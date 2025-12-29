@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Drawer,
@@ -14,16 +14,19 @@ import {
 } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PFC } from '@/lib/types';
+import { PFC, UserProfile } from '@/lib/types';
+import { ProfileCalculator } from './ProfileCalculator';
 
 interface GoalEditFormProps {
     initialGoals: PFC;
-    onSave: (goals: PFC) => void;
+    initialProfile?: UserProfile;
+    onSave: (goals: PFC, profile?: UserProfile) => void;
     trigger: React.ReactNode;
 }
 
-export function GoalEditForm({ initialGoals, onSave, trigger }: GoalEditFormProps) {
+export function GoalEditForm({ initialGoals, initialProfile, onSave, trigger }: GoalEditFormProps) {
     const [goals, setGoals] = useState<PFC>(initialGoals);
+    const [profile, setProfile] = useState<UserProfile | undefined>(initialProfile);
     const [isOpen, setIsOpen] = useState(false);
 
     const handleChange = (key: keyof PFC, value: string) => {
@@ -31,8 +34,13 @@ export function GoalEditForm({ initialGoals, onSave, trigger }: GoalEditFormProp
         setGoals((prev) => ({ ...prev, [key]: numValue }));
     };
 
+    const handleCalculate = useCallback((newGoals: PFC, newProfile: UserProfile) => {
+        setGoals(newGoals);
+        setProfile(newProfile);
+    }, []);
+
     const handleSave = () => {
-        onSave(goals);
+        onSave(goals, profile);
         setIsOpen(false);
     };
 
@@ -43,61 +51,13 @@ export function GoalEditForm({ initialGoals, onSave, trigger }: GoalEditFormProp
                 <div className="mx-auto w-full max-w-sm">
                     <DrawerHeader>
                         <DrawerTitle>目標を編集</DrawerTitle>
-                        <DrawerDescription>一日の目標摂取量を設定してください。</DrawerDescription>
+                        <DrawerDescription>プロフィールを入力して目標を自動計算します。</DrawerDescription>
                     </DrawerHeader>
-                    <div className="grid gap-4 p-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="calories" className="text-right text-sm">
-                                カロリー
-                            </Label>
-                            <Input
-                                id="calories"
-                                type="number"
-                                value={goals.calories}
-                                onChange={(e) => handleChange('calories', e.target.value)}
-                                className="col-span-3 text-sm"
-                                inputMode="numeric"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="protein" className="text-right text-sm">
-                                タンパク質
-                            </Label>
-                            <Input
-                                id="protein"
-                                type="number"
-                                value={goals.protein}
-                                onChange={(e) => handleChange('protein', e.target.value)}
-                                className="col-span-3 text-sm"
-                                inputMode="numeric"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="fat" className="text-right text-sm">
-                                脂質
-                            </Label>
-                            <Input
-                                id="fat"
-                                type="number"
-                                value={goals.fat}
-                                onChange={(e) => handleChange('fat', e.target.value)}
-                                className="col-span-3 text-sm"
-                                inputMode="numeric"
-                            />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="carbs" className="text-right text-sm">
-                                炭水化物
-                            </Label>
-                            <Input
-                                id="carbs"
-                                type="number"
-                                value={goals.carbs}
-                                onChange={(e) => handleChange('carbs', e.target.value)}
-                                className="col-span-3 text-sm"
-                                inputMode="numeric"
-                            />
-                        </div>
+                    <div className="p-4 overflow-y-auto max-h-[70vh]">
+                        <ProfileCalculator
+                            initialProfile={profile}
+                            onCalculate={handleCalculate}
+                        />
                     </div>
                     <DrawerFooter>
                         <Button onClick={handleSave}>保存</Button>

@@ -14,8 +14,8 @@ export default function SettingsPage() {
         setSettings(getSettings());
     }, []);
 
-    const handleSaveGoals = (newGoals: PFC) => {
-        const newSettings = { ...settings, targetPFC: newGoals };
+    const handleSaveGoals = (newGoals: PFC, newProfile?: UserProfile) => {
+        const newSettings = { ...settings, targetPFC: newGoals, profile: newProfile };
         saveSettings(newSettings);
         setSettings(newSettings);
         toast.success('目標を更新しました');
@@ -37,6 +37,7 @@ export default function SettingsPage() {
                     </p>
                     <GoalEditForm
                         initialGoals={settings.targetPFC}
+                        initialProfile={settings.profile}
                         onSave={handleSaveGoals}
                         trigger={
                             <Button variant="outline" className="w-full">

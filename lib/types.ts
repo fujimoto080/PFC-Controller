@@ -19,8 +19,18 @@ export interface DailyLog {
   total: PFC;
 }
 
+export interface UserProfile {
+  gender: 'male' | 'female';
+  age: number;
+  height: number;
+  weight: number;
+  targetWeight: number;
+  activityLevel: number; // 1.2, 1.375, 1.55, 1.725, 1.9
+}
+
 export interface UserSettings {
   targetPFC: PFC;
+  profile?: UserProfile;
 }
 
 export const DEFAULT_TARGET: PFC = {
