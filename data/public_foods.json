@@ -1,0 +1,42 @@
+[
+  {
+    "id": "item_1",
+    "name": "Salad Chicken (Herb)",
+    "protein": 24.1,
+    "fat": 1.2,
+    "carbs": 0.3,
+    "calories": 108
+  },
+  {
+    "id": "item_2",
+    "name": "Salmon Onigiri",
+    "protein": 5.2,
+    "fat": 1.1,
+    "carbs": 38.0,
+    "calories": 185
+  },
+  {
+    "id": "item_3",
+    "name": "Beef Bowl (Medium)",
+    "protein": 22.9,
+    "fat": 25.0,
+    "carbs": 95.8,
+    "calories": 733
+  },
+  {
+    "id": "item_4",
+    "name": "Boiled Egg",
+    "protein": 6.0,
+    "fat": 5.0,
+    "carbs": 0.2,
+    "calories": 70
+  },
+  {
+    "id": "item_5",
+    "name": "Protein Bar (Chocolate)",
+    "protein": 15.0,
+    "fat": 9.0,
+    "carbs": 12.0,
+    "calories": 190
+  }
+]

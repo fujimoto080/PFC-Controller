@@ -1,0 +1,22 @@
+
+> pfc-app@0.1.0 build
+> next build
+
+笆ｲ Next.js 16.1.1 (Turbopack)
+
+  Creating an optimized production build ...
+笨・Compiled successfully in 2.2s
+  Running TypeScript ...
+Failed to compile.
+System.Management.Automation.RemoteException
+./components/history/LogList.tsx:4:23
+Type error: Module '"@/lib/storage"' declares 'DailyLog' locally, but it is not exported.
+System.Management.Automation.RemoteException
+[0m [90m 2 |[39m
+ [90m 3 |[39m [36mimport[39m { useEffect[33m,[39m useState } [36mfrom[39m [32m"react"[39m
+[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { getTodayLog[33m,[39m [33mDailyLog[39m[33m,[39m [33mFoodItem[39m } [36mfrom[39m [32m"@/lib/storage"[39m
+ [90m   |[39m                       [31m[1m^[22m[39m
+ [90m 5 |[39m [36mimport[39m { [33mCard[39m[33m,[39m [33mCardContent[39m[33m,[39m [33mCardHeader[39m[33m,[39m [33mCardTitle[39m } [36mfrom[39m [32m"@/components/ui/card"[39m
+ [90m 6 |[39m [36mimport[39m { [33mScrollArea[39m } [36mfrom[39m [32m"@/components/ui/scroll-area"[39m
+ [90m 7 |[39m [36mimport[39m { [33mTrash2[39m } [36mfrom[39m [32m"lucide-react"[39m[0m
+Next.js build worker exited with code: 1 and signal: null
