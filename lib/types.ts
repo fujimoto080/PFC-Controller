@@ -9,6 +9,7 @@ export interface FoodItem extends PFC {
   id: string;
   name: string;
   image?: string; // base64 or url
+  store?: string;
   timestamp: number;
 }
 

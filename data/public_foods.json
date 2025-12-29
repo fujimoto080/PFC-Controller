@@ -1,42 +1,52 @@
 [
   {
     "id": "item_1",
-    "name": "Salad Chicken (Herb)",
+    "name": "サラダチキン (ハーブ)",
     "protein": 24.1,
     "fat": 1.2,
     "carbs": 0.3,
-    "calories": 108
+    "calories": 108,
+    "store": "セブンイレブン",
+    "image": "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=150&h=150&fit=crop"
   },
   {
     "id": "item_2",
-    "name": "Salmon Onigiri",
+    "name": "紅しゃけおにぎり",
     "protein": 5.2,
     "fat": 1.1,
     "carbs": 38.0,
-    "calories": 185
+    "calories": 185,
+    "store": "セブンイレブン",
+    "image": "https://images.unsplash.com/photo-1598155523122-38423bb4d6cf?w=150&h=150&fit=crop"
   },
   {
     "id": "item_3",
-    "name": "Beef Bowl (Medium)",
+    "name": "牛丼 (並盛)",
     "protein": 22.9,
     "fat": 25.0,
     "carbs": 95.8,
-    "calories": 733
+    "calories": 733,
+    "store": "松屋",
+    "image": "https://images.unsplash.com/photo-1552611052-33e04de081de?w=150&h=150&fit=crop"
   },
   {
     "id": "item_4",
-    "name": "Boiled Egg",
+    "name": "ゆで卵",
     "protein": 6.0,
     "fat": 5.0,
     "carbs": 0.2,
-    "calories": 70
+    "calories": 70,
+    "store": "ローソン",
+    "image": "https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=150&h=150&fit=crop"
   },
   {
     "id": "item_5",
-    "name": "Protein Bar (Chocolate)",
+    "name": "プロテインバー (チョコ)",
     "protein": 15.0,
     "fat": 9.0,
     "carbs": 12.0,
-    "calories": 190
+    "calories": 190,
+    "store": "Other",
+    "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150&h=150&fit=crop"
   }
 ]

@@ -61,3 +61,70 @@ export function getSettings(): UserSettings {
 export function saveSettings(settings: UserSettings) {
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
 }
+
+// --- Food Dictionary Management ---
+
+const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
+import publicFoods from '@/data/public_foods.json';
+
+export function getFoodDictionary(): FoodItem[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(STORAGE_KEY_FOODS);
+  if (stored) {
+    return JSON.parse(stored);
+  }
+  // Initialize with public foods if empty
+  const defaults = publicFoods as FoodItem[];
+  saveFoodDictionary(defaults);
+  return defaults;
+}
+
+export function saveFoodDictionary(foods: FoodItem[]) {
+  localStorage.setItem(STORAGE_KEY_FOODS, JSON.stringify(foods));
+}
+
+export function addFoodToDictionary(item: FoodItem) {
+  const foods = getFoodDictionary();
+  foods.push(item);
+  saveFoodDictionary(foods);
+}
+
+export function updateFoodInDictionary(updatedItem: FoodItem) {
+  const foods = getFoodDictionary();
+  const index = foods.findIndex((f) => f.id === updatedItem.id);
+  if (index !== -1) {
+    foods[index] = updatedItem;
+    saveFoodDictionary(foods);
+  }
+}
+
+export function deleteFoodFromDictionary(id: string) {
+  const foods = getFoodDictionary();
+  const filtered = foods.filter((f) => f.id !== id);
+  saveFoodDictionary(filtered);
+}
+
+export function getHistoryItems(): FoodItem[] {
+  const logs = getLogs();
+  const allItems: FoodItem[] = [];
+  const seenNames = new Set<string>();
+
+  // Iterate over all logs in reverse chronological order (if keys are dates, sort them)
+  const sortedDates = Object.keys(logs).sort().reverse();
+
+  for (const date of sortedDates) {
+    const dayLog = logs[date];
+    // Traverse items in reverse (newest first)
+    for (let i = dayLog.items.length - 1; i >= 0; i--) {
+      const item = dayLog.items[i];
+      // Key by name + calories (rough uniqueness)
+      const key = `${item.name}-${item.calories}`;
+      if (!seenNames.has(key)) {
+        seenNames.add(key);
+        allItems.push(item);
+      }
+    }
+  }
+
+  return allItems;
+}
