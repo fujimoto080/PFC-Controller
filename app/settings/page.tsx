@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getSettings, saveSettings } from '@/lib/storage';
-import { UserSettings, PFC } from '@/lib/types';
+import { UserSettings, PFC, UserProfile } from '@/lib/types';
 import { GoalEditForm } from '@/components/settings/GoalEditForm';
 import { toast } from 'sonner';
 
