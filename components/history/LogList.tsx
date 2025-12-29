@@ -18,7 +18,7 @@ export function LogList() {
     if (!log || log.items.length === 0) {
         return (
             <div className="text-center py-10 text-muted-foreground">
-                <p>No entries for today.</p>
+                <p>今日の記録はありません。</p>
             </div>
         )
     }

@@ -22,7 +22,7 @@ export function PFCStats() {
         return () => window.removeEventListener('pfc-update', handleUpdate)
     }, [])
 
-    if (!data) return <div className="p-4 text-center text-muted-foreground animate-pulse">Loading daily stats...</div>
+    if (!data) return <div className="p-4 text-center text-muted-foreground animate-pulse">データを読み込み中...</div>
 
     const { protein, fat, carbs, calories } = data.total
     const { targetPFC } = settings
@@ -41,7 +41,7 @@ export function PFCStats() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-medium text-muted-foreground">Calories</CardTitle>
+                    <CardTitle className="text-lg font-medium text-muted-foreground">摂取カロリー</CardTitle>
                     <div className="flex items-baseline space-x-2">
                         <span className="text-4xl font-bold tracking-tighter">{calories}</span>
                         <span className="text-sm text-muted-foreground">/ {targetPFC.calories} kcal</span>
@@ -53,9 +53,9 @@ export function PFCStats() {
             <div className="grid grid-cols-1 gap-4">
                 <Card>
                     <CardContent className="pt-6 space-y-6">
-                        <StatRow label="Protein" current={protein} target={targetPFC.protein} color="bg-blue-500" delay={0.1} />
-                        <StatRow label="Fat" current={fat} target={targetPFC.fat} color="bg-yellow-500" delay={0.2} />
-                        <StatRow label="Carbs" current={carbs} target={targetPFC.carbs} color="bg-green-500" delay={0.3} />
+                        <StatRow label="タンパク質" current={protein} target={targetPFC.protein} color="bg-blue-500" delay={0.1} />
+                        <StatRow label="脂質" current={fat} target={targetPFC.fat} color="bg-yellow-500" delay={0.2} />
+                        <StatRow label="炭水化物" current={carbs} target={targetPFC.carbs} color="bg-green-500" delay={0.3} />
                     </CardContent>
                 </Card>
             </div>

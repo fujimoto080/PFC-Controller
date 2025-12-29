@@ -9,10 +9,10 @@ export function BottomNav() {
   const pathname = usePathname()
 
   const navItems = [
-    { href: "/", icon: Home, label: "Home" },
-    { href: "/log", icon: History, label: "Log" },
-    { href: "/add", icon: PlusCircle, label: "Add", main: true },
-    { href: "/settings", icon: Settings, label: "Settings" },
+    { href: "/", icon: Home, label: "ホーム" },
+    { href: "/log", icon: History, label: "履歴" },
+    { href: "/add", icon: PlusCircle, label: "追加", main: true },
+    { href: "/settings", icon: Settings, label: "設定" },
   ]
 
   return (
@@ -20,7 +20,7 @@ export function BottomNav() {
       <div className="flex justify-around items-center h-16">
         {navItems.map((item) => {
           const isActive = pathname === item.href
-          
+
           if (item.main) {
             return (
               <Link
@@ -41,8 +41,8 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                  "flex flex-col items-center justify-center w-full h-full space-y-1",
-                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                "flex flex-col items-center justify-center w-full h-full space-y-1",
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <item.icon size={20} />

@@ -37,7 +37,7 @@ export function AddFoodForm() {
         }
 
         addFoodItem(item)
-        toast.success("Added " + item.name)
+        toast.success(item.name + "を追加しました")
         reset()
         router.push("/")
     }
@@ -49,7 +49,7 @@ export function AddFoodForm() {
             timestamp: Date.now()
         }
         addFoodItem(item)
-        toast.success("Added " + item.name)
+        toast.success(item.name + "を追加しました")
         router.push("/")
     }
 
@@ -61,9 +61,9 @@ export function AddFoodForm() {
         <div className="space-y-4">
             <Tabs defaultValue="manual" onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="manual">Manual</TabsTrigger>
-                    <TabsTrigger value="search">Search</TabsTrigger>
-                    <TabsTrigger value="photo">Photo</TabsTrigger>
+                    <TabsTrigger value="manual">手動入力</TabsTrigger>
+                    <TabsTrigger value="search">検索</TabsTrigger>
+                    <TabsTrigger value="photo">写真</TabsTrigger>
                 </TabsList>
 
                 <AnimatePresence mode="wait">
@@ -79,29 +79,29 @@ export function AddFoodForm() {
                                 <CardContent className="pt-6">
                                     <form onSubmit={handleSubmit(onSubmitManual)} className="space-y-4">
                                         <div className="space-y-2">
-                                            <Label>Food Name</Label>
-                                            <Input {...register("name", { required: true })} placeholder="e.g. My Lunch" />
+                                            <Label>食品名</Label>
+                                            <Input {...register("name", { required: true })} placeholder="例: ランチセット" />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label>Protein (g)</Label>
+                                                <Label>タンパク質 (g)</Label>
                                                 <Input type="number" step="0.1" {...register("protein")} placeholder="0" />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label>Fat (g)</Label>
+                                                <Label>脂質 (g)</Label>
                                                 <Input type="number" step="0.1" {...register("fat")} placeholder="0" />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label>Carbs (g)</Label>
+                                                <Label>炭水化物 (g)</Label>
                                                 <Input type="number" step="0.1" {...register("carbs")} placeholder="0" />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label>Calories</Label>
+                                                <Label>カロリー</Label>
                                                 <Input type="number" {...register("calories")} placeholder="0" />
                                             </div>
                                         </div>
                                         <Button type="submit" className="w-full">
-                                            <Plus className="mr-2 h-4 w-4" /> Add Entry
+                                            <Plus className="mr-2 h-4 w-4" /> 記録を追加
                                         </Button>
                                     </form>
                                 </CardContent>
@@ -115,7 +115,7 @@ export function AddFoodForm() {
                                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             type="search"
-                                            placeholder="Search foods..."
+                                            placeholder="食品を検索..."
                                             className="pl-8"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -136,7 +136,7 @@ export function AddFoodForm() {
                                             </div>
                                         ))}
                                         {filteredFoods.length === 0 && (
-                                            <div className="text-center text-muted-foreground text-sm py-4">No foods found.</div>
+                                            <div className="text-center text-muted-foreground text-sm py-4">食品が見つかりません。</div>
                                         )}
                                     </div>
                                 </CardContent>
@@ -148,11 +148,11 @@ export function AddFoodForm() {
                                 <CardContent className="pt-6 text-center space-y-4">
                                     <div className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-muted-foreground relative overflow-hidden group">
                                         <Camera className="h-10 w-10 mb-2 group-hover:scale-110 transition-transform" />
-                                        <p>Take a photo</p>
+                                        <p>写真を撮る</p>
                                         <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer" />
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Note: Photo analysis is not currently connected to an AI API. Use Manual or Search for accurate data.
+                                        注: 写真分析は現在AI APIに接続されていません。手動入力または検索を使用してください。
                                     </p>
                                 </CardContent>
                             </Card>
