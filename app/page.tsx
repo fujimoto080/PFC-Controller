@@ -58,7 +58,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="text-sm font-semibold">
-                  P:{item.protein} F:{item.fat} C:{item.carbs}
+                  P:{Math.round(item.protein * 100) / 100} F:{Math.round(item.fat * 100) / 100} C:{Math.round(item.carbs * 100) / 100}
                 </div>
               </div>
             ))}

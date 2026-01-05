@@ -75,10 +75,10 @@ export function getWeeklyLog(): {
   }
 
   return {
-    protein: daysCount > 0 ? Math.round(totalProtein / 7) : 0,
-    fat: daysCount > 0 ? Math.round(totalFat / 7) : 0,
-    carbs: daysCount > 0 ? Math.round(totalCarbs / 7) : 0,
-    calories: daysCount > 0 ? Math.round(totalCalories / 7) : 0,
+    protein: daysCount > 0 ? Math.round((totalProtein / 7) * 100) / 100 : 0,
+    fat: daysCount > 0 ? Math.round((totalFat / 7) * 100) / 100 : 0,
+    carbs: daysCount > 0 ? Math.round((totalCarbs / 7) * 100) / 100 : 0,
+    calories: daysCount > 0 ? Math.round((totalCalories / 7) * 100) / 100 : 0,
     daysCount,
   };
 }
@@ -128,7 +128,7 @@ export function getBalancedWeeklyTargets(): {
 
   const getBalanced = (weekly: number, consumed: number, dailyBase: number) => {
     const remaining = Math.max(0, weekly - consumed);
-    const balanced = Math.round(remaining / remainingDays);
+    const balanced = Math.round((remaining / remainingDays) * 100) / 100;
     return Math.min(dailyBase, balanced);
   };
 
@@ -141,7 +141,7 @@ export function getBalancedWeeklyTargets(): {
   };
 }
 export function recalculateLogTotals(log: DailyLog): DailyLog {
-  log.total = log.items.reduce(
+  const totals = log.items.reduce(
     (acc, curr) => ({
       protein: acc.protein + curr.protein,
       fat: acc.fat + curr.fat,
@@ -150,6 +150,14 @@ export function recalculateLogTotals(log: DailyLog): DailyLog {
     }),
     { protein: 0, fat: 0, carbs: 0, calories: 0 },
   );
+
+  log.total = {
+    protein: Math.round(totals.protein * 100) / 100,
+    fat: Math.round(totals.fat * 100) / 100,
+    carbs: Math.round(totals.carbs * 100) / 100,
+    calories: Math.round(totals.calories * 100) / 100,
+  };
+
   return log;
 }
 

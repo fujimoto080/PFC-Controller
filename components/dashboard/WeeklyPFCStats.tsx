@@ -58,7 +58,7 @@ export function WeeklyPFCStats() {
                                 平均カロリー
                             </p>
                             <div className="flex items-baseline space-x-1">
-                                <span className="text-2xl font-bold">{calories}</span>
+                                <span className="text-2xl font-bold">{Math.round(calories * 100) / 100}</span>
                                 <span className="text-muted-foreground text-xs">kcal</span>
                             </div>
                             <Progress
@@ -110,7 +110,7 @@ function WeeklyStatSmall({
             <div className="flex justify-between text-[10px]">
                 <span className="font-bold">{label}</span>
                 <span className="text-muted-foreground">
-                    {current}/{target}g
+                    {Math.round(current * 100) / 100}/{target}g
                 </span>
             </div>
             <Progress value={pct} indicatorClassName={color} className="h-1" />

@@ -64,7 +64,7 @@ export function WeeklyBalancingStats() {
                             <p className="text-muted-foreground text-xs font-medium">1日の推奨上限</p>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-3xl font-bold tracking-tight text-primary">
-                                    {balancedTarget.calories}
+                                    {Math.round(balancedTarget.calories * 100) / 100}
                                 </span>
                                 <span className="text-muted-foreground text-xs italic">
                                     kcal
@@ -127,11 +127,11 @@ function MiniGoal({
             <div className="flex justify-between items-center text-[10px]">
                 <span className="font-bold flex items-center gap-1">
                     {label}
-                    <span className={diff > 0 ? "text-red-500" : diff < 0 ? "text-blue-500" : "text-muted-foreground"}>
-                        {diff > 0 ? `+${diff}` : diff === 0 ? "±0" : diff}g
+                    <span className={diff > 0.005 ? "text-red-500" : diff < -0.005 ? "text-blue-500" : "text-muted-foreground"}>
+                        {diff > 0.005 ? `+${Math.round(diff * 100) / 100}` : Math.abs(diff) < 0.005 ? "±0" : Math.round(diff * 100) / 100}g
                     </span>
                 </span>
-                <span className="font-medium text-primary">{current}g</span>
+                <span className="font-medium text-primary">{Math.round(current * 100) / 100}g</span>
             </div>
             <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
                 <div
