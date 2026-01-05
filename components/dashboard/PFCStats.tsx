@@ -131,12 +131,13 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
             <div className="bg-primary/5 absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-3xl" />
 
             <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-muted-foreground text-lg font-medium">
+              <div className="flex justify-between items-center px-2">
+                {/* Spacers for the arrows that are positioned absolutely */}
+                <div className="w-12" />
+                <CardTitle className="text-muted-foreground text-lg font-medium text-center">
                   摂取カロリー
                 </CardTitle>
-                {/* Spacer for the arrows that are positioned absolutely */}
-                <div className="w-20" />
+                <div className="w-12" />
               </div>
               <div className="flex items-baseline space-x-2">
                 <span className={`text-4xl font-bold tracking-tighter ${calories > targetPFC.calories ? 'text-red-500' : ''}`}>
