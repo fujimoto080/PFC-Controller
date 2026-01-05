@@ -29,6 +29,19 @@ export function AddFoodForm() {
     const [historyFoods, setHistoryFoods] = useState<FoodItem[]>([]);
     const [saveToDictionary, setSaveToDictionary] = useState(false);
 
+    const now = new Date();
+    const initialDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const initialTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const [eatDate, setEatDate] = useState(initialDate);
+    const [eatTime, setEatTime] = useState(initialTime);
+
+    const getSelectedTimestamp = () => {
+        const [year, month, day] = eatDate.split('-').map(Number);
+        const [hour, minute] = eatTime.split(':').map(Number);
+        return new Date(year, month - 1, day, hour, minute).getTime();
+    };
+
     useEffect(() => {
         setPublicFoods(getFoodDictionary());
         setHistoryFoods(getHistoryItems());
@@ -47,7 +60,7 @@ export function AddFoodForm() {
             carbs: Number(data.carbs),
             calories: Number(data.calories),
             store: data.store || undefined,
-            timestamp: Date.now(),
+            timestamp: getSelectedTimestamp(),
         };
 
         addFoodItem(item);
@@ -78,7 +91,7 @@ export function AddFoodForm() {
         const item: FoodItem = {
             ...food,
             id: Date.now().toString(), // unique id for log
-            timestamp: Date.now(),
+            timestamp: getSelectedTimestamp(),
         };
         addFoodItem(item);
         toast.success(item.name + 'を追加しました');
@@ -91,6 +104,31 @@ export function AddFoodForm() {
 
     return (
         <div className="space-y-4">
+            <Card className="bg-muted/30">
+                <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="eatDate">食べた日付</Label>
+                            <Input
+                                id="eatDate"
+                                type="date"
+                                value={eatDate}
+                                onChange={(e) => setEatDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="eatTime">時刻</Label>
+                            <Input
+                                id="eatTime"
+                                type="time"
+                                value={eatTime}
+                                onChange={(e) => setEatTime(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             <Tabs defaultValue="manual" onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="manual">手動</TabsTrigger>

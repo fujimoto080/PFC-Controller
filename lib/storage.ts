@@ -5,9 +5,13 @@ import { DailyLog, FoodItem, UserSettings, DEFAULT_TARGET } from './types';
 const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
 
-// Helper to get today's date string YYYY-MM-DD
+// Helper to get today's date string YYYY-MM-DD in local time
 export function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
+  const dateObj = new Date();
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function getLogs(): Record<string, DailyLog> {
@@ -16,8 +20,7 @@ export function getLogs(): Record<string, DailyLog> {
   return stored ? JSON.parse(stored) : {};
 }
 
-export function getTodayLog(): DailyLog {
-  const date = getTodayString();
+export function getLogForDate(date: string): DailyLog {
   const logs = getLogs();
   return (
     logs[date] || {
@@ -28,6 +31,10 @@ export function getTodayLog(): DailyLog {
   );
 }
 
+export function getTodayLog(): DailyLog {
+  return getLogForDate(getTodayString());
+}
+
 export function saveLog(log: DailyLog) {
   const logs = getLogs();
   logs[log.date] = log;
@@ -35,7 +42,15 @@ export function saveLog(log: DailyLog) {
 }
 
 export function addFoodItem(item: FoodItem) {
-  const log = getTodayLog();
+  // Extract date (YYYY-MM-DD) from timestamp
+  // Use local time for date string
+  const dateObj = new Date(item.timestamp);
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const date = `${year}-${month}-${day}`;
+
+  const log = getLogForDate(date);
   log.items.push(item);
 
   // Recalculate totals
