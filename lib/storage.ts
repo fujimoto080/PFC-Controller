@@ -41,6 +41,48 @@ export function saveLog(log: DailyLog) {
   localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
 }
 
+export function getWeeklyLog(): {
+  protein: number;
+  fat: number;
+  carbs: number;
+  calories: number;
+  daysCount: number;
+} {
+  const logs = getLogs();
+  const today = new Date();
+  let totalProtein = 0;
+  let totalFat = 0;
+  let totalCarbs = 0;
+  let totalCalories = 0;
+  let daysCount = 0;
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+
+    const log = logs[dateStr];
+    if (log && log.total) {
+      totalProtein += log.total.protein;
+      totalFat += log.total.fat;
+      totalCarbs += log.total.carbs;
+      totalCalories += log.total.calories;
+      daysCount++;
+    }
+  }
+
+  return {
+    protein: daysCount > 0 ? Math.round(totalProtein / 7) : 0,
+    fat: daysCount > 0 ? Math.round(totalFat / 7) : 0,
+    carbs: daysCount > 0 ? Math.round(totalCarbs / 7) : 0,
+    calories: daysCount > 0 ? Math.round(totalCalories / 7) : 0,
+    daysCount,
+  };
+}
+
 export function addFoodItem(item: FoodItem) {
   // Extract date (YYYY-MM-DD) from timestamp
   // Use local time for date string

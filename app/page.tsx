@@ -1,4 +1,5 @@
 import { PFCStats } from '@/components/dashboard/PFCStats';
+import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       </header>
 
       <PFCStats />
+      <WeeklyPFCStats />
 
       {/* Placeholder for Recent Entries */}
       <div className="space-y-4">
