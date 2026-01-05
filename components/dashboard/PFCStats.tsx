@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getLogForDate, getSettings, getTodayString } from '@/lib/storage';
-import { DailyLog, UserSettings, DEFAULT_TARGET } from '@/lib/types';
+import { getLogForDate, getSettings, getTodayString, getPfcDebt } from '@/lib/storage';
+import { DailyLog, UserSettings, DEFAULT_TARGET, PFC } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -19,14 +19,19 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   const [settings, setSettings] = useState<UserSettings>({
     targetPFC: DEFAULT_TARGET,
   });
+  const [debt, setDebt] = useState<PFC>({ protein: 0, fat: 0, carbs: 0, calories: 0 });
   const [direction, setDirection] = useState(0);
 
   useEffect(() => {
     // Load data for selected date
     setData(getLogForDate(selectedDate));
     setSettings(getSettings());
+    setDebt(getPfcDebt(selectedDate));
 
-    const handleUpdate = () => setData(getLogForDate(selectedDate));
+    const handleUpdate = () => {
+      setData(getLogForDate(selectedDate));
+      setDebt(getPfcDebt(selectedDate));
+    };
     window.addEventListener('pfc-update', handleUpdate);
     return () => window.removeEventListener('pfc-update', handleUpdate);
   }, [selectedDate]);
@@ -139,6 +144,11 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 </span>
                 <span className="text-muted-foreground text-sm">
                   / {targetPFC.calories} kcal
+                  {debt.calories > 0 && (
+                    <span className="text-red-500 font-bold ml-1">
+                      (調整: -{debt.calories})
+                    </span>
+                  )}
                 </span>
               </div>
               <Progress
@@ -155,6 +165,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                   label="タンパク質"
                   current={protein}
                   target={targetPFC.protein}
+                  debt={debt.protein}
                   color="bg-blue-500"
                   delay={0.1}
                 />
@@ -162,6 +173,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                   label="脂質"
                   current={fat}
                   target={targetPFC.fat}
+                  debt={debt.fat}
                   color="bg-yellow-500"
                   delay={0.2}
                 />
@@ -169,6 +181,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                   label="炭水化物"
                   current={carbs}
                   target={targetPFC.carbs}
+                  debt={debt.carbs}
                   color="bg-green-500"
                   delay={0.3}
                 />
@@ -185,15 +198,18 @@ function StatRow({
   label,
   current,
   target,
+  debt,
   color,
   delay,
 }: {
   label: string;
   current: number;
   target: number;
+  debt: number;
   color: string;
   delay: number;
 }) {
+  const adjustedTarget = Math.max(0, target - debt);
   const pct = Math.min(100, (current / target) * 100);
   return (
     <motion.div
@@ -204,8 +220,13 @@ function StatRow({
     >
       <div className="flex justify-between text-sm">
         <span className="font-medium">{label}</span>
-        <span className={`${current > target ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
+        <span className={`${current > adjustedTarget ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
           {Math.round(current * 100) / 100} / {target}g
+          {debt > 0 && (
+            <span className="text-[10px] ml-1">
+              (調整: -{debt})
+            </span>
+          )}
         </span>
       </div>
       <Progress value={pct} indicatorClassName={color} className="h-2" />

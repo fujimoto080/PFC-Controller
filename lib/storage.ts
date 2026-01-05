@@ -140,6 +140,49 @@ export function getBalancedWeeklyTargets(): {
     remainingDays,
   };
 }
+
+export function getPfcDebt(currentDate: string): PFC {
+  const settings = getSettings();
+  const target = settings.targetPFC;
+  const logs = getLogs();
+
+  // Sort dates chronological to calculate cumulative debt
+  const sortedDates = Object.keys(logs).sort();
+
+  let cumulativeDebt: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
+
+  for (const date of sortedDates) {
+    if (date >= currentDate) break; // Only calculate debt from previous days
+
+    const log = logs[date];
+    if (log && log.total) {
+      // Calculate daily balance (surplus/deficit relative to target)
+      // Positive result means excess (debt)
+      // Negative result means under target (repayment)
+      const dailyExcess = {
+        protein: log.total.protein - target.protein,
+        fat: log.total.fat - target.fat,
+        carbs: log.total.carbs - target.carbs,
+        calories: log.total.calories - target.calories,
+      };
+
+      // Add to cumulative debt, but cap debt at zero (no "savings" for the future)
+      cumulativeDebt = {
+        protein: Math.max(0, cumulativeDebt.protein + dailyExcess.protein),
+        fat: Math.max(0, cumulativeDebt.fat + dailyExcess.fat),
+        carbs: Math.max(0, cumulativeDebt.carbs + dailyExcess.carbs),
+        calories: Math.max(0, cumulativeDebt.calories + dailyExcess.calories),
+      };
+    }
+  }
+
+  return {
+    protein: Math.round(cumulativeDebt.protein * 100) / 100,
+    fat: Math.round(cumulativeDebt.fat * 100) / 100,
+    carbs: Math.round(cumulativeDebt.carbs * 100) / 100,
+    calories: Math.round(cumulativeDebt.calories * 100) / 100,
+  };
+}
 export function recalculateLogTotals(log: DailyLog): DailyLog {
   const totals = log.items.reduce(
     (acc, curr) => ({

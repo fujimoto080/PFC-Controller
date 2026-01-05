@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { getBalancedWeeklyTargets, getSettings } from '@/lib/storage';
-import { UserSettings, DEFAULT_TARGET } from '@/lib/types';
+import { getBalancedWeeklyTargets, getSettings, getPfcDebt, getTodayString } from '@/lib/storage';
+import { UserSettings, DEFAULT_TARGET, PFC } from '@/lib/types';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
@@ -18,12 +18,18 @@ export function WeeklyBalancingStats() {
     const [settings, setSettings] = useState<UserSettings>({
         targetPFC: DEFAULT_TARGET,
     });
+    const [debt, setDebt] = useState<PFC>({ protein: 0, fat: 0, carbs: 0, calories: 0 });
 
     useEffect(() => {
+        const today = getTodayString();
         setBalancedTarget(getBalancedWeeklyTargets());
         setSettings(getSettings());
+        setDebt(getPfcDebt(today));
 
-        const handleUpdate = () => setBalancedTarget(getBalancedWeeklyTargets());
+        const handleUpdate = () => {
+            setBalancedTarget(getBalancedWeeklyTargets());
+            setDebt(getPfcDebt(today));
+        };
         window.addEventListener('pfc-update', handleUpdate);
         return () => window.removeEventListener('pfc-update', handleUpdate);
     }, []);
@@ -36,7 +42,8 @@ export function WeeklyBalancingStats() {
         balancedTarget.protein < targetPFC.protein ||
         balancedTarget.fat < targetPFC.fat ||
         balancedTarget.carbs < targetPFC.carbs ||
-        balancedTarget.calories < targetPFC.calories;
+        balancedTarget.calories < targetPFC.calories ||
+        debt.calories > 0 || debt.protein > 0 || debt.fat > 0 || debt.carbs > 0;
 
     return (
         <motion.div
@@ -82,18 +89,21 @@ export function WeeklyBalancingStats() {
                                 label="P"
                                 current={balancedTarget.protein}
                                 base={targetPFC.protein}
+                                debt={debt.protein}
                                 color="bg-blue-500"
                             />
                             <MiniGoal
                                 label="F"
                                 current={balancedTarget.fat}
                                 base={targetPFC.fat}
+                                debt={debt.fat}
                                 color="bg-yellow-500"
                             />
                             <MiniGoal
                                 label="C"
                                 current={balancedTarget.carbs}
                                 base={targetPFC.carbs}
+                                debt={debt.carbs}
                                 color="bg-green-500"
                             />
                         </div>
@@ -103,7 +113,7 @@ export function WeeklyBalancingStats() {
 
             <p className="text-muted-foreground text-[10px] text-center px-4">
                 {isAdjusted
-                    ? "※ 食べ過ぎた分を週内で調整するために算出された目標です（不足分の補填は行いません）。"
+                    ? "※ 食べ過ぎた分（負債）を調整するために算出された目標です。"
                     : "※ 日曜日からの摂取量は目標内です。このままベース目標を維持しましょう。"}
             </p>
         </motion.div>
@@ -114,11 +124,13 @@ function MiniGoal({
     label,
     current,
     base,
+    debt,
     color
 }: {
     label: string;
     current: number;
     base: number;
+    debt: number;
     color: string;
 }) {
     const diff = current - base;
@@ -127,8 +139,8 @@ function MiniGoal({
             <div className="flex justify-between items-center text-[10px]">
                 <span className="font-bold flex items-center gap-1">
                     {label}
-                    <span className={diff > 0.005 ? "text-red-500" : diff < -0.005 ? "text-blue-500" : "text-muted-foreground"}>
-                        {diff > 0.005 ? `+${Math.round(diff * 100) / 100}` : Math.abs(diff) < 0.005 ? "±0" : Math.round(diff * 100) / 100}g
+                    <span className={debt > 0.005 ? "text-red-500" : diff < -0.005 ? "text-blue-500" : "text-muted-foreground"}>
+                        {debt > 0.005 ? `-${Math.round(debt * 100) / 100}` : Math.abs(diff) < 0.005 ? "±0" : Math.round(diff * 100) / 100}g
                     </span>
                 </span>
                 <span className="font-medium text-primary">{Math.round(current * 100) / 100}g</span>
