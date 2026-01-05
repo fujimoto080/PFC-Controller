@@ -143,3 +143,20 @@ export function getHistoryItems(): FoodItem[] {
 
   return allItems;
 }
+
+export function getAllLogItems(): FoodItem[] {
+  const logs = getLogs();
+  const allItems: FoodItem[] = [];
+
+  // Sort dates in reverse chronological order
+  const sortedDates = Object.keys(logs).sort().reverse();
+
+  for (const date of sortedDates) {
+    const dayLog = logs[date];
+    // Sort items within the day by timestamp desc
+    const sortedDayItems = [...dayLog.items].sort((a, b) => b.timestamp - a.timestamp);
+    allItems.push(...sortedDayItems);
+  }
+
+  return allItems;
+}
