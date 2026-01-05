@@ -82,7 +82,64 @@ export function getWeeklyLog(): {
     daysCount,
   };
 }
+export function getBalancedWeeklyTargets(): {
+  protein: number;
+  fat: number;
+  carbs: number;
+  calories: number;
+  remainingDays: number;
+} {
+  const settings = getSettings();
+  const target = settings.targetPFC;
+  const logs = getLogs();
+  const today = new Date();
 
+  // Find the most recent Sunday
+  const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - dayOfWeek);
+
+  let totalProtein = 0;
+  let totalFat = 0;
+  let totalCarbs = 0;
+  let totalCalories = 0;
+
+  // Aggregate stats from Sunday up to yesterday
+  for (let i = 0; i < dayOfWeek; i++) {
+    const d = new Date(sunday);
+    d.setDate(sunday.getDate() + i);
+    const dateStr = d.toISOString().split('T')[0];
+    const log = logs[dateStr];
+    if (log && log.total) {
+      totalProtein += log.total.protein;
+      totalFat += log.total.fat;
+      totalCarbs += log.total.carbs;
+      totalCalories += log.total.calories;
+    }
+  }
+
+  const remainingDays = 7 - dayOfWeek;
+  const weeklyTarget = {
+    protein: target.protein * 7,
+    fat: target.fat * 7,
+    carbs: target.carbs * 7,
+    calories: target.calories * 7,
+  };
+
+  const getBalanced = (weekly: number, consumed: number, dailyBase: number) => {
+    const remaining = Math.max(0, weekly - consumed);
+    const balanced = Math.round(remaining / remainingDays);
+    return Math.min(dailyBase, balanced);
+  };
+
+  return {
+    protein: getBalanced(weeklyTarget.protein, totalProtein, target.protein),
+    fat: getBalanced(weeklyTarget.fat, totalFat, target.fat),
+    carbs: getBalanced(weeklyTarget.carbs, totalCarbs, target.carbs),
+    calories: getBalanced(weeklyTarget.calories, totalCalories, target.calories),
+    remainingDays,
+  };
+}
 export function addFoodItem(item: FoodItem) {
   // Extract date (YYYY-MM-DD) from timestamp
   // Use local time for date string

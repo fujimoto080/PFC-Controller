@@ -1,5 +1,6 @@
 import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
+import { WeeklyBalancingStats } from '@/components/dashboard/WeeklyBalancingStats';
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
       </header>
 
       <PFCStats />
+      <WeeklyBalancingStats />
       <WeeklyPFCStats />
 
       {/* Placeholder for Recent Entries */}
