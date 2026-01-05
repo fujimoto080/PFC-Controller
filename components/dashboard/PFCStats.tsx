@@ -134,7 +134,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 <div className="w-20" />
               </div>
               <div className="flex items-baseline space-x-2">
-                <span className="text-4xl font-bold tracking-tighter">
+                <span className={`text-4xl font-bold tracking-tighter ${calories > targetPFC.calories ? 'text-red-500' : ''}`}>
                   {Math.round(calories * 100) / 100}
                 </span>
                 <span className="text-muted-foreground text-sm">
@@ -204,7 +204,7 @@ function StatRow({
     >
       <div className="flex justify-between text-sm">
         <span className="font-medium">{label}</span>
-        <span className="text-muted-foreground">
+        <span className={`${current > target ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
           {Math.round(current * 100) / 100} / {target}g
         </span>
       </div>
