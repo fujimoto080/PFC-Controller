@@ -70,7 +70,33 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   };
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden group">
+      {/* Navigation Arrows - Stable and outside the animated content */}
+      <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center px-2 pointer-events-none h-16">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateDate(-1);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="p-3 hover:bg-secondary/80 bg-background/50 backdrop-blur-sm rounded-full transition-all pointer-events-auto shadow-sm active:scale-95"
+          aria-label="Previous day"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigateDate(1);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="p-3 hover:bg-secondary/80 bg-background/50 backdrop-blur-sm rounded-full transition-all pointer-events-auto shadow-sm active:scale-95"
+          aria-label="Next day"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      </div>
+
       <AnimatePresence initial={false} custom={direction} mode="wait">
         <motion.div
           key={selectedDate}
@@ -104,20 +130,8 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 <CardTitle className="text-muted-foreground text-lg font-medium">
                   摂取カロリー
                 </CardTitle>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => navigateDate(-1)}
-                    className="p-1 hover:bg-secondary rounded-full transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => navigateDate(1)}
-                    className="p-1 hover:bg-secondary rounded-full transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
+                {/* Spacer for the arrows that are positioned absolutely */}
+                <div className="w-20" />
               </div>
               <div className="flex items-baseline space-x-2">
                 <span className="text-4xl font-bold tracking-tighter">
