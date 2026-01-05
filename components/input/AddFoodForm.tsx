@@ -114,6 +114,7 @@ export function AddFoodForm() {
                                 type="date"
                                 value={eatDate}
                                 onChange={(e) => setEatDate(e.target.value)}
+                                onClick={(e) => e.currentTarget.showPicker?.()}
                             />
                         </div>
                         <div className="space-y-2">
@@ -123,6 +124,7 @@ export function AddFoodForm() {
                                 type="time"
                                 value={eatTime}
                                 onChange={(e) => setEatTime(e.target.value)}
+                                onClick={(e) => e.currentTarget.showPicker?.()}
                             />
                         </div>
                     </div>

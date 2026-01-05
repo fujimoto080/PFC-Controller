@@ -140,6 +140,19 @@ export function getBalancedWeeklyTargets(): {
     remainingDays,
   };
 }
+export function recalculateLogTotals(log: DailyLog): DailyLog {
+  log.total = log.items.reduce(
+    (acc, curr) => ({
+      protein: acc.protein + curr.protein,
+      fat: acc.fat + curr.fat,
+      carbs: acc.carbs + curr.carbs,
+      calories: acc.calories + curr.calories,
+    }),
+    { protein: 0, fat: 0, carbs: 0, calories: 0 },
+  );
+  return log;
+}
+
 export function addFoodItem(item: FoodItem) {
   // Extract date (YYYY-MM-DD) from timestamp
   // Use local time for date string
@@ -152,18 +165,41 @@ export function addFoodItem(item: FoodItem) {
   const log = getLogForDate(date);
   log.items.push(item);
 
-  // Recalculate totals
-  log.total = log.items.reduce(
-    (acc, curr) => ({
-      protein: acc.protein + curr.protein,
-      fat: acc.fat + curr.fat,
-      carbs: acc.carbs + curr.carbs,
-      calories: acc.calories + curr.calories,
-    }),
-    { protein: 0, fat: 0, carbs: 0, calories: 0 },
-  );
-
+  recalculateLogTotals(log);
   saveLog(log);
+}
+
+export function deleteLogItem(id: string, timestamp: number) {
+  const dateObj = new Date(timestamp);
+  const date = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+
+  const log = getLogForDate(date);
+  log.items = log.items.filter(item => item.id !== id);
+
+  recalculateLogTotals(log);
+  saveLog(log);
+}
+
+export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
+  const oldDateObj = new Date(oldTimestamp);
+  const oldDate = `${oldDateObj.getFullYear()}-${String(oldDateObj.getMonth() + 1).padStart(2, '0')}-${String(oldDateObj.getDate()).padStart(2, '0')}`;
+
+  const newDateObj = new Date(newItem.timestamp);
+  const newDate = `${newDateObj.getFullYear()}-${String(newDateObj.getMonth() + 1).padStart(2, '0')}-${String(newDateObj.getDate()).padStart(2, '0')}`;
+
+  if (oldDate === newDate) {
+    const log = getLogForDate(oldDate);
+    const index = log.items.findIndex(item => item.id === newItem.id);
+    if (index !== -1) {
+      log.items[index] = newItem;
+      recalculateLogTotals(log);
+      saveLog(log);
+    }
+  } else {
+    // Moved to another day
+    deleteLogItem(newItem.id, oldTimestamp);
+    addFoodItem(newItem);
+  }
 }
 
 export function getSettings(): UserSettings {
