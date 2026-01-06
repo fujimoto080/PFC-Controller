@@ -1,6 +1,6 @@
 'use client';
 
-import { DailyLog, FoodItem, UserSettings, DEFAULT_TARGET } from './types';
+import { DailyLog, FoodItem, UserSettings, DEFAULT_TARGET, PFC } from './types';
 
 const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
@@ -35,10 +35,17 @@ export function getTodayLog(): DailyLog {
   return getLogForDate(getTodayString());
 }
 
+export function refreshUI() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('pfc-update'));
+  }
+}
+
 export function saveLog(log: DailyLog) {
   const logs = getLogs();
   logs[log.date] = log;
   localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
+  refreshUI();
 }
 
 export function getWeeklyLog(): {
@@ -108,7 +115,7 @@ export function getBalancedWeeklyTargets(): {
   for (let i = 0; i < dayOfWeek; i++) {
     const d = new Date(sunday);
     d.setDate(sunday.getDate() + i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const log = logs[dateStr];
     if (log && log.total) {
       totalProtein += log.total.protein;
@@ -151,29 +158,49 @@ export function getPfcDebt(currentDate: string): PFC {
 
   let cumulativeDebt: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
-  for (const date of sortedDates) {
-    if (date >= currentDate) break; // Only calculate debt from previous days
+  // Helper to get local date string for any Date object
+  const toDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-    const log = logs[date];
-    if (log && log.total) {
-      // Calculate daily balance (surplus/deficit relative to target)
-      // Positive result means excess (debt)
-      // Negative result means under target (repayment)
-      const dailyExcess = {
-        protein: log.total.protein - target.protein,
-        fat: log.total.fat - target.fat,
-        carbs: log.total.carbs - target.carbs,
-        calories: log.total.calories - target.calories,
-      };
+  // If there are no logs at all, return zero debt
+  if (sortedDates.length === 0) return cumulativeDebt;
 
-      // Add to cumulative debt, but cap debt at zero (no "savings" for the future)
-      cumulativeDebt = {
-        protein: Math.max(0, cumulativeDebt.protein + dailyExcess.protein),
-        fat: Math.max(0, cumulativeDebt.fat + dailyExcess.fat),
-        carbs: Math.max(0, cumulativeDebt.carbs + dailyExcess.carbs),
-        calories: Math.max(0, cumulativeDebt.calories + dailyExcess.calories),
-      };
-    }
+  const firstLogDate = sortedDates[0];
+  const firstDate = new Date(firstLogDate);
+  const current = new Date(currentDate);
+
+  // Iterate from the very first log date up to the day before currentDate
+  let d = new Date(firstDate);
+  while (toDateStr(d) < currentDate) {
+    const dateStr = toDateStr(d);
+    const log = logs[dateStr];
+
+    // Calculate daily balance (surplus/deficit relative to target)
+    // Positive result means excess (debt)
+    // Negative result means under target (repayment)
+    const dailyExcess = log && log.total ? {
+      protein: log.total.protein - target.protein,
+      fat: log.total.fat - target.fat,
+      carbs: log.total.carbs - target.carbs,
+      calories: log.total.calories - target.calories,
+    } : {
+      // If no log for this day, it's a "perfect" day (zero contribution to debt/repayment)
+      // Note: This is a design choice. If we want missing days to count as repayment,
+      // we would use negative target values here.
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+      calories: 0,
+    };
+
+    // Add to cumulative debt, but cap debt at zero
+    cumulativeDebt = {
+      protein: Math.max(0, cumulativeDebt.protein + dailyExcess.protein),
+      fat: Math.max(0, cumulativeDebt.fat + dailyExcess.fat),
+      carbs: Math.max(0, cumulativeDebt.carbs + dailyExcess.carbs),
+      calories: Math.max(0, cumulativeDebt.calories + dailyExcess.calories),
+    };
+
+    d.setDate(d.getDate() + 1);
   }
 
   return {
@@ -261,6 +288,7 @@ export function getSettings(): UserSettings {
 
 export function saveSettings(settings: UserSettings) {
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+  refreshUI();
 }
 
 // --- Food Dictionary Management ---

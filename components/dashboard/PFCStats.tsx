@@ -224,7 +224,7 @@ function StatRow({
         <span className={`${current > adjustedTarget ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
           {Math.round(current * 100) / 100} / {target}g
           {debt > 0 && (
-            <span className="text-[10px] ml-1">
+            <span className="text-red-500 text-[10px] ml-1">
               (調整: -{debt})
             </span>
           )}
