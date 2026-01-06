@@ -142,10 +142,10 @@ export function Calendar() {
                                                     )}>
                                                         {Math.round(calories)}
                                                     </span>
-                                                    <div className="mx-auto mt-0.5 h-1 w-full max-w-[20px] rounded-full bg-muted-foreground/10 overflow-hidden">
+                                                    <div className="mx-auto mt-0.5 h-1 w-full max-w-[20px] bg-muted-foreground/10 overflow-hidden">
                                                         <div
                                                             className={cn(
-                                                                "h-full rounded-full transition-all duration-500",
+                                                                "h-full transition-all duration-500",
                                                                 isOver ? "bg-red-500" : "bg-primary"
                                                             )}
                                                             style={{ width: `${Math.min(100, (calories / targetCalories) * 100)}%` }}
@@ -156,12 +156,22 @@ export function Calendar() {
                                         </div>
                                     );
                                 })}
-                                {/* Weekly progress bar */}
+                                { /* Weekly progress bar */}
                                 <div className="flex flex-col items-center justify-center border-l pl-1">
-                                    <div className="relative h-12 w-1.5 rounded-full bg-muted-foreground/10 overflow-hidden">
+                                    <div className="relative h-12 w-1.5 bg-muted-foreground/10 overflow-hidden">
+                                        {/* Pace lines (7 divisions) */}
+                                        <div className="absolute inset-0">
+                                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                                <div
+                                                    key={i}
+                                                    className="absolute h-[1px] w-full bg-muted-foreground/30"
+                                                    style={{ bottom: `${(i / 7) * 100}%` }}
+                                                />
+                                            ))}
+                                        </div>
                                         <div
                                             className={cn(
-                                                "absolute bottom-0 w-full rounded-full transition-all duration-500",
+                                                "absolute bottom-0 w-full transition-all duration-500",
                                                 isWeekOver ? "bg-red-500" : "bg-green-500"
                                             )}
                                             style={{ height: `${Math.min(100, (weekCalories / weeklyTarget) * 100)}%` }}
