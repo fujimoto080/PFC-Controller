@@ -17,6 +17,7 @@ import {
     getFoodDictionary,
     getHistoryItems,
     addFoodToDictionary,
+    getUniqueStores,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ export function AddFoodForm() {
     const [publicFoods, setPublicFoods] = useState<FoodItem[]>([]);
     const [historyFoods, setHistoryFoods] = useState<FoodItem[]>([]);
     const [saveToDictionary, setSaveToDictionary] = useState(false);
+    const [uniqueStores, setUniqueStores] = useState<string[]>([]);
 
     const now = new Date();
     const initialDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -45,6 +47,7 @@ export function AddFoodForm() {
     useEffect(() => {
         setPublicFoods(getFoodDictionary());
         setHistoryFoods(getHistoryItems());
+        setUniqueStores(getUniqueStores());
     }, [activeTab]); // Reload when tab changes in case data was updated externally
 
     // Form for manual entry
@@ -197,6 +200,20 @@ export function AddFoodForm() {
                                                     placeholder="0"
                                                 />
                                             </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="store">店名 / ブランド (任意)</Label>
+                                            <Input
+                                                id="store"
+                                                {...register('store')}
+                                                placeholder="例: セブンイレブン"
+                                                list="store-suggestions"
+                                            />
+                                            <datalist id="store-suggestions">
+                                                {uniqueStores.map((store) => (
+                                                    <option key={store} value={store} />
+                                                ))}
+                                            </datalist>
                                         </div>
                                         <div className="flex items-center space-x-2 pt-2">
                                             <Checkbox

@@ -15,6 +15,7 @@ import {
     addFoodToDictionary,
     updateFoodInDictionary,
     deleteFoodFromDictionary,
+    getUniqueStores,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 
@@ -24,6 +25,7 @@ export default function ManageFoodsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
     const [isAdding, setIsAdding] = useState(false);
+    const [uniqueStores, setUniqueStores] = useState<string[]>([]);
 
     // Form handling
     const { register, handleSubmit, reset, setValue } = useForm<FoodItem>();
@@ -31,6 +33,7 @@ export default function ManageFoodsPage() {
     useEffect(() => {
         // Load foods on mount
         setFoods(getFoodDictionary());
+        setUniqueStores(getUniqueStores());
     }, []);
 
     const refreshFoods = () => {
@@ -175,7 +178,12 @@ export default function ManageFoodsPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label>店名 / ブランド (任意)</Label>
-                                    <Input {...register('store')} placeholder="例: セブンイレブン" />
+                                    <Input {...register('store')} placeholder="例: セブンイレブン" list="store-suggestions" />
+                                    <datalist id="store-suggestions">
+                                        {uniqueStores.map((store) => (
+                                            <option key={store} value={store} />
+                                        ))}
+                                    </datalist>
                                 </div>
 
                                 <div className="flex gap-2 pt-4">

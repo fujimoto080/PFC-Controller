@@ -374,3 +374,20 @@ export function getAllLogItems(): FoodItem[] {
 
   return allItems;
 }
+
+export function getUniqueStores(): string[] {
+  const dictionary = getFoodDictionary();
+  const history = getHistoryItems();
+
+  const stores = new Set<string>();
+
+  dictionary.forEach(item => {
+    if (item.store) stores.add(item.store);
+  });
+
+  history.forEach(item => {
+    if (item.store) stores.add(item.store);
+  });
+
+  return Array.from(stores).sort();
+}
