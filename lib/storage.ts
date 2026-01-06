@@ -296,16 +296,37 @@ export function saveSettings(settings: UserSettings) {
 const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
 import publicFoods from '@/data/public_foods.json';
 
+let generatedFoods: FoodItem[] = [];
+try {
+  generatedFoods = require('@/data/generated_foods.json');
+} catch (e) {
+  // Ignore if file doesn't exist yet
+}
+
 export function getFoodDictionary(): FoodItem[] {
   if (typeof window === 'undefined') return [];
   const stored = localStorage.getItem(STORAGE_KEY_FOODS);
-  if (stored) {
-    return JSON.parse(stored);
+  const userFoods: FoodItem[] = stored ? JSON.parse(stored) : [];
+
+  const defaults = [...(publicFoods as FoodItem[]), ...(generatedFoods as FoodItem[])];
+
+  // Merge system foods (defaults) into user foods if they don't exist
+  const merged = [...userFoods];
+  let changed = false;
+
+  defaults.forEach(defaultItem => {
+    const exists = merged.some(item => item.id === defaultItem.id);
+    if (!exists) {
+      merged.push(defaultItem);
+      changed = true;
+    }
+  });
+
+  if (changed || !stored) {
+    saveFoodDictionary(merged);
   }
-  // Initialize with public foods if empty
-  const defaults = publicFoods as FoodItem[];
-  saveFoodDictionary(defaults);
-  return defaults;
+
+  return merged;
 }
 
 export function saveFoodDictionary(foods: FoodItem[]) {
