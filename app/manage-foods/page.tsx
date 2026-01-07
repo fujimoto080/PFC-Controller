@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Pencil, Trash, Save, X } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash, Save, X, ScanBarcode } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 import {
     getFoodDictionary,
     addFoodToDictionary,
@@ -26,6 +27,7 @@ export default function ManageFoodsPage() {
     const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
     const [isAdding, setIsAdding] = useState(false);
     const [uniqueStores, setUniqueStores] = useState<string[]>([]);
+    const [showScanner, setShowScanner] = useState(false);
 
     // Form handling
     const { register, handleSubmit, reset, setValue } = useForm<FoodItem>();
@@ -69,6 +71,43 @@ export default function ManageFoodsPage() {
         setIsAdding(false);
         setEditingItem(null);
         reset();
+    };
+
+    const handleScanSuccess = async (code: string) => {
+        setShowScanner(false);
+        const loadingToast = toast.loading('商品情報を取得中...');
+
+        try {
+            const res = await fetch(`/api/barcode?code=${code}`);
+            const data = await res.json();
+
+            if (!res.ok) {
+                toast.dismiss(loadingToast);
+                toast.error(data.error || '商品が見つかりませんでした');
+                // Even if not found, we can start adding with just the code if we wanted, 
+                // but for now let's just error.
+                // Or maybe facilitate manual entry? 
+                // Let's just switch to add mode manually.
+                return;
+            }
+
+            toast.dismiss(loadingToast);
+            toast.success(`「${data.name}」が見つかりました`);
+
+            // Switch to add mode and fill form
+            startAdd();
+            setValue('name', data.name);
+            setValue('protein', data.protein);
+            setValue('fat', data.fat);
+            setValue('carbs', data.carbs);
+            setValue('calories', data.calories);
+            if (data.store) setValue('store', data.store);
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error('エラーが発生しました');
+            console.error(error);
+        }
     };
 
     const onSubmit = (data: any) => {
@@ -210,6 +249,9 @@ export default function ManageFoodsPage() {
                             <Button onClick={startAdd}>
                                 <Plus className="h-4 w-4" /> 新規
                             </Button>
+                            <Button variant="outline" size="icon" onClick={() => setShowScanner(true)}>
+                                <ScanBarcode className="h-4 w-4" />
+                            </Button>
                         </div>
 
                         <div className="space-y-2">
@@ -251,6 +293,13 @@ export default function ManageFoodsPage() {
                     </div>
                 )}
             </div>
+
+            {showScanner && (
+                <BarcodeScanner
+                    onScanSuccess={handleScanSuccess}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
         </div>
     );
 }
