@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Camera, Search, Plus } from 'lucide-react';
+import { Camera, Search, Plus, ScanBarcode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,6 +20,7 @@ import {
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 import { toast } from 'sonner';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 
 export interface AddFoodFormProps {
     onSuccess?: () => void;
@@ -33,6 +34,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const [publicFoods, setPublicFoods] = useState<FoodItem[]>([]);
     const [saveToDictionary, setSaveToDictionary] = useState(false);
     const [uniqueStores, setUniqueStores] = useState<string[]>([]);
+    const [showScanner, setShowScanner] = useState(false);
 
     const now = new Date();
     const initialDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -109,6 +111,45 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         }
     };
 
+    const handleScanSuccess = async (code: string) => {
+        setShowScanner(false);
+        const loadingToast = toast.loading('商品情報を取得中...');
+
+        try {
+            const res = await fetch(`/api/barcode?code=${code}`);
+            const data = await res.json();
+
+            if (!res.ok) {
+                toast.dismiss(loadingToast);
+                toast.error(data.error || '商品が見つかりませんでした');
+                return;
+            }
+
+            toast.dismiss(loadingToast);
+            toast.success(`「${data.name}」が見つかりました`);
+
+            // Switch to manual mode and fill form
+            setActiveTab('manual');
+
+            // We need to wait a tick for the tab switch to happen and form to mount/reset
+            setTimeout(() => {
+                reset({
+                    name: data.name,
+                    protein: data.protein,
+                    fat: data.fat,
+                    carbs: data.carbs,
+                    calories: data.calories,
+                    store: data.store
+                });
+            }, 100);
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error('エラーが発生しました');
+            console.error(error);
+        }
+    };
+
     const filteredFoods = publicFoods.filter((f) =>
         f.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
@@ -164,6 +205,15 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                         onSubmit={handleSubmit(onSubmitManual)}
                                         className="space-y-4"
                                     >
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="w-full gap-2"
+                                            onClick={() => setShowScanner(true)}
+                                        >
+                                            <ScanBarcode className="h-4 w-4" />
+                                            バーコードから読み取る
+                                        </Button>
                                         <div className="space-y-2">
                                             <Label>食品名</Label>
                                             <Input
@@ -354,6 +404,13 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                     </motion.div>
                 </AnimatePresence>
             </Tabs>
+
+            {showScanner && (
+                <BarcodeScanner
+                    onScanSuccess={handleScanSuccess}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
         </div >
     );
 }
