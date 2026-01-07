@@ -15,19 +15,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
     addFoodItem,
     getFoodDictionary,
-    getHistoryItems,
     addFoodToDictionary,
     getUniqueStores,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 import { toast } from 'sonner';
 
-export function AddFoodForm() {
+export interface AddFoodFormProps {
+    onSuccess?: () => void;
+    initialData?: FoodItem;
+}
+
+export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('manual');
     const [searchQuery, setSearchQuery] = useState('');
     const [publicFoods, setPublicFoods] = useState<FoodItem[]>([]);
-    const [historyFoods, setHistoryFoods] = useState<FoodItem[]>([]);
     const [saveToDictionary, setSaveToDictionary] = useState(false);
     const [uniqueStores, setUniqueStores] = useState<string[]>([]);
 
@@ -46,12 +49,20 @@ export function AddFoodForm() {
 
     useEffect(() => {
         setPublicFoods(getFoodDictionary());
-        setHistoryFoods(getHistoryItems());
         setUniqueStores(getUniqueStores());
     }, [activeTab]); // Reload when tab changes in case data was updated externally
 
     // Form for manual entry
-    const { register, handleSubmit, reset } = useForm<FoodItem>();
+    const { register, handleSubmit, reset } = useForm<FoodItem>({
+        defaultValues: initialData ? {
+            name: initialData.name,
+            protein: initialData.protein,
+            fat: initialData.fat,
+            carbs: initialData.carbs,
+            calories: initialData.calories,
+            store: initialData.store,
+        } : undefined
+    });
 
     const onSubmitManual = (data: any) => {
         // Basic validation / conversion
@@ -74,21 +85,14 @@ export function AddFoodForm() {
         toast.success(item.name + 'を追加しました');
         reset();
         setSaveToDictionary(false);
-        router.push('/');
+        if (onSuccess) {
+            onSuccess();
+        } else {
+            router.push('/');
+        }
     };
 
-    const loadFromHistory = (item: FoodItem) => {
-        reset({
-            name: item.name,
-            protein: item.protein,
-            fat: item.fat,
-            carbs: item.carbs,
-            calories: item.calories,
-            store: item.store,
-        });
-        setActiveTab('manual');
-        toast.info('履歴から入力フォームに読み込みました。必要に応じて編集・保存してください。');
-    };
+
 
     const handleAddPublic = (food: any) => {
         const item: FoodItem = {
@@ -98,7 +102,11 @@ export function AddFoodForm() {
         };
         addFoodItem(item);
         toast.success(item.name + 'を追加しました');
-        router.push('/');
+        if (onSuccess) {
+            onSuccess();
+        } else {
+            router.push('/');
+        }
     };
 
     const filteredFoods = publicFoods.filter((f) =>
@@ -135,10 +143,9 @@ export function AddFoodForm() {
             </Card>
 
             <Tabs defaultValue="manual" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="manual">手動</TabsTrigger>
                     <TabsTrigger value="search">検索</TabsTrigger>
-                    <TabsTrigger value="history">履歴</TabsTrigger>
                     <TabsTrigger value="photo">写真</TabsTrigger>
                 </TabsList>
 
@@ -322,44 +329,7 @@ export function AddFoodForm() {
                             </Card>
                         </TabsContent>
 
-                        <TabsContent value="history" className="mt-4">
-                            <Card>
-                                <CardContent className="space-y-4 pt-6">
-                                    <div className="max-h-[300px] space-y-4 overflow-y-auto">
-                                        {historyFoods.length === 0 ? (
-                                            <div className="text-muted-foreground py-4 text-center text-sm">
-                                                履歴がありません。
-                                            </div>
-                                        ) : (
-                                            historyFoods.map((item, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors"
-                                                    role="button"
-                                                    onClick={() => loadFromHistory(item)}
-                                                >
-                                                    <div>
-                                                        <div className="font-medium">{item.name}</div>
-                                                        <div className="text-muted-foreground text-xs">
-                                                            P:{item.protein} F:{item.fat} C:{item.carbs} |{' '}
-                                                            {item.calories}kcal
-                                                        </div>
-                                                    </div>
-                                                    <Button size="sm" variant="outline">
-                                                        呼び出し
-                                                    </Button>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground text-center">
-                                        タップして手動入力フォームに読み込みます。
-                                        <br />
-                                        そこで「食品リストにも保存」にチェックを入れると、リストに登録できます。
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
+
 
                         <TabsContent value="photo" className="mt-4">
                             <Card>
