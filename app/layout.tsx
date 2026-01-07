@@ -21,7 +21,7 @@ export default function RootLayout({
       <body className="bg-background text-foreground min-h-screen pb-20 antialiased">
         <main className="container mx-auto max-w-md px-4 py-4">{children}</main>
         <BottomNav />
-        <Toaster />
+        <Toaster position="top-center" />
       </body>
     </html>
   );
