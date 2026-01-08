@@ -27,17 +27,18 @@ export function BarcodeScanner({ onScanSuccess, onClose }: BarcodeScannerProps) 
 
     const startScanning = async () => {
         try {
-            if (!scannerRef.current) {
-                scannerRef.current = new Html5Qrcode(regionId);
-            }
+            const html5QrCode = new Html5Qrcode(regionId, {
+                formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13],
+                verbose: false
+            });
+            scannerRef.current = html5QrCode;
 
-            await scannerRef.current.start(
+            await html5QrCode.start(
                 { facingMode: 'environment' }, // Prefer back camera
                 {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0,
-                    formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13] // JAN code is EAN-13
+                    aspectRatio: 1.0
                 },
                 (decodedText) => {
                     // Success callback
