@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getLogForDate, getSettings, getTodayString, getPfcDebt } from '@/lib/storage';
+import { getLogForDate, getSettings, getPfcDebt } from '@/lib/storage';
 import { DailyLog, UserSettings, DEFAULT_TARGET, PFC } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';

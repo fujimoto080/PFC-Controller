@@ -12,8 +12,6 @@ import {
     DrawerTitle,
     DrawerTrigger,
 } from '@/components/ui/drawer';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { PFC, UserProfile } from '@/lib/types';
 import { ProfileCalculator } from './ProfileCalculator';
 
@@ -28,11 +26,6 @@ export function GoalEditForm({ initialGoals, initialProfile, onSave, trigger }: 
     const [goals, setGoals] = useState<PFC>(initialGoals);
     const [profile, setProfile] = useState<UserProfile | undefined>(initialProfile);
     const [isOpen, setIsOpen] = useState(false);
-
-    const handleChange = (key: keyof PFC, value: string) => {
-        const numValue = parseInt(value, 10) || 0;
-        setGoals((prev) => ({ ...prev, [key]: numValue }));
-    };
 
     const handleCalculate = useCallback((newGoals: PFC, newProfile: UserProfile) => {
         setGoals(newGoals);

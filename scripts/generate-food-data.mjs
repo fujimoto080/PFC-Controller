@@ -11,7 +11,7 @@ function parseCsv(content) {
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     const dataLines = lines.slice(1);
 
-    return dataLines.map((line, index) => {
+    return dataLines.map((line) => {
         const values = line.split(',').map(v => v.trim());
         const item = {};
         headers.forEach((header, i) => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { getWeeklyLog, getSettings } from '@/lib/storage';
 import { UserSettings, DEFAULT_TARGET } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
 export function WeeklyPFCStats() {

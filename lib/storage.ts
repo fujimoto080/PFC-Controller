@@ -166,10 +166,9 @@ export function getPfcDebt(currentDate: string): PFC {
 
   const firstLogDate = sortedDates[0];
   const firstDate = new Date(firstLogDate);
-  const current = new Date(currentDate);
 
   // Iterate from the very first log date up to the day before currentDate
-  let d = new Date(firstDate);
+  const d = new Date(firstDate);
   while (toDateStr(d) < currentDate) {
     const dateStr = toDateStr(d);
     const log = logs[dateStr];
@@ -299,7 +298,7 @@ import publicFoods from '@/data/public_foods.json';
 let generatedFoods: FoodItem[] = [];
 try {
   generatedFoods = require('@/data/generated_foods.json');
-} catch (e) {
+} catch {
   // Ignore if file doesn't exist yet
 }
 

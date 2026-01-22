@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { getBalancedWeeklyTargets, getSettings, getPfcDebt, getTodayString } from '@/lib/storage';
 import { UserSettings, DEFAULT_TARGET, PFC } from '@/lib/types';
 import { Card, CardHeader } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 
 export function WeeklyBalancingStats() {
     const [balancedTarget, setBalancedTarget] = useState<{
