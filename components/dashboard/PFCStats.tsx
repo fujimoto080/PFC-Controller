@@ -156,6 +156,12 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 value={getPct(calories, targetPFC.calories)}
                 className="mt-2 h-2"
               />
+              {Math.max(0, calories - targetPFC.calories) > 0 && (
+                <Progress
+                  value={getPct(Math.max(0, calories - targetPFC.calories), targetPFC.calories)}
+                  className="mt-1 h-2 border border-red-500"
+                />
+              )}
             </CardHeader>
           </Card>
 
@@ -231,6 +237,13 @@ function StatRow({
         </span>
       </div>
       <Progress value={pct} indicatorClassName={color} className="h-2" />
+      {Math.max(0, current - target) > 0 && (
+        <Progress
+          value={Math.min(100, (Math.max(0, current - target) / target) * 100)}
+          indicatorClassName={color}
+          className="mt-1 h-2 border border-red-500"
+        />
+      )}
     </motion.div>
   );
 }
