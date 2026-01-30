@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
-import { WeeklyBalancingStats } from '@/components/dashboard/WeeklyBalancingStats';
 import { getTodayString, getLogForDate, saveSettings } from '@/lib/storage';
 import { format, parseISO, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -64,7 +63,7 @@ export default function Home() {
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
       />
-      <WeeklyBalancingStats />
+
       <WeeklyPFCStats />
 
       {/* Recent Entries */}
