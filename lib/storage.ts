@@ -1,17 +1,14 @@
 'use client';
 
 import { DailyLog, FoodItem, UserSettings, DEFAULT_TARGET, PFC } from './types';
+import { formatDate, roundPFC } from './utils';
 
 const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
 
 // Helper to get today's date string YYYY-MM-DD in local time
 export function getTodayString(): string {
-  const dateObj = new Date();
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return formatDate(new Date());
 }
 
 export function getLogs(): Record<string, DailyLog> {
@@ -66,10 +63,7 @@ export function getWeeklyLog(): {
   for (let i = 0; i < 7; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
+    const dateStr = formatDate(d);
 
     const log = logs[dateStr];
     if (log && log.total) {
@@ -82,10 +76,10 @@ export function getWeeklyLog(): {
   }
 
   return {
-    protein: daysCount > 0 ? Math.round((totalProtein / 7) * 100) / 100 : 0,
-    fat: daysCount > 0 ? Math.round((totalFat / 7) * 100) / 100 : 0,
-    carbs: daysCount > 0 ? Math.round((totalCarbs / 7) * 100) / 100 : 0,
-    calories: daysCount > 0 ? Math.round((totalCalories / 7) * 100) / 100 : 0,
+    protein: daysCount > 0 ? roundPFC(totalProtein / 7) : 0,
+    fat: daysCount > 0 ? roundPFC(totalFat / 7) : 0,
+    carbs: daysCount > 0 ? roundPFC(totalCarbs / 7) : 0,
+    calories: daysCount > 0 ? roundPFC(totalCalories / 7) : 0,
     daysCount,
   };
 }
@@ -115,7 +109,7 @@ export function getBalancedWeeklyTargets(): {
   for (let i = 0; i < dayOfWeek; i++) {
     const d = new Date(sunday);
     d.setDate(sunday.getDate() + i);
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const dateStr = formatDate(d);
     const log = logs[dateStr];
     if (log && log.total) {
       totalProtein += log.total.protein;
@@ -135,7 +129,7 @@ export function getBalancedWeeklyTargets(): {
 
   const getBalanced = (weekly: number, consumed: number, dailyBase: number) => {
     const remaining = Math.max(0, weekly - consumed);
-    const balanced = Math.round((remaining / remainingDays) * 100) / 100;
+    const balanced = roundPFC(remaining / remainingDays);
     return Math.min(dailyBase, balanced);
   };
 
@@ -159,7 +153,7 @@ export function getPfcDebt(currentDate: string): PFC {
   let cumulativeDebt: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
   // Helper to get local date string for any Date object
-  const toDateStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const toDateStr = (d: Date) => formatDate(d);
 
   // If there are no logs at all, return zero debt
   if (sortedDates.length === 0) return cumulativeDebt;
@@ -203,10 +197,10 @@ export function getPfcDebt(currentDate: string): PFC {
   }
 
   return {
-    protein: Math.round(cumulativeDebt.protein * 100) / 100,
-    fat: Math.round(cumulativeDebt.fat * 100) / 100,
-    carbs: Math.round(cumulativeDebt.carbs * 100) / 100,
-    calories: Math.round(cumulativeDebt.calories * 100) / 100,
+    protein: roundPFC(cumulativeDebt.protein),
+    fat: roundPFC(cumulativeDebt.fat),
+    carbs: roundPFC(cumulativeDebt.carbs),
+    calories: roundPFC(cumulativeDebt.calories),
   };
 }
 export function recalculateLogTotals(log: DailyLog): DailyLog {
@@ -221,10 +215,10 @@ export function recalculateLogTotals(log: DailyLog): DailyLog {
   );
 
   log.total = {
-    protein: Math.round(totals.protein * 100) / 100,
-    fat: Math.round(totals.fat * 100) / 100,
-    carbs: Math.round(totals.carbs * 100) / 100,
-    calories: Math.round(totals.calories * 100) / 100,
+    protein: roundPFC(totals.protein),
+    fat: roundPFC(totals.fat),
+    carbs: roundPFC(totals.carbs),
+    calories: roundPFC(totals.calories),
   };
 
   return log;
@@ -234,10 +228,7 @@ export function addFoodItem(item: FoodItem) {
   // Extract date (YYYY-MM-DD) from timestamp
   // Use local time for date string
   const dateObj = new Date(item.timestamp);
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  const date = `${year}-${month}-${day}`;
+  const date = formatDate(dateObj);
 
   const log = getLogForDate(date);
   log.items.push(item);
@@ -248,7 +239,7 @@ export function addFoodItem(item: FoodItem) {
 
 export function deleteLogItem(id: string, timestamp: number) {
   const dateObj = new Date(timestamp);
-  const date = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+  const date = formatDate(dateObj);
 
   const log = getLogForDate(date);
   log.items = log.items.filter(item => item.id !== id);
@@ -259,10 +250,9 @@ export function deleteLogItem(id: string, timestamp: number) {
 
 export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
   const oldDateObj = new Date(oldTimestamp);
-  const oldDate = `${oldDateObj.getFullYear()}-${String(oldDateObj.getMonth() + 1).padStart(2, '0')}-${String(oldDateObj.getDate()).padStart(2, '0')}`;
+  const oldDate = formatDate(oldDateObj);
 
-  const newDateObj = new Date(newItem.timestamp);
-  const newDate = `${newDateObj.getFullYear()}-${String(newDateObj.getMonth() + 1).padStart(2, '0')}-${String(newDateObj.getDate()).padStart(2, '0')}`;
+  const newDate = formatDate(newItem.timestamp);
 
   if (oldDate === newDate) {
     const log = getLogForDate(oldDate);
@@ -326,6 +316,7 @@ export function getFoodDictionary(): FoodItem[] {
 
 export function saveFoodDictionary(foods: FoodItem[]) {
   localStorage.setItem(STORAGE_KEY_FOODS, JSON.stringify(foods));
+  refreshUI();
 }
 
 export function addFoodToDictionary(item: FoodItem) {

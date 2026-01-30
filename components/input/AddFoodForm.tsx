@@ -14,11 +14,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     addFoodItem,
-    getFoodDictionary,
-    addFoodToDictionary,
-    getUniqueStores,
+    addFoodToDictionary
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
+import { generateId, formatDate } from '@/lib/utils';
+import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { toast } from 'sonner';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import Image from 'next/image';
@@ -28,15 +28,13 @@ export interface AddFoodFormProps {
     initialData?: FoodItem;
 }
 
-const generateId = () => Date.now().toString();
 
 export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('manual');
     const [searchQuery, setSearchQuery] = useState('');
-    const [publicFoods, setPublicFoods] = useState<FoodItem[]>([]);
+    const { foods: publicFoods, uniqueStores } = useFoodDictionary();
     const [saveToDictionary, setSaveToDictionary] = useState(false);
-    const [uniqueStores, setUniqueStores] = useState<string[]>([]);
     const [showScanner, setShowScanner] = useState(false);
 
     const [eatDate, setEatDate] = useState('');
@@ -45,14 +43,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     useEffect(() => {
         // マウント時に日付と時刻を初期化（ハイドレーションエラーと同期的なsetStateの警告を回避）
         const now = new Date();
-        const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const date = formatDate(now);
         const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         queueMicrotask(() => {
             if (!eatDate) setEatDate(date);
             if (!eatTime) setEatTime(time);
         });
-    }, []); // マウント時に一度だけ実行
+    }, [eatDate, eatTime]); // マウント時に一度だけ実行
 
     const getSelectedTimestamp = () => {
         const [year, month, day] = eatDate.split('-').map(Number);
@@ -60,16 +58,6 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         return new Date(year, month - 1, day, hour, minute).getTime();
     };
 
-    useEffect(() => {
-        const loadInitialData = () => {
-            setPublicFoods(getFoodDictionary());
-            setUniqueStores(getUniqueStores());
-        };
-
-        loadInitialData();
-        window.addEventListener('pfc-update', loadInitialData);
-        return () => window.removeEventListener('pfc-update', loadInitialData);
-    }, []); // タブ変更ではなくイベント駆動で更新
 
     // Form for manual entry
     const { register, handleSubmit, reset } = useForm<FoodItem>({

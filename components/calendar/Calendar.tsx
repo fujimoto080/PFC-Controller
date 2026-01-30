@@ -1,38 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-    format,
-    startOfMonth,
-    endOfMonth,
-    startOfWeek,
-    endOfWeek,
-    eachDayOfInterval,
-    isSameMonth,
-    isSameDay,
-    addMonths,
-    subMonths,
-} from 'date-fns';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getLogs, getSettings } from '@/lib/storage';
-import { DailyLog, UserSettings } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { getSettings } from '@/lib/storage';
+import { UserSettings } from '@/lib/types';
+import { cn, formatDate } from '@/lib/utils';
+import { useAllLogs } from '@/hooks/use-logs';
 
 export function Calendar() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
-    const [logs, setLogs] = useState<Record<string, DailyLog>>({});
+    const { logs } = useAllLogs();
     const [settings, setSettings] = useState<UserSettings | null>(null);
 
     useEffect(() => {
         queueMicrotask(() => {
-            setLogs(getLogs());
             setSettings(getSettings());
         });
 
         const handleUpdate = () => {
-            queueMicrotask(() => {
-                setLogs(getLogs());
+             queueMicrotask(() => {
                 setSettings(getSettings());
             });
         };
@@ -108,7 +96,7 @@ export function Calendar() {
                 <div className="space-y-1">
                     {weeks.map((week, weekIdx) => {
                         const weekCalories = week.reduce((acc, day) => {
-                            const dateStr = format(day, 'yyyy-MM-dd');
+                            const dateStr = formatDate(day);
                             return acc + (logs[dateStr]?.total?.calories || 0);
                         }, 0);
                         const isWeekOver = weekCalories > weeklyTarget;
@@ -116,7 +104,7 @@ export function Calendar() {
                         return (
                             <div key={weekIdx} className="grid grid-cols-[repeat(7,1fr)_40px] gap-1">
                                 {week.map((day) => {
-                                    const dateStr = format(day, 'yyyy-MM-dd');
+                                    const dateStr = formatDate(day);
                                     const log = logs[dateStr];
                                     const calories = log?.total?.calories || 0;
                                     const isToday = isSameDay(day, new Date());

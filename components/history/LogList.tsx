@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Edit2 } from 'lucide-react';
 import { getAllLogItems, addFoodItem } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
+import { generateId } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,6 @@ import { EditLogItemDrawer } from './EditLogItemDrawer';
 import { AddFoodForm } from '@/components/input/AddFoodForm';
 
 const getCurrentTimestamp = () => Date.now();
-const generateId = () => Date.now().toString();
 
 export function LogList() {
   const [allItems, setAllItems] = useState<FoodItem[]>([]);

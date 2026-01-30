@@ -11,32 +11,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-    getFoodDictionary,
     addFoodToDictionary,
     updateFoodInDictionary,
     deleteFoodFromDictionary,
-    getUniqueStores,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
+import { generateId } from '@/lib/utils';
+import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 
 const getCurrentTimestamp = () => Date.now();
-const generateId = () => Date.now().toString();
 
 export default function ManageFoodsPage() {
     const router = useRouter();
-    const [foods, setFoods] = useState<FoodItem[]>(() => getFoodDictionary());
+    const { foods, uniqueStores } = useFoodDictionary();
     const [searchQuery, setSearchQuery] = useState('');
     const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
     const [isAdding, setIsAdding] = useState(false);
-    const [uniqueStores] = useState<string[]>(() => getUniqueStores());
 
     // Form handling
     const { register, handleSubmit, reset, setValue } = useForm<FoodItem>();
-
-
-    const refreshFoods = () => {
-        setFoods(getFoodDictionary());
-    };
 
     const startAdd = () => {
         setEditingItem(null);
@@ -100,15 +93,12 @@ export default function ManageFoodsPage() {
             toast.success('食品を追加しました');
         }
 
-        refreshFoods();
         cancelEdit();
     };
 
     const handleDelete = (id: string, name: string) => {
         if (confirm(`「${name}」を削除してもよろしいですか？`)) {
             deleteFoodFromDictionary(id);
-            toast.success('食品を削除しました');
-            refreshFoods();
         }
     };
 

@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getLogForDate, getSettings, getPfcDebt } from '@/lib/storage';
-import { DailyLog, UserSettings, DEFAULT_TARGET, PFC } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addDays, format, parseISO } from 'date-fns';
+import { usePfcData } from '@/hooks/use-pfc-data';
+import { getPFCPercentage, roundPFC } from '@/lib/utils';
 
 interface PFCStatsProps {
   selectedDate: string;
@@ -15,30 +15,8 @@ interface PFCStatsProps {
 }
 
 export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
-  const [data, setData] = useState<DailyLog | null>(null);
-  const [settings, setSettings] = useState<UserSettings>({
-    targetPFC: DEFAULT_TARGET,
-  });
-  const [debt, setDebt] = useState<PFC>({ protein: 0, fat: 0, carbs: 0, calories: 0 });
+  const { log: data, settings, debt } = usePfcData(selectedDate);
   const [direction, setDirection] = useState(0);
-
-    useEffect(() => {
-        // Load data for selected date
-        queueMicrotask(() => {
-            setData(getLogForDate(selectedDate));
-            setSettings(getSettings());
-            setDebt(getPfcDebt(selectedDate));
-        });
-
-    const handleUpdate = () => {
-        queueMicrotask(() => {
-            setData(getLogForDate(selectedDate));
-            setDebt(getPfcDebt(selectedDate));
-        });
-    };
-    window.addEventListener('pfc-update', handleUpdate);
-    return () => window.removeEventListener('pfc-update', handleUpdate);
-  }, [selectedDate]);
 
   if (!data)
     return (
@@ -49,9 +27,6 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
 
   const { protein, fat, carbs, calories } = data.total;
   const { targetPFC } = settings;
-
-  const getPct = (current: number, target: number) =>
-    Math.min(100, Math.max(0, (current / target) * 100));
 
   const navigateDate = (days: number) => {
     const currentDate = parseISO(selectedDate);
@@ -145,7 +120,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
               </div>
               <div className="flex items-baseline space-x-2">
                 <span className={`text-4xl font-bold tracking-tighter ${calories > targetPFC.calories ? 'text-red-500' : ''}`}>
-                  {Math.round(calories * 100) / 100}
+                  {roundPFC(calories)}
                 </span>
                 <span className="text-muted-foreground text-sm">
                   / {targetPFC.calories} kcal
@@ -157,12 +132,12 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 </span>
               </div>
               <Progress
-                value={getPct(calories, targetPFC.calories)}
+                value={getPFCPercentage(calories, targetPFC.calories)}
                 className="mt-2 h-2"
               />
               {Math.max(0, calories - targetPFC.calories) > 0 && (
                 <Progress
-                  value={getPct(Math.max(0, calories - targetPFC.calories), targetPFC.calories)}
+                  value={getPFCPercentage(Math.max(0, calories - targetPFC.calories), targetPFC.calories)}
                   className="mt-1 h-2 border border-red-500"
                 />
               )}
