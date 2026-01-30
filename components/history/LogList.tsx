@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Edit2 } from 'lucide-react';
 import { getAllLogItems, addFoodItem } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
-import { generateId } from '@/lib/utils';
+import { generateId, cn } from '@/lib/utils';
+import { format, isToday } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -62,6 +64,23 @@ export function LogList() {
 
   const [callingItem, setCallingItem] = useState<FoodItem | null>(null);
 
+  // Group items by date
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, FoodItem[]> = {};
+    allItems.slice(0, displayCount).forEach((item) => {
+      const dateKey = new Date(item.timestamp).toISOString().split('T')[0];
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(item);
+    });
+    return groups;
+  }, [allItems, displayCount]);
+
+  const sortedDateKeys = useMemo(() => {
+    return Object.keys(groupedItems).sort((a, b) => b.localeCompare(a));
+  }, [groupedItems]);
+
   return (
     <div className="space-y-4">
       <Drawer open={isAddDrawerOpen} onOpenChange={(open) => {
@@ -84,59 +103,74 @@ export function LogList() {
         </div>
       ) : (
         <ScrollArea className="h-[calc(100vh-100px)]">
-          <div className="space-y-2 px-1 pb-40">
-            {allItems.slice(0, displayCount).map((item) => (
-              <Card key={item.id} className="overflow-hidden">
-                <CardContent className="space-y-3 p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium">{item.name}</h3>
-                      <div className="text-muted-foreground mt-0.5 text-[10px]">
-                        {new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </div>
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleEditClick(item)}
-                      className="h-8 w-8 text-muted-foreground"
-                      title="編集"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+          <div className="space-y-6 px-1 pb-40">
+            {sortedDateKeys.map((dateKey) => {
+              const dateItems = groupedItems[dateKey];
+              const date = new Date(dateKey);
+              const formattedDate = format(date, 'M/d(eee)', { locale: ja });
+              const isItemToday = isToday(date);
 
-                  <div className="text-muted-foreground flex gap-2 text-xs">
-                    <span>{item.calories} kcal</span>
-                    <span>P:{item.protein}</span>
-                    <span>F:{item.fat}</span>
-                    <span>C:{item.carbs}</span>
-                  </div>
+              return (
+                <div key={dateKey} className="space-y-2">
+                  <h2 className={cn(
+                    "text-xs font-semibold px-1 py-1 sticky top-0 bg-background/95 backdrop-blur z-10",
+                    isItemToday ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {isItemToday ? `今日 - ${formattedDate}` : formattedDate}
+                  </h2>
+                  <div className="space-y-2">
+                    {dateItems.map((item) => (
+                      <Card key={item.id} className="overflow-hidden">
+                        <CardContent className="space-y-3 p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-sm font-medium">{item.name}</h3>
+                              <div className="text-muted-foreground mt-0.5 text-[10px]">
+                                {format(new Date(item.timestamp), 'HH:mm')} • {item.calories} kcal
+                              </div>
+                            </div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleEditClick(item)}
+                              className="h-8 w-8 text-muted-foreground"
+                              title="編集"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          </div>
 
-                  <div className="flex gap-2 pt-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCallClick(item)}
-                      className="h-8 flex-1 text-xs"
-                    >
-                      呼び出し
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleReRegisterClick(item)}
-                      className="h-8 flex-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
-                    >
-                      再登録
-                    </Button>
+                          <div className="text-muted-foreground flex gap-2 text-xs">
+                            <span>P:{item.protein}</span>
+                            <span>F:{item.fat}</span>
+                            <span>C:{item.carbs}</span>
+                          </div>
+
+                          <div className="flex gap-2 pt-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCallClick(item)}
+                              className="h-8 flex-1 text-xs"
+                            >
+                              呼び出し
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleReRegisterClick(item)}
+                              className="h-8 flex-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                            >
+                              再登録
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              );
+            })}
 
             {allItems.length > displayCount && (
               <div className="flex justify-center pt-2 pb-6">
