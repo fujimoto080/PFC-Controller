@@ -1,15 +1,29 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
 import { WeeklyBalancingStats } from '@/components/dashboard/WeeklyBalancingStats';
-import { getTodayString, getLogForDate } from '@/lib/storage';
+import { getTodayString, getLogForDate, saveSettings } from '@/lib/storage';
 import { format, parseISO, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { GoalEditForm } from '@/components/settings/GoalEditForm';
+import { Button } from '@/components/ui/button';
+import { Settings } from 'lucide-react';
+import { PFC, UserProfile } from '@/lib/types';
+import { toast } from 'sonner';
+import { usePfcData } from '@/hooks/use-pfc-data';
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
+  const { settings } = usePfcData();
+
+  const handleSaveGoals = useCallback((newGoals: PFC, newProfile?: UserProfile) => {
+    if (!settings) return;
+    const newSettings = { ...settings, targetPFC: newGoals, profile: newProfile };
+    saveSettings(newSettings);
+    toast.success('目標を更新しました');
+  }, [settings]);
   const recentEntries = useMemo(() => {
     const log = getLogForDate(selectedDate);
     return log.items.slice().reverse(); // Newest first
@@ -29,7 +43,21 @@ export default function Home() {
             ? '今日のバランス'
             : `${format(displayDate, 'M月d日', { locale: ja })}のバランス`}
         </h1>
-        <div className="bg-secondary h-8 w-8 rounded-full" />
+        <div className="flex items-center gap-2">
+          {settings && (
+            <GoalEditForm
+              initialGoals={settings.targetPFC}
+              initialProfile={settings.profile}
+              onSave={handleSaveGoals}
+              trigger={
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Settings className="h-5 w-5 text-muted-foreground" />
+                </Button>
+              }
+            />
+          )}
+          <div className="bg-secondary h-8 w-8 rounded-full" />
+        </div>
       </header>
 
       <PFCStats

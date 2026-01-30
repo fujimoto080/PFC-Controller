@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, History, Settings, Calendar } from 'lucide-react';
+import { Home, PlusCircle, History, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function BottomNav() {
@@ -11,9 +11,8 @@ export function BottomNav() {
   const navItems = [
     { href: '/', icon: Home, label: 'ホーム' },
     { href: '/log', icon: History, label: '履歴' },
-    { href: '/calendar', icon: Calendar, label: 'カレンダー' },
     { href: '/add', icon: PlusCircle, label: '追加', main: true },
-    { href: '/settings', icon: Settings, label: '設定' },
+    { href: '/calendar', icon: Calendar, label: 'カレンダー' },
   ];
 
   return (
