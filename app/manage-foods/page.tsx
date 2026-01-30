@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Pencil, Trash, Save, X } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash, Save, X, Star } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -14,6 +14,8 @@ import {
     addFoodToDictionary,
     updateFoodInDictionary,
     deleteFoodFromDictionary,
+    toggleFavoriteFood,
+    isFavoriteFood,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 import { generateId } from '@/lib/utils';
@@ -100,6 +102,10 @@ export default function ManageFoodsPage() {
         if (confirm(`「${name}」を削除してもよろしいですか？`)) {
             deleteFoodFromDictionary(id);
         }
+    };
+
+    const handleToggleFavorite = (id: string) => {
+        toggleFavoriteFood(id);
     };
 
     const filteredFoods = foods.filter((f) =>
@@ -219,6 +225,19 @@ export default function ManageFoodsPage() {
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleToggleFavorite(food.id)}
+                                            >
+                                                <Star
+                                                    className={`h-4 w-4 ${
+                                                        isFavoriteFood(food.id)
+                                                            ? 'fill-yellow-400 text-yellow-400'
+                                                            : 'text-muted-foreground'
+                                                    }`}
+                                                />
+                                            </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

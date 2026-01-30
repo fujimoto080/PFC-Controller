@@ -31,6 +31,7 @@ export interface UserProfile {
 export interface UserSettings {
   targetPFC: PFC;
   profile?: UserProfile;
+  favoriteFoodIds?: string[];
 }
 
 export const DEFAULT_TARGET: PFC = {

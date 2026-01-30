@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
+import { QuickAddButtons } from '@/components/dashboard/QuickAddButtons';
 import { getTodayString, saveSettings } from '@/lib/storage';
 import { format, parseISO, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -60,6 +61,8 @@ export default function Home() {
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
       />
+
+      <QuickAddButtons />
 
       <WeeklyPFCStats />
 

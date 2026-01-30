@@ -400,3 +400,40 @@ export function getUniqueStores(): string[] {
 
   return Array.from(stores).sort();
 }
+
+// --- Favorite Foods Management ---
+
+export function getFavoriteFoods(): FoodItem[] {
+  const settings = getSettings();
+  const favoriteIds = settings.favoriteFoodIds || [];
+  
+  if (favoriteIds.length === 0) return [];
+  
+  const dictionary = getFoodDictionary();
+  return favoriteIds
+    .map(id => dictionary.find(item => item.id === id))
+    .filter((item): item is FoodItem => item !== undefined);
+}
+
+export function toggleFavoriteFood(id: string) {
+  const settings = getSettings();
+  const favoriteIds = settings.favoriteFoodIds || [];
+  
+  const index = favoriteIds.indexOf(id);
+  if (index === -1) {
+    // Add to favorites
+    favoriteIds.push(id);
+  } else {
+    // Remove from favorites
+    favoriteIds.splice(index, 1);
+  }
+  
+  saveSettings({ ...settings, favoriteFoodIds: favoriteIds });
+}
+
+export function isFavoriteFood(id: string): boolean {
+  const settings = getSettings();
+  const favoriteIds = settings.favoriteFoodIds || [];
+  return favoriteIds.includes(id);
+}
+
