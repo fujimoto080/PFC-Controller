@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +13,7 @@ interface StatRowProps {
     delay: number;
 }
 
-export function StatRow({
+export const StatRow = memo(function StatRow({
     label,
     current,
     target,
@@ -107,4 +108,4 @@ export function StatRow({
             })}
         </motion.div>
     );
-}
+});

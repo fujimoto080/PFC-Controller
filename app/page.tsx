@@ -1,23 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
 import { WeeklyBalancingStats } from '@/components/dashboard/WeeklyBalancingStats';
 import { getTodayString, getLogForDate } from '@/lib/storage';
-import { FoodItem } from '@/lib/types';
 import { format, parseISO, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
-  const [recentEntries, setRecentEntries] = useState<FoodItem[]>([]);
-
-  useEffect(() => {
+  const recentEntries = useMemo(() => {
     const log = getLogForDate(selectedDate);
-    queueMicrotask(() => {
-      setRecentEntries(log.items.slice().reverse()); // Newest first
-    });
+    return log.items.slice().reverse(); // Newest first
   }, [selectedDate]);
 
   const handleDateChange = (newDate: string) => {

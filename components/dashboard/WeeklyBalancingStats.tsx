@@ -1,38 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { getBalancedWeeklyTargets, getSettings, getPfcDebt, getTodayString } from '@/lib/storage';
-import { UserSettings, DEFAULT_TARGET, PFC } from '@/lib/types';
 import { Card, CardHeader } from '@/components/ui/card';
+import { useEffect, useMemo, useState } from 'react';
 
 export function WeeklyBalancingStats() {
-    const [balancedTarget, setBalancedTarget] = useState<{
-        protein: number;
-        fat: number;
-        carbs: number;
-        calories: number;
-        remainingDays: number;
-    } | null>(null);
-    const [settings, setSettings] = useState<UserSettings>({
-        targetPFC: DEFAULT_TARGET,
-    });
-    const [debt, setDebt] = useState<PFC>({ protein: 0, fat: 0, carbs: 0, calories: 0 });
+    const [version, setVersion] = useState(0);
+    const today = getTodayString();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const balancedTarget = useMemo(() => getBalancedWeeklyTargets(), [version]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const settings = useMemo(() => getSettings(), [version]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const debt = useMemo(() => getPfcDebt(today), [version, today]);
 
     useEffect(() => {
-        const today = getTodayString();
-        queueMicrotask(() => {
-            setBalancedTarget(getBalancedWeeklyTargets());
-            setSettings(getSettings());
-            setDebt(getPfcDebt(today));
-        });
-
-        const handleUpdate = () => {
-            queueMicrotask(() => {
-                setBalancedTarget(getBalancedWeeklyTargets());
-                setDebt(getPfcDebt(today));
-            });
-        };
+        const handleUpdate = () => setVersion(v => v + 1);
         window.addEventListener('pfc-update', handleUpdate);
         return () => window.removeEventListener('pfc-update', handleUpdate);
     }, []);

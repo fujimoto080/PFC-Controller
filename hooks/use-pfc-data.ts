@@ -1,29 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
-import { DailyLog, UserSettings, DEFAULT_TARGET, PFC } from '@/lib/types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getLogForDate, getSettings, getPfcDebt, getTodayString } from '@/lib/storage';
 
 export function usePfcData(selectedDate: string = getTodayString()) {
-    const [log, setLog] = useState<DailyLog | null>(null);
-    const [settings, setSettings] = useState<UserSettings>({ targetPFC: DEFAULT_TARGET });
-    const [debt, setDebt] = useState<PFC>({ protein: 0, fat: 0, carbs: 0, calories: 0 });
-    const [isLoading, setIsLoading] = useState(true);
+    const [version, setVersion] = useState(0);
 
     const refresh = useCallback(() => {
-        queueMicrotask(() => {
-             setLog(getLogForDate(selectedDate));
-             setSettings(getSettings());
-             setDebt(getPfcDebt(selectedDate));
-             setIsLoading(false);
-        });
-    }, [selectedDate]);
+        setVersion(v => v + 1);
+    }, []);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const log = useMemo(() => getLogForDate(selectedDate), [selectedDate, version]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const settings = useMemo(() => getSettings(), [version]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const debt = useMemo(() => getPfcDebt(selectedDate), [selectedDate, version]);
 
     useEffect(() => {
-        refresh(); // Initial load
-        
         const handleUpdate = () => refresh();
         window.addEventListener('pfc-update', handleUpdate);
         return () => window.removeEventListener('pfc-update', handleUpdate);
     }, [refresh]);
 
-    return { log, settings, debt, isLoading, refresh };
+    return { log, settings, debt, isLoading: false, refresh };
 }

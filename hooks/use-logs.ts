@@ -1,18 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { DailyLog } from '@/lib/types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getLogs } from '@/lib/storage';
 
 export function useAllLogs() {
-    const [logs, setLogs] = useState<Record<string, DailyLog>>({});
+    const [version, setVersion] = useState(0);
 
     const refresh = useCallback(() => {
-        queueMicrotask(() => {
-            setLogs(getLogs());
-        });
+        setVersion(v => v + 1);
     }, []);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const logs = useMemo(() => getLogs(), [version]);
+
     useEffect(() => {
-        refresh();
         const handleUpdate = () => refresh();
         window.addEventListener('pfc-update', handleUpdate);
         return () => window.removeEventListener('pfc-update', handleUpdate);

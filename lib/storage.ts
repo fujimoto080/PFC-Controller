@@ -150,7 +150,7 @@ export function getPfcDebt(currentDate: string): PFC {
   // Sort dates chronological to calculate cumulative debt
   const sortedDates = Object.keys(logs).sort();
 
-  let cumulativeDebt: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
+  const cumulativeDebt: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
   // Helper to get local date string for any Date object
   const toDateStr = (d: Date) => formatDate(d);
@@ -162,23 +162,26 @@ export function getPfcDebt(currentDate: string): PFC {
   const firstDate = new Date(firstLogDate);
 
   // Iterate from the very first log date up to the day before currentDate
+  // Use a cache for target values to avoid repeated function calls
+  const targetProtein = target.protein;
+  const targetFat = target.fat;
+  const targetCarbs = target.carbs;
+  const targetCalories = target.calories;
+
   const d = new Date(firstDate);
-  while (toDateStr(d) < currentDate) {
-    const dateStr = toDateStr(d);
+  let dateStr = toDateStr(d);
+  while (dateStr < currentDate) {
     const log = logs[dateStr];
 
     // Calculate daily balance (surplus/deficit relative to target)
     // Positive result means excess (debt)
     // Negative result means under target (repayment)
     const dailyExcess = log && log.total ? {
-      protein: log.total.protein - target.protein,
-      fat: log.total.fat - target.fat,
-      carbs: log.total.carbs - target.carbs,
-      calories: log.total.calories - target.calories,
+      protein: log.total.protein - targetProtein,
+      fat: log.total.fat - targetFat,
+      carbs: log.total.carbs - targetCarbs,
+      calories: log.total.calories - targetCalories,
     } : {
-      // If no log for this day, it's a "perfect" day (zero contribution to debt/repayment)
-      // Note: This is a design choice. If we want missing days to count as repayment,
-      // we would use negative target values here.
       protein: 0,
       fat: 0,
       carbs: 0,
@@ -186,14 +189,13 @@ export function getPfcDebt(currentDate: string): PFC {
     };
 
     // Add to cumulative debt, but cap debt at zero
-    cumulativeDebt = {
-      protein: Math.max(0, cumulativeDebt.protein + dailyExcess.protein),
-      fat: Math.max(0, cumulativeDebt.fat + dailyExcess.fat),
-      carbs: Math.max(0, cumulativeDebt.carbs + dailyExcess.carbs),
-      calories: Math.max(0, cumulativeDebt.calories + dailyExcess.calories),
-    };
+    cumulativeDebt.protein = Math.max(0, cumulativeDebt.protein + dailyExcess.protein);
+    cumulativeDebt.fat = Math.max(0, cumulativeDebt.fat + dailyExcess.fat);
+    cumulativeDebt.carbs = Math.max(0, cumulativeDebt.carbs + dailyExcess.carbs);
+    cumulativeDebt.calories = Math.max(0, cumulativeDebt.calories + dailyExcess.calories);
 
     d.setDate(d.getDate() + 1);
+    dateStr = toDateStr(d);
   }
 
   return {
