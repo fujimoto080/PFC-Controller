@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Edit2 } from 'lucide-react';
+import { Edit2, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAllLogItems, addFoodItem } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 import { generateId, cn } from '@/lib/utils';
@@ -16,6 +16,18 @@ import { EditLogItemDrawer } from './EditLogItemDrawer';
 import { AddFoodForm } from '@/components/input/AddFoodForm';
 
 const getCurrentTimestamp = () => Date.now();
+
+type GroupedFoodItem = {
+  name: string;
+  count: number;
+  totalCalories: number;
+  totalProtein: number;
+  totalFat: number;
+  totalCarbs: number;
+  items: FoodItem[];
+  // グループのキー（食品名+PFC値）
+  groupKey: string;
+};
 
 export function LogList() {
   const [allItems, setAllItems] = useState<FoodItem[]>([]);
@@ -63,18 +75,56 @@ export function LogList() {
   };
 
   const [callingItem, setCallingItem] = useState<FoodItem | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  // Group items by date
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupKey)) {
+        next.delete(groupKey);
+      } else {
+        next.add(groupKey);
+      }
+      return next;
+    });
+  };
+
+  // Group items by date, then by food (name + PFC)
   const groupedItems = useMemo(() => {
-    const groups: Record<string, FoodItem[]> = {};
+    const dateGroups: Record<string, Record<string, GroupedFoodItem>> = {};
+    
     allItems.slice(0, displayCount).forEach((item) => {
       const dateKey = new Date(item.timestamp).toISOString().split('T')[0];
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
+      // 食品名とPFC値でグループキーを作成
+      const groupKey = `${item.name}_${item.protein}_${item.fat}_${item.carbs}`;
+      
+      if (!dateGroups[dateKey]) {
+        dateGroups[dateKey] = {};
       }
-      groups[dateKey].push(item);
+      
+      if (!dateGroups[dateKey][groupKey]) {
+        dateGroups[dateKey][groupKey] = {
+          name: item.name,
+          count: 0,
+          totalCalories: 0,
+          totalProtein: 0,
+          totalFat: 0,
+          totalCarbs: 0,
+          items: [],
+          groupKey,
+        };
+      }
+      
+      const group = dateGroups[dateKey][groupKey];
+      group.count++;
+      group.totalCalories += item.calories;
+      group.totalProtein += item.protein;
+      group.totalFat += item.fat;
+      group.totalCarbs += item.carbs;
+      group.items.push(item);
     });
-    return groups;
+    
+    return dateGroups;
   }, [allItems, displayCount]);
 
   const sortedDateKeys = useMemo(() => {
@@ -111,64 +161,125 @@ export function LogList() {
               const isItemToday = isToday(date);
 
               return (
-                <div key={dateKey} className="space-y-2">
-                  <h2 className={cn(
-                    "text-xs font-semibold px-1 py-1 sticky top-0 bg-background/95 backdrop-blur z-10",
-                    isItemToday ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    {isItemToday ? `今日 - ${formattedDate}` : formattedDate}
-                  </h2>
-                  <div className="space-y-2">
-                    {dateItems.map((item) => (
-                      <Card key={item.id} className="overflow-hidden">
-                        <CardContent className="space-y-3 p-3">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="text-sm font-medium">{item.name}</h3>
-                              <div className="text-muted-foreground mt-0.5 text-[10px]">
-                                {format(new Date(item.timestamp), 'HH:mm')} • {item.calories} kcal
+                  <div key={dateKey} className="space-y-2">
+                    <h2 className={cn(
+                      "text-xs font-semibold px-1 py-1 sticky top-0 bg-background/95 backdrop-blur z-10",
+                      isItemToday ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      {isItemToday ? `今日 - ${formattedDate}` : formattedDate}
+                    </h2>
+                    <div className="space-y-2">
+                      {Object.values(dateItems).map((group) => {
+                        const isExpanded = expandedGroups.has(group.groupKey);
+                        const isSingleItem = group.count === 1;
+                        
+                        return (
+                          <Card key={group.groupKey} className="overflow-hidden">
+                            <CardContent className="space-y-3 p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h3 className="text-sm font-medium">
+                                    {group.name}
+                                    {!isSingleItem && (
+                                      <span className="text-muted-foreground ml-2 text-xs font-normal">
+                                        ×{group.count}
+                                      </span>
+                                    )}
+                                  </h3>
+                                  <div className="text-muted-foreground mt-0.5 text-[10px]">
+                                    {group.totalCalories} kcal
+                                  </div>
+                                </div>
+                                {!isSingleItem && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => toggleGroup(group.groupKey)}
+                                    className="h-8 w-8 text-muted-foreground"
+                                    title={isExpanded ? "折りたたむ" : "展開"}
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                )}
                               </div>
-                            </div>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleEditClick(item)}
-                              className="h-8 w-8 text-muted-foreground"
-                              title="編集"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                          </div>
 
-                          <div className="text-muted-foreground flex gap-2 text-xs">
-                            <span>P:{item.protein}</span>
-                            <span>F:{item.fat}</span>
-                            <span>C:{item.carbs}</span>
-                          </div>
+                              <div className="text-muted-foreground flex gap-2 text-xs">
+                                <span>P:{group.totalProtein.toFixed(1)}</span>
+                                <span>F:{group.totalFat.toFixed(1)}</span>
+                                <span>C:{group.totalCarbs.toFixed(1)}</span>
+                              </div>
 
-                          <div className="flex gap-2 pt-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleCallClick(item)}
-                              className="h-8 flex-1 text-xs"
-                            >
-                              呼び出し
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleReRegisterClick(item)}
-                              className="h-8 flex-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
-                            >
-                              再登録
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                              {/* グループ全体の操作ボタン */}
+                              <div className="flex gap-2 pt-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCallClick(group.items[0])}
+                                  className="h-8 flex-1 text-xs"
+                                >
+                                  呼び出し
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleReRegisterClick(group.items[0])}
+                                  className="h-8 flex-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                                >
+                                  再登録
+                                </Button>
+                                {isSingleItem && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => handleEditClick(group.items[0])}
+                                    className="h-8 w-8 text-muted-foreground"
+                                    title="編集"
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+
+                              {/* 複数アイテムの場合は展開時に個別エントリを表示 */}
+                              {!isSingleItem && isExpanded && (
+                                <div className="border-t pt-3 space-y-2">
+                                  {group.items.map((item) => (
+                                    <div key={item.id} className="bg-muted/30 rounded-lg p-2 space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                          <div className="text-xs text-muted-foreground">
+                                            {format(new Date(item.timestamp), 'HH:mm')} • {item.calories} kcal
+                                          </div>
+                                          <div className="text-muted-foreground flex gap-2 text-[10px] mt-1">
+                                            <span>P:{item.protein}</span>
+                                            <span>F:{item.fat}</span>
+                                            <span>C:{item.carbs}</span>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          onClick={() => handleEditClick(item)}
+                                          className="h-7 w-7 text-muted-foreground"
+                                          title="編集"
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
               );
             })}
 
