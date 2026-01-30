@@ -21,22 +21,26 @@ export function StatRow({
     delay,
 }: StatRowProps) {
     const adjustedTarget = target - debt;
-    const totalValue = current + debt;
 
     const renderBar = (d: number, c: number, t: number, isFirst: boolean) => {
-        const cPct = Math.min(100, (c / t) * 100);
-        const dPct = Math.min(100 - cPct, (d / t) * 100);
+        // Calculate percentage for content within this specific bar's target (t)
+        // c: current intake allocated to this bar
+        // d: debt allocated to this bar
+        const total = c + d;
+        const totalPct = Math.min(100, (total / t) * 100);
+        const dPct = Math.min(totalPct, (d / t) * 100);
+        const cPct = Math.max(0, totalPct - dPct);
         
         return (
             <div className={cn("relative w-full overflow-hidden rounded-full bg-primary/20", isFirst ? "h-2" : "h-2 mt-1 border border-red-500/30")}>
-                {/* Current Intake Bar (Normal) */}
+                {/* Current Intake Bar */}
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${cPct}%` }}
                     transition={{ delay: delay + 0.2, duration: 0.5 }}
                     className={cn("absolute left-0 top-0 h-full rounded-full", color)}
                 />
-                {/* Debt Bar (Thin) */}
+                {/* Debt Bar */}
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${dPct}%` }}
@@ -48,7 +52,7 @@ export function StatRow({
         );
     };
 
-    const extraBarsCount = Math.ceil(Math.max(0, totalValue - target) / target);
+    const extraBarsCount = Math.ceil(Math.max(0, (current + debt) - target) / target);
 
     return (
         <motion.div
@@ -63,28 +67,41 @@ export function StatRow({
                     {Math.round(current * 100) / 100} / {target}g
                     {debt > 0 && (
                         <span className="text-red-500 text-[10px] ml-1">
-                            (負債: -{debt})
+                            (負債: {debt}g)
                         </span>
                     )}
                 </span>
             </div>
             
             {/* Primary Bar */}
-            {renderBar(debt, current, target, true)}
+            {/* Priority: current first, then debt */}
+            {(() => {
+                const currentInBar = Math.min(target, current);
+                const debtInBar = Math.min(target - currentInBar, debt);
+                return renderBar(debtInBar, currentInBar, target, true);
+            })()}
 
             {/* Extra Bars for excess */}
             {Array.from({ length: Math.min(10, extraBarsCount) }).map((_, i) => {
-                const barTargetStart = (i + 1) * target;
-                // Debt in this bar
-                const debtInThisBar = Math.min(target, Math.max(0, debt - barTargetStart));
-                // Current in this bar (considering debt already occupied some space)
-                const currentInThisBar = Math.min(target - debtInThisBar, Math.max(0, (current + debt) - barTargetStart - debtInThisBar));
+                const barStart = (i + 1) * target;
+                const barEnd = (i + 2) * target;
+                
+                // Current's portion in this specific extra bar range [barStart, barEnd]
+                const currentInThisBar = Math.max(0, Math.min(target, current - barStart));
+                
+                // Debt's portion starts after ALL of 'current' is filled.
+                // Debt exists in the range [current, current + debt]
+                const debtStart = current;
+                const debtEnd = current + debt;
+                
+                // Intersection of [barStart, barEnd] and [debtStart, debtEnd]
+                const debtInThisBarActual = Math.max(0, Math.min(barEnd, debtEnd) - Math.max(barStart, debtStart));
 
-                if (debtInThisBar + currentInThisBar <= 0) return null;
+                if (currentInThisBar + debtInThisBarActual <= 0) return null;
 
                 return (
                     <div key={i}>
-                        {renderBar(debtInThisBar, currentInThisBar, target, false)}
+                        {renderBar(debtInThisBarActual, currentInThisBar, target, false)}
                     </div>
                 );
             })}

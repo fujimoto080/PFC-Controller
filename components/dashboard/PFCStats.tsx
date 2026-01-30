@@ -133,7 +133,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                   / {targetPFC.calories} kcal
                   {debt.calories > 0 && (
                     <span className="text-red-500 font-bold ml-1">
-                      (負債: -{debt.calories})
+                      (負債: {debt.calories} kcal)
                     </span>
                   )}
                 </span>

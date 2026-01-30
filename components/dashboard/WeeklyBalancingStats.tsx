@@ -143,7 +143,7 @@ function MiniGoal({
                 <span className="font-bold flex items-center gap-1">
                     {label}
                     <span className={debt > 0.005 ? "text-red-500" : diff < -0.005 ? "text-blue-500" : "text-muted-foreground"}>
-                        {debt > 0.005 ? `-${Math.round(debt * 100) / 100}` : Math.abs(diff) < 0.005 ? "±0" : Math.round(diff * 100) / 100}g
+                        {debt > 0.005 ? `${Math.round(debt * 100) / 100}` : Math.abs(diff) < 0.005 ? "±0" : Math.round(diff * 100) / 100}g
                     </span>
                 </span>
                 <span className="font-medium text-primary">{Math.round(current * 100) / 100}g</span>
