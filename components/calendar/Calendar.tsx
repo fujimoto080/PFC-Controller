@@ -25,12 +25,16 @@ export function Calendar() {
     const [settings, setSettings] = useState<UserSettings | null>(null);
 
     useEffect(() => {
-        setLogs(getLogs());
-        setSettings(getSettings());
-
-        const handleUpdate = () => {
+        queueMicrotask(() => {
             setLogs(getLogs());
             setSettings(getSettings());
+        });
+
+        const handleUpdate = () => {
+            queueMicrotask(() => {
+                setLogs(getLogs());
+                setSettings(getSettings());
+            });
         };
 
         window.addEventListener('pfc-update', handleUpdate);

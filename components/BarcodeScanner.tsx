@@ -45,7 +45,7 @@ export function BarcodeScanner({ onScanSuccess, onClose }: BarcodeScannerProps) 
                     stopScanning();
                     onScanSuccess(decodedText);
                 },
-                (errorMessage) => {
+                () => {
                     // parse error, ignore it.
                 }
             );

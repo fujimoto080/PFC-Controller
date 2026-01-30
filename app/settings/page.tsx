@@ -11,7 +11,9 @@ export default function SettingsPage() {
     const [settings, setSettings] = useState<UserSettings | null>(null);
 
     useEffect(() => {
-        setSettings(getSettings());
+        queueMicrotask(() => {
+            setSettings(getSettings());
+        });
     }, []);
 
     const handleSaveGoals = (newGoals: PFC, newProfile?: UserProfile) => {

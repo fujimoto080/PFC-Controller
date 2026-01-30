@@ -21,13 +21,17 @@ export function WeeklyBalancingStats() {
 
     useEffect(() => {
         const today = getTodayString();
-        setBalancedTarget(getBalancedWeeklyTargets());
-        setSettings(getSettings());
-        setDebt(getPfcDebt(today));
+        queueMicrotask(() => {
+            setBalancedTarget(getBalancedWeeklyTargets());
+            setSettings(getSettings());
+            setDebt(getPfcDebt(today));
+        });
 
         const handleUpdate = () => {
-            setBalancedTarget(getBalancedWeeklyTargets());
-            setDebt(getPfcDebt(today));
+            queueMicrotask(() => {
+                setBalancedTarget(getBalancedWeeklyTargets());
+                setDebt(getPfcDebt(today));
+            });
         };
         window.addEventListener('pfc-update', handleUpdate);
         return () => window.removeEventListener('pfc-update', handleUpdate);

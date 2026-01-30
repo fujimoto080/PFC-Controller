@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, Pencil, Trash, Save, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -19,22 +19,20 @@ import {
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 
+const getCurrentTimestamp = () => Date.now();
+const generateId = () => Date.now().toString();
+
 export default function ManageFoodsPage() {
     const router = useRouter();
-    const [foods, setFoods] = useState<FoodItem[]>([]);
+    const [foods, setFoods] = useState<FoodItem[]>(() => getFoodDictionary());
     const [searchQuery, setSearchQuery] = useState('');
     const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
     const [isAdding, setIsAdding] = useState(false);
-    const [uniqueStores, setUniqueStores] = useState<string[]>([]);
+    const [uniqueStores] = useState<string[]>(() => getUniqueStores());
 
     // Form handling
     const { register, handleSubmit, reset, setValue } = useForm<FoodItem>();
 
-    useEffect(() => {
-        // Load foods on mount
-        setFoods(getFoodDictionary());
-        setUniqueStores(getUniqueStores());
-    }, []);
 
     const refreshFoods = () => {
         setFoods(getFoodDictionary());
@@ -73,7 +71,7 @@ export default function ManageFoodsPage() {
 
 
 
-    const onSubmit = (data: any) => {
+    const onSubmit = (data: FoodItem) => {
         const itemData = {
             name: data.name,
             protein: Number(data.protein),
@@ -81,7 +79,7 @@ export default function ManageFoodsPage() {
             carbs: Number(data.carbs),
             calories: Number(data.calories),
             store: data.store || undefined,
-            timestamp: Date.now(),
+            timestamp: getCurrentTimestamp(),
         };
 
         if (editingItem) {
@@ -95,7 +93,7 @@ export default function ManageFoodsPage() {
         } else {
             // Create
             const newItem: FoodItem = {
-                id: Date.now().toString(),
+                id: generateId(),
                 ...itemData,
             };
             addFoodToDictionary(newItem);

@@ -20,10 +20,16 @@ export function WeeklyPFCStats() {
     });
 
     useEffect(() => {
-        setWeeklyData(getWeeklyLog());
-        setSettings(getSettings());
+        queueMicrotask(() => {
+            setWeeklyData(getWeeklyLog());
+            setSettings(getSettings());
+        });
 
-        const handleUpdate = () => setWeeklyData(getWeeklyLog());
+        const handleUpdate = () => {
+            queueMicrotask(() => {
+                setWeeklyData(getWeeklyLog());
+            });
+        };
         window.addEventListener('pfc-update', handleUpdate);
         return () => window.removeEventListener('pfc-update', handleUpdate);
     }, []);

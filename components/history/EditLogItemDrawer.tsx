@@ -49,8 +49,10 @@ export function EditLogItemDrawer({
                 store: item.store,
             });
             const date = new Date(item.timestamp);
-            setEatDate(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
-            setEatTime(`${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`);
+            queueMicrotask(() => {
+                setEatDate(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
+                setEatTime(`${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`);
+            });
         }
     }, [item, reset]);
 
@@ -60,7 +62,7 @@ export function EditLogItemDrawer({
         return new Date(year, month - 1, day, hour, minute).getTime();
     };
 
-    const onSubmit = (data: any) => {
+    const onSubmit = (data: FoodItem) => {
         if (!item) return;
 
         const updatedItem: FoodItem = {

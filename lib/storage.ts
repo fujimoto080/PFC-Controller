@@ -295,12 +295,8 @@ export function saveSettings(settings: UserSettings) {
 const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
 import publicFoods from '@/data/public_foods.json';
 
-let generatedFoods: FoodItem[] = [];
-try {
-  generatedFoods = require('@/data/generated_foods.json');
-} catch {
-  // Ignore if file doesn't exist yet
-}
+import generatedFoodsRaw from '@/data/generated_foods.json';
+const generatedFoods = generatedFoodsRaw as FoodItem[];
 
 export function getFoodDictionary(): FoodItem[] {
   if (typeof window === 'undefined') return [];

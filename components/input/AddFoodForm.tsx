@@ -21,11 +21,14 @@ import {
 import { FoodItem } from '@/lib/types';
 import { toast } from 'sonner';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
+import Image from 'next/image';
 
 export interface AddFoodFormProps {
     onSuccess?: () => void;
     initialData?: FoodItem;
 }
+
+const generateId = () => Date.now().toString();
 
 export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const router = useRouter();
@@ -36,12 +39,20 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const [uniqueStores, setUniqueStores] = useState<string[]>([]);
     const [showScanner, setShowScanner] = useState(false);
 
-    const now = new Date();
-    const initialDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const initialTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const [eatDate, setEatDate] = useState('');
+    const [eatTime, setEatTime] = useState('');
 
-    const [eatDate, setEatDate] = useState(initialDate);
-    const [eatTime, setEatTime] = useState(initialTime);
+    useEffect(() => {
+        // マウント時に日付と時刻を初期化（ハイドレーションエラーと同期的なsetStateの警告を回避）
+        const now = new Date();
+        const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        queueMicrotask(() => {
+            if (!eatDate) setEatDate(date);
+            if (!eatTime) setEatTime(time);
+        });
+    }, []); // マウント時に一度だけ実行
 
     const getSelectedTimestamp = () => {
         const [year, month, day] = eatDate.split('-').map(Number);
@@ -50,9 +61,15 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     };
 
     useEffect(() => {
-        setPublicFoods(getFoodDictionary());
-        setUniqueStores(getUniqueStores());
-    }, [activeTab]); // Reload when tab changes in case data was updated externally
+        const loadInitialData = () => {
+            setPublicFoods(getFoodDictionary());
+            setUniqueStores(getUniqueStores());
+        };
+
+        loadInitialData();
+        window.addEventListener('pfc-update', loadInitialData);
+        return () => window.removeEventListener('pfc-update', loadInitialData);
+    }, []); // タブ変更ではなくイベント駆動で更新
 
     // Form for manual entry
     const { register, handleSubmit, reset } = useForm<FoodItem>({
@@ -66,10 +83,10 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         } : undefined
     });
 
-    const onSubmitManual = (data: any) => {
+    const onSubmitManual = (data: FoodItem) => {
         // Basic validation / conversion
         const item: FoodItem = {
-            id: Date.now().toString(),
+            id: generateId(),
             name: data.name,
             protein: Number(data.protein),
             fat: Number(data.fat),
@@ -96,10 +113,10 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
 
 
-    const handleAddPublic = (food: any) => {
+    const handleAddPublic = (food: FoodItem) => {
         const item: FoodItem = {
             ...food,
-            id: Date.now().toString(), // unique id for log
+            id: generateId(), // unique id for log
             timestamp: getSelectedTimestamp(),
         };
         addFoodItem(item);
@@ -338,7 +355,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 {food.image ? (
-                                                                    <img
+                                                                    <Image
                                                                         src={food.image}
                                                                         alt={food.name}
                                                                         className="h-10 w-10 rounded-md object-cover"

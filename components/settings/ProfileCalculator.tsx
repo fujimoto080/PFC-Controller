@@ -27,14 +27,7 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         activityLevel: 1.375,
     });
 
-    const [bmi, setBmi] = useState<number>(0);
 
-    // Sync if initialProfile changes externally
-    useEffect(() => {
-        if (initialProfile) {
-            setProfile(initialProfile);
-        }
-    }, [initialProfile]);
 
     const calculateGoals = (p: UserProfile) => {
         const { gender, age, height, weight, targetWeight, activityLevel } = p;
@@ -63,10 +56,14 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         };
     };
 
+    const heightInMeters = (profile.height || 170) / 100;
+    const bmi = (profile.weight || 70) / (heightInMeters * heightInMeters);
+
     useEffect(() => {
-        const heightInMeters = (profile.height || 170) / 100;
-        setBmi((profile.weight || 70) / (heightInMeters * heightInMeters));
-        onCalculate(calculateGoals(profile), profile);
+        // 同期的なsetStateの警告を避けるため microtask で処理
+        queueMicrotask(() => {
+            onCalculate(calculateGoals(profile), profile);
+        });
     }, [profile, onCalculate]);
 
     const calculatedGoals = calculateGoals(profile);

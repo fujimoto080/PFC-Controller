@@ -15,7 +15,9 @@ export default function Home() {
 
   useEffect(() => {
     const log = getLogForDate(selectedDate);
-    setRecentEntries(log.items.slice().reverse()); // Newest first
+    queueMicrotask(() => {
+      setRecentEntries(log.items.slice().reverse()); // Newest first
+    });
   }, [selectedDate]);
 
   const handleDateChange = (newDate: string) => {

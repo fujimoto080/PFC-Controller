@@ -12,6 +12,9 @@ import { toast } from 'sonner';
 import { EditLogItemDrawer } from './EditLogItemDrawer';
 import { AddFoodForm } from '@/components/input/AddFoodForm';
 
+const getCurrentTimestamp = () => Date.now();
+const generateId = () => Date.now().toString();
+
 export function LogList() {
   const [allItems, setAllItems] = useState<FoodItem[]>([]);
   const [displayCount, setDisplayCount] = useState(100);
@@ -24,7 +27,9 @@ export function LogList() {
   }, []);
 
   useEffect(() => {
-    refreshItems();
+    queueMicrotask(() => {
+      refreshItems();
+    });
   }, [refreshItems]);
 
   const handleEditClick = (item: FoodItem) => {
@@ -41,8 +46,8 @@ export function LogList() {
   const handleReRegisterClick = (item: FoodItem) => {
     const newItem: FoodItem = {
       ...item,
-      id: Date.now().toString(),
-      timestamp: Date.now(),
+      id: generateId(),
+      timestamp: getCurrentTimestamp(),
     };
     addFoodItem(newItem);
     toast.success(`${item.name}を再登録しました`);

@@ -20,20 +20,6 @@ export async function GET(request: NextRequest) {
         const product = data.product;
         const nutriments = product.nutriments;
 
-        // Extract relevant data
-        // Try to get per serving data first, fallback to per 100g
-        const servingSize = product.serving_size || '100g';
-
-        // Helper to get nutrient value (either serving or 100g)
-        // Prefer explicit value fields if available
-        const getNutrient = (key: string) => {
-            // First check for _value (parsed)
-            if (nutriments[`${key}_value`] !== undefined) return Number(nutriments[`${key}_value`]);
-            // Fallback to _100g
-            if (nutriments[`${key}_100g`] !== undefined) return Number(nutriments[`${key}_100g`]);
-            return 0;
-        };
-
         // We prioritize "1 package" or "1 serving" if available, but API structure varies.
         // For simplicity in this prototype, we return 100g data and let user adjust,
         // OR if serving data is clearly available.

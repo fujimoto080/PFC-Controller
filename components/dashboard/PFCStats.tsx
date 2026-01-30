@@ -22,15 +22,19 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   const [debt, setDebt] = useState<PFC>({ protein: 0, fat: 0, carbs: 0, calories: 0 });
   const [direction, setDirection] = useState(0);
 
-  useEffect(() => {
-    // Load data for selected date
-    setData(getLogForDate(selectedDate));
-    setSettings(getSettings());
-    setDebt(getPfcDebt(selectedDate));
+    useEffect(() => {
+        // Load data for selected date
+        queueMicrotask(() => {
+            setData(getLogForDate(selectedDate));
+            setSettings(getSettings());
+            setDebt(getPfcDebt(selectedDate));
+        });
 
     const handleUpdate = () => {
-      setData(getLogForDate(selectedDate));
-      setDebt(getPfcDebt(selectedDate));
+        queueMicrotask(() => {
+            setData(getLogForDate(selectedDate));
+            setDebt(getPfcDebt(selectedDate));
+        });
     };
     window.addEventListener('pfc-update', handleUpdate);
     return () => window.removeEventListener('pfc-update', handleUpdate);
@@ -117,7 +121,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.6}
-          onDragEnd={(e, { offset, velocity }) => {
+          onDragEnd={(e, { offset, }) => {
             const swipe = offset.x;
             if (swipe < -50) {
               navigateDate(1);
