@@ -48,14 +48,17 @@ export function getTimeOfDay(timestamp: number): 'morning' | 'afternoon' | 'even
 export function getTimeOfDayGradient(timestamp: number): string {
   const timeOfDay = getTimeOfDay(timestamp);
   
-  switch (timeOfDay) {
-    case 'morning':
-      return 'bg-gradient-to-br from-amber-50/30 via-orange-50/20 to-yellow-50/30';
-    case 'afternoon':
-      return 'bg-gradient-to-br from-sky-50/30 via-blue-50/20 to-cyan-50/30';
-    case 'evening':
-      return 'bg-gradient-to-br from-orange-50/30 via-pink-50/20 to-rose-50/30';
-    case 'night':
-      return 'bg-gradient-to-br from-indigo-50/30 via-purple-50/20 to-blue-50/30';
-  }
+switch (timeOfDay) {
+  case 'morning':
+    return 'bg-[linear-gradient(80deg,rgba(255,120,80,0.45)_0%,rgba(255,180,150,0.25)_5%,transparent_10%)]';
+
+  case 'afternoon':
+    return 'bg-[linear-gradient(80deg,rgba(80,160,255,0.45)_0%,rgba(150,210,255,0.25)_5%,transparent_10%)]';
+
+  case 'evening':
+    return 'bg-[linear-gradient(80deg,rgba(255,90,120,0.45)_0%,rgba(200,120,255,0.25)_5%,transparent_10%)]';
+
+  case 'night':
+    return 'bg-[linear-gradient(80deg,rgba(80,90,255,0.45)_0%,rgba(120,100,200,0.25)_5%,transparent_10%)]';
+}
 }
