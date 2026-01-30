@@ -6,9 +6,14 @@ export const metadata = {
   title: 'PFC Balance',
   description: 'Manage your daily PFC balance',
   manifest: '/manifest.json',
+};
+
+export const viewport = {
   themeColor: '#ffffff',
-  viewport:
-    'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
