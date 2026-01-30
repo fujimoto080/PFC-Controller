@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { getSettings } from '@/lib/storage';
 import { UserSettings } from '@/lib/types';
 import { cn, formatDate } from '@/lib/utils';
@@ -59,18 +60,22 @@ export function Calendar() {
                     {format(currentMonth, 'yyyy年 M月', { locale: ja })}
                 </h2>
                 <div className="flex gap-2">
-                    <button
+                    <Button
                         onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                        className="rounded-full p-2 transition-colors hover:bg-accent"
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full"
                     >
                         <ChevronLeft size={24} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                        className="rounded-full p-2 transition-colors hover:bg-accent"
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full"
                     >
                         <ChevronRight size={24} />
-                    </button>
+                    </Button>
                 </div>
             </div>
 

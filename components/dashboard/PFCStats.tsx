@@ -9,6 +9,9 @@ import { addDays, format, parseISO } from 'date-fns';
 import { usePfcData } from '@/hooks/use-pfc-data';
 import { getPFCPercentage, roundPFC } from '@/lib/utils';
 
+import { Button } from '@/components/ui/button';
+import { StatRow } from './StatRow';
+
 interface PFCStatsProps {
   selectedDate: string;
   onDateChange: (date: string) => void;
@@ -57,28 +60,32 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
     <div className="relative overflow-hidden group">
       {/* Navigation Arrows - Stable and outside the animated content */}
       <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center px-2 pointer-events-none h-16">
-        <button
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             navigateDate(-1);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-3 hover:bg-secondary/80 bg-background/50 backdrop-blur-sm rounded-full transition-all pointer-events-auto shadow-sm active:scale-95"
+          variant="ghost"
+          size="icon"
+          className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
           aria-label="Previous day"
         >
           <ChevronLeft className="w-6 h-6" />
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={(e) => {
             e.stopPropagation();
             navigateDate(1);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-3 hover:bg-secondary/80 bg-background/50 backdrop-blur-sm rounded-full transition-all pointer-events-auto shadow-sm active:scale-95"
+          variant="ghost"
+          size="icon"
+          className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
           aria-label="Next day"
         >
           <ChevronRight className="w-6 h-6" />
-        </button>
+        </Button>
       </div>
 
       <AnimatePresence initial={false} custom={direction} mode="wait">
@@ -180,49 +187,4 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   );
 }
 
-function StatRow({
-  label,
-  current,
-  target,
-  debt,
-  color,
-  delay,
-}: {
-  label: string;
-  current: number;
-  target: number;
-  debt: number;
-  color: string;
-  delay: number;
-}) {
-  const adjustedTarget = Math.max(0, target - debt);
-  const pct = Math.min(100, (current / target) * 100);
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay, duration: 0.4 }}
-      className="space-y-2"
-    >
-      <div className="flex justify-between text-sm">
-        <span className="font-medium">{label}</span>
-        <span className={`${current > adjustedTarget ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
-          {Math.round(current * 100) / 100} / {target}g
-          {debt > 0 && (
-            <span className="text-red-500 text-[10px] ml-1">
-              (調整: -{debt})
-            </span>
-          )}
-        </span>
-      </div>
-      <Progress value={pct} indicatorClassName={color} className="h-2" />
-      {Math.max(0, current - target) > 0 && (
-        <Progress
-          value={Math.min(100, (Math.max(0, current - target) / target) * 100)}
-          indicatorClassName={color}
-          className="mt-1 h-2 border border-red-500"
-        />
-      )}
-    </motion.div>
-  );
-}
+
