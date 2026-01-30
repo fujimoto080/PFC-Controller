@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Edit2, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAllLogItems, addFoodItem } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
-import { generateId, cn } from '@/lib/utils';
+import { generateId, cn, getTimeOfDayGradient } from '@/lib/utils';
 import { format, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
@@ -174,7 +174,13 @@ export function LogList() {
                         const isSingleItem = group.count === 1;
                         
                         return (
-                          <Card key={group.groupKey} className="overflow-hidden">
+                          <Card 
+                            key={group.groupKey} 
+                            className={cn(
+                              "overflow-hidden",
+                              getTimeOfDayGradient(group.items[0].timestamp)
+                            )}
+                          >
                             <CardContent className="space-y-3 p-3">
                               <div className="flex items-center justify-between">
                                 <div className="flex-1">
@@ -248,7 +254,13 @@ export function LogList() {
                               {!isSingleItem && isExpanded && (
                                 <div className="border-t pt-3 space-y-2">
                                   {group.items.map((item) => (
-                                    <div key={item.id} className="bg-muted/30 rounded-lg p-2 space-y-2">
+                                    <div 
+                                      key={item.id} 
+                                      className={cn(
+                                        "rounded-lg p-2 space-y-2",
+                                        getTimeOfDayGradient(item.timestamp)
+                                      )}
+                                    >
                                       <div className="flex items-center justify-between">
                                         <div className="flex-1">
                                           <div className="text-xs text-muted-foreground">
