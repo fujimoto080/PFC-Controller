@@ -102,8 +102,8 @@ export function LogList() {
           <p>記録はありません。</p>
         </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-100px)]">
-          <div className="space-y-6 px-1 pb-40">
+        <ScrollArea className="h-[calc(100vh-160px)]">
+          <div className="space-y-6 px-1 pb-20">
             {sortedDateKeys.map((dateKey) => {
               const dateItems = groupedItems[dateKey];
               const date = new Date(dateKey);
