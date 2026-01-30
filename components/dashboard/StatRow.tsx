@@ -42,13 +42,20 @@ export function StatRow({
                 </span>
             </div>
             <Progress value={pct} indicatorClassName={color} className="h-2" />
-            {Math.max(0, current - target) > 0 && (
-                <Progress
-                    value={Math.min(100, (Math.max(0, current - target) / target) * 100)}
-                    indicatorClassName={color}
-                    className="mt-1 h-2 border border-red-500"
-                />
-            )}
+            {Array.from({ length: Math.min(10, Math.ceil(Math.max(0, current - target) / target)) }).map((_, i) => {
+                const excess = current - target;
+                const excessInThisBar = Math.min(target, Math.max(0, excess - i * target));
+                const barPct = (excessInThisBar / target) * 100;
+                
+                return (
+                    <Progress
+                        key={i}
+                        value={barPct}
+                        indicatorClassName={color}
+                        className="mt-1 h-2 border border-red-500"
+                    />
+                );
+            })}
         </motion.div>
     );
 }
