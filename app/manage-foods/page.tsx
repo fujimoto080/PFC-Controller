@@ -211,36 +211,52 @@ export default function ManageFoodsPage() {
 
                         <div className="space-y-2">
                             {filteredFoods.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-8">食品が見つかりません</p>
+                                <p>食品が見つかりません</p>
                             ) : (
-                                filteredFoods.map((food) => (
-                                    <div
-                                        key={food.id}
-                                        className="flex items-center justify-between rounded-lg border p-3 bg-card"
-                                    >
-                                        <div>
-                                            <div className="font-medium">{food.name}</div>
-                                            <div className="text-xs text-muted-foreground">
-                                                P:{food.protein} F:{food.fat} C:{food.carbs} | {food.calories}kcal
-                                                {food.store && ` • ${food.store}`}
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <IconButton onClick={() => handleToggleFavorite(food.id)}>
-                                                <Star
-                                                    className={`h-4 w-4 ${
-                                                        isFavoriteFood(food.id)
-                                                            ? 'fill-yellow-400 text-yellow-400'
-                                                            : 'text-muted-foreground'
-                                                    }`}
-                                                />
-                                            </IconButton>
-                                            <IconButton onClick={() => startEdit(food)}>
-                                                <Pencil className="h-4 w-4 text-muted-foreground" />
-                                            </IconButton>
-                                            <IconButton onClick={() => handleDelete(food.id, food.name)}>
-                                                <Trash className="h-4 w-4 text-destructive" />
-                                            </IconButton>
+                                Object.entries(
+                                    filteredFoods.reduce((acc, food) => {
+                                        const store = food.store || 'その他';
+                                        if (!acc[store]) acc[store] = [];
+                                        acc[store].push(food);
+                                        return acc;
+                                    }, {} as Record<string, typeof filteredFoods>),
+                                ).map(([store, foods]) => (
+                                    <div key={store} className="pb-4">
+                                        <h3 className="mb-2 text-sm font-semibold text-muted-foreground bg-muted/30 px-2 py-1 rounded">
+                                            {store}
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {foods.map((food) => (
+                                                <div
+                                                    key={food.id}
+                                                    className="flex items-center justify-between rounded-lg border p-3 bg-card"
+                                                >
+                                                    <div>
+                                                        <div className="font-medium">{food.name}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            P:{food.protein} F:{food.fat} C:{food.carbs} | {food.calories}kcal
+                                                            {food.store && ` • ${food.store}`}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        <IconButton onClick={() => handleToggleFavorite(food.id)}>
+                                                            <Star
+                                                                className={`h-4 w-4 ${
+                                                                    isFavoriteFood(food.id)
+                                                                        ? 'fill-yellow-400 text-yellow-400'
+                                                                        : 'text-muted-foreground'
+                                                                }`}
+                                                            />
+                                                        </IconButton>
+                                                        <IconButton onClick={() => startEdit(food)}>
+                                                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                                                        </IconButton>
+                                                        <IconButton onClick={() => handleDelete(food.id, food.name)}>
+                                                            <Trash className="h-4 w-4 text-destructive" />
+                                                        </IconButton>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 ))
