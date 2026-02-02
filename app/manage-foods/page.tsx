@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
@@ -116,9 +117,9 @@ export default function ManageFoodsPage() {
         <div className="space-y-6 pb-20">
             <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 border-b">
                 <div className="flex items-center gap-4 px-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                    <IconButton onClick={() => router.back()}>
                         <ArrowLeft className="h-5 w-5" />
-                    </Button>
+                    </IconButton>
                     <h1 className="text-xl font-bold">食品データ管理</h1>
                 </div>
             </header>
@@ -225,11 +226,7 @@ export default function ManageFoodsPage() {
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleToggleFavorite(food.id)}
-                                            >
+                                            <IconButton onClick={() => handleToggleFavorite(food.id)}>
                                                 <Star
                                                     className={`h-4 w-4 ${
                                                         isFavoriteFood(food.id)
@@ -237,21 +234,13 @@ export default function ManageFoodsPage() {
                                                             : 'text-muted-foreground'
                                                     }`}
                                                 />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => startEdit(food)}
-                                            >
+                                            </IconButton>
+                                            <IconButton onClick={() => startEdit(food)}>
                                                 <Pencil className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleDelete(food.id, food.name)}
-                                            >
+                                            </IconButton>
+                                            <IconButton onClick={() => handleDelete(food.id, food.name)}>
                                                 <Trash className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                            </IconButton>
                                         </div>
                                     </div>
                                 ))

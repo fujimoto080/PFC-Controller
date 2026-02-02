@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GradientCard } from '@/components/ui/gradient-card';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addDays, format, parseISO } from 'date-fns';
 import { usePfcData } from '@/hooks/use-pfc-data';
 import { getPFCPercentage, roundPFC } from '@/lib/utils';
-
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { StatRow } from './StatRow';
 
 interface PFCStatsProps {
@@ -60,32 +60,28 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
     <div className="relative overflow-hidden group">
       {/* Navigation Arrows - Stable and outside the animated content */}
       <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center px-2 pointer-events-none h-16">
-        <Button
+        <IconButton
           onClick={(e) => {
             e.stopPropagation();
             navigateDate(-1);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          variant="ghost"
-          size="icon"
           className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
           aria-label="Previous day"
         >
           <ChevronLeft className="w-6 h-6" />
-        </Button>
-        <Button
+        </IconButton>
+        <IconButton
           onClick={(e) => {
             e.stopPropagation();
             navigateDate(1);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          variant="ghost"
-          size="icon"
           className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
           aria-label="Next day"
         >
           <ChevronRight className="w-6 h-6" />
-        </Button>
+        </IconButton>
       </div>
 
       <AnimatePresence initial={false} custom={direction} mode="wait">
@@ -113,7 +109,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
           }}
           className="space-y-4 touch-pan-y"
         >
-          <Card className="from-card to-secondary/10 relative overflow-hidden border-none bg-gradient-to-br shadow-md">
+          <GradientCard>
             <div className="bg-primary/5 absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-3xl" />
 
             <CardHeader className="pb-2">
@@ -149,7 +145,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 />
               )}
             </CardHeader>
-          </Card>
+          </GradientCard>
 
           <Card>
             <CardContent className="space-y-6 pt-6">

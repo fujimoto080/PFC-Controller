@@ -8,7 +8,7 @@ import { getTodayString, saveSettings } from '@/lib/storage';
 import { format, parseISO, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { GoalEditForm } from '@/components/settings/GoalEditForm';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Settings } from 'lucide-react';
 import { PFC, UserProfile } from '@/lib/types';
 import { toast } from 'sonner';
@@ -46,9 +46,9 @@ export default function Home() {
             initialProfile={settings.profile}
             onSave={handleSaveGoals}
             trigger={
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <IconButton className="rounded-full">
                 <Settings className="h-5 w-5 text-muted-foreground" />
-              </Button>
+              </IconButton>
             }
           />
         )}
@@ -58,8 +58,13 @@ export default function Home() {
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
       />
+
       <QuickAddButtons />
+
       <WeeklyPFCStats />
+
+
     </div>
   );
 }
+

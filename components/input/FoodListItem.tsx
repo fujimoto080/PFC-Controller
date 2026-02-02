@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { FoodItem } from '@/lib/types';
 
 interface FoodListItemProps {
@@ -38,9 +38,9 @@ export function FoodListItem({ food, onAdd }: FoodListItemProps) {
                     </div>
                 </div>
             </div>
-            <Button size="icon" variant="ghost">
+            <IconButton>
                 <Plus className="h-4 w-4" />
-            </Button>
+            </IconButton>
         </div>
     );
 }

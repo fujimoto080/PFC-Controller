@@ -10,6 +10,7 @@ import { ja } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { toast } from 'sonner';
 import { EditLogItemDrawer } from './EditLogItemDrawer';
@@ -206,9 +207,7 @@ export function LogList() {
                                   </div>
                                 </div>
                                 {!isSingleItem && (
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
+                                  <IconButton
                                     onClick={() => toggleGroup(group.groupKey)}
                                     className="h-8 w-8 text-muted-foreground"
                                     title={isExpanded ? "折りたたむ" : "展開"}
@@ -218,7 +217,7 @@ export function LogList() {
                                     ) : (
                                       <ChevronDown className="h-4 w-4" />
                                     )}
-                                  </Button>
+                                  </IconButton>
                                 )}
                               </div>
 
@@ -243,15 +242,13 @@ export function LogList() {
                                   再登録
                                 </Button>
                                 {isSingleItem && (
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
+                                  <IconButton
                                     onClick={() => handleEditClick(group.items[0])}
                                     className="h-8 w-8 text-muted-foreground"
                                     title="編集"
                                   >
                                     <Edit2 className="h-4 w-4" />
-                                  </Button>
+                                  </IconButton>
                                 )}
                               </div>
 
@@ -273,15 +270,13 @@ export function LogList() {
                                           </div>
                                           <PFCLine p={item.protein} f={item.fat} c={item.carbs} className="text-[10px] mt-1" />
                                         </div>
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
+                                        <IconButton
                                           onClick={() => handleEditClick(item)}
                                           className="h-7 w-7 text-muted-foreground"
                                           title="編集"
                                         >
                                           <Edit2 className="h-3 w-3" />
-                                        </Button>
+                                        </IconButton>
                                       </div>
                                     </div>
                                   ))}

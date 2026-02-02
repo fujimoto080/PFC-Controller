@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { getWeeklyLog, getSettings } from '@/lib/storage';
 import { UserSettings, DEFAULT_TARGET } from '@/lib/types';
 import { Card, CardHeader } from '@/components/ui/card';
+import { GradientCard } from '@/components/ui/gradient-card';
 import { Progress } from '@/components/ui/progress';
 
 export function WeeklyPFCStats() {
@@ -56,7 +57,7 @@ export function WeeklyPFCStats() {
                 </span>
             </div>
 
-            <Card className="from-card to-secondary/5 relative overflow-hidden border-none bg-gradient-to-br shadow-sm">
+            <GradientCard className="from-card to-secondary/5">
                 <CardHeader className="pb-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -94,7 +95,7 @@ export function WeeklyPFCStats() {
                         </div>
                     </div>
                 </CardHeader>
-            </Card>
+            </GradientCard>
         </motion.div>
     );
 }

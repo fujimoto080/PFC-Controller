@@ -15,6 +15,7 @@ import {
     DrawerTitle,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FoodItem } from '@/lib/types';
@@ -87,7 +88,6 @@ export function EditLogItemDrawer({
         if (confirm('この記録を削除しますか？')) {
             deleteLogItem(item.id, item.timestamp);
             toast.success('削除しました');
-            onSuccess();
             onOpenChange(false);
         }
     };
@@ -183,9 +183,9 @@ export function EditLogItemDrawer({
                             <Save className="mr-2 h-4 w-4" /> 保存
                         </Button>
                         <DrawerClose asChild>
-                            <Button variant="outline" size="icon">
+                            <IconButton>
                                 <X className="h-4 w-4" />
-                            </Button>
+                            </IconButton>
                         </DrawerClose>
                     </DrawerFooter>
                 </div>

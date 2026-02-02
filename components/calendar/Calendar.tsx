@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { getSettings } from '@/lib/storage';
 import { UserSettings } from '@/lib/types';
 import { cn, formatDate } from '@/lib/utils';
 import { useAllLogs } from '@/hooks/use-logs';
+import { IconButton } from '@/components/ui/icon-button';
 
 export function Calendar() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -65,22 +65,18 @@ export function Calendar() {
                     {format(currentMonth, 'yyyy年 M月', { locale: ja })}
                 </h2>
                 <div className="flex gap-2">
-                    <Button
+                    <IconButton
                         onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                        variant="ghost"
-                        size="icon"
                         className="rounded-full"
                     >
                         <ChevronLeft size={24} />
-                    </Button>
-                    <Button
+                    </IconButton>
+                    <IconButton
                         onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                        variant="ghost"
-                        size="icon"
                         className="rounded-full"
                     >
                         <ChevronRight size={24} />
-                    </Button>
+                    </IconButton>
                 </div>
             </div>
 
