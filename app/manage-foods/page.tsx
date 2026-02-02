@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, Pencil, Trash, Save, X, Star } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -17,9 +17,10 @@ import {
     deleteFoodFromDictionary,
     toggleFavoriteFood,
     isFavoriteFood,
+    addFoodItem, // 追加
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
-import { generateId } from '@/lib/utils';
+import { generateId, formatDate } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 
 const getCurrentTimestamp = () => Date.now();
@@ -31,8 +32,40 @@ export default function ManageFoodsPage() {
     const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
     const [isAdding, setIsAdding] = useState(false);
 
+    const [eatDate, setEatDate] = useState('');
+    const [eatTime, setEatTime] = useState('');
+
+    useEffect(() => {
+        const now = new Date();
+        const date = formatDate(now);
+        const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        queueMicrotask(() => {
+            if (!eatDate) setEatDate(date);
+            if (!eatTime) setEatTime(time);
+        });
+    }, [eatDate, eatTime]);
+
+    const getSelectedTimestamp = () => {
+        const [year, month, day] = eatDate.split('-').map(Number);
+        const [hour, minute] = eatTime.split(':').map(Number);
+        return new Date(year, month - 1, day, hour, minute).getTime();
+    };
+
     // Form handling
     const { register, handleSubmit, reset, setValue } = useForm<FoodItem>();
+
+    const handleAddLog = (food: FoodItem) => {
+        const item: FoodItem = {
+            ...food,
+            id: generateId(), // unique id for log
+            timestamp: getSelectedTimestamp(),
+        };
+        addFoodItem(item);
+        toast.success(item.name + 'を食事記録に追加しました');
+        // Optionally navigate away or provide further action
+        // router.push('/');
+    };
 
     const startAdd = () => {
         setEditingItem(null);
@@ -196,6 +229,32 @@ export default function ManageFoodsPage() {
                     </Card>
                 ) : (
                     <div className="space-y-4">
+                        <Card className="bg-muted/30">
+                            <CardContent className="pt-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="eatDate">食べた日付</Label>
+                                        <Input
+                                            id="eatDate"
+                                            type="date"
+                                            value={eatDate}
+                                            onChange={(e) => setEatDate(e.target.value)}
+                                            onClick={(e) => e.currentTarget.showPicker?.()}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="eatTime">時刻</Label>
+                                        <Input
+                                            id="eatTime"
+                                            type="time"
+                                            value={eatTime}
+                                            onChange={(e) => setEatTime(e.target.value)}
+                                            onClick={(e) => e.currentTarget.showPicker?.()}
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                         <div className="flex gap-2">
                             <div className="relative flex-1">
                                 <Input
@@ -239,6 +298,9 @@ export default function ManageFoodsPage() {
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-1">
+                                                        <IconButton onClick={() => handleAddLog(food)}>
+                                                            <Plus className="h-4 w-4" />
+                                                        </IconButton>
                                                         <IconButton onClick={() => handleToggleFavorite(food.id)}>
                                                             <Star
                                                                 className={`h-4 w-4 ${

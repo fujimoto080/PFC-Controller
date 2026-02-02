@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Camera, Search, Plus, ScanBarcode } from 'lucide-react';
+import { Camera, Plus, ScanBarcode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from '@/components/ui/checkbox';              
 import {
     addFoodItem,
     addFoodToDictionary
@@ -21,7 +21,6 @@ import { generateId, formatDate } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { toast } from 'sonner';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
-import { FoodListItem } from './FoodListItem';
 
 export interface AddFoodFormProps {
     onSuccess?: () => void;
@@ -32,8 +31,7 @@ export interface AddFoodFormProps {
 export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('manual');
-    const [searchQuery, setSearchQuery] = useState('');
-    const { foods: publicFoods, uniqueStores } = useFoodDictionary();
+    const {uniqueStores} = useFoodDictionary();
     const [saveToDictionary, setSaveToDictionary] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
 
@@ -99,68 +97,48 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         }
     };
 
-
-
-    const handleAddPublic = (food: FoodItem) => {
-        const item: FoodItem = {
-            ...food,
-            id: generateId(), // unique id for log
-            timestamp: getSelectedTimestamp(),
-        };
-        addFoodItem(item);
-        toast.success(item.name + 'を追加しました');
-        if (onSuccess) {
-            onSuccess();
-        } else {
-            router.push('/');
-        }
-    };
-
-    const handleScanSuccess = async (code: string) => {
-        setShowScanner(false);
-        const loadingToast = toast.loading('商品情報を取得中...');
-
-        try {
-            const res = await fetch(`/api/barcode?code=${code}`);
-            const data = await res.json();
-
-            if (!res.ok) {
+        const handleScanSuccess = async (code: string) => {
+            setShowScanner(false);
+            const loadingToast = toast.loading('商品情報を取得中...');
+    
+            try {
+                const res = await fetch(`/api/barcode?code=${code}`);
+                const data = await res.json();
+    
+                if (!res.ok) {
+                    toast.dismiss(loadingToast);
+                    toast.error(data.error || '商品が見つかりませんでした');
+                    return;
+                }
+    
                 toast.dismiss(loadingToast);
-                toast.error(data.error || '商品が見つかりませんでした');
-                return;
+                toast.success(`「${data.name}」が見つかりました`);
+    
+                // Switch to manual mode and fill form
+                setActiveTab('manual');
+    
+                // We need to wait a tick for the tab switch to happen and form to mount/reset
+                setTimeout(() => {
+                    reset({
+                        name: data.name,
+                        protein: data.protein,
+                        fat: data.fat,
+                        carbs: data.carbs,
+                        calories: data.calories,
+                        store: data.store
+                    });
+                }, 100);
+    
+            } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error('エラーが発生しました');
+                console.error(error);
             }
-
-            toast.dismiss(loadingToast);
-            toast.success(`「${data.name}」が見つかりました`);
-
-            // Switch to manual mode and fill form
-            setActiveTab('manual');
-
-            // We need to wait a tick for the tab switch to happen and form to mount/reset
-            setTimeout(() => {
-                reset({
-                    name: data.name,
-                    protein: data.protein,
-                    fat: data.fat,
-                    carbs: data.carbs,
-                    calories: data.calories,
-                    store: data.store
-                });
-            }, 100);
-
-        } catch (error) {
-            toast.dismiss(loadingToast);
-            toast.error('エラーが発生しました');
-            console.error(error);
-        }
-    };
-
-    const filteredFoods = publicFoods.filter((f) =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-
-    return (
-        <div className="space-y-4">
+        };
+    
+    
+        return (
+            <div className="space-y-4">
             <Card className="bg-muted/30">
                 <CardContent className="pt-6">
                     <div className="grid grid-cols-2 gap-4">
@@ -189,9 +167,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
             </Card>
 
             <Tabs defaultValue="manual" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="manual">手動</TabsTrigger>
-                    <TabsTrigger value="search">検索</TabsTrigger>
                     <TabsTrigger value="photo">写真</TabsTrigger>
                 </TabsList>
 
@@ -300,63 +277,6 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                             </Card>
                         </TabsContent>
 
-                        <TabsContent value="search" className="mt-4">
-                            <Card>
-                                <CardContent className="space-y-4 pt-6">
-                                    <div className="flex justify-end items-center mb-2">
-                                        <Button variant="outline" size="sm" asChild>
-                                            <a href="/manage-foods">
-                                                管理 / 追加
-                                            </a>
-                                        </Button>
-                                    </div>
-                                    <div className="relative">
-                                        <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-                                        <Input
-                                            type="search"
-                                            placeholder="食品を検索..."
-                                            className="pl-8"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="h-[calc(100vh-320px)] space-y-4 overflow-y-auto">
-                                        {Object.entries(
-                                            filteredFoods.reduce((acc, food) => {
-                                                const store = food.store || 'その他';
-                                                if (!acc[store]) acc[store] = [];
-                                                acc[store].push(food);
-                                                return acc;
-                                            }, {} as Record<string, typeof filteredFoods>),
-                                        ).map(([store, foods]) => (
-                                            <div key={store}>
-                                                <h3 className="mb-2 text-sm font-semibold text-muted-foreground bg-muted/30 px-2 py-1 rounded">
-                                                    {store}
-                                                </h3>
-                                                <div className="space-y-2">
-                                                    {foods.map((food) => (
-                                                        <FoodListItem
-                                                            key={food.id}
-                                                            food={food}
-                                                            onAdd={handleAddPublic}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {filteredFoods.length === 0 && (
-                                            <div className="text-muted-foreground py-4 text-center text-sm">
-                                                食品が見つかりません。
-                                                <br />
-                                                <a href="/manage-foods" className="text-primary underline mt-2 inline-block">
-                                                    新しい食品を登録する
-                                                </a>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
 
 
 
