@@ -46,17 +46,23 @@ export function GoalEditForm({ initialGoals, initialProfile, onSave, trigger }: 
                         <DrawerTitle>目標を編集</DrawerTitle>
                         <DrawerDescription>プロフィールを入力して目標を自動計算します。</DrawerDescription>
                     </DrawerHeader>
-                    <div className="p-4 overflow-y-auto max-h-[70vh]">
+                    <div className="p-4 overflow-y-auto max-h-[70vh] pb-24">
                         <ProfileCalculator
                             initialProfile={profile}
                             onCalculate={handleCalculate}
                         />
                     </div>
-                    <DrawerFooter>
-                        <Button onClick={handleSave}>保存</Button>
-                        <DrawerClose asChild>
-                            <Button variant="outline">キャンセル</Button>
-                        </DrawerClose>
+                    <DrawerFooter className="fixed bottom-0 left-0 right-0 z-10 w-full border-t bg-background p-0">
+                        <div className="mx-auto flex w-full max-w-sm items-center gap-4 p-4">
+                            <DrawerClose asChild>
+                                <Button variant="outline" className="flex-1">
+                                    キャンセル
+                                </Button>
+                            </DrawerClose>
+                            <Button onClick={handleSave} className="flex-1">
+                                保存
+                            </Button>
+                        </div>
                     </DrawerFooter>
                 </div>
             </DrawerContent>
