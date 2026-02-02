@@ -58,25 +58,24 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
 
   return (
     <div className="relative overflow-hidden group">
-      {/* Navigation Arrows - Stable and outside the animated content */}
       <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center px-2 pointer-events-none h-16">
         <IconButton
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             navigateDate(-1);
           }}
-          onPointerDown={(e) => e.stopPropagation()}
+          onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
           className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
           aria-label="Previous day"
         >
           <ChevronLeft className="w-6 h-6" />
         </IconButton>
         <IconButton
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             navigateDate(1);
           }}
-          onPointerDown={(e) => e.stopPropagation()}
+          onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
           className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
           aria-label="Next day"
         >
