@@ -1,6 +1,42 @@
-
 import { NextRequest, NextResponse } from 'next/server';
+import { promises as fs } from 'fs';
+import path from 'path';
 
+const BARCODE_KVS_FILE = path.join(process.cwd(), 'data', 'barcode_kvs.json');
+
+interface FoodItemForKVS {
+    name: string;
+    protein: number;
+    fat: number;
+    carbs: number;
+    calories: number;
+    store?: string;
+}
+
+async function readBarcodeKVS(): Promise<{ [barcode: string]: FoodItemForKVS }> {
+    try {
+        const fileContents = await fs.readFile(BARCODE_KVS_FILE, 'utf8');
+        return JSON.parse(fileContents);
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            // File does not exist, return empty object
+            return {};
+        }
+        console.error('Error reading barcode KVS file:', error);
+        return {}; // Return empty on error to prevent crashing
+    }
+}
+
+async function writeBarcodeKVS(data: { [barcode: string]: FoodItemForKVS }): Promise<void> {
+    try {
+        await fs.writeFile(BARCODE_KVS_FILE, JSON.stringify(data, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Error writing barcode KVS file:', error);
+        throw new Error('Failed to save barcode data');
+    }
+}
+
+// GET request to retrieve food data by barcode
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
@@ -10,36 +46,35 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-        const data = await response.json();
+        const kvs = await readBarcodeKVS();
+        const foodData = kvs[code];
 
-        if (data.status === 0) {
-            return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        if (foodData) {
+            return NextResponse.json(foodData);
+        } else {
+            return NextResponse.json({ error: 'Product not found in KVS' }, { status: 404 });
         }
-
-        const product = data.product;
-        const nutriments = product.nutriments;
-
-        // We prioritize "1 package" or "1 serving" if available, but API structure varies.
-        // For simplicity in this prototype, we return 100g data and let user adjust,
-        // OR if serving data is clearly available.
-        // Let's try to get data per 100g as a standard baseline, 
-        // effectively, `nutriments.protein_100g`.
-        // Ideally we should return both and let frontend decide, but let's stick to simple structure.
-
-        const result = {
-            name: product.product_name_ja || product.product_name || 'Unknown Product',
-            protein: nutriments.proteins_100g || 0,
-            fat: nutriments.fat_100g || 0,
-            carbs: nutriments.carbohydrates_100g || 0,
-            calories: nutriments['energy-kcal_100g'] || 0,
-            store: product.brands || '',
-        };
-
-        return NextResponse.json(result);
-
     } catch (error) {
-        console.error('Error fetching product:', error);
-        return NextResponse.json({ error: 'Failed to fetch product data' }, { status: 500 });
+        console.error('Error in GET /api/barcode:', error);
+        return NextResponse.json({ error: 'Failed to retrieve product data' }, { status: 500 });
+    }
+}
+
+// POST request to save food data for a barcode
+export async function POST(request: NextRequest) {
+    const { barcode, foodData }: { barcode: string, foodData: FoodItemForKVS } = await request.json();
+
+    if (!barcode || !foodData) {
+        return NextResponse.json({ error: 'Barcode and foodData are required' }, { status: 400 });
+    }
+
+    try {
+        const kvs = await readBarcodeKVS();
+        kvs[barcode] = foodData;
+        await writeBarcodeKVS(kvs);
+        return NextResponse.json({ message: 'Barcode data saved successfully' }, { status: 200 });
+    } catch (error) {
+        console.error('Error in POST /api/barcode:', error);
+        return NextResponse.json({ error: 'Failed to save barcode data' }, { status: 500 });
     }
 }

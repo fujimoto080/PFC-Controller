@@ -34,6 +34,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const {uniqueStores} = useFoodDictionary();
     const [saveToDictionary, setSaveToDictionary] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
+    const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
 
     const [eatDate, setEatDate] = useState('');
     const [eatTime, setEatTime] = useState('');
@@ -58,7 +59,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
 
     // Form for manual entry
-    const { register, handleSubmit, reset } = useForm<FoodItem>({
+    const { register, handleSubmit, reset, getValues } = useForm<FoodItem>({
         defaultValues: initialData ? {
             name: initialData.name,
             protein: initialData.protein,
@@ -69,7 +70,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         } : undefined
     });
 
-    const onSubmitManual = (data: FoodItem) => {
+    const onSubmitManual = async (data: FoodItem) => {
         // Basic validation / conversion
         const item: FoodItem = {
             id: generateId(),
@@ -88,6 +89,35 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
             toast.success('食品リストにも保存しました');
         }
         toast.success(item.name + 'を追加しました');
+
+        // KVSにバーコードデータを保存する
+        if (scannedBarcode) {
+            try {
+                const kvsFoodData = {
+                    name: item.name,
+                    protein: item.protein,
+                    fat: item.fat,
+                    carbs: item.carbs,
+                    calories: item.calories,
+                    store: item.store,
+                };
+                await fetch('/api/barcode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ barcode: scannedBarcode, foodData: kvsFoodData }),
+                });
+                toast.success('バーコード情報も保存しました');
+            } catch (error) {
+                console.error('Failed to save barcode data to KVS:', error);
+                toast.error('バーコード情報の保存に失敗しました');
+            } finally {
+                setScannedBarcode(null); // KVS保存後、scannedBarcodeをクリア
+            }
+        }
+
+
         reset();
         setSaveToDictionary(false);
         if (onSuccess) {
@@ -99,36 +129,50 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
         const handleScanSuccess = async (code: string) => {
             setShowScanner(false);
+            setScannedBarcode(code); // バーコードを保存
             const loadingToast = toast.loading('商品情報を取得中...');
     
             try {
                 const res = await fetch(`/api/barcode?code=${code}`);
-                const data = await res.json();
     
-                if (!res.ok) {
+                if (res.ok) {
+                    const data = await res.json();
                     toast.dismiss(loadingToast);
-                    toast.error(data.error || '商品が見つかりませんでした');
-                    return;
+                    toast.success(`「${data.name}」が見つかりました`);
+        
+                    // Switch to manual mode and fill form
+                    setActiveTab('manual');
+        
+                    setTimeout(() => {
+                        reset({
+                            name: data.name,
+                            protein: data.protein,
+                            fat: data.fat,
+                            carbs: data.carbs,
+                            calories: data.calories,
+                            store: data.store
+                        });
+                    }, 100);
+                } else if (res.status === 404) {
+                    toast.dismiss(loadingToast);
+                    toast.info('バーコードが見つかりませんでした。手動で入力してください。');
+                    setActiveTab('manual');
+                    setTimeout(() => {
+                        reset({
+                            name: '',
+                            protein: 0,
+                            fat: 0,
+                            carbs: 0,
+                            calories: 0,
+                            store: ''
+                        });
+                        reset({ ...getValues(), name: `バーコード: ${code}` }); // getValues()を使って他のフィールドの既存の値を保持
+                    }, 100);
+                } else {
+                    const data = await res.json();
+                    toast.dismiss(loadingToast);
+                    toast.error(data.error || '商品情報の取得に失敗しました');
                 }
-    
-                toast.dismiss(loadingToast);
-                toast.success(`「${data.name}」が見つかりました`);
-    
-                // Switch to manual mode and fill form
-                setActiveTab('manual');
-    
-                // We need to wait a tick for the tab switch to happen and form to mount/reset
-                setTimeout(() => {
-                    reset({
-                        name: data.name,
-                        protein: data.protein,
-                        fat: data.fat,
-                        carbs: data.carbs,
-                        calories: data.calories,
-                        store: data.store
-                    });
-                }, 100);
-    
             } catch (error) {
                 toast.dismiss(loadingToast);
                 toast.error('エラーが発生しました');
