@@ -12,11 +12,23 @@ import {
 } from '@/components/ui/select';
 import { PFC, UserProfile } from '@/lib/types';
 import { Card } from '@/components/ui/card';
+import { Info } from 'lucide-react';
 
 interface ProfileCalculatorProps {
     onCalculate: (goals: PFC, profile: UserProfile) => void;
     initialProfile?: UserProfile;
 }
+
+const calculateRecommendedDuration = (currentWeight: number, targetWeight: number): number => {
+    const weightToLose = currentWeight - targetWeight;
+    const safeMonthlyWeightLoss = currentWeight * 0.05;
+    if (weightToLose > 0 && safeMonthlyWeightLoss > 0) {
+        const duration = weightToLose / safeMonthlyWeightLoss;
+        // 小数点第一位に丸める
+        return Math.round(duration * 10) / 10;
+    }
+    return 0;
+};
 
 export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalculatorProps) {
     const [profile, setProfile] = useState<UserProfile>(initialProfile || {
@@ -27,13 +39,18 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         targetWeight: 65,
         activityLevel: 1.375,
     });
-    const [calorieAdjustment, setCalorieAdjustment] = useState(-500);
+
+    const [targetDuration, setTargetDuration] = useState(() => {
+        const recommended = calculateRecommendedDuration(profile.weight, profile.targetWeight);
+        return recommended > 0 ? recommended : 3;
+    });
 
 
-    const calculateGoals = (p: UserProfile, adjustment: number) => {
-        const { gender, age, height, weight, activityLevel } = p;
+    const calculateGoals = (p: UserProfile, duration: number) => {
+        const { gender, age, height, weight, targetWeight, activityLevel } = p;
         const h = height || 170;
         const w = weight || 70;
+        const tw = targetWeight || w;
         const a = age || 30;
 
         let bmr = 0;
@@ -45,7 +62,19 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         bmr = Math.round(bmr);
         const tdee = Math.round(bmr * activityLevel);
 
-        const caloriesBeforeAdjustment = tdee + adjustment;
+        const weightDifference = w - tw;
+        let calorieAdjustment = 0;
+        if (weightDifference > 0 && duration > 0) { // 減量
+            const totalCaloriesToLose = weightDifference * 7200;
+            const totalDays = duration * 30;
+            calorieAdjustment = -(totalCaloriesToLose / totalDays);
+        } else if (weightDifference < 0 && duration > 0) { // 増量
+            const totalCaloriesToGain = Math.abs(weightDifference) * 7200;
+            const totalDays = duration * 30;
+            calorieAdjustment = totalCaloriesToGain / totalDays;
+        }
+
+        const caloriesBeforeAdjustment = tdee + calorieAdjustment;
         const minimumCalories = gender === 'male' ? 1500 : 1200;
         const targetCalories = Math.max(caloriesBeforeAdjustment, minimumCalories);
 
@@ -55,6 +84,7 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
             carbs: Math.round((targetCalories * 0.50) / 4) || 0,
             calories: Math.round(targetCalories) || 0,
             caloriesBeforeAdjustment: Math.round(caloriesBeforeAdjustment),
+            calorieAdjustment: Math.round(calorieAdjustment),
             minimumCalories,
             bmr,
             tdee,
@@ -65,9 +95,8 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
     const bmi = (profile.weight || 70) / (heightInMeters * heightInMeters);
 
     useEffect(() => {
-        // 同期的なsetStateの警告を避けるため microtask で処理
         queueMicrotask(() => {
-            const goals = calculateGoals(profile, calorieAdjustment);
+            const goals = calculateGoals(profile, targetDuration);
             onCalculate({
                 protein: goals.protein,
                 fat: goals.fat,
@@ -75,9 +104,10 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                 calories: goals.calories,
             }, profile);
         });
-    }, [profile, onCalculate, calorieAdjustment]);
+    }, [profile, onCalculate, targetDuration]);
 
-    const calculatedGoals = calculateGoals(profile, calorieAdjustment);
+    const calculatedGoals = calculateGoals(profile, targetDuration);
+    const recommendedDuration = calculateRecommendedDuration(profile.weight, profile.targetWeight);
     const genderText = profile.gender === 'male' ? '男性' : '女性';
     const bmrFormula = profile.gender === 'male'
         ? `10 * ${profile.weight}kg + 6.25 * ${profile.height}cm - 5 * ${profile.age}歳 + 5`
@@ -91,12 +121,18 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         '1.9': '非常に激しい運動',
     }[profile.activityLevel.toString()] || '';
 
-    const targetStatus = calorieAdjustment < 0 ? '減量' : calorieAdjustment > 0 ? '増量' : '維持';
-    const targetFormula = `${calculatedGoals.tdee}kcal ${calorieAdjustment >= 0 ? '+' : ''} ${calorieAdjustment}kcal`;
+    const targetStatus = calculatedGoals.calorieAdjustment < 0 ? '減量' : calculatedGoals.calorieAdjustment > 0 ? '増量' : '維持';
+    const targetFormula = `${calculatedGoals.tdee}kcal ${calculatedGoals.calorieAdjustment >= 0 ? '+' : ''} ${calculatedGoals.calorieAdjustment}kcal`;
 
 
     const handleLevelChange = (value: string) => {
         setProfile(prev => ({ ...prev, activityLevel: parseFloat(value) }));
+    };
+
+    const handleDurationBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const value = parseFloat(e.target.value);
+        const roundedValue = Math.round(value * 10) / 10;
+        setTargetDuration(Math.max(0.1, roundedValue));
     };
 
     return (
@@ -179,17 +215,33 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                 </div>
             </div>
 
+            <Card className="p-3 mt-4 bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800">
+                <div className="flex items-center gap-2">
+                    <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">ダイエット期間の目安</p>
+                </div>
+                <div className="text-[10px] text-blue-700 dark:text-blue-400 mt-1 pl-6 space-y-1">
+                    <p>専門家は、1ヶ月あたり現在の体重の5%以内の減量を推奨しています。</p>
+                    <p>・安全な月間減量ペース: {profile.weight}kg × 5% = <strong>{(profile.weight * 0.05).toFixed(1)}kg</strong></p>
+                    {recommendedDuration > 0 && (
+                        <p>・推奨期間の計算: ({profile.weight}kg - {profile.targetWeight}kg) ÷ {(profile.weight * 0.05).toFixed(1)}kg/月 ≒ <strong>{recommendedDuration}ヶ月</strong></p>
+                    )}
+                </div>
+            </Card>
+
             <div className="space-y-2 pt-4">
-                <Label htmlFor="calorieAdjustment">カロリー調整 (kcal/日)</Label>
+                <Label htmlFor="targetDuration">目標期間 (ヶ月)</Label>
                 <Input
-                    id="calorieAdjustment"
+                    id="targetDuration"
                     type="number"
-                    step="50"
-                    value={calorieAdjustment}
-                    onChange={(e) => setCalorieAdjustment(parseInt(e.target.value) || 0)}
+                    min="0.1"
+                    step="0.1"
+                    value={targetDuration}
+                    onChange={(e) => setTargetDuration(parseFloat(e.target.value) || 0)}
+                    onBlur={handleDurationBlur}
                 />
-                <p className="text-[10px] text-muted-foreground">
-                    減量の場合はマイナス値 (例: -500)、増量の場合はプラス値を入力してください。
+                 <p className="text-[10px] text-muted-foreground">
+                    目標体重を達成するまでの期間を設定してください。小数点第一位まで入力できます。
                 </p>
             </div>
 
@@ -223,7 +275,7 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                 )}
                 <div className="pt-2">
                     <div className="text-xs text-muted-foreground mt-2 space-y-3 p-3 bg-background/50 rounded-md">
-                        <p className="text-[11px] font-bold text-foreground/80">ミフリン-セントジョー方程式を用いて計算しています。</p>
+                        <p className="text-[11px] font-bold text-foreground/80">計算の内訳</p>
                         <div className="space-y-1">
                             <p className="font-semibold">1. 基礎代謝量 (BMR)</p>
                             <p className="text-[10px]">{genderText}の場合: <br /> <code className="text-[11px]">{bmrFormula}</code></p>
@@ -236,7 +288,7 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                         </div>
                          <div className="space-y-1">
                             <p className="font-semibold">3. 目標カロリー ({targetStatus})</p>
-                            <p className="text-[10px]">TDEEを元に調整: <br /> <code className="text-[11px]">{targetFormula}</code></p>
+                            <p className="text-[10px]">1日の調整カロリーを計算: <br /> <code className="text-[11px]">{targetFormula}</code></p>
                             <p className="text-right font-bold text-sm">= {calculatedGoals.caloriesBeforeAdjustment} kcal</p>
                         </div>
                         {calculatedGoals.calories !== calculatedGoals.caloriesBeforeAdjustment && (
