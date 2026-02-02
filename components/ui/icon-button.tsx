@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { Button, type ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const IconButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const IconButton = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof Button>>(
   ({ className, ...props }, ref) => {
     return (
       <Button

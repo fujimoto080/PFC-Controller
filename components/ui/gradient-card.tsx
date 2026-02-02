@@ -1,8 +1,8 @@
 import * as React from "react"
-import { Card, type CardProps } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
-const GradientCard = React.forwardRef<HTMLDivElement, CardProps>(
+const GradientCard = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof Card>>(
   ({ className, ...props }, ref) => {
     return (
       <Card
