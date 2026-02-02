@@ -141,7 +141,7 @@ export function LogList() {
   }, [groupedItems]);
 
   return (
-    <div className="space-y-4">
+    <>
       <Drawer open={isAddDrawerOpen} onOpenChange={(open) => {
         setIsAddDrawerOpen(open);
         if (!open) setCallingItem(null);
@@ -157,9 +157,9 @@ export function LogList() {
       </Drawer>
 
       {allItems.length === 0 ? (
-        <div className="text-muted-foreground py-10 text-center">
-          <p>記録はありません。</p>
-        </div>
+        <p className="text-muted-foreground py-10 text-center">
+          記録はありません。
+        </p>
       ) : (
         <ScrollArea className="h-[calc(100vh-160px)]">
           <div className="space-y-6 px-1 pb-20">
@@ -317,6 +317,6 @@ export function LogList() {
         onOpenChange={setIsEditDrawerOpen}
         onSuccess={refreshItems}
       />
-    </div>
+    </>
   );
 }

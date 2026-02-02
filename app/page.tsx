@@ -40,32 +40,26 @@ export default function Home() {
             ? '今日のバランス'
             : `${format(displayDate, 'M月d日', { locale: ja })}のバランス`}
         </h1>
-        <div className="flex items-center gap-2">
-          {settings && (
-            <GoalEditForm
-              initialGoals={settings.targetPFC}
-              initialProfile={settings.profile}
-              onSave={handleSaveGoals}
-              trigger={
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Settings className="h-5 w-5 text-muted-foreground" />
-                </Button>
-              }
-            />
-          )}
-        </div>
+        {settings && (
+          <GoalEditForm
+            initialGoals={settings.targetPFC}
+            initialProfile={settings.profile}
+            onSave={handleSaveGoals}
+            trigger={
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Settings className="h-5 w-5 text-muted-foreground" />
+              </Button>
+            }
+          />
+        )}
       </header>
 
       <PFCStats
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
       />
-
       <QuickAddButtons />
-
       <WeeklyPFCStats />
-
-
     </div>
   );
 }
