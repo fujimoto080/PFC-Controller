@@ -28,8 +28,6 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         activityLevel: 1.375,
     });
 
-
-
     const calculateGoals = (p: UserProfile) => {
         const { gender, age, height, weight, targetWeight, activityLevel } = p;
         const h = height || 170;
@@ -43,7 +41,9 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         } else {
             bmr = 10 * w + 6.25 * h - 5 * a - 161;
         }
-        const tdee = bmr * activityLevel;
+        bmr = Math.round(bmr);
+        const tdee = Math.round(bmr * activityLevel);
+
         let targetCalories = tdee;
         if (tw < w) targetCalories = tdee - 500;
         else if (tw > w) targetCalories = tdee + 300;
@@ -54,6 +54,8 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
             fat: Math.round((targetCalories * 0.25) / 9) || 0,
             carbs: Math.round((targetCalories * 0.50) / 4) || 0,
             calories: Math.round(targetCalories) || 0,
+            bmr,
+            tdee,
         };
     };
 
@@ -63,11 +65,38 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
     useEffect(() => {
         // 同期的なsetStateの警告を避けるため microtask で処理
         queueMicrotask(() => {
-            onCalculate(calculateGoals(profile), profile);
+            const goals = calculateGoals(profile);
+            onCalculate({
+                protein: goals.protein,
+                fat: goals.fat,
+                carbs: goals.carbs,
+                calories: goals.calories,
+            }, profile);
         });
     }, [profile, onCalculate]);
 
     const calculatedGoals = calculateGoals(profile);
+    const genderText = profile.gender === 'male' ? '男性' : '女性';
+    const bmrFormula = profile.gender === 'male'
+        ? `10 * ${profile.weight}kg + 6.25 * ${profile.height}cm - 5 * ${profile.age}歳 + 5`
+        : `10 * ${profile.weight}kg + 6.25 * ${profile.height}cm - 5 * ${profile.age}歳 - 161`;
+
+    const activityLevelText = {
+        '1.2': 'ほぼ運動しない',
+        '1.375': '軽い運動（週1-3回）',
+        '1.55': '中程度の運動（週3-5回）',
+        '1.725': '激しい運動（週6-7回）',
+        '1.9': '非常に激しい運動',
+    }[profile.activityLevel.toString()] || '';
+
+    const targetStatus = profile.targetWeight < profile.weight ? '減量' : profile.targetWeight > profile.weight ? '増量' : '維持';
+    let targetFormula = `${calculatedGoals.tdee}kcal`;
+    if (targetStatus === '減量') {
+        targetFormula = `${calculatedGoals.tdee}kcal - 500kcal`;
+    } else if (targetStatus === '増量') {
+        targetFormula = `${calculatedGoals.tdee}kcal + 300kcal`;
+    }
+
 
     const handleLevelChange = (value: string) => {
         setProfile(prev => ({ ...prev, activityLevel: parseFloat(value) }));
@@ -180,6 +209,26 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                         </div>
                     </div>
                 )}
+                <div className="pt-2">
+                    <div className="text-xs text-muted-foreground mt-2 space-y-3 p-3 bg-background/50 rounded-md">
+                        <p className="text-[11px] font-bold text-foreground/80">ミフリン-セントジョー方程式を用いて計算しています。</p>
+                        <div className="space-y-1">
+                            <p className="font-semibold">1. 基礎代謝量 (BMR)</p>
+                            <p className="text-[10px]">{genderText}の場合: <br /> <code className="text-[11px]">{bmrFormula}</code></p>
+                            <p className="text-right font-bold text-sm">= {calculatedGoals.bmr} kcal</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="font-semibold">2. 維持カロリー (TDEE)</p>
+                            <p className="text-[10px]">BMR × 活動レベル({activityLevelText}): <br /> <code className="text-[11px]">{calculatedGoals.bmr} * {profile.activityLevel}</code></p>
+                            <p className="text-right font-bold text-sm">= {calculatedGoals.tdee} kcal</p>
+                        </div>
+                         <div className="space-y-1">
+                            <p className="font-semibold">3. 目標カロリー ({targetStatus})</p>
+                            <p className="text-[10px]">TDEEを元に調整: <br /> <code className="text-[11px]">{targetFormula}</code></p>
+                            <p className="text-right font-bold text-sm">= {calculatedGoals.calories} kcal</p>
+                        </div>
+                    </div>
+                </div>
             </div>
             <p className="text-[10px] text-muted-foreground text-center">
                 ※プロフィールを変更すると自動で目標値が更新されます。
