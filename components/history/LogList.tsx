@@ -29,6 +29,15 @@ type GroupedFoodItem = {
   groupKey: string;
 };
 
+// PFC表示用の小さなコンポーネント
+const PFCLine = ({ p, f, c, className }: { p: number, f: number, c: number, className?: string }) => (
+    <div className={cn("text-muted-foreground flex gap-2", className)}>
+        <span>P:{p.toFixed(1)}</span>
+        <span>F:{f.toFixed(1)}</span>
+        <span>C:{c.toFixed(1)}</span>
+    </div>
+);
+
 export function LogList() {
   const [allItems, setAllItems] = useState<FoodItem[]>([]);
   const [displayCount, setDisplayCount] = useState(100);
@@ -213,11 +222,7 @@ export function LogList() {
                                 )}
                               </div>
 
-                              <div className="text-muted-foreground flex gap-2 text-xs">
-                                <span>P:{group.totalProtein.toFixed(1)}</span>
-                                <span>F:{group.totalFat.toFixed(1)}</span>
-                                <span>C:{group.totalCarbs.toFixed(1)}</span>
-                              </div>
+                              <PFCLine p={group.totalProtein} f={group.totalFat} c={group.totalCarbs} className="text-xs" />
 
                               {/* グループ全体の操作ボタン */}
                               <div className="flex gap-2 pt-1">
@@ -266,11 +271,7 @@ export function LogList() {
                                           <div className="text-xs text-muted-foreground">
                                             {format(new Date(item.timestamp), 'HH:mm')} • {item.calories} kcal
                                           </div>
-                                          <div className="text-muted-foreground flex gap-2 text-[10px] mt-1">
-                                            <span>P:{item.protein}</span>
-                                            <span>F:{item.fat}</span>
-                                            <span>C:{item.carbs}</span>
-                                          </div>
+                                          <PFCLine p={item.protein} f={item.fat} c={item.carbs} className="text-[10px] mt-1" />
                                         </div>
                                         <Button
                                           size="icon"

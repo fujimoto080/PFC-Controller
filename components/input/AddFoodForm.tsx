@@ -353,7 +353,6 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                                 </a>
                                             </div>
                                         )}
-                                        <div className="pt-2 text-center" />
                                     </div>
                                 </CardContent>
                             </Card>

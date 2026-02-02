@@ -151,36 +151,34 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
             </CardHeader>
           </Card>
 
-          <div className="grid grid-cols-1 gap-4">
-            <Card>
-              <CardContent className="space-y-6 pt-6">
-                <StatRow
-                  label="タンパク質"
-                  current={protein}
-                  target={targetPFC.protein}
-                  debt={debt.protein}
-                  color="bg-blue-500"
-                  delay={0.1}
-                />
-                <StatRow
-                  label="脂質"
-                  current={fat}
-                  target={targetPFC.fat}
-                  debt={debt.fat}
-                  color="bg-yellow-500"
-                  delay={0.2}
-                />
-                <StatRow
-                  label="炭水化物"
-                  current={carbs}
-                  target={targetPFC.carbs}
-                  debt={debt.carbs}
-                  color="bg-green-500"
-                  delay={0.3}
-                />
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardContent className="space-y-6 pt-6">
+              <StatRow
+                label="タンパク質"
+                current={protein}
+                target={targetPFC.protein}
+                debt={debt.protein}
+                color="bg-blue-500"
+                delay={0.1}
+              />
+              <StatRow
+                label="脂質"
+                current={fat}
+                target={targetPFC.fat}
+                debt={debt.fat}
+                color="bg-yellow-500"
+                delay={0.2}
+              />
+              <StatRow
+                label="炭水化物"
+                current={carbs}
+                target={targetPFC.carbs}
+                debt={debt.carbs}
+                color="bg-green-500"
+                delay={0.3}
+              />
+            </CardContent>
+          </Card>
         </motion.div>
       </AnimatePresence>
     </div>

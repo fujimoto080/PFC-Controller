@@ -53,7 +53,6 @@ export default function Home() {
               }
             />
           )}
-          <div className="bg-secondary h-8 w-8 rounded-full" />
         </div>
       </header>
 

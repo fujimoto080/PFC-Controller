@@ -53,6 +53,11 @@ export function Calendar() {
     const targetCalories = settings.targetPFC.calories;
     const weeklyTarget = targetCalories * 7;
 
+    const monthLogs = Object.values(logs).filter(log => log.date.startsWith(format(currentMonth, 'yyyy-MM')));
+    const totalMonthCalories = monthLogs.reduce((acc, log) => acc + (log.total?.calories || 0), 0);
+    const daysWithLogs = Math.max(1, monthLogs.filter(log => log.total?.calories > 0).length);
+    const averageCalories = totalMonthCalories / daysWithLogs;
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between px-2">
@@ -193,22 +198,13 @@ export function Calendar() {
                     <div>
                         <p className="text-xs text-muted-foreground">総摂取カロリー</p>
                         <p className="text-lg font-bold">
-                            {Math.round(
-                                Object.values(logs)
-                                    .filter(log => log.date.startsWith(format(currentMonth, 'yyyy-MM')))
-                                    .reduce((acc, log) => acc + (log.total?.calories || 0), 0)
-                            ).toLocaleString()} kcal
+                            {Math.round(totalMonthCalories).toLocaleString()} kcal
                         </p>
                     </div>
                     <div>
                         <p className="text-xs text-muted-foreground">平均 / 日</p>
                         <p className="text-lg font-bold">
-                            {Math.round(
-                                Object.values(logs)
-                                    .filter(log => log.date.startsWith(format(currentMonth, 'yyyy-MM')))
-                                    .reduce((acc, log) => acc + (log.total?.calories || 0), 0) /
-                                Math.max(1, Object.values(logs).filter(log => log.date.startsWith(format(currentMonth, 'yyyy-MM')) && log.total?.calories > 0).length)
-                            ).toLocaleString()} kcal
+                            {Math.round(averageCalories).toLocaleString()} kcal
                         </p>
                     </div>
                 </div>
