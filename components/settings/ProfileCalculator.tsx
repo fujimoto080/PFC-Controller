@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { PFC, UserProfile } from '@/lib/types';
+import { Card } from '@/components/ui/card';
 
 interface ProfileCalculatorProps {
     onCalculate: (goals: PFC, profile: UserProfile) => void;
@@ -164,18 +165,18 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                             <span>{calculatedGoals.calories} kcal</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-xs text-center pt-2">
-                            <div className="bg-card p-2 rounded border">
+                            <Card className="p-2">
                                 <div className="text-muted-foreground">タンパク質</div>
                                 <div className="font-semibold">{calculatedGoals.protein}g</div>
-                            </div>
-                            <div className="bg-card p-2 rounded border">
+                            </Card>
+                            <Card className="p-2">
                                 <div className="text-muted-foreground">脂質</div>
                                 <div className="font-semibold">{calculatedGoals.fat}g</div>
-                            </div>
-                            <div className="bg-card p-2 rounded border">
+                            </Card>
+                            <Card className="p-2">
                                 <div className="text-muted-foreground">炭水化物</div>
                                 <div className="font-semibold">{calculatedGoals.carbs}g</div>
-                            </div>
+                            </Card>
                         </div>
                     </div>
                 )}

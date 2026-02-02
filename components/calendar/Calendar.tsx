@@ -9,6 +9,7 @@ import { UserSettings } from '@/lib/types';
 import { cn, formatDate } from '@/lib/utils';
 import { useAllLogs } from '@/hooks/use-logs';
 import { IconButton } from '@/components/ui/icon-button';
+import { Card } from '@/components/ui/card';
 
 export function Calendar() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -80,7 +81,7 @@ export function Calendar() {
                 </div>
             </div>
 
-            <div className="bg-card rounded-3xl border p-4 shadow-sm">
+            <Card className="rounded-3xl p-4">
                 <div className="mb-2 grid grid-cols-[repeat(7,1fr)_40px] gap-1">
                     {weekDays.map((day, i) => (
                         <div
@@ -186,9 +187,9 @@ export function Calendar() {
                         );
                     })}
                 </div>
-            </div>
+            </Card>
 
-            <div className="bg-card glassmorphism rounded-2xl border p-4 shadow-sm">
+            <Card className="glassmorphism rounded-2xl p-4">
                 <h3 className="mb-2 text-sm font-semibold text-muted-foreground">今月のサマリー</h3>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -204,7 +205,7 @@ export function Calendar() {
                         </p>
                     </div>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }

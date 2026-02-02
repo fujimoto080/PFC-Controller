@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { getWeeklyLog, getSettings } from '@/lib/storage';
 import { UserSettings, DEFAULT_TARGET } from '@/lib/types';
-import { Card, CardHeader } from '@/components/ui/card';
+import { CardHeader } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { Progress } from '@/components/ui/progress';
 

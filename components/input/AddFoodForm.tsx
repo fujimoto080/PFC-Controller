@@ -366,7 +366,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                     <div className="text-muted-foreground group relative flex flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed p-10">
                                         <Camera className="mb-2 h-10 w-10 transition-transform group-hover:scale-110" />
                                         <p>写真を撮る</p>
-                                        <input
+                                        <Input
                                             type="file"
                                             accept="image/*"
                                             capture="environment"
