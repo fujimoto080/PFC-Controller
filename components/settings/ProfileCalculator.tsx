@@ -17,20 +17,71 @@ import { Info } from 'lucide-react';
 interface ProfileCalculatorProps {
     onCalculate: (goals: PFC, profile: UserProfile) => void;
     initialProfile?: UserProfile;
+    duration?: number;
+    onDurationChange?: (duration: number) => void;
 }
 
-const calculateRecommendedDuration = (currentWeight: number, targetWeight: number): number => {
-    const weightToLose = currentWeight - targetWeight;
-    const safeMonthlyWeightLoss = currentWeight * 0.05;
-    if (weightToLose > 0 && safeMonthlyWeightLoss > 0) {
-        const duration = weightToLose / safeMonthlyWeightLoss;
-        // 小数点第一位に丸める
-        return Math.round(duration * 10) / 10;
+export const calculateBMR = (weight: number, height: number, age: number, gender: 'male' | 'female'): number => {
+    let bmr = 0;
+    if (gender === 'male') {
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161;
     }
-    return 0;
+    return Math.round(bmr);
 };
 
-export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalculatorProps) {
+export const calculateTDEE = (bmr: number, activityLevel: number): number => {
+    return Math.round(bmr * activityLevel);
+};
+
+export const calculateMinimumCalories = (gender: 'male' | 'female'): number => {
+    return gender === 'male' ? 1500 : 1200;
+};
+
+const calculateRecommendedDuration = (
+    currentWeight: number,
+    targetWeight: number,
+    profile: UserProfile
+): { recommended: number; byWeightLoss: number; byCalorieLimit: number } => {
+    const weightToLose = currentWeight - targetWeight;
+
+    // 1. 5% weight loss rule (monthly)
+    const safeMonthlyWeightLoss = currentWeight * 0.05;
+    let durationByWeightLoss = 0;
+    if (weightToLose > 0 && safeMonthlyWeightLoss > 0) {
+        durationByWeightLoss = weightToLose / safeMonthlyWeightLoss;
+    }
+
+    // 2. Safe Calorie limit rule (avoid dropping below 1200/1500 kcal)
+    let durationByCalorieLimit = 0;
+    if (weightToLose > 0) { // Only checking for weight loss
+        const bmr = calculateBMR(currentWeight, profile.height, profile.age, profile.gender);
+        const tdee = calculateTDEE(bmr, profile.activityLevel);
+        const minCalories = calculateMinimumCalories(profile.gender);
+        const maxDailyDeficit = tdee - minCalories;
+
+        if (maxDailyDeficit > 0) {
+            const totalCaloriesToLose = weightToLose * 7200;
+            // totalCalories / (30 * dailyDeficit)
+            durationByCalorieLimit = totalCaloriesToLose / (30 * maxDailyDeficit);
+        } else {
+            // TDEE is already low, very slow loss recommended or impossible to do safely with diet alone
+            durationByCalorieLimit = 12; // Fallback to a long duration if safe deficit is 0 or negative
+        }
+    }
+
+    // Return the longer (safer) duration
+    const recommended = Math.max(durationByWeightLoss, durationByCalorieLimit);
+
+    return {
+        recommended: recommended > 0 ? Math.round(recommended * 10) / 10 : 0,
+        byWeightLoss: durationByWeightLoss > 0 ? Math.round(durationByWeightLoss * 10) / 10 : 0,
+        byCalorieLimit: durationByCalorieLimit > 0 ? Math.round(durationByCalorieLimit * 10) / 10 : 0
+    };
+};
+
+export function ProfileCalculator({ onCalculate, initialProfile, duration, onDurationChange }: ProfileCalculatorProps) {
     const [profile, setProfile] = useState<UserProfile>(initialProfile || {
         gender: 'male',
         age: 30,
@@ -40,10 +91,18 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         activityLevel: 1.375,
     });
 
-    const [targetDuration, setTargetDuration] = useState(() => {
-        const recommended = calculateRecommendedDuration(profile.weight, profile.targetWeight);
-        return recommended > 0 ? recommended : 3;
+    // Use controlled duration if provided, otherwise local state (though mostly intended to be controlled now)
+    const [localDuration, setLocalDuration] = useState(() => {
+        const result = calculateRecommendedDuration(profile.weight, profile.targetWeight, profile);
+        return result.recommended > 0 ? result.recommended : 3;
     });
+
+    const targetDuration = duration ?? localDuration;
+
+    const setTargetDuration = (val: number) => {
+        setLocalDuration(val);
+        onDurationChange?.(val);
+    };
 
 
     const calculateGoals = (p: UserProfile, duration: number) => {
@@ -53,14 +112,8 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         const tw = targetWeight || w;
         const a = age || 30;
 
-        let bmr = 0;
-        if (gender === 'male') {
-            bmr = 10 * w + 6.25 * h - 5 * a + 5;
-        } else {
-            bmr = 10 * w + 6.25 * h - 5 * a - 161;
-        }
-        bmr = Math.round(bmr);
-        const tdee = Math.round(bmr * activityLevel);
+        const bmr = calculateBMR(w, h, a, gender);
+        const tdee = calculateTDEE(bmr, activityLevel);
 
         const weightDifference = w - tw;
         let calorieAdjustment = 0;
@@ -75,7 +128,7 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
         }
 
         const caloriesBeforeAdjustment = tdee + calorieAdjustment;
-        const minimumCalories = gender === 'male' ? 1500 : 1200;
+        const minimumCalories = calculateMinimumCalories(gender);
         const targetCalories = Math.max(caloriesBeforeAdjustment, minimumCalories);
 
         return {
@@ -107,8 +160,10 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
     }, [profile, onCalculate, targetDuration]);
 
     const calculatedGoals = calculateGoals(profile, targetDuration);
-    const recommendedDuration = calculateRecommendedDuration(profile.weight, profile.targetWeight);
+    const durationInfo = calculateRecommendedDuration(profile.weight, profile.targetWeight, profile);
+    const recommendedDuration = durationInfo.recommended;
     const genderText = profile.gender === 'male' ? '男性' : '女性';
+    const minSafeCalories = calculateMinimumCalories(profile.gender);
     const bmrFormula = profile.gender === 'male'
         ? `10 * ${profile.weight}kg + 6.25 * ${profile.height}cm - 5 * ${profile.age}歳 + 5`
         : `10 * ${profile.weight}kg + 6.25 * ${profile.height}cm - 5 * ${profile.age}歳 - 161`;
@@ -224,7 +279,14 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                     <p>専門家は、1ヶ月あたり現在の体重の5%以内の減量を推奨しています。</p>
                     <p>・安全な月間減量ペース: {profile.weight}kg × 5% = <strong>{(profile.weight * 0.05).toFixed(1)}kg</strong></p>
                     {recommendedDuration > 0 && (
-                        <p>・推奨期間の計算: ({profile.weight}kg - {profile.targetWeight}kg) ÷ {(profile.weight * 0.05).toFixed(1)}kg/月 ≒ <strong>{recommendedDuration}ヶ月</strong></p>
+                        <>
+                            <p>・5%ルールでの最短期間: ({profile.weight}kg - {profile.targetWeight}kg) ÷ {(profile.weight * 0.05).toFixed(1)}kg/月 ≒ <strong>{durationInfo.byWeightLoss}ヶ月</strong></p>
+                            <p>・安全カロリー({minSafeCalories}kcal)での最短期間: <strong>{durationInfo.byCalorieLimit}ヶ月</strong></p>
+                            <p className="pt-1 font-bold text-blue-900 dark:text-blue-200">
+                                → 推奨期間: {recommendedDuration}ヶ月以上
+                                {durationInfo.byCalorieLimit > durationInfo.byWeightLoss && <span> (カロリー制限を考慮)</span>}
+                            </p>
+                        </>
                     )}
                 </div>
             </Card>
@@ -240,7 +302,7 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                     onChange={(e) => setTargetDuration(parseFloat(e.target.value) || 0)}
                     onBlur={handleDurationBlur}
                 />
-                 <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground">
                     目標体重を達成するまでの期間を設定してください。小数点第一位まで入力できます。
                 </p>
             </div>
@@ -286,7 +348,7 @@ export function ProfileCalculator({ onCalculate, initialProfile }: ProfileCalcul
                             <p className="text-[10px]">BMR × 活動レベル({activityLevelText}): <br /> <code className="text-[11px]">{calculatedGoals.bmr} * {profile.activityLevel}</code></p>
                             <p className="text-right font-bold text-sm">= {calculatedGoals.tdee} kcal</p>
                         </div>
-                         <div className="space-y-1">
+                        <div className="space-y-1">
                             <p className="font-semibold">3. 目標カロリー ({targetStatus})</p>
                             <p className="text-[10px]">1日の調整カロリーを計算: <br /> <code className="text-[11px]">{targetFormula}</code></p>
                             <p className="text-right font-bold text-sm">= {calculatedGoals.caloriesBeforeAdjustment} kcal</p>

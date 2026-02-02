@@ -25,6 +25,7 @@ interface GoalEditFormProps {
 export function GoalEditForm({ initialGoals, initialProfile, onSave, trigger }: GoalEditFormProps) {
     const [goals, setGoals] = useState<PFC>(initialGoals);
     const [profile, setProfile] = useState<UserProfile | undefined>(initialProfile);
+    const [duration, setDuration] = useState<number | undefined>(undefined);
     const [isOpen, setIsOpen] = useState(false);
 
     const handleCalculate = useCallback((newGoals: PFC, newProfile: UserProfile) => {
@@ -50,6 +51,8 @@ export function GoalEditForm({ initialGoals, initialProfile, onSave, trigger }: 
                         <ProfileCalculator
                             initialProfile={profile}
                             onCalculate={handleCalculate}
+                            duration={duration}
+                            onDurationChange={setDuration}
                         />
                     </div>
                     <DrawerFooter className="fixed bottom-0 left-0 right-0 z-10 w-full border-t bg-background p-0">
