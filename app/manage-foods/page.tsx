@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Pencil, Trash, Save, X, Star } from 'lucide-react';
+import { Plus, Pencil, Trash, Save, X, Star } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -26,7 +25,6 @@ import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 const getCurrentTimestamp = () => Date.now();
 
 export default function ManageFoodsPage() {
-    const router = useRouter();
     const { foods, uniqueStores } = useFoodDictionary();
     const [searchQuery, setSearchQuery] = useState('');
     const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
@@ -148,14 +146,7 @@ export default function ManageFoodsPage() {
 
     return (
         <div className="space-y-6 pb-20">
-            <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 border-b">
-                <div className="flex items-center gap-4 px-4">
-                    <IconButton onClick={() => router.back()}>
-                        <ArrowLeft className="h-5 w-5" />
-                    </IconButton>
-                    <h1 className="text-xl font-bold">食品データ管理</h1>
-                </div>
-            </header>
+            <h1 className="text-2xl font-bold tracking-tight py-2 mb-6 px-4">食品データ管理</h1>
 
             <div className="px-4">
                 {isAdding ? (
