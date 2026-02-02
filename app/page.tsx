@@ -13,6 +13,7 @@ import { Settings } from 'lucide-react';
 import { PFC, UserProfile } from '@/lib/types';
 import { toast } from 'sonner';
 import { usePfcData } from '@/hooks/use-pfc-data';
+import { PageTitle } from '@/components/ui/page-title';
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
@@ -34,25 +35,25 @@ export default function Home() {
 
   return (
     <div className="space-y-6 pb-20">
-      <header className="flex items-center justify-between py-2">
-        <h1 className="text-2xl font-bold tracking-tight">
+      <div className="flex items-center justify-between">
+        <PageTitle>
           {isToday(displayDate)
             ? '今日のバランス'
             : `${format(displayDate, 'M月d日', { locale: ja })}のバランス`}
-        </h1>
+        </PageTitle>
         {settings && (
           <GoalEditForm
             initialGoals={settings.targetPFC}
             initialProfile={settings.profile}
             onSave={handleSaveGoals}
             trigger={
-              <IconButton className="rounded-full">
+              <IconButton className="rounded-full mr-4">
                 <Settings className="h-5 w-5 text-muted-foreground" />
               </IconButton>
             }
           />
         )}
-      </header>
+      </div>
 
       <PFCStats
         selectedDate={selectedDate}

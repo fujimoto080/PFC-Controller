@@ -1,9 +1,10 @@
 import { LogList } from '@/components/history/LogList';
+import { PageTitle } from '@/components/ui/page-title';
 
 export default function LogPage() {
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight py-2 mb-6">履歴</h1>
+      <PageTitle>履歴</PageTitle>
       <LogList />
     </>
   );

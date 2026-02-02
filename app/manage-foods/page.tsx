@@ -16,11 +16,12 @@ import {
     deleteFoodFromDictionary,
     toggleFavoriteFood,
     isFavoriteFood,
-    addFoodItem, // 追加
+    addFoodItem,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 import { generateId, formatDate } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
+import { PageTitle } from '@/components/ui/page-title';
 
 const getCurrentTimestamp = () => Date.now();
 
@@ -52,18 +53,6 @@ export default function ManageFoodsPage() {
 
     // Form handling
     const { register, handleSubmit, reset, setValue } = useForm<FoodItem>();
-
-    const handleAddLog = (food: FoodItem) => {
-        const item: FoodItem = {
-            ...food,
-            id: generateId(), // unique id for log
-            timestamp: getSelectedTimestamp(),
-        };
-        addFoodItem(item);
-        toast.success(item.name + 'を食事記録に追加しました');
-        // Optionally navigate away or provide further action
-        // router.push('/');
-    };
 
     const startAdd = () => {
         setEditingItem(null);
@@ -140,13 +129,23 @@ export default function ManageFoodsPage() {
         toggleFavoriteFood(id);
     };
 
+    const handleAddLog = (food: FoodItem) => {
+        const item: FoodItem = {
+            ...food,
+            id: generateId(),
+            timestamp: getSelectedTimestamp(),
+        };
+        addFoodItem(item);
+        toast.success(item.name + 'を食事記録に追加しました');
+    };
+
     const filteredFoods = foods.filter((f) =>
         f.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
         <div className="space-y-6 pb-20">
-            <h1 className="text-2xl font-bold tracking-tight py-2 mb-6 px-4">食品データ管理</h1>
+            <PageTitle>食品データ管理</PageTitle>
 
             <div className="px-4">
                 {isAdding ? (
