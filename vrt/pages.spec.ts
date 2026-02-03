@@ -6,7 +6,6 @@ const pages = [
   { name: 'calendar', path: '/calendar' },
   { name: 'log', path: '/log' },
   { name: 'manage-foods', path: '/manage-foods' },
-  { name: 'settings', path: '/settings' },
   { name: 'signup', path: '/signup' },
 ];
 
