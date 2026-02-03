@@ -11,6 +11,19 @@ interface BarcodeScannerProps {
     onClose: () => void;
 }
 
+const SUPPORTED_FORMATS = [
+    Html5QrcodeSupportedFormats.EAN_13, // JAN
+    Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E,
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.CODE_39,
+    Html5QrcodeSupportedFormats.CODE_93,
+    Html5QrcodeSupportedFormats.ITF,
+    Html5QrcodeSupportedFormats.CODABAR,
+    Html5QrcodeSupportedFormats.QR_CODE
+];
+
 export function BarcodeScanner({ onScanSuccess, onClose }: BarcodeScannerProps) {
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const regionId = 'html5qr-code-full-region';
@@ -34,7 +47,7 @@ export function BarcodeScanner({ onScanSuccess, onClose }: BarcodeScannerProps) 
     const startScanning = async () => {
         try {
             const html5QrCode = new Html5Qrcode(regionId, {
-                formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13],
+                formatsToSupport: SUPPORTED_FORMATS,
                 verbose: false
             });
             scannerRef.current = html5QrCode;
@@ -100,7 +113,7 @@ export function BarcodeScanner({ onScanSuccess, onClose }: BarcodeScannerProps) 
                 <div className="p-4 text-center">
                     <h3 className="font-semibold mb-2">バーコードをスキャン</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                        商品のJANコードをカメラに向けてください
+                        JAN/EAN/UPC/Code128/ITFなどに対応しています
                     </p>
                     <div id={regionId} className="w-full overflow-hidden rounded-md bg-black min-h-[300px]" />
                 </div>
