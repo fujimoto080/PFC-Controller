@@ -138,7 +138,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                 if (res.ok) {
                     const data = await res.json();
                     toast.dismiss(loadingToast);
-                    toast.success(`「${data.name}」が見つかりました`);
+                    toast.success(`「${data.name}」が見つかりました (${code})`);
         
                     // Switch to manual mode and fill form
                     setActiveTab('manual');
@@ -240,6 +240,11 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                             <ScanBarcode className="h-4 w-4" />
                                             バーコードから読み取る
                                         </Button>
+                                        {scannedBarcode && (
+                                            <div className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                                                バーコード: {scannedBarcode}
+                                            </div>
+                                        )}
                                         <div className="space-y-2">
                                             <Label>食品名</Label>
                                             <Input
