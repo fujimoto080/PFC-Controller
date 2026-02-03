@@ -59,7 +59,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
 
     // Form for manual entry
-    const { register, handleSubmit, reset, getValues } = useForm<FoodItem>({
+    const { register, handleSubmit, reset } = useForm<FoodItem>({
         defaultValues: initialData ? {
             name: initialData.name,
             protein: initialData.protein,
