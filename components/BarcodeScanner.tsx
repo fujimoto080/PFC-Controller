@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { useEffect, useRef } from 'react';
+import { Html5Qrcode, Html5QrcodeScannerState, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -12,18 +12,24 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ onScanSuccess, onClose }: BarcodeScannerProps) {
-    const [isScanning, setIsScanning] = useState(false);
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const regionId = 'html5qr-code-full-region';
 
     useEffect(() => {
         // Cleanup on unmount
         return () => {
-            if (scannerRef.current && isScanning) {
-                scannerRef.current.stop().catch(console.error);
+            if (scannerRef.current) {
+                try {
+                    const state = scannerRef.current.getState();
+                    if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
+                        scannerRef.current.stop().catch(console.debug);
+                    }
+                } catch {
+                    // Ignore errors during cleanup
+                }
             }
         };
-    }, [isScanning]);
+    }, []);
 
     const startScanning = async () => {
         try {
@@ -49,7 +55,6 @@ export function BarcodeScanner({ onScanSuccess, onClose }: BarcodeScannerProps) 
                     // parse error, ignore it.
                 }
             );
-            setIsScanning(true);
         } catch (err) {
             console.error(err);
             toast.error('カメラの起動に失敗しました。カメラへのアクセスを許可してください。');
@@ -58,12 +63,15 @@ export function BarcodeScanner({ onScanSuccess, onClose }: BarcodeScannerProps) 
     };
 
     const stopScanning = async () => {
-        if (scannerRef.current && isScanning) {
+        if (scannerRef.current) {
             try {
-                await scannerRef.current.stop();
-                setIsScanning(false);
+                const state = scannerRef.current.getState();
+                if (state === Html5QrcodeScannerState.SCANNING || state === Html5QrcodeScannerState.PAUSED) {
+                    await scannerRef.current.stop();
+                }
             } catch (err) {
-                console.error('Failed to stop scanner', err);
+                // Ignore error if scanner is not running
+                console.debug('Scanner stop:', err);
             }
         }
     };
