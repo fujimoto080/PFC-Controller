@@ -285,7 +285,6 @@ export function saveSettings(settings: UserSettings) {
 // --- Food Dictionary Management ---
 
 const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
-import publicFoods from '@/data/public_foods.json';
 
 import generatedFoodsRaw from '@/data/generated_foods.json';
 const generatedFoods = generatedFoodsRaw as FoodItem[];
@@ -295,13 +294,11 @@ export function getFoodDictionary(): FoodItem[] {
   const stored = localStorage.getItem(STORAGE_KEY_FOODS);
   const userFoods: FoodItem[] = stored ? JSON.parse(stored) : [];
 
-  const defaults = [...(publicFoods as FoodItem[]), ...(generatedFoods as FoodItem[])];
-
   // Merge system foods (defaults) into user foods if they don't exist
   const merged = [...userFoods];
   let changed = false;
 
-  defaults.forEach(defaultItem => {
+  generatedFoods.forEach(defaultItem => {
     const exists = merged.some(item => item.id === defaultItem.id);
     if (!exists) {
       merged.push(defaultItem);
