@@ -166,7 +166,6 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                             calories: 0,
                             store: ''
                         });
-                        reset({ ...getValues(), name: `バーコード: ${code}` }); // getValues()を使って他のフィールドの既存の値を保持
                     }, 100);
                 } else {
                     const data = await res.json();
@@ -241,8 +240,17 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                             バーコードから読み取る
                                         </Button>
                                         {scannedBarcode && (
-                                            <div className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-                                                バーコード: {scannedBarcode}
+                                            <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                                                <span>バーコード: {scannedBarcode}</span>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-6 px-2"
+                                                    onClick={() => setScannedBarcode(null)}
+                                                >
+                                                    クリア
+                                                </Button>
                                             </div>
                                         )}
                                         <div className="space-y-2">
