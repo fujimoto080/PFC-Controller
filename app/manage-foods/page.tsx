@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Pencil, Trash, Save, X, Star } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -19,8 +19,9 @@ import {
     addFoodItem,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
-import { generateId, formatDate } from '@/lib/utils';
+import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
+import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { PageTitle } from '@/components/ui/page-title';
 
 const getCurrentTimestamp = () => Date.now();
@@ -31,25 +32,7 @@ export default function ManageFoodsPage() {
     const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
     const [isAdding, setIsAdding] = useState(false);
 
-    const [eatDate, setEatDate] = useState('');
-    const [eatTime, setEatTime] = useState('');
-
-    useEffect(() => {
-        const now = new Date();
-        const date = formatDate(now);
-        const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-        queueMicrotask(() => {
-            if (!eatDate) setEatDate(date);
-            if (!eatTime) setEatTime(time);
-        });
-    }, [eatDate, eatTime]);
-
-    const getSelectedTimestamp = () => {
-        const [year, month, day] = eatDate.split('-').map(Number);
-        const [hour, minute] = eatTime.split(':').map(Number);
-        return new Date(year, month - 1, day, hour, minute).getTime();
-    };
+    const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
 
     // Form handling
     const { register, handleSubmit, reset, setValue } = useForm<FoodItem>();
