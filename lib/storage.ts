@@ -5,6 +5,27 @@ import { formatDate, roundPFC } from './utils';
 
 const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
+const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
+
+const isClient = typeof window !== 'undefined';
+
+const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
+
+const getDateFromTimestamp = (timestamp: number) => formatDate(new Date(timestamp));
+
+const getSortedLogDates = (logs: Record<string, DailyLog>, order: 'asc' | 'desc' = 'desc') =>
+  Object.keys(logs).sort((a, b) => (order === 'asc' ? a.localeCompare(b) : b.localeCompare(a)));
+
+const getStorageItem = <T,>(key: string, fallback: T): T => {
+  if (!isClient) return fallback;
+  const stored = localStorage.getItem(key);
+  return stored ? JSON.parse(stored) : fallback;
+};
+
+const setStorageItem = <T,>(key: string, value: T) => {
+  if (!isClient) return;
+  localStorage.setItem(key, JSON.stringify(value));
+};
 
 // Helper to get today's date string YYYY-MM-DD in local time
 export function getTodayString(): string {
@@ -12,9 +33,7 @@ export function getTodayString(): string {
 }
 
 export function getLogs(): Record<string, DailyLog> {
-  if (typeof window === 'undefined') return {};
-  const stored = localStorage.getItem(STORAGE_KEY_LOGS);
-  return stored ? JSON.parse(stored) : {};
+  return getStorageItem<Record<string, DailyLog>>(STORAGE_KEY_LOGS, {});
 }
 
 export function getLogForDate(date: string): DailyLog {
@@ -33,7 +52,7 @@ export function getTodayLog(): DailyLog {
 }
 
 export function refreshUI() {
-  if (typeof window !== 'undefined') {
+  if (isClient) {
     window.dispatchEvent(new Event('pfc-update'));
   }
 }
@@ -41,7 +60,7 @@ export function refreshUI() {
 export function saveLog(log: DailyLog) {
   const logs = getLogs();
   logs[log.date] = log;
-  localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
+  setStorageItem(STORAGE_KEY_LOGS, logs);
   refreshUI();
 }
 
@@ -148,9 +167,8 @@ export function getPfcDebt(currentDate: string): PFC {
   const logs = getLogs();
 
   // Sort dates chronological to calculate cumulative debt
-  const sortedDates = Object.keys(logs).sort();
-
-  const cumulativeDebt: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
+  const sortedDates = getSortedLogDates(logs, 'asc');
+  const cumulativeDebt: PFC = { ...emptyTotals };
 
   // Helper to get local date string for any Date object
   const toDateStr = (d: Date) => formatDate(d);
@@ -181,12 +199,7 @@ export function getPfcDebt(currentDate: string): PFC {
       fat: log.total.fat - targetFat,
       carbs: log.total.carbs - targetCarbs,
       calories: log.total.calories - targetCalories,
-    } : {
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-      calories: 0,
-    };
+    } : emptyTotals;
 
     // Add to cumulative debt, but cap debt at zero
     cumulativeDebt.protein = Math.max(0, cumulativeDebt.protein + dailyExcess.protein);
@@ -213,7 +226,7 @@ export function recalculateLogTotals(log: DailyLog): DailyLog {
       carbs: acc.carbs + curr.carbs,
       calories: acc.calories + curr.calories,
     }),
-    { protein: 0, fat: 0, carbs: 0, calories: 0 },
+    emptyTotals,
   );
 
   log.total = {
@@ -229,8 +242,7 @@ export function recalculateLogTotals(log: DailyLog): DailyLog {
 export function addFoodItem(item: FoodItem) {
   // Extract date (YYYY-MM-DD) from timestamp
   // Use local time for date string
-  const dateObj = new Date(item.timestamp);
-  const date = formatDate(dateObj);
+  const date = getDateFromTimestamp(item.timestamp);
 
   const log = getLogForDate(date);
   log.items.push(item);
@@ -240,8 +252,7 @@ export function addFoodItem(item: FoodItem) {
 }
 
 export function deleteLogItem(id: string, timestamp: number) {
-  const dateObj = new Date(timestamp);
-  const date = formatDate(dateObj);
+  const date = getDateFromTimestamp(timestamp);
 
   const log = getLogForDate(date);
   log.items = log.items.filter(item => item.id !== id);
@@ -251,10 +262,8 @@ export function deleteLogItem(id: string, timestamp: number) {
 }
 
 export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
-  const oldDateObj = new Date(oldTimestamp);
-  const oldDate = formatDate(oldDateObj);
-
-  const newDate = formatDate(newItem.timestamp);
+  const oldDate = getDateFromTimestamp(oldTimestamp);
+  const newDate = getDateFromTimestamp(newItem.timestamp);
 
   if (oldDate === newDate) {
     const log = getLogForDate(oldDate);
@@ -272,27 +281,22 @@ export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
 }
 
 export function getSettings(): UserSettings {
-  if (typeof window === 'undefined') return { targetPFC: DEFAULT_TARGET };
-  const stored = localStorage.getItem(STORAGE_KEY_SETTINGS);
-  return stored ? JSON.parse(stored) : { targetPFC: DEFAULT_TARGET };
+  return getStorageItem<UserSettings>(STORAGE_KEY_SETTINGS, { targetPFC: DEFAULT_TARGET });
 }
 
 export function saveSettings(settings: UserSettings) {
-  localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+  setStorageItem(STORAGE_KEY_SETTINGS, settings);
   refreshUI();
 }
 
 // --- Food Dictionary Management ---
 
-const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
-
 import generatedFoodsRaw from '@/data/generated_foods.json';
 const generatedFoods = generatedFoodsRaw as FoodItem[];
 
 export function getFoodDictionary(): FoodItem[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(STORAGE_KEY_FOODS);
-  const userFoods: FoodItem[] = stored ? JSON.parse(stored) : [];
+  if (!isClient) return [];
+  const userFoods = getStorageItem<FoodItem[]>(STORAGE_KEY_FOODS, []);
 
   // Merge system foods (defaults) into user foods if they don't exist
   const merged = [...userFoods];
@@ -306,7 +310,7 @@ export function getFoodDictionary(): FoodItem[] {
     }
   });
 
-  if (changed || !stored) {
+  if (changed || userFoods.length === 0) {
     saveFoodDictionary(merged);
   }
 
@@ -314,7 +318,7 @@ export function getFoodDictionary(): FoodItem[] {
 }
 
 export function saveFoodDictionary(foods: FoodItem[]) {
-  localStorage.setItem(STORAGE_KEY_FOODS, JSON.stringify(foods));
+  setStorageItem(STORAGE_KEY_FOODS, foods);
   refreshUI();
 }
 
@@ -345,7 +349,7 @@ export function getHistoryItems(): FoodItem[] {
   const seenNames = new Set<string>();
 
   // Iterate over all logs in reverse chronological order (if keys are dates, sort them)
-  const sortedDates = Object.keys(logs).sort().reverse();
+  const sortedDates = getSortedLogDates(logs);
 
   for (const date of sortedDates) {
     const dayLog = logs[date];
@@ -369,7 +373,7 @@ export function getAllLogItems(): FoodItem[] {
   const allItems: FoodItem[] = [];
 
   // Sort dates in reverse chronological order
-  const sortedDates = Object.keys(logs).sort().reverse();
+  const sortedDates = getSortedLogDates(logs);
 
   for (const date of sortedDates) {
     const dayLog = logs[date];
@@ -433,4 +437,3 @@ export function isFavoriteFood(id: string): boolean {
   const favoriteIds = settings.favoriteFoodIds || [];
   return favoriteIds.includes(id);
 }
-
