@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Camera, Plus, ScanBarcode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -17,8 +17,9 @@ import {
     addFoodToDictionary
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
-import { generateId, formatDate } from '@/lib/utils';
+import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
+import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { toast } from 'sonner';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 
@@ -36,26 +37,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const [showScanner, setShowScanner] = useState(false);
     const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
 
-    const [eatDate, setEatDate] = useState('');
-    const [eatTime, setEatTime] = useState('');
-
-    useEffect(() => {
-        // マウント時に日付と時刻を初期化（ハイドレーションエラーと同期的なsetStateの警告を回避）
-        const now = new Date();
-        const date = formatDate(now);
-        const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-        queueMicrotask(() => {
-            if (!eatDate) setEatDate(date);
-            if (!eatTime) setEatTime(time);
-        });
-    }, [eatDate, eatTime]); // マウント時に一度だけ実行
-
-    const getSelectedTimestamp = () => {
-        const [year, month, day] = eatDate.split('-').map(Number);
-        const [hour, minute] = eatTime.split(':').map(Number);
-        return new Date(year, month - 1, day, hour, minute).getTime();
-    };
+    const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
 
 
     // Form for manual entry
