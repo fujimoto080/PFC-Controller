@@ -1,4 +1,3 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { AddFoodForm } from '@/components/input/AddFoodForm';
@@ -9,17 +8,6 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
-const MotionDiv = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ children, ...props }, ref) => (
-  <div ref={ref} {...props}>
-    {children}
-  </div>
-));
-
-MotionDiv.displayName = 'MotionDiv';
-
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -27,6 +15,18 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('framer-motion', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  const MotionDiv = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+  >(({ children, ...props }, ref) => (
+    <div ref={ref} {...props}>
+      {children}
+    </div>
+  ));
+
+  MotionDiv.displayName = 'MotionDiv';
+
   return {
     AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     motion: {
