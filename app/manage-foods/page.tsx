@@ -399,22 +399,24 @@ export default function ManageFoodsPage() {
                             </CardContent>
                         </Card>
 
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <Input
-                                    placeholder="食品を検索..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-                            {!isSelecting && (
-                                <Button variant="outline" onClick={startSelection}>
-                                    店舗/グループ変更
+                        <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Input
+                                        placeholder="食品を検索..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                {!isSelecting && (
+                                    <Button variant="outline" onClick={startSelection}>
+                                        店舗/グループ変更
+                                    </Button>
+                                )}
+                                <Button onClick={startAdd}>
+                                    <Plus className="h-4 w-4" /> 新規
                                 </Button>
-                            )}
-                            <Button onClick={startAdd}>
-                                <Plus className="h-4 w-4" /> 新規
-                            </Button>
+                            </div>
                         </div>
 
                         {searchQuery.trim() && (
