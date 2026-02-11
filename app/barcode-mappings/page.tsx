@@ -1,44 +1,11 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageTitle } from '@/components/ui/page-title';
+import { listBarcodeMappings } from '@/lib/barcode-kv';
 
-interface BarcodeMappedFood {
-  name: string;
-  protein: number;
-  fat: number;
-  carbs: number;
-  calories: number;
-  store?: string;
-}
-
-interface BarcodeMappingRow {
-  barcode: string;
-  food: BarcodeMappedFood;
-}
-
-const BARCODE_KVS_FILE = path.join(process.cwd(), 'data', 'barcode_kvs.json');
-
-async function loadBarcodeMappings(): Promise<BarcodeMappingRow[]> {
-  try {
-    const fileContents = await fs.readFile(BARCODE_KVS_FILE, 'utf8');
-    const parsed = JSON.parse(fileContents) as Record<string, BarcodeMappedFood>;
-
-    return Object.entries(parsed)
-      .map(([barcode, food]) => ({ barcode, food }))
-      .sort((left, right) => left.barcode.localeCompare(right.barcode));
-  } catch (error) {
-    const nodeError = error as NodeJS.ErrnoException;
-    if (nodeError.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-}
+export const dynamic = 'force-dynamic';
 
 export default async function BarcodeMappingsPage() {
-  const mappings = await loadBarcodeMappings();
+  const mappings = await listBarcodeMappings();
 
   return (
     <div className="mx-auto w-full max-w-4xl pb-24">
