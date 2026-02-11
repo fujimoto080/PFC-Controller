@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "csv_松屋_0",
+    "name": "牛めし (並)",
+    "protein": 19.2,
+    "fat": 23.8,
+    "carbs": 95.2,
+    "calories": 710,
+    "store": "松屋",
+    "image": "https://www.matsuyafoods.co.jp/common/images/menu/m_gyumeshi.jpg"
+  },
+  {
+    "id": "csv_松屋_1",
+    "name": "豚焼肉定食",
+    "protein": 28.4,
+    "fat": 45.2,
+    "carbs": 88.1,
+    "calories": 865,
+    "store": "松屋",
+    "image": null
+  }
+]
