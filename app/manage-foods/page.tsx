@@ -455,9 +455,10 @@ export default function ManageFoodsPage() {
                                     </Button>
                                 )}
                                 <Button
-                                    variant={isSortLocked ? 'default' : 'outline'}
+                                    variant={isSortLocked ? 'outline' : 'default'}
                                     onClick={() => setIsSortLocked((prev) => !prev)}
-                                    aria-pressed={isSortLocked}
+                                    aria-pressed={!isSortLocked}
+                                    aria-label={isSortLocked ? '並び替え無効' : '並び替え可能'}
                                 >
                                     並び替え
                                 </Button>
