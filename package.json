@@ -2,7 +2,7 @@
   "name": "pfc-app",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.28.2",
+  "packageManager": "pnpm@10.29.2",
   "scripts": {
     "dev": "next dev",
     "predev": "node scripts/generate-food-data.mjs",
