@@ -414,8 +414,8 @@ export default function ManageFoodsPage() {
                                 >
                                     並び替え
                                 </Button>
-                                <Button onClick={startAdd}>
-                                    <Plus className="h-4 w-4" /> 新規
+                                <Button onClick={startAdd} aria-label="新規追加">
+                                    +
                                 </Button>
                             </div>
                             <div className="relative">
