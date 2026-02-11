@@ -89,6 +89,8 @@ export default function ManageFoodsPage() {
     const [selectedFoodIds, setSelectedFoodIds] = useState<string[]>([]);
     const [bulkStoreName, setBulkStoreName] = useState('');
     const [bulkGroupName, setBulkGroupName] = useState('');
+    const [draggingFoodId, setDraggingFoodId] = useState<string | null>(null);
+    const [dropTarget, setDropTarget] = useState<{ storeName: string; groupName: string } | null>(null);
 
     const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
 
@@ -256,6 +258,48 @@ export default function ManageFoodsPage() {
         saveFoodDictionary(nextFoods);
     };
 
+    const moveFoodToStoreGroup = (foodId: string, targetStoreName: string, targetGroupName: string) => {
+        const movingFood = foods.find((food) => food.id === foodId);
+        if (!movingFood) return;
+
+        if (getStoreName(movingFood) === targetStoreName && getStoreGroupName(movingFood) === targetGroupName) return;
+
+        const nextMovedFood: FoodItem = {
+            ...movingFood,
+            store: targetStoreName === 'その他' ? undefined : targetStoreName,
+            storeGroup: targetGroupName === '未分類' ? undefined : targetGroupName,
+            timestamp: getCurrentTimestamp(),
+        };
+
+        const remainingFoods = foods.filter((food) => food.id !== foodId);
+        const targetGroupLastIndex = remainingFoods.reduce(
+            (lastIndex, food, index) =>
+                getStoreName(food) === targetStoreName && getStoreGroupName(food) === targetGroupName ? index : lastIndex,
+            -1,
+        );
+
+        if (targetGroupLastIndex >= 0) {
+            const nextFoods = [...remainingFoods];
+            nextFoods.splice(targetGroupLastIndex + 1, 0, nextMovedFood);
+            saveFoodDictionary(nextFoods);
+            return;
+        }
+
+        const targetStoreLastIndex = remainingFoods.reduce(
+            (lastIndex, food, index) => (getStoreName(food) === targetStoreName ? index : lastIndex),
+            -1,
+        );
+
+        if (targetStoreLastIndex >= 0) {
+            const nextFoods = [...remainingFoods];
+            nextFoods.splice(targetStoreLastIndex + 1, 0, nextMovedFood);
+            saveFoodDictionary(nextFoods);
+            return;
+        }
+
+        saveFoodDictionary([...remainingFoods, nextMovedFood]);
+    };
+
     const filteredFoods = useMemo(
         () => foods.filter((food) => food.name.toLowerCase().includes(searchQuery.toLowerCase())),
         [foods, searchQuery],
@@ -412,9 +456,41 @@ export default function ManageFoodsPage() {
                                                                 handleFoodReorder(section.storeName, group.groupName, ids)
                                                             }
                                                             className="space-y-2"
+                                                            onDragOver={(event) => {
+                                                                if (disableDnD || !draggingFoodId) return;
+                                                                event.preventDefault();
+                                                                setDropTarget({
+                                                                    storeName: section.storeName,
+                                                                    groupName: group.groupName,
+                                                                });
+                                                            }}
+                                                            onDragLeave={() => {
+                                                                if (!dropTarget) return;
+                                                                if (
+                                                                    dropTarget.storeName === section.storeName &&
+                                                                    dropTarget.groupName === group.groupName
+                                                                ) {
+                                                                    setDropTarget(null);
+                                                                }
+                                                            }}
+                                                            onDrop={(event) => {
+                                                                event.preventDefault();
+                                                                if (!draggingFoodId || disableDnD) return;
+
+                                                                moveFoodToStoreGroup(
+                                                                    draggingFoodId,
+                                                                    section.storeName,
+                                                                    group.groupName,
+                                                                );
+                                                                setDraggingFoodId(null);
+                                                                setDropTarget(null);
+                                                            }}
                                                         >
                                                             {group.foods.map((food) => {
                                                                 const isSelected = selectedFoodIds.includes(food.id);
+                                                                const isDropTarget =
+                                                                    dropTarget?.storeName === section.storeName &&
+                                                                    dropTarget.groupName === group.groupName;
 
                                                                 return (
                                                                     <Reorder.Item
@@ -422,10 +498,20 @@ export default function ManageFoodsPage() {
                                                                         value={food.id}
                                                                         drag={!disableDnD}
                                                                         dragSnapToOrigin
+                                                                        draggable={!disableDnD}
+                                                                        onDragStart={() => setDraggingFoodId(food.id)}
+                                                                        onDragEnd={() => {
+                                                                            setDraggingFoodId(null);
+                                                                            setDropTarget(null);
+                                                                        }}
                                                                     >
                                                                         <div
                                                                             className={`flex items-center justify-between gap-2 rounded-lg border p-3 ${
-                                                                                isSelected ? 'border-primary bg-primary/5' : 'bg-card'
+                                                                                isSelected
+                                                                                    ? 'border-primary bg-primary/5'
+                                                                                    : isDropTarget
+                                                                                      ? 'border-primary/60 bg-primary/10'
+                                                                                      : 'bg-card'
                                                                             }`}
                                                                             onClick={() => {
                                                                                 if (!isSelecting) return;
