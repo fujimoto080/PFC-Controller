@@ -14,20 +14,19 @@ function buildBarcodeMappingKey(barcode: string): string {
 
 export async function getBarcodeMapping(barcode: string): Promise<FoodItemForKVS | null> {
   const key = buildBarcodeMappingKey(barcode);
-  const value = await redis.get<string>(key);
+  const value = await redis.get<FoodItemForKVS>(key);
 
   if (!value) {
     return null;
   }
 
-  return JSON.parse(value) as FoodItemForKVS;
+  return value;
 }
 
 export async function saveBarcodeMapping(barcode: string, foodData: FoodItemForKVS): Promise<void> {
   const key = buildBarcodeMappingKey(barcode);
-  const serialized = JSON.stringify(foodData);
 
-  await redis.set(key, serialized);
+  await redis.set(key, foodData);
   await redis.sadd(BARCODE_MAPPING_INDEX_KEY, barcode);
 }
 
