@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Plus, Pencil, Trash, Save, X, Star } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, Pencil, Trash, Save, X, Star, ChevronDown, ChevronRight } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -28,6 +28,24 @@ import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { PageTitle } from '@/components/ui/page-title';
 
 const getCurrentTimestamp = () => Date.now();
+const STORAGE_KEY_MANAGE_FOODS_COLLAPSE = 'pfc_manage_foods_collapse_state';
+
+const readCollapseState = () => {
+    if (typeof window === 'undefined') return { collapsedStores: [], collapsedGroups: [] };
+
+    const storedState = localStorage.getItem(STORAGE_KEY_MANAGE_FOODS_COLLAPSE);
+    if (!storedState) return { collapsedStores: [], collapsedGroups: [] };
+
+    try {
+        const parsed = JSON.parse(storedState) as { collapsedStores?: string[]; collapsedGroups?: string[] };
+        return {
+            collapsedStores: Array.isArray(parsed.collapsedStores) ? parsed.collapsedStores : [],
+            collapsedGroups: Array.isArray(parsed.collapsedGroups) ? parsed.collapsedGroups : [],
+        };
+    } catch {
+        return { collapsedStores: [], collapsedGroups: [] };
+    }
+};
 
 type StoreGroupSection = {
     storeName: string;
@@ -92,6 +110,9 @@ export default function ManageFoodsPage() {
     const [isSortLocked, setIsSortLocked] = useState(false);
     const [draggingFoodId, setDraggingFoodId] = useState<string | null>(null);
     const [dropTarget, setDropTarget] = useState<{ storeName: string; groupName: string } | null>(null);
+    const initialCollapseState = useMemo(() => readCollapseState(), []);
+    const [collapsedStores, setCollapsedStores] = useState<string[]>(initialCollapseState.collapsedStores);
+    const [collapsedGroups, setCollapsedGroups] = useState<string[]>(initialCollapseState.collapsedGroups);
 
     const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
 
@@ -101,6 +122,17 @@ export default function ManageFoodsPage() {
         () => Array.from(new Set(foods.map((food) => food.storeGroup).filter(Boolean) as string[])).sort(),
         [foods],
     );
+
+
+    useEffect(() => {
+        localStorage.setItem(
+            STORAGE_KEY_MANAGE_FOODS_COLLAPSE,
+            JSON.stringify({
+                collapsedStores,
+                collapsedGroups,
+            }),
+        );
+    }, [collapsedStores, collapsedGroups]);
 
     const startAdd = () => {
         setEditingItem(null);
@@ -301,6 +333,21 @@ export default function ManageFoodsPage() {
         saveFoodDictionary([...remainingFoods, nextMovedFood]);
     };
 
+    const getStoreGroupKey = (storeName: string, groupName: string) => `${storeName}::${groupName}`;
+
+    const toggleStoreCollapsed = (storeName: string) => {
+        setCollapsedStores((prev) =>
+            prev.includes(storeName) ? prev.filter((name) => name !== storeName) : [...prev, storeName],
+        );
+    };
+
+    const toggleStoreGroupCollapsed = (storeName: string, groupName: string) => {
+        const groupKey = getStoreGroupKey(storeName, groupName);
+        setCollapsedGroups((prev) =>
+            prev.includes(groupKey) ? prev.filter((key) => key !== groupKey) : [...prev, groupKey],
+        );
+    };
+
     const filteredFoods = useMemo(
         () => foods.filter((food) => food.name.toLowerCase().includes(searchQuery.toLowerCase())),
         [foods, searchQuery],
@@ -441,9 +488,22 @@ export default function ManageFoodsPage() {
                             ) : (
                                 sections.map((section) => (
                                     <div key={section.storeName} className="pb-4">
-                                        <h3 className="mb-2 rounded bg-muted/30 px-2 py-1 text-sm font-semibold text-muted-foreground">
+                                        <button
+                                            type="button"
+                                            className="mb-2 flex w-full items-center rounded bg-muted/30 px-2 py-1 text-left text-sm font-semibold text-muted-foreground"
+                                            onClick={() => toggleStoreCollapsed(section.storeName)}
+                                        >
+                                            {collapsedStores.includes(section.storeName) ? (
+                                                <ChevronRight className="mr-1 h-4 w-4" />
+                                            ) : (
+                                                <ChevronDown className="mr-1 h-4 w-4" />
+                                            )}
                                             {section.storeName}
-                                        </h3>
+                                        </button>
+
+                                        {collapsedStores.includes(section.storeName) && null}
+
+                                        {!collapsedStores.includes(section.storeName) && (
 
                                         <Reorder.Group
                                             axis="y"
@@ -452,6 +512,11 @@ export default function ManageFoodsPage() {
                                             className="space-y-3"
                                         >
                                             {section.groups.map((group) => (
+                                                (() => {
+                                                    const groupKey = getStoreGroupKey(section.storeName, group.groupName);
+                                                    const isGroupCollapsed = collapsedGroups.includes(groupKey);
+
+                                                    return (
                                                 <Reorder.Item
                                                     key={`${section.storeName}-${group.groupName}`}
                                                     value={group.groupName}
@@ -459,10 +524,20 @@ export default function ManageFoodsPage() {
                                                     dragSnapToOrigin
                                                 >
                                                     <div className="space-y-2 rounded-md border bg-background p-2">
-                                                        <h4 className="px-1 text-xs font-medium text-muted-foreground">
+                                                        <button
+                                                            type="button"
+                                                            className="flex w-full items-center px-1 text-left text-xs font-medium text-muted-foreground"
+                                                            onClick={() => toggleStoreGroupCollapsed(section.storeName, group.groupName)}
+                                                        >
+                                                            {isGroupCollapsed ? (
+                                                                <ChevronRight className="mr-1 h-3.5 w-3.5" />
+                                                            ) : (
+                                                                <ChevronDown className="mr-1 h-3.5 w-3.5" />
+                                                            )}
                                                             {group.groupName}
-                                                        </h4>
+                                                        </button>
 
+                                                        {!isGroupCollapsed && (
                                                         <Reorder.Group
                                                             axis="y"
                                                             values={group.foods.map((food) => food.id)}
@@ -578,10 +653,14 @@ export default function ManageFoodsPage() {
                                                                 );
                                                             })}
                                                         </Reorder.Group>
+                                                        )}
                                                     </div>
                                                 </Reorder.Item>
+                                                    );
+                                                })()
                                             ))}
                                         </Reorder.Group>
+                                        )}
                                     </div>
                                 ))
                             )}
