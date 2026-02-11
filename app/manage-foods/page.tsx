@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash, Save, X, Star } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -11,6 +11,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     addFoodToDictionary,
     updateFoodInDictionary,
@@ -27,7 +28,6 @@ import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { PageTitle } from '@/components/ui/page-title';
 
 const getCurrentTimestamp = () => Date.now();
-const LONG_PRESS_MS = 450;
 
 type StoreGroupSection = {
     storeName: string;
@@ -87,9 +87,8 @@ export default function ManageFoodsPage() {
     const [isAdding, setIsAdding] = useState(false);
     const [isSelecting, setIsSelecting] = useState(false);
     const [selectedFoodIds, setSelectedFoodIds] = useState<string[]>([]);
+    const [bulkStoreName, setBulkStoreName] = useState('');
     const [bulkGroupName, setBulkGroupName] = useState('');
-
-    const pressTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
     const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
 
@@ -180,37 +179,32 @@ export default function ManageFoodsPage() {
         );
     };
 
-    const startPressSelect = (foodId: string) => {
-        if (isSelecting) return;
-        pressTimersRef.current[foodId] = setTimeout(() => {
-            setIsSelecting(true);
-            setSelectedFoodIds((prev) => (prev.includes(foodId) ? prev : [...prev, foodId]));
-        }, LONG_PRESS_MS);
-    };
-
-    const clearPressSelect = (foodId: string) => {
-        const timer = pressTimersRef.current[foodId];
-        if (!timer) return;
-        clearTimeout(timer);
-        delete pressTimersRef.current[foodId];
-    };
-
     const cancelSelection = () => {
         setIsSelecting(false);
         setSelectedFoodIds([]);
+        setBulkStoreName('');
         setBulkGroupName('');
     };
 
-    const applyBulkGroup = () => {
+    const startSelection = () => {
+        setIsSelecting(true);
+        setSelectedFoodIds([]);
+        setBulkStoreName('');
+        setBulkGroupName('');
+    };
+
+    const applyBulkUpdate = () => {
         if (selectedFoodIds.length === 0) return;
 
         const selectedSet = new Set(selectedFoodIds);
+        const nextStore = bulkStoreName.trim() || undefined;
         const nextGroup = bulkGroupName.trim() || undefined;
 
         const updatedFoods = foods.map((food) =>
             selectedSet.has(food.id)
                 ? {
                       ...food,
+                      store: nextStore,
                       storeGroup: nextGroup,
                       timestamp: getCurrentTimestamp(),
                   }
@@ -218,7 +212,7 @@ export default function ManageFoodsPage() {
         );
 
         saveFoodDictionary(updatedFoods);
-        toast.success('選択した食品をグルーピングしました');
+        toast.success('選択した食品の店舗とグループを更新しました');
         cancelSelection();
     };
 
@@ -369,6 +363,11 @@ export default function ManageFoodsPage() {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
+                            {!isSelecting && (
+                                <Button variant="outline" onClick={startSelection}>
+                                    店舗/グループ変更
+                                </Button>
+                            )}
                             <Button onClick={startAdd}>
                                 <Plus className="h-4 w-4" /> 新規
                             </Button>
@@ -399,6 +398,7 @@ export default function ManageFoodsPage() {
                                                     key={`${section.storeName}-${group.groupName}`}
                                                     value={group.groupName}
                                                     drag={!disableDnD}
+                                                    dragSnapToOrigin
                                                 >
                                                     <div className="space-y-2 rounded-md border bg-background p-2">
                                                         <h4 className="px-1 text-xs font-medium text-muted-foreground">
@@ -421,20 +421,25 @@ export default function ManageFoodsPage() {
                                                                         key={food.id}
                                                                         value={food.id}
                                                                         drag={!disableDnD}
+                                                                        dragSnapToOrigin
                                                                     >
                                                                         <div
-                                                                            className={`flex items-center justify-between rounded-lg border p-3 ${
+                                                                            className={`flex items-center justify-between gap-2 rounded-lg border p-3 ${
                                                                                 isSelected ? 'border-primary bg-primary/5' : 'bg-card'
                                                                             }`}
-                                                                            onPointerDown={() => startPressSelect(food.id)}
-                                                                            onPointerUp={() => clearPressSelect(food.id)}
-                                                                            onPointerCancel={() => clearPressSelect(food.id)}
-                                                                            onPointerLeave={() => clearPressSelect(food.id)}
                                                                             onClick={() => {
                                                                                 if (!isSelecting) return;
                                                                                 toggleFoodSelection(food.id);
                                                                             }}
                                                                         >
+                                                                            {isSelecting && (
+                                                                                <Checkbox
+                                                                                    checked={isSelected}
+                                                                                    onCheckedChange={() => toggleFoodSelection(food.id)}
+                                                                                    onClick={(e) => e.stopPropagation()}
+                                                                                    aria-label={`${food.name}を選択`}
+                                                                                />
+                                                                            )}
                                                                             <div className="flex-1 pr-2">
                                                                                 <div className="font-medium">{food.name}</div>
                                                                                 <div className="text-xs text-muted-foreground">
@@ -490,17 +495,29 @@ export default function ManageFoodsPage() {
                     <Card>
                         <CardContent className="space-y-3 pt-4">
                             <p className="text-sm font-medium">{selectedFoodIds.length}件を選択中</p>
-                            <Input
-                                value={bulkGroupName}
-                                onChange={(e) => setBulkGroupName(e.target.value)}
-                                placeholder="グループ名を入力（未入力で未分類）"
-                                list="store-group-suggestions"
-                            />
+                            <div className="space-y-1">
+                                <Label className="text-xs">店舗（未入力でその他）</Label>
+                                <Input
+                                    value={bulkStoreName}
+                                    onChange={(e) => setBulkStoreName(e.target.value)}
+                                    placeholder="店舗名を入力"
+                                    list="store-suggestions"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">店内グループ（未入力で未分類）</Label>
+                                <Input
+                                    value={bulkGroupName}
+                                    onChange={(e) => setBulkGroupName(e.target.value)}
+                                    placeholder="グループ名を入力"
+                                    list="store-group-suggestions"
+                                />
+                            </div>
                             <div className="flex gap-2">
                                 <Button variant="outline" className="flex-1" onClick={cancelSelection}>
                                     キャンセル
                                 </Button>
-                                <Button className="flex-1" onClick={applyBulkGroup} disabled={selectedFoodIds.length === 0}>
+                                <Button className="flex-1" onClick={applyBulkUpdate} disabled={selectedFoodIds.length === 0}>
                                     保存
                                 </Button>
                             </div>
