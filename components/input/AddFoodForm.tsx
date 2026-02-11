@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Camera, Plus, ScanBarcode } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -28,6 +29,15 @@ export interface AddFoodFormProps {
     initialData?: FoodItem;
 }
 
+interface BarcodeMappedFood {
+    name: string;
+    protein: number;
+    fat: number;
+    carbs: number;
+    calories: number;
+    store?: string;
+}
+
 
 export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const router = useRouter();
@@ -36,6 +46,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const [saveToDictionary, setSaveToDictionary] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
     const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
+    const [barcodeLookupInput, setBarcodeLookupInput] = useState('');
+    const [mappedFoodData, setMappedFoodData] = useState<BarcodeMappedFood | null>(null);
 
     const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
 
@@ -51,6 +63,40 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
             store: initialData.store,
         } : undefined
     });
+
+    const fetchBarcodeMapping = async (code: string): Promise<BarcodeMappedFood | null> => {
+        const response = await fetch(`/api/barcode?code=${code}`);
+
+        if (response.ok) {
+            const data: BarcodeMappedFood = await response.json();
+            setMappedFoodData(data);
+            reset({
+                name: data.name,
+                protein: data.protein,
+                fat: data.fat,
+                carbs: data.carbs,
+                calories: data.calories,
+                store: data.store,
+            });
+            return data;
+        }
+
+        if (response.status === 404) {
+            setMappedFoodData(null);
+            reset({
+                name: '',
+                protein: 0,
+                fat: 0,
+                carbs: 0,
+                calories: 0,
+                store: '',
+            });
+            return null;
+        }
+
+        const errorBody = await response.json();
+        throw new Error(errorBody.error || '商品情報の取得に失敗しました');
+    };
 
     const onSubmitManual = async (data: FoodItem) => {
         // Basic validation / conversion
@@ -96,6 +142,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                 toast.error('バーコード情報の保存に失敗しました');
             } finally {
                 setScannedBarcode(null); // KVS保存後、scannedBarcodeをクリア
+                setMappedFoodData(null);
+                setBarcodeLookupInput('');
             }
         }
 
@@ -115,48 +163,47 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
             const loadingToast = toast.loading('商品情報を取得中...');
     
             try {
-                const res = await fetch(`/api/barcode?code=${code}`);
-    
-                if (res.ok) {
-                    const data = await res.json();
-                    toast.dismiss(loadingToast);
+                const data = await fetchBarcodeMapping(code);
+                toast.dismiss(loadingToast);
+                setActiveTab('manual');
+
+                if (data) {
                     toast.success(`「${data.name}」が見つかりました (${code})`);
-        
-                    // Switch to manual mode and fill form
-                    setActiveTab('manual');
-        
-                    setTimeout(() => {
-                        reset({
-                            name: data.name,
-                            protein: data.protein,
-                            fat: data.fat,
-                            carbs: data.carbs,
-                            calories: data.calories,
-                            store: data.store
-                        });
-                    }, 100);
-                } else if (res.status === 404) {
+                } else {
                     toast.dismiss(loadingToast);
                     toast.info('バーコードが見つかりませんでした。手動で入力してください。');
-                    setActiveTab('manual');
-                    setTimeout(() => {
-                        reset({
-                            name: '',
-                            protein: 0,
-                            fat: 0,
-                            carbs: 0,
-                            calories: 0,
-                            store: ''
-                        });
-                    }, 100);
-                } else {
-                    const data = await res.json();
-                    toast.dismiss(loadingToast);
-                    toast.error(data.error || '商品情報の取得に失敗しました');
                 }
             } catch (error) {
                 toast.dismiss(loadingToast);
-                toast.error('エラーが発生しました');
+                toast.error(error instanceof Error ? error.message : 'エラーが発生しました');
+                console.error(error);
+            }
+        };
+
+        const handleLookupBarcode = async () => {
+            const code = barcodeLookupInput.trim();
+
+            if (!code) {
+                toast.info('確認したいバーコードを入力してください');
+                return;
+            }
+
+            const loadingToast = toast.loading('バーコードのマッピングを確認中...');
+            setScannedBarcode(code);
+
+            try {
+                const data = await fetchBarcodeMapping(code);
+                toast.dismiss(loadingToast);
+                setActiveTab('manual');
+
+                if (data) {
+                    toast.success(`「${data.name}」のマッピングを表示しています`);
+                } else {
+                    toast.info('このバーコードは未登録です。手動入力で登録できます。');
+                }
+            } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error(error instanceof Error ? error.message : 'エラーが発生しました');
                 console.error(error);
             }
         };
@@ -229,12 +276,47 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                                     variant="ghost"
                                                     size="sm"
                                                     className="h-6 px-2"
-                                                    onClick={() => setScannedBarcode(null)}
+                                                    onClick={() => {
+                                                        setScannedBarcode(null);
+                                                        setMappedFoodData(null);
+                                                    }}
                                                 >
                                                     クリア
                                                 </Button>
                                             </div>
                                         )}
+                                        <div className="space-y-2 rounded-md border border-dashed p-3">
+                                            <Label htmlFor="barcodeLookup">バーコードのマッピング確認</Label>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    id="barcodeLookup"
+                                                    value={barcodeLookupInput}
+                                                    onChange={(event) => setBarcodeLookupInput(event.target.value)}
+                                                    placeholder="例: 4900000000000"
+                                                />
+                                                <Button type="button" variant="secondary" onClick={handleLookupBarcode}>
+                                                    確認
+                                                </Button>
+                                            </div>
+                                            <Button type="button" variant="link" className="h-auto w-fit px-0 text-xs" asChild>
+                                                <Link href="/barcode-mappings">マッピング一覧ページを見る</Link>
+                                            </Button>
+                                            {scannedBarcode && (
+                                                <div className="rounded-md bg-muted p-3 text-sm">
+                                                    <p className="font-medium">現在のバーコード: {scannedBarcode}</p>
+                                                    {mappedFoodData ? (
+                                                        <ul className="mt-2 space-y-1 text-muted-foreground">
+                                                            <li>食品名: {mappedFoodData.name}</li>
+                                                            <li>P/F/C: {mappedFoodData.protein} / {mappedFoodData.fat} / {mappedFoodData.carbs} g</li>
+                                                            <li>カロリー: {mappedFoodData.calories} kcal</li>
+                                                            <li>店名: {mappedFoodData.store || '未設定'}</li>
+                                                        </ul>
+                                                    ) : (
+                                                        <p className="mt-2 text-muted-foreground">このバーコードに対応するマッピングは未登録です。</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="space-y-2">
                                             <Label>食品名</Label>
                                             <Input
