@@ -411,8 +411,9 @@ export default function ManageFoodsPage() {
                                     variant={isSortLocked ? 'outline' : 'default'}
                                     onClick={() => setIsSortLocked((prev) => !prev)}
                                     aria-pressed={!isSortLocked}
+                                    aria-label={isSortLocked ? '並び替え無効' : '並び替え可能'}
                                 >
-                                    {isSortLocked ? '並び替え無効' : '並び替え可能'}
+                                    並び替え
                                 </Button>
                                 <Button onClick={startAdd} aria-label="新規追加">
                                     +
