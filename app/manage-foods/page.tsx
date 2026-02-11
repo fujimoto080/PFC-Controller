@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Pencil, Trash, Save, X, Star } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -23,14 +23,70 @@ import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { PageTitle } from '@/components/ui/page-title';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 const getCurrentTimestamp = () => Date.now();
+
+type SortOption = 'name-asc' | 'name-desc' | 'calories-desc' | 'protein-desc' | 'latest';
+type GroupOption = 'none' | 'store' | 'favorite';
+
+const sortOptionLabels: Record<SortOption, string> = {
+    'name-asc': '名前順 (A→Z)',
+    'name-desc': '名前順 (Z→A)',
+    'calories-desc': 'カロリーが高い順',
+    'protein-desc': 'タンパク質が多い順',
+    latest: '更新が新しい順',
+};
+
+const groupOptionLabels: Record<GroupOption, string> = {
+    none: 'グループなし',
+    store: '店名 / ブランド',
+    favorite: 'お気に入り',
+};
+
+const sortFoods = (foods: FoodItem[], sortOption: SortOption) => {
+    const sortedFoods = [...foods];
+    const collator = new Intl.Collator('ja');
+
+    sortedFoods.sort((a, b) => {
+        switch (sortOption) {
+            case 'name-asc':
+                return collator.compare(a.name, b.name);
+            case 'name-desc':
+                return collator.compare(b.name, a.name);
+            case 'calories-desc':
+                return b.calories - a.calories;
+            case 'protein-desc':
+                return b.protein - a.protein;
+            case 'latest':
+                return (b.timestamp ?? 0) - (a.timestamp ?? 0);
+            default:
+                return 0;
+        }
+    });
+
+    return sortedFoods;
+};
+
+const getGroupName = (food: FoodItem, groupOption: GroupOption) => {
+    if (groupOption === 'none') return '全ての食品';
+    if (groupOption === 'favorite') return isFavoriteFood(food.id) ? 'お気に入り' : '通常';
+    return food.store || 'その他';
+};
 
 export default function ManageFoodsPage() {
     const { foods, uniqueStores } = useFoodDictionary();
     const [searchQuery, setSearchQuery] = useState('');
     const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
     const [isAdding, setIsAdding] = useState(false);
+    const [sortOption, setSortOption] = useState<SortOption>('name-asc');
+    const [groupOption, setGroupOption] = useState<GroupOption>('store');
 
     const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
 
@@ -122,9 +178,21 @@ export default function ManageFoodsPage() {
         toast.success(item.name + 'を食事記録に追加しました');
     };
 
-    const filteredFoods = foods.filter((f) =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredFoods = useMemo(
+        () => foods.filter((f) => f.name.toLowerCase().includes(searchQuery.toLowerCase())),
+        [foods, searchQuery],
     );
+
+    const groupedFoods = useMemo(() => {
+        return Object.entries(
+            sortFoods(filteredFoods, sortOption).reduce((acc, food) => {
+                const groupName = getGroupName(food, groupOption);
+                if (!acc[groupName]) acc[groupName] = [];
+                acc[groupName].push(food);
+                return acc;
+            }, {} as Record<string, FoodItem[]>),
+        );
+    }, [filteredFoods, groupOption, sortOption]);
 
     return (
         <div className="space-y-6 pb-20">
@@ -241,21 +309,53 @@ export default function ManageFoodsPage() {
                             </Button>
                         </div>
 
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <div className="space-y-1">
+                                <Label>並び替え</Label>
+                                <Select
+                                    value={sortOption}
+                                    onValueChange={(value) => setSortOption(value as SortOption)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(sortOptionLabels).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label>グルーピング</Label>
+                                <Select
+                                    value={groupOption}
+                                    onValueChange={(value) => setGroupOption(value as GroupOption)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(groupOptionLabels).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             {filteredFoods.length === 0 ? (
                                 <p>食品が見つかりません</p>
                             ) : (
-                                Object.entries(
-                                    filteredFoods.reduce((acc, food) => {
-                                        const store = food.store || 'その他';
-                                        if (!acc[store]) acc[store] = [];
-                                        acc[store].push(food);
-                                        return acc;
-                                    }, {} as Record<string, typeof filteredFoods>),
-                                ).map(([store, foods]) => (
-                                    <div key={store} className="pb-4">
+                                groupedFoods.map(([groupName, foods]) => (
+                                    <div key={groupName} className="pb-4">
                                         <h3 className="mb-2 text-sm font-semibold text-muted-foreground bg-muted/30 px-2 py-1 rounded">
-                                            {store}
+                                            {groupName}
                                         </h3>
                                         <div className="space-y-2">
                                             {foods.map((food) => (
