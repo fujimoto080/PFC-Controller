@@ -32,6 +32,9 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // 生成済みのサービスワーカー関連は lint 対象外にする
+    'public/sw.js',
+    'public/workbox-*.js',
   ]),
 ]);
 
