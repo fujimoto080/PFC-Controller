@@ -29,6 +29,15 @@ export interface AddFoodFormProps {
     initialData?: FoodItem;
 }
 
+interface ManualFoodFormValues {
+    name: string;
+    protein?: number;
+    fat?: number;
+    carbs?: number;
+    calories?: number;
+    store?: string;
+}
+
 interface BarcodeMappedFood {
     name: string;
     protein: number;
@@ -53,7 +62,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
 
     // Form for manual entry
-    const { register, handleSubmit, reset } = useForm<FoodItem>({
+    const { register, handleSubmit, reset } = useForm<ManualFoodFormValues>({
         defaultValues: initialData ? {
             name: initialData.name,
             protein: initialData.protein,
@@ -85,10 +94,10 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
             setMappedFoodData(null);
             reset({
                 name: '',
-                protein: 0,
-                fat: 0,
-                carbs: 0,
-                calories: 0,
+                protein: undefined,
+                fat: undefined,
+                carbs: undefined,
+                calories: undefined,
                 store: '',
             });
             return null;
@@ -98,15 +107,15 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         throw new Error(errorBody.error || '商品情報の取得に失敗しました');
     };
 
-    const onSubmitManual = async (data: FoodItem) => {
+    const onSubmitManual = async (data: ManualFoodFormValues) => {
         // Basic validation / conversion
         const item: FoodItem = {
             id: generateId(),
             name: data.name,
-            protein: Number(data.protein),
-            fat: Number(data.fat),
-            carbs: Number(data.carbs),
-            calories: Number(data.calories),
+            protein: Number(data.protein ?? 0),
+            fat: Number(data.fat ?? 0),
+            carbs: Number(data.carbs ?? 0),
+            calories: Number(data.calories ?? 0),
             store: data.store || undefined,
             timestamp: getSelectedTimestamp(),
         };
@@ -329,8 +338,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                                 <Label>タンパク質 (g)</Label>
                                                 <Input
                                                     type="number"
-                                                    step="0.1"
-                                                    {...register('protein')}
+                                                    step="0.01"
+                                                    {...register('protein', { valueAsNumber: true })}
                                                     placeholder="0"
                                                 />
                                             </div>
@@ -338,8 +347,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                                 <Label>脂質 (g)</Label>
                                                 <Input
                                                     type="number"
-                                                    step="0.1"
-                                                    {...register('fat')}
+                                                    step="0.01"
+                                                    {...register('fat', { valueAsNumber: true })}
                                                     placeholder="0"
                                                 />
                                             </div>
@@ -347,8 +356,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                                 <Label>炭水化物 (g)</Label>
                                                 <Input
                                                     type="number"
-                                                    step="0.1"
-                                                    {...register('carbs')}
+                                                    step="0.01"
+                                                    {...register('carbs', { valueAsNumber: true })}
                                                     placeholder="0"
                                                 />
                                             </div>
@@ -356,7 +365,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                                 <Label>カロリー</Label>
                                                 <Input
                                                     type="number"
-                                                    {...register('calories')}
+                                                    step="0.01"
+                                                    {...register('calories', { valueAsNumber: true })}
                                                     placeholder="0"
                                                 />
                                             </div>
