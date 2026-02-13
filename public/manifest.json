@@ -1,11 +1,13 @@
 {
-  "name": "PFC Controller",
-  "short_name": "PFC App",
+  "name": "PFC Balance",
+  "short_name": "PFC",
   "description": "PFC Balance Management Tool",
-  "start_url": "/",
+  "id": "/?source=pwa",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "/icon.png",

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.pfc_controller.twa",
+      "sha256_cert_fingerprints": [
+        "34:60:8F:DF:6A:5E:C3:08:DF:DC:FD:A9:85:CE:46:1E:89:79:37:F6:F7:C7:A3:75:6A:A4:52:8E:23:C8:CE:F8"
+      ]
+    }
+  }
+]

@@ -1,9 +1,7 @@
 import { existsSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import type { NextConfig } from 'next';
-
-const require = createRequire(import.meta.url);
+import withPWA from '@ducanh2912/next-pwa';
 
 const baseConfig: NextConfig = {
   turbopack: {},
@@ -20,10 +18,10 @@ const baseConfig: NextConfig = {
 const hasNextPwa =
   process.env.NODE_ENV === 'production' &&
   process.env.NEXT_DISABLE_PWA !== 'true' &&
-  existsSync(join(process.cwd(), 'node_modules', 'next-pwa'));
+  existsSync(join(process.cwd(), 'node_modules', '@ducanh2912', 'next-pwa'));
 
 const nextConfig: NextConfig = hasNextPwa
-  ? require('next-pwa')({
+  ? withPWA({
       dest: 'public',
       disable: process.env.NODE_ENV !== 'production',
       register: true,

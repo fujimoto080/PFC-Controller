@@ -23,6 +23,12 @@
 # misc
 .DS_Store
 *.pem
+*.keystore
+*.jks
+*.apk
+*.aab
+*.idsig
+android.keystore
 
 # debug
 npm-debug.log*
@@ -35,6 +41,13 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# android / twa
+/twa/.gradle
+/twa/app/build
+/twa/outputs
+/twa/manifest-checksum.txt
+/twa/store_icon.png
 
 # typescript
 *.tsbuildinfo
