@@ -6,6 +6,7 @@ import type { NextConfig } from 'next';
 const require = createRequire(import.meta.url);
 
 const baseConfig: NextConfig = {
+  turbopack: {},
   images: {
     remotePatterns: [
       {
