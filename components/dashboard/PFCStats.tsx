@@ -30,6 +30,8 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
 
   const { protein, fat, carbs, calories } = data.total;
   const { targetPFC } = settings;
+  const adjustedCalorieTarget = Math.max(0, targetPFC.calories - debt.calories);
+  const calorieExcessWithDebt = Math.max(0, (calories + debt.calories) - targetPFC.calories);
 
   const navigateDate = (days: number) => {
     const currentDate = parseISO(selectedDate);
@@ -121,13 +123,13 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 <div className="w-12" />
               </div>
               <div className="flex items-baseline space-x-2">
-                <span className={`text-4xl font-bold tracking-tighter ${calories > targetPFC.calories ? 'text-red-500' : ''}`}>
+                <span className={`text-4xl font-bold tracking-tighter ${calories > adjustedCalorieTarget ? 'text-red-500' : ''}`}>
                   {roundPFC(calories)}
                 </span>
                 <span className="text-muted-foreground text-sm">
                   / {targetPFC.calories} kcal
                   {debt.calories > 0 && (
-                    <span className="text-red-500 font-bold ml-1">
+                    <span className="text-red-500 text-[10px] ml-1">
                       (負債: {debt.calories} kcal)
                     </span>
                   )}
@@ -137,9 +139,9 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 value={getPFCPercentage(calories, targetPFC.calories)}
                 className="mt-2 h-2"
               />
-              {Math.max(0, calories - targetPFC.calories) > 0 && (
+              {calorieExcessWithDebt > 0 && (
                 <Progress
-                  value={getPFCPercentage(Math.max(0, calories - targetPFC.calories), targetPFC.calories)}
+                  value={getPFCPercentage(calorieExcessWithDebt, targetPFC.calories)}
                   className="mt-1 h-2 border border-red-500"
                 />
               )}
@@ -179,5 +181,4 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
     </div>
   );
 }
-
 
