@@ -22,14 +22,14 @@
 
 ### 2-2. Service Worker の導入
 
-Next.jsでPWA化する場合、代表的には `next-pwa` を使います。  
-導入する場合は以下のような流れになります。
+Next.jsでPWA化する場合、`next-pwa` を使ってService Workerを自動生成・登録する構成が保守しやすいです。  
+このリポジトリも `next.config.ts` で `next-pwa` を使う方針に変更します。
 
 - `next-pwa` をインストール
-- `next.config.ts` にPWA設定を追加
-- `public/` 配下に必要なアイコンを配置
+- `next.config.ts` にPWA設定を追加（`dest: 'public'`, `register: true`, `skipWaiting: true`）
+- `pnpm build` 後に生成される `public/sw.js` / Workbox関連ファイルを確認
 
-> 既にPWA対応済みなら、設定と動作確認のみ行います。
+> 補足: 開発環境ではService Workerを無効化し、本番ビルド時のみ有効化するのが安全です。
 
 ---
 
