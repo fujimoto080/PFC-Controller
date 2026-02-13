@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
 import { QuickAddButtons } from '@/components/dashboard/QuickAddButtons';
@@ -25,7 +26,6 @@ export default function Home() {
     saveSettings(newSettings);
     toast.success('目標を更新しました');
   }, [settings]);
-
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
@@ -64,7 +64,11 @@ export default function Home() {
 
       <WeeklyPFCStats />
 
-
+      <div className="pb-4 text-right">
+        <Link href="/privacy-policy" className="text-muted-foreground text-xs underline">
+          プライバシーポリシー
+        </Link>
+      </div>
     </div>
   );
 }
