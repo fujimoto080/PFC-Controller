@@ -22,6 +22,7 @@ export const StatRow = memo(function StatRow({
     delay,
 }: StatRowProps) {
     const adjustedTarget = target - debt;
+    const remaining = Math.max(0, adjustedTarget - current);
 
     const renderBar = (d: number, c: number, t: number, isFirst: boolean) => {
         // Calculate percentage for content within this specific bar's target (t)
@@ -73,6 +74,9 @@ export const StatRow = memo(function StatRow({
                     )}
                 </span>
             </div>
+            <p className="text-muted-foreground text-xs">
+                今日はあと <span className="font-semibold">{Math.round(remaining * 100) / 100}g</span> 摂取できます
+            </p>
             
             {/* Primary Bar */}
             {/* Priority: current first, then debt */}
