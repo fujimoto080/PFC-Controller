@@ -31,6 +31,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   const { protein, fat, carbs, calories } = data.total;
   const { targetPFC } = settings;
   const adjustedCalorieTarget = Math.max(0, targetPFC.calories - debt.calories);
+  const remainingCalories = Math.max(0, adjustedCalorieTarget - calories);
   const calorieExcessWithDebt = Math.max(0, (calories + debt.calories) - targetPFC.calories);
 
   const navigateDate = (days: number) => {
@@ -135,6 +136,9 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                   )}
                 </span>
               </div>
+              <p className="text-muted-foreground text-xs">
+                今日はあと <span className="font-semibold">{roundPFC(remainingCalories)} kcal</span> 摂取できます
+              </p>
               <Progress
                 value={getPFCPercentage(calories, targetPFC.calories)}
                 className="mt-2 h-2"
@@ -181,4 +185,3 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
     </div>
   );
 }
-
