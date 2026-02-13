@@ -25,7 +25,6 @@ const nextConfig: NextConfig = hasNextPwa
       dest: 'public',
       disable: process.env.NODE_ENV !== 'production',
       register: true,
-      skipWaiting: true,
     })(baseConfig)
   : baseConfig;
 
