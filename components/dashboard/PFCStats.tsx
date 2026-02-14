@@ -31,6 +31,8 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   const { protein, fat, carbs, calories } = data.total;
   const { targetPFC } = settings;
   const adjustedCalorieTarget = Math.max(0, targetPFC.calories - debt.calories);
+  const calorieTotalWithDebt = calories + debt.calories;
+  const hasCalorieDebt = debt.calories > 0;
   const remainingCalories = Math.max(0, adjustedCalorieTarget - calories);
   const calorieExcessWithDebt = Math.max(0, (calories + debt.calories) - targetPFC.calories);
 
@@ -143,10 +145,11 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                 value={getPFCPercentage(calories, targetPFC.calories)}
                 className="mt-2 h-2"
               />
-              {calorieExcessWithDebt > 0 && (
+              {hasCalorieDebt && (
                 <Progress
-                  value={getPFCPercentage(calorieExcessWithDebt, targetPFC.calories)}
+                  value={getPFCPercentage(calorieTotalWithDebt, targetPFC.calories)}
                   className="mt-1 h-2 border border-red-500"
+                  indicatorClassName="bg-red-500"
                 />
               )}
             </CardHeader>
