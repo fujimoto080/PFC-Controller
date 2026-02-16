@@ -29,8 +29,10 @@ pnpm dev
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
-GitHub Actions で運用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
+CI（GitHub Actions）で利用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
 `GEMINI_API_KEY` を登録して管理してください。
+
+ワークフローからは `${{ secrets.GEMINI_API_KEY }}` として参照できます。
 
 ## テスト・Lint
 
