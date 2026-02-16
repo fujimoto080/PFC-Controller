@@ -12,7 +12,7 @@ import { GoalEditForm } from '@/components/settings/GoalEditForm';
 import { IconButton } from '@/components/ui/icon-button';
 import { Settings } from 'lucide-react';
 import { PFC, UserProfile } from '@/lib/types';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { usePfcData } from '@/hooks/use-pfc-data';
 import { PageTitle } from '@/components/ui/page-title';
 

@@ -5,7 +5,7 @@ import { getFavoriteFoods, addFoodItem } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { generateId } from '@/lib/utils';
 
 const getCurrentTimestamp = () => Date.now();

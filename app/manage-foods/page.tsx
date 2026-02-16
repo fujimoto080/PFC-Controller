@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Plus, Pencil, Trash, Save, X, Star, ChevronDown, ChevronRight } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';

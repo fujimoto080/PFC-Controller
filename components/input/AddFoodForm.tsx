@@ -21,7 +21,7 @@ import { FoodItem } from '@/lib/types';
 import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 
 export interface AddFoodFormProps {
