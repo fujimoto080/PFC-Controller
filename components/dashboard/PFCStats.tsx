@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';
-import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addDays, format, parseISO } from 'date-fns';
 import { usePfcData } from '@/hooks/use-pfc-data';
-import { getPFCPercentage, roundPFC } from '@/lib/utils';
+import { roundPFC } from '@/lib/utils';
 import { IconButton } from '@/components/ui/icon-button';
 import { StatRow } from './StatRow';
+import { DebtStackedBars } from './DebtStackedBars';
 
 interface PFCStatsProps {
   selectedDate: string;
@@ -31,10 +31,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   const { protein, fat, carbs, calories } = data.total;
   const { targetPFC } = settings;
   const adjustedCalorieTarget = Math.max(0, targetPFC.calories - debt.calories);
-  const calorieTotalWithDebt = calories + debt.calories;
-  const hasCalorieDebt = debt.calories > 0;
   const remainingCalories = Math.max(0, adjustedCalorieTarget - calories);
-  const calorieExcessWithDebt = Math.max(0, (calories + debt.calories) - targetPFC.calories);
 
   const navigateDate = (days: number) => {
     const currentDate = parseISO(selectedDate);
@@ -141,17 +138,14 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
               <p className="text-muted-foreground text-xs">
                 今日はあと <span className="font-semibold">{roundPFC(remainingCalories)} kcal</span> 摂取できます
               </p>
-              <Progress
-                value={getPFCPercentage(calories, targetPFC.calories)}
-                className="mt-2 h-2"
-              />
-              {hasCalorieDebt && (
-                <Progress
-                  value={getPFCPercentage(calorieTotalWithDebt, targetPFC.calories)}
-                  className="mt-1 h-2 border border-red-500"
-                  indicatorClassName="bg-red-500"
+              <div className="mt-2">
+                <DebtStackedBars
+                  current={calories}
+                  debt={debt.calories}
+                  target={targetPFC.calories}
+                  color="bg-primary"
                 />
-              )}
+              </div>
             </CardHeader>
           </GradientCard>
 
