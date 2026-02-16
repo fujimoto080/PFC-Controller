@@ -34,7 +34,6 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   const calorieTotalWithDebt = calories + debt.calories;
   const hasCalorieDebt = debt.calories > 0;
   const remainingCalories = Math.max(0, adjustedCalorieTarget - calories);
-  const calorieExcessWithDebt = Math.max(0, (calories + debt.calories) - targetPFC.calories);
 
   const navigateDate = (days: number) => {
     const currentDate = parseISO(selectedDate);
