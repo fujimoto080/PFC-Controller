@@ -5,10 +5,7 @@
     "components/**/*.{ts,tsx}",
     "hooks/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
-    "scripts/**/*.mjs",
-    "next.config.ts",
-    "jest.config.ts",
-    "playwright.config.ts"
+    "scripts/**/*.mjs"
   ],
   "project": [
     "**/*.{ts,tsx,mjs,mts}",
@@ -17,5 +14,15 @@
     "!public/**",
     "!vrt/**",
     "!twa/**"
+  ],
+  "ignoreDependencies": [
+    "@radix-ui/react-dialog",
+    "add",
+    "pnpm",
+    "tailwindcss",
+    "ts-node",
+    "tw-animate-css",
+    "postcss",
+    "server-only"
   ]
 }
