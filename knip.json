@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "scripts/**/*.mjs"
+  ],
+  "project": [
+    "**/*.{ts,tsx,mjs,mts}",
+    "!**/*.d.ts",
+    "!node_modules/**",
+    "!public/**",
+    "!vrt/**",
+    "!twa/**"
+  ],
+  "ignoreDependencies": [
+    "@radix-ui/react-dialog",
+    "add",
+    "pnpm",
+    "tailwindcss",
+    "ts-node",
+    "tw-animate-css",
+    "postcss",
+    "server-only"
+  ]
+}
