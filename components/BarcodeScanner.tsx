@@ -8,7 +8,7 @@ import {
 } from 'html5-qrcode';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 
 interface BarcodeScannerProps {
   onScanSuccess: (decodedText: string) => void;
