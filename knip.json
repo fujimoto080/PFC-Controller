@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "scripts/**/*.mjs",
+    "next.config.ts",
+    "jest.config.ts",
+    "playwright.config.ts"
+  ],
+  "project": [
+    "**/*.{ts,tsx,mjs,mts}",
+    "!**/*.d.ts",
+    "!node_modules/**",
+    "!public/**",
+    "!vrt/**",
+    "!twa/**"
+  ]
+}
