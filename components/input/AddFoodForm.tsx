@@ -64,7 +64,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
 
     // Form for manual entry
-    const { register, handleSubmit, reset } = useForm<ManualFoodFormValues>({
+    const { register, handleSubmit, reset, getValues } = useForm<ManualFoodFormValues>({
         defaultValues: initialData ? {
             name: initialData.name,
             protein: initialData.protein,
@@ -84,6 +84,16 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
             calories: data.calories,
             store: data.store,
         });
+
+        const values = getValues();
+        const isNameValid = typeof values.name === 'string' && values.name.trim().length > 0;
+        const areMacrosValid =
+            Number.isFinite(values.protein) &&
+            Number.isFinite(values.fat) &&
+            Number.isFinite(values.carbs) &&
+            Number.isFinite(values.calories);
+
+        return isNameValid && areMacrosValid;
     };
 
     const fetchBarcodeMapping = async (code: string): Promise<BarcodeMappedFood | null> => {
@@ -248,9 +258,15 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                     throw new Error(result.error || 'AI推定に失敗しました');
                 }
 
-                applyFoodDataToForm(result as BarcodeMappedFood);
-                setActiveTab('manual');
-                toast.success('AIでPFCとカロリーを入力しました');
+                const isApplied = applyFoodDataToForm(result as BarcodeMappedFood);
+
+                if (isApplied) {
+                    setActiveTab('manual');
+                    toast.success('AIでPFCとカロリーを入力しました');
+                    return;
+                }
+
+                toast.error('AI結果の入力に失敗しました');
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : 'AI推定に失敗しました');
                 console.error(error);
