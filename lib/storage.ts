@@ -2,27 +2,40 @@
 
 import { DailyLog, FoodItem, UserSettings, DEFAULT_TARGET, PFC } from './types';
 import { formatDate, roundPFC } from './utils';
+import { BackupPayload, isBackupPayload } from './backup';
 
 const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
 const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
 
+const STORAGE_KEYS = {
+  logs: STORAGE_KEY_LOGS,
+  settings: STORAGE_KEY_SETTINGS,
+  foods: STORAGE_KEY_FOODS,
+} as const;
+
 const isClient = typeof window !== 'undefined';
 
 const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
-const getDateFromTimestamp = (timestamp: number) => formatDate(new Date(timestamp));
+const getDateFromTimestamp = (timestamp: number) =>
+  formatDate(new Date(timestamp));
 
-const getSortedLogDates = (logs: Record<string, DailyLog>, order: 'asc' | 'desc' = 'desc') =>
-  Object.keys(logs).sort((a, b) => (order === 'asc' ? a.localeCompare(b) : b.localeCompare(a)));
+const getSortedLogDates = (
+  logs: Record<string, DailyLog>,
+  order: 'asc' | 'desc' = 'desc',
+) =>
+  Object.keys(logs).sort((a, b) =>
+    order === 'asc' ? a.localeCompare(b) : b.localeCompare(a),
+  );
 
-const getStorageItem = <T,>(key: string, fallback: T): T => {
+const getStorageItem = <T>(key: string, fallback: T): T => {
   if (!isClient) return fallback;
   const stored = localStorage.getItem(key);
   return stored ? JSON.parse(stored) : fallback;
 };
 
-const setStorageItem = <T,>(key: string, value: T) => {
+const setStorageItem = <T>(key: string, value: T) => {
   if (!isClient) return;
   localStorage.setItem(key, JSON.stringify(value));
 };
@@ -33,7 +46,7 @@ export function getTodayString(): string {
 }
 
 export function getLogs(): Record<string, DailyLog> {
-  return getStorageItem<Record<string, DailyLog>>(STORAGE_KEY_LOGS, {});
+  return getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {});
 }
 
 export function getLogForDate(date: string): DailyLog {
@@ -60,7 +73,7 @@ export function refreshUI() {
 export function saveLog(log: DailyLog) {
   const logs = getLogs();
   logs[log.date] = log;
-  setStorageItem(STORAGE_KEY_LOGS, logs);
+  setStorageItem(STORAGE_KEYS.logs, logs);
   refreshUI();
 }
 
@@ -156,7 +169,11 @@ export function getBalancedWeeklyTargets(): {
     protein: getBalanced(weeklyTarget.protein, totalProtein, target.protein),
     fat: getBalanced(weeklyTarget.fat, totalFat, target.fat),
     carbs: getBalanced(weeklyTarget.carbs, totalCarbs, target.carbs),
-    calories: getBalanced(weeklyTarget.calories, totalCalories, target.calories),
+    calories: getBalanced(
+      weeklyTarget.calories,
+      totalCalories,
+      target.calories,
+    ),
     remainingDays,
   };
 }
@@ -194,18 +211,30 @@ export function getPfcDebt(currentDate: string): PFC {
     // Calculate daily balance (surplus/deficit relative to target)
     // Positive result means excess (debt)
     // Negative result means under target (repayment)
-    const dailyExcess = log && log.total ? {
-      protein: log.total.protein - targetProtein,
-      fat: log.total.fat - targetFat,
-      carbs: log.total.carbs - targetCarbs,
-      calories: log.total.calories - targetCalories,
-    } : emptyTotals;
+    const dailyExcess =
+      log && log.total
+        ? {
+            protein: log.total.protein - targetProtein,
+            fat: log.total.fat - targetFat,
+            carbs: log.total.carbs - targetCarbs,
+            calories: log.total.calories - targetCalories,
+          }
+        : emptyTotals;
 
     // Add to cumulative debt, but cap debt at zero
-    cumulativeDebt.protein = Math.max(0, cumulativeDebt.protein + dailyExcess.protein);
+    cumulativeDebt.protein = Math.max(
+      0,
+      cumulativeDebt.protein + dailyExcess.protein,
+    );
     cumulativeDebt.fat = Math.max(0, cumulativeDebt.fat + dailyExcess.fat);
-    cumulativeDebt.carbs = Math.max(0, cumulativeDebt.carbs + dailyExcess.carbs);
-    cumulativeDebt.calories = Math.max(0, cumulativeDebt.calories + dailyExcess.calories);
+    cumulativeDebt.carbs = Math.max(
+      0,
+      cumulativeDebt.carbs + dailyExcess.carbs,
+    );
+    cumulativeDebt.calories = Math.max(
+      0,
+      cumulativeDebt.calories + dailyExcess.calories,
+    );
 
     d.setDate(d.getDate() + 1);
     dateStr = toDateStr(d);
@@ -255,7 +284,7 @@ export function deleteLogItem(id: string, timestamp: number) {
   const date = getDateFromTimestamp(timestamp);
 
   const log = getLogForDate(date);
-  log.items = log.items.filter(item => item.id !== id);
+  log.items = log.items.filter((item) => item.id !== id);
 
   recalculateLogTotals(log);
   saveLog(log);
@@ -267,7 +296,7 @@ export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
 
   if (oldDate === newDate) {
     const log = getLogForDate(oldDate);
-    const index = log.items.findIndex(item => item.id === newItem.id);
+    const index = log.items.findIndex((item) => item.id === newItem.id);
     if (index !== -1) {
       log.items[index] = newItem;
       recalculateLogTotals(log);
@@ -281,11 +310,13 @@ export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
 }
 
 export function getSettings(): UserSettings {
-  return getStorageItem<UserSettings>(STORAGE_KEY_SETTINGS, { targetPFC: DEFAULT_TARGET });
+  return getStorageItem<UserSettings>(STORAGE_KEYS.settings, {
+    targetPFC: DEFAULT_TARGET,
+  });
 }
 
 export function saveSettings(settings: UserSettings) {
-  setStorageItem(STORAGE_KEY_SETTINGS, settings);
+  setStorageItem(STORAGE_KEYS.settings, settings);
   refreshUI();
 }
 
@@ -296,14 +327,14 @@ const generatedFoods = generatedFoodsRaw as FoodItem[];
 
 export function getFoodDictionary(): FoodItem[] {
   if (!isClient) return [];
-  const userFoods = getStorageItem<FoodItem[]>(STORAGE_KEY_FOODS, []);
+  const userFoods = getStorageItem<FoodItem[]>(STORAGE_KEYS.foods, []);
 
   // Merge system foods (defaults) into user foods if they don't exist
   const merged = [...userFoods];
   let changed = false;
 
-  generatedFoods.forEach(defaultItem => {
-    const exists = merged.some(item => item.id === defaultItem.id);
+  generatedFoods.forEach((defaultItem) => {
+    const exists = merged.some((item) => item.id === defaultItem.id);
     if (!exists) {
       merged.push(defaultItem);
       changed = true;
@@ -318,8 +349,31 @@ export function getFoodDictionary(): FoodItem[] {
 }
 
 export function saveFoodDictionary(foods: FoodItem[]) {
-  setStorageItem(STORAGE_KEY_FOODS, foods);
+  setStorageItem(STORAGE_KEYS.foods, foods);
   refreshUI();
+}
+
+export function createBackupPayload(): BackupPayload {
+  return {
+    version: 1,
+    createdAt: Date.now(),
+    logs: getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {}),
+    settings: getStorageItem<Record<string, unknown>>(STORAGE_KEYS.settings, {
+      targetPFC: DEFAULT_TARGET,
+    } as unknown as Record<string, unknown>),
+    foods: getStorageItem<unknown[]>(STORAGE_KEYS.foods, []),
+  };
+}
+
+export function restoreBackupPayload(payload: unknown): boolean {
+  if (!isBackupPayload(payload)) return false;
+
+  setStorageItem(STORAGE_KEYS.logs, payload.logs);
+  setStorageItem(STORAGE_KEYS.settings, payload.settings);
+  setStorageItem(STORAGE_KEYS.foods, payload.foods);
+  refreshUI();
+
+  return true;
 }
 
 export function addFoodToDictionary(item: FoodItem) {
@@ -378,7 +432,9 @@ export function getAllLogItems(): FoodItem[] {
   for (const date of sortedDates) {
     const dayLog = logs[date];
     // Sort items within the day by timestamp desc
-    const sortedDayItems = [...dayLog.items].sort((a, b) => b.timestamp - a.timestamp);
+    const sortedDayItems = [...dayLog.items].sort(
+      (a, b) => b.timestamp - a.timestamp,
+    );
     allItems.push(...sortedDayItems);
   }
 
@@ -391,11 +447,11 @@ export function getUniqueStores(): string[] {
 
   const stores = new Set<string>();
 
-  dictionary.forEach(item => {
+  dictionary.forEach((item) => {
     if (item.store) stores.add(item.store);
   });
 
-  history.forEach(item => {
+  history.forEach((item) => {
     if (item.store) stores.add(item.store);
   });
 
@@ -407,19 +463,19 @@ export function getUniqueStores(): string[] {
 export function getFavoriteFoods(): FoodItem[] {
   const settings = getSettings();
   const favoriteIds = settings.favoriteFoodIds || [];
-  
+
   if (favoriteIds.length === 0) return [];
-  
+
   const dictionary = getFoodDictionary();
   return favoriteIds
-    .map(id => dictionary.find(item => item.id === id))
+    .map((id) => dictionary.find((item) => item.id === id))
     .filter((item): item is FoodItem => item !== undefined);
 }
 
 export function toggleFavoriteFood(id: string) {
   const settings = getSettings();
   const favoriteIds = settings.favoriteFoodIds || [];
-  
+
   const index = favoriteIds.indexOf(id);
   if (index === -1) {
     // Add to favorites
@@ -428,7 +484,7 @@ export function toggleFavoriteFood(id: string) {
     // Remove from favorites
     favoriteIds.splice(index, 1);
   }
-  
+
   saveSettings({ ...settings, favoriteFoodIds: favoriteIds });
 }
 

@@ -13,7 +13,8 @@ export default function PrivacyPolicyPage() {
 
       <section className="space-y-3 text-sm leading-7">
         <p>
-          PFC Balance（以下「本アプリ」）は、ユーザーのプライバシーを尊重し、個人情報の保護に努めます。
+          PFC
+          Balance（以下「本アプリ」）は、ユーザーのプライバシーを尊重し、個人情報の保護に努めます。
         </p>
         <p>
           本ポリシーでは、本アプリにおける情報の取得・利用・管理について説明します。
@@ -24,6 +25,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-base font-semibold">1. 取得する情報</h2>
         <p>
           本アプリでは、食事ログ、目標PFC、ユーザー設定など、ユーザーが入力した情報を端末内に保存します。
+          また、ユーザーが明示的に操作した場合に限り、端末移行用途の一時バックアップをクラウドに保存します。
         </p>
       </section>
 
@@ -45,6 +47,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-base font-semibold">4. 情報の管理</h2>
         <p>
           本アプリのデータは主にユーザー端末内で管理されます。ユーザーは端末の操作により、保存データを削除できます。
+          クラウド一時バックアップは作成から24時間後に自動削除されます。
         </p>
       </section>
 
@@ -57,7 +60,9 @@ export default function PrivacyPolicyPage() {
 
       <section className="space-y-3 text-sm leading-7">
         <h2 className="text-base font-semibold">6. お問い合わせ</h2>
-        <p>本ポリシーに関するお問い合わせは、アプリ配布ページの連絡先をご利用ください。</p>
+        <p>
+          本ポリシーに関するお問い合わせは、アプリ配布ページの連絡先をご利用ください。
+        </p>
       </section>
 
       <Link href="/" className="text-primary inline-block text-sm underline">
