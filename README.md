@@ -16,6 +16,22 @@ pnpm dev
 
 ブラウザで `http://localhost:3000` を開いて確認できます。
 
+## Gemini 連携設定（AIでPFC推定）
+
+追加画面の「写真」タブでは、食べた内容をテキスト入力して Gemini で **P/F/C とカロリーを推定**できます。
+
+- サーバー側API: `POST /api/ai-nutrition`
+- 必要な環境変数: `GEMINI_API_KEY`
+
+ローカルで確認する場合は `.env.local` に以下を設定してください。
+
+```bash
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+GitHub Actions で運用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
+`GEMINI_API_KEY` を登録して管理してください。
+
 ## テスト・Lint
 
 ```bash

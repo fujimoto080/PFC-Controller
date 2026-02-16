@@ -57,6 +57,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
     const [barcodeLookupInput, setBarcodeLookupInput] = useState('');
     const [mappedFoodData, setMappedFoodData] = useState<BarcodeMappedFood | null>(null);
+    const [aiInputText, setAiInputText] = useState('');
+    const [isEstimatingNutrition, setIsEstimatingNutrition] = useState(false);
 
     const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
 
@@ -73,20 +75,24 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         } : undefined
     });
 
+    const applyFoodDataToForm = (data: BarcodeMappedFood) => {
+        reset({
+            name: data.name,
+            protein: data.protein,
+            fat: data.fat,
+            carbs: data.carbs,
+            calories: data.calories,
+            store: data.store,
+        });
+    };
+
     const fetchBarcodeMapping = async (code: string): Promise<BarcodeMappedFood | null> => {
         const response = await fetch(`/api/barcode?code=${code}`);
 
         if (response.ok) {
             const data: BarcodeMappedFood = await response.json();
             setMappedFoodData(data);
-            reset({
-                name: data.name,
-                protein: data.protein,
-                fat: data.fat,
-                carbs: data.carbs,
-                calories: data.calories,
-                store: data.store,
-            });
+            applyFoodDataToForm(data);
             return data;
         }
 
@@ -214,6 +220,42 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                 toast.dismiss(loadingToast);
                 toast.error(error instanceof Error ? error.message : 'エラーが発生しました');
                 console.error(error);
+            }
+        };
+
+        const handleEstimateByAi = async () => {
+            const text = aiInputText.trim();
+
+            if (!text) {
+                toast.info('食べた内容を入力してください');
+                return;
+            }
+
+            setIsEstimatingNutrition(true);
+
+            try {
+                const response = await fetch('/api/ai-nutrition', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text }),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'AI推定に失敗しました');
+                }
+
+                applyFoodDataToForm(result as BarcodeMappedFood);
+                setActiveTab('manual');
+                toast.success('AIでPFCとカロリーを入力しました');
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : 'AI推定に失敗しました');
+                console.error(error);
+            } finally {
+                setIsEstimatingNutrition(false);
             }
         };
     
@@ -424,10 +466,26 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                             className="absolute inset-0 cursor-pointer opacity-0"
                                         />
                                     </div>
-                                    <p className="text-muted-foreground text-xs">
-                                        注: 写真分析は現在AI
-                                        APIに接続されていません。手動入力または検索を使用してください。
-                                    </p>
+                                    <div className="space-y-2 text-left">
+                                        <Label htmlFor="aiInputText">食べた内容をテキストで入力</Label>
+                                        <Input
+                                            id="aiInputText"
+                                            value={aiInputText}
+                                            onChange={(event) => setAiInputText(event.target.value)}
+                                            placeholder="例: コンビニのおにぎり2個とサラダチキン"
+                                        />
+                                        <Button
+                                            type="button"
+                                            className="w-full"
+                                            onClick={handleEstimateByAi}
+                                            disabled={isEstimatingNutrition}
+                                        >
+                                            {isEstimatingNutrition ? 'AIで推定中...' : 'AIでPFCを入力する'}
+                                        </Button>
+                                        <p className="text-muted-foreground text-xs">
+                                            推定結果は手動入力フォームに反映されます。必要に応じて調整してください。
+                                        </p>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>
