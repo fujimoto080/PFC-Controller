@@ -12,6 +12,20 @@ interface GeminiResponse {
   candidates?: GeminiCandidate[];
 }
 
+interface GeminiRequestBody {
+  contents: Array<{
+    role: 'user';
+    parts: Array<{ text: string }>;
+  }>;
+  generationConfig: {
+    temperature: number;
+    responseMimeType: 'application/json';
+  };
+  tools?: Array<{
+    google_search: Record<string, never>;
+  }>;
+}
+
 interface EstimatedNutrition {
   name: string;
   protein: number;
@@ -81,6 +95,20 @@ export async function POST(request: NextRequest) {
   ].join('\n');
 
   try {
+    const requestBody: GeminiRequestBody = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: 'application/json',
+      },
+      tools: [{ google_search: {} }],
+    };
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`,
       {
@@ -88,18 +116,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: prompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: 'application/json',
-          },
-        }),
+        body: JSON.stringify(requestBody),
       },
     );
 
