@@ -17,7 +17,7 @@ import { getLogs } from '@/lib/storage';
 import { usePfcData } from '@/hooks/use-pfc-data';
 
 interface PfcDebtChartsProps {
-  startDate: string;
+  referenceDate: string;
   days?: number;
 }
 
@@ -58,15 +58,19 @@ function calculateDebtVisual(intake: number, target: number, carry: number): Deb
   };
 }
 
-export function PfcDebtCharts({ startDate, days = 7 }: PfcDebtChartsProps) {
-  const { settings, debt } = usePfcData(startDate);
+export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) {
   const [isSplitView, setIsSplitView] = useState(false);
+  const windowStartDate = useMemo(() => {
+    const reference = parseISO(referenceDate);
+    return format(addDays(reference, -(days - 1)), 'yyyy-MM-dd');
+  }, [referenceDate, days]);
+  const { settings, debt } = usePfcData(windowStartDate);
 
   const chartData = useMemo(() => {
     if (!settings) return [];
 
     const logs = getLogs();
-    const start = parseISO(startDate);
+    const start = parseISO(windowStartDate);
     const data: Array<Record<string, number | string>> = [];
 
     let proteinCarry = debt.protein;
@@ -110,7 +114,7 @@ export function PfcDebtCharts({ startDate, days = 7 }: PfcDebtChartsProps) {
     }
 
     return data;
-  }, [days, startDate, settings, debt]);
+  }, [days, windowStartDate, settings, debt]);
 
   if (!settings || chartData.length === 0) return null;
 
@@ -120,7 +124,7 @@ export function PfcDebtCharts({ startDate, days = 7 }: PfcDebtChartsProps) {
     <div className="space-y-4">
       <Card className="cursor-pointer" onClick={() => setIsSplitView((prev) => !prev)}>
         <CardHeader>
-          <CardTitle>PFC積み上げグラフ（タップで栄養素別表示）</CardTitle>
+          <CardTitle>PFC積み上げグラフ（過去20日 / タップで栄養素別表示）</CardTitle>
         </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">

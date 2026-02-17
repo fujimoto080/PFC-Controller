@@ -63,7 +63,7 @@ export default function Home() {
 
       <QuickAddButtons />
 
-      <PfcDebtCharts startDate={selectedDate} />
+      <PfcDebtCharts referenceDate={selectedDate} />
 
       <WeeklyPFCStats />
 
