@@ -13,7 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLogs } from '@/lib/storage';
+import { getLogs, getPfcDebt } from '@/lib/storage';
 import { usePfcData } from '@/hooks/use-pfc-data';
 
 interface PfcDebtChartsProps {
@@ -59,23 +59,26 @@ function calculateDebtVisual(intake: number, target: number, carry: number): Deb
 }
 
 export function PfcDebtCharts({ startDate, days = 7 }: PfcDebtChartsProps) {
-  const { settings, debt } = usePfcData(startDate);
+  const { settings } = usePfcData(startDate);
   const [isSplitView, setIsSplitView] = useState(false);
 
   const chartData = useMemo(() => {
     if (!settings) return [];
 
     const logs = getLogs();
-    const start = parseISO(startDate);
+    const endDate = parseISO(startDate);
+    const rangeStart = addDays(endDate, -(days - 1));
+    const rangeStartKey = format(rangeStart, 'yyyy-MM-dd');
+    const rangeStartDebt = getPfcDebt(rangeStartKey);
     const data: Array<Record<string, number | string>> = [];
 
-    let proteinCarry = debt.protein;
-    let fatCarry = debt.fat;
-    let carbsCarry = debt.carbs;
-    let caloriesCarry = debt.calories;
+    let proteinCarry = rangeStartDebt.protein;
+    let fatCarry = rangeStartDebt.fat;
+    let carbsCarry = rangeStartDebt.carbs;
+    let caloriesCarry = rangeStartDebt.calories;
 
     for (let i = 0; i < days; i++) {
-      const date = addDays(start, i);
+      const date = addDays(rangeStart, i);
       const dateStr = format(date, 'yyyy-MM-dd');
       const label = format(date, 'M/d');
       const total = logs[dateStr]?.total;
@@ -110,7 +113,7 @@ export function PfcDebtCharts({ startDate, days = 7 }: PfcDebtChartsProps) {
     }
 
     return data;
-  }, [days, startDate, settings, debt]);
+  }, [days, startDate, settings]);
 
   if (!settings || chartData.length === 0) return null;
 

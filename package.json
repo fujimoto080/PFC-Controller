@@ -15,7 +15,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:vrt": "playwright test",
-    "knip": "pnpm dlx knip"
+    "knip": "pnpm dlx knip",
+    "seed:week-ui-check": "node scripts/seed-week-data-and-check-ui.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",

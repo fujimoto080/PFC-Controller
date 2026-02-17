@@ -32,6 +32,22 @@ GEMINI_API_KEY=your_gemini_api_key
 GitHub Actions で運用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
 `GEMINI_API_KEY` を登録して管理してください。
 
+
+## 過去1週間のテストデータ投入 + UIチェック
+
+履歴画面とホーム画面（過去日のグラフ表示）確認用に、過去1週間分のログを `localStorage` に投入して `/log` と `/` の表示を検証するスクリプトを用意しています。
+
+```bash
+pnpm exec playwright install chromium
+pnpm seed:week-ui-check
+```
+
+- デフォルトURL: `http://127.0.0.1:3000`
+- 別URLを使う場合: `BASE_URL=http://127.0.0.1:3001 pnpm seed:week-ui-check`
+- 成功時スクリーンショット:
+  - `artifacts/seed-week-log-ui-check.png`
+  - `artifacts/seed-week-home-graph-check.png`
+
 ## テスト・Lint
 
 ```bash
