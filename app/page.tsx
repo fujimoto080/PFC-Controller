@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
 import { QuickAddButtons } from '@/components/dashboard/QuickAddButtons';
+import { PfcDebtCharts } from '@/components/dashboard/PfcDebtCharts';
 import { getTodayString, saveSettings } from '@/lib/storage';
 import { format, parseISO, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -62,6 +63,8 @@ export default function Home() {
 
       <QuickAddButtons />
 
+      <PfcDebtCharts referenceDate={selectedDate} />
+
       <WeeklyPFCStats />
 
       <div className="pb-4 text-right">
@@ -72,4 +75,3 @@ export default function Home() {
     </div>
   );
 }
-
