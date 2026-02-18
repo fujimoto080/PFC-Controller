@@ -19,7 +19,6 @@ interface GeminiRequestBody {
   }>;
   generationConfig: {
     temperature: number;
-    responseMimeType: 'application/json';
   };
   tools?: Array<{
     google_search: Record<string, never>;
@@ -104,7 +103,6 @@ export async function POST(request: NextRequest) {
       ],
       generationConfig: {
         temperature: 0.2,
-        responseMimeType: 'application/json',
       },
       tools: [{ google_search: {} }],
     };
