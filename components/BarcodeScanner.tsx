@@ -215,15 +215,12 @@ export function BarcodeScanner({
   onScanSuccess,
   onClose,
 }: BarcodeScannerProps) {
-  const REQUIRED_CONSECUTIVE_SCANS = 3;
+  const REQUIRED_TOTAL_SCANS = 3;
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const regionId = 'html5qr-code-full-region';
   const [scanFeedback, setScanFeedback] = useState<ScanFeedback>(null);
   const feedbackTimeoutRef = useRef<number | null>(null);
-  const consecutiveScanRef = useRef<{ value: string | null; count: number }>({
-    value: null,
-    count: 0,
-  });
+  const scanCountByCodeRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     // Cleanup on unmount
@@ -296,18 +293,14 @@ export function BarcodeScanner({
           );
 
           if (!isValid) {
-            consecutiveScanRef.current = { value: null, count: 0 };
             triggerFeedback('error');
             return;
           }
 
-          if (consecutiveScanRef.current.value === decodedText) {
-            consecutiveScanRef.current.count += 1;
-          } else {
-            consecutiveScanRef.current = { value: decodedText, count: 1 };
-          }
+          scanCountByCodeRef.current[decodedText] =
+            (scanCountByCodeRef.current[decodedText] ?? 0) + 1;
 
-          if (consecutiveScanRef.current.count < REQUIRED_CONSECUTIVE_SCANS) {
+          if (scanCountByCodeRef.current[decodedText] < REQUIRED_TOTAL_SCANS) {
             return;
           }
 
