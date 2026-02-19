@@ -35,6 +35,15 @@ type CheckDigitResult = {
   expectedCheckDigit: number | null;
 };
 
+const CODE_SPECIFIC_RULES: Partial<
+  Record<Html5QrcodeSupportedFormats, RegExp>
+> = {
+  [Html5QrcodeSupportedFormats.CODE_128]: /^[\x20-\x7E]{6,32}$/,
+  [Html5QrcodeSupportedFormats.CODE_39]: /^[0-9A-Z .\-$/+%]{6,32}$/,
+  [Html5QrcodeSupportedFormats.CODE_93]: /^[\x20-\x7E]{6,32}$/,
+  [Html5QrcodeSupportedFormats.CODABAR]: /^[A-D][0-9\-\$:/.+]{4,30}[A-D]$/,
+};
+
 function isNumeric(value: string): boolean {
   return /^[0-9]+$/.test(value);
 }
@@ -204,7 +213,13 @@ function validateBarcode(
     case Html5QrcodeSupportedFormats.CODE_128:
     case Html5QrcodeSupportedFormats.CODE_39:
     case Html5QrcodeSupportedFormats.CODE_93:
-    case Html5QrcodeSupportedFormats.CODABAR:
+    case Html5QrcodeSupportedFormats.CODABAR: {
+      const rule = CODE_SPECIFIC_RULES[format];
+      if (!rule) {
+        return value.length > 0;
+      }
+      return rule.test(value);
+    }
     case Html5QrcodeSupportedFormats.QR_CODE:
     default:
       return value.length > 0;
@@ -265,7 +280,7 @@ export function BarcodeScanner({
       await html5QrCode.start(
         { facingMode: 'environment' }, // Prefer back camera
         {
-          fps: 10,
+          fps: 15,
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
         },
@@ -312,6 +327,18 @@ export function BarcodeScanner({
           // parse error, ignore it.
         },
       );
+
+      // 読み取り精度を上げるため、可能な限り高いカメラ制約を適用する
+      try {
+        await html5QrCode.applyVideoConstraints({
+          focusMode: 'continuous',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          advanced: [{ torch: true }],
+        });
+      } catch {
+        // 端末によっては未対応のため無視
+      }
     } catch (err) {
       console.error(err);
       toast.error(
