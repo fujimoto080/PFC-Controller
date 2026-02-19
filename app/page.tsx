@@ -12,7 +12,7 @@ import { ja } from 'date-fns/locale';
 import { GoalEditForm } from '@/components/settings/GoalEditForm';
 import { IconButton } from '@/components/ui/icon-button';
 import { Settings } from 'lucide-react';
-import { PFC, UserProfile } from '@/lib/types';
+import { PFC, SportDefinition, UserProfile } from '@/lib/types';
 import { toast } from '@/lib/toast';
 import { usePfcData } from '@/hooks/use-pfc-data';
 import { PageTitle } from '@/components/ui/page-title';
@@ -21,9 +21,18 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const { settings } = usePfcData();
 
-  const handleSaveGoals = useCallback((newGoals: PFC, newProfile?: UserProfile) => {
+  const handleSaveGoals = useCallback((
+    newGoals: PFC,
+    newProfile: UserProfile | undefined,
+    sports: SportDefinition[],
+  ) => {
     if (!settings) return;
-    const newSettings = { ...settings, targetPFC: newGoals, profile: newProfile };
+    const newSettings = {
+      ...settings,
+      targetPFC: newGoals,
+      profile: newProfile,
+      sports,
+    };
     saveSettings(newSettings);
     toast.success('目標を更新しました');
   }, [settings]);
@@ -46,6 +55,7 @@ export default function Home() {
           <GoalEditForm
             initialGoals={settings.targetPFC}
             initialProfile={settings.profile}
+            initialSports={settings.sports || []}
             onSave={handleSaveGoals}
             trigger={
               <IconButton className="rounded-full mr-4">

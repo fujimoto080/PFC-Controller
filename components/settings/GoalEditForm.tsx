@@ -12,21 +12,40 @@ import {
     DrawerTitle,
     DrawerTrigger,
 } from '@/components/ui/drawer';
-import { PFC, UserProfile } from '@/lib/types';
+import { PFC, SportDefinition, UserProfile } from '@/lib/types';
 import { ProfileCalculator } from './ProfileCalculator';
+import { SportSettingsForm } from './SportSettingsForm';
 
 interface GoalEditFormProps {
     initialGoals: PFC;
     initialProfile?: UserProfile;
-    onSave: (goals: PFC, profile?: UserProfile) => void;
+    initialSports?: SportDefinition[];
+    onSave: (goals: PFC, profile: UserProfile | undefined, sports: SportDefinition[]) => void;
     trigger: React.ReactNode;
 }
 
-export function GoalEditForm({ initialGoals, initialProfile, onSave, trigger }: GoalEditFormProps) {
+export function GoalEditForm({
+    initialGoals,
+    initialProfile,
+    initialSports = [],
+    onSave,
+    trigger,
+}: GoalEditFormProps) {
     const [goals, setGoals] = useState<PFC>(initialGoals);
     const [profile, setProfile] = useState<UserProfile | undefined>(initialProfile);
     const [duration, setDuration] = useState<number | undefined>(undefined);
+    const [sports, setSports] = useState<SportDefinition[]>(initialSports);
     const [isOpen, setIsOpen] = useState(false);
+
+
+    const handleOpenChange = (open: boolean) => {
+        if (open) {
+            setGoals(initialGoals);
+            setProfile(initialProfile);
+            setSports(initialSports);
+        }
+        setIsOpen(open);
+    };
 
     const handleCalculate = useCallback((newGoals: PFC, newProfile: UserProfile) => {
         setGoals(newGoals);
@@ -34,12 +53,20 @@ export function GoalEditForm({ initialGoals, initialProfile, onSave, trigger }: 
     }, []);
 
     const handleSave = () => {
-        onSave(goals, profile);
+        onSave(goals, profile, sports);
         setIsOpen(false);
     };
 
+    const handleAddSport = (sport: SportDefinition) => {
+        setSports((prev) => [...prev, sport]);
+    };
+
+    const handleDeleteSport = (id: string) => {
+        setSports((prev) => prev.filter((sport) => sport.id !== id));
+    };
+
     return (
-        <Drawer open={isOpen} onOpenChange={setIsOpen}>
+        <Drawer open={isOpen} onOpenChange={handleOpenChange}>
             <DrawerTrigger asChild>{trigger}</DrawerTrigger>
             <DrawerContent>
                 <div className="mx-auto w-full max-w-sm">
@@ -53,6 +80,11 @@ export function GoalEditForm({ initialGoals, initialProfile, onSave, trigger }: 
                             onCalculate={handleCalculate}
                             duration={duration}
                             onDurationChange={setDuration}
+                        />
+                        <SportSettingsForm
+                            sports={sports}
+                            onAddSport={handleAddSport}
+                            onDeleteSport={handleDeleteSport}
                         />
                     </div>
                     <DrawerFooter className="fixed bottom-0 left-0 right-0 z-10 w-full border-t bg-background p-0">

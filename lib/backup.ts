@@ -6,6 +6,7 @@ export interface BackupPayload {
   logs: Record<string, unknown>;
   settings: Record<string, unknown>;
   foods: unknown[];
+  sports?: unknown[];
 }
 
 export function isBackupPayload(value: unknown): value is BackupPayload {
@@ -20,7 +21,8 @@ export function isBackupPayload(value: unknown): value is BackupPayload {
     typeof data.logs === 'object' &&
     !!data.settings &&
     typeof data.settings === 'object' &&
-    Array.isArray(data.foods)
+    Array.isArray(data.foods) &&
+    (data.sports === undefined || Array.isArray(data.sports))
   );
 }
 
