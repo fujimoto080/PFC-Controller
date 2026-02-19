@@ -331,10 +331,8 @@ export function BarcodeScanner({
       // 読み取り精度を上げるため、可能な限り高いカメラ制約を適用する
       try {
         await html5QrCode.applyVideoConstraints({
-          focusMode: 'continuous',
           width: { ideal: 1920 },
           height: { ideal: 1080 },
-          advanced: [{ torch: true }],
         });
       } catch {
         // 端末によっては未対応のため無視
