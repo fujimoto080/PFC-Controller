@@ -8,9 +8,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addDays, format, parseISO } from 'date-fns';
 import { usePfcData } from '@/hooks/use-pfc-data';
 import { roundPFC } from '@/lib/utils';
+import { getAdjustedCalorieTarget } from '@/lib/storage';
 import { IconButton } from '@/components/ui/icon-button';
 import { StatRow } from './StatRow';
 import { DebtStackedBars } from './DebtStackedBars';
+import { SportActivityControls } from './SportActivityControls';
 
 interface PFCStatsProps {
   selectedDate: string;
@@ -30,8 +32,10 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
 
   const { protein, fat, carbs, calories } = data.total;
   const { targetPFC } = settings;
-  const adjustedCalorieTarget = Math.max(0, targetPFC.calories - debt.calories);
+  const boostedCalorieTarget = getAdjustedCalorieTarget(selectedDate);
+  const adjustedCalorieTarget = Math.max(0, boostedCalorieTarget - debt.calories);
   const remainingCalories = Math.max(0, adjustedCalorieTarget - calories);
+  const activityBonusCalories = Math.max(0, boostedCalorieTarget - targetPFC.calories);
 
   const navigateDate = (days: number) => {
     const currentDate = parseISO(selectedDate);
@@ -127,7 +131,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
                   {roundPFC(calories)}
                 </span>
                 <span className="text-muted-foreground text-sm">
-                  / {targetPFC.calories} kcal
+                  / {roundPFC(adjustedCalorieTarget)} kcal
                   {debt.calories > 0 && (
                     <span className="text-red-500 text-[10px] ml-1">
                       (負債: {debt.calories} kcal)
@@ -137,6 +141,11 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
               </div>
               <p className="text-muted-foreground text-xs">
                 今日はあと <span className="font-semibold">{roundPFC(remainingCalories)} kcal</span> 摂取できます
+                {activityBonusCalories > 0 && (
+                  <span className="ml-1 text-emerald-600">
+                    (運動で +{roundPFC(activityBonusCalories)} kcal)
+                  </span>
+                )}
               </p>
               <div className="mt-2">
                 <DebtStackedBars
@@ -148,6 +157,12 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
               </div>
             </CardHeader>
           </GradientCard>
+
+          <SportActivityControls
+            date={selectedDate}
+            sports={settings.sports || []}
+            activities={data.activities || []}
+          />
 
           <Card>
             <CardContent className="space-y-6 pt-6">

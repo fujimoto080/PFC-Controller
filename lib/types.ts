@@ -18,6 +18,17 @@ export interface DailyLog {
   date: string; // YYYY-MM-DD
   items: FoodItem[];
   total: PFC;
+  activities?: SportActivityLog[];
+}
+
+export interface SportDefinition {
+  id: string;
+  name: string;
+  caloriesBurned: number;
+}
+
+export interface SportActivityLog extends SportDefinition {
+  timestamp: number;
 }
 
 export interface UserProfile {
@@ -33,6 +44,7 @@ export interface UserSettings {
   targetPFC: PFC;
   profile?: UserProfile;
   favoriteFoodIds?: string[];
+  sports?: SportDefinition[];
 }
 
 export const DEFAULT_TARGET: PFC = {

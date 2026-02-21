@@ -1,17 +1,27 @@
 'use client';
 
-import { DailyLog, FoodItem, UserSettings, DEFAULT_TARGET, PFC } from './types';
+import {
+  DailyLog,
+  FoodItem,
+  UserSettings,
+  DEFAULT_TARGET,
+  PFC,
+  SportActivityLog,
+  SportDefinition,
+} from './types';
 import { formatDate, roundPFC } from './utils';
 import { BackupPayload, isBackupPayload } from './backup';
 
 const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
 const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
+const STORAGE_KEY_SPORTS = 'pfc_sports';
 
 const STORAGE_KEYS = {
   logs: STORAGE_KEY_LOGS,
   settings: STORAGE_KEY_SETTINGS,
   foods: STORAGE_KEY_FOODS,
+  sports: STORAGE_KEY_SPORTS,
 } as const;
 
 const isClient = typeof window !== 'undefined';
@@ -55,6 +65,7 @@ export function getLogForDate(date: string): DailyLog {
     logs[date] || {
       date,
       items: [],
+      activities: [],
       total: { protein: 0, fat: 0, carbs: 0, calories: 0 },
     }
   );
@@ -70,12 +81,118 @@ export function refreshUI() {
   }
 }
 
+const toSportDefinition = (sport: SportDefinition): SportDefinition => ({
+  id: sport.id,
+  name: sport.name,
+  caloriesBurned: Math.max(0, roundPFC(sport.caloriesBurned)),
+});
+
+const getDefaultSports = (): SportDefinition[] => [
+  { id: 'walking', name: 'ウォーキング', caloriesBurned: 180 },
+  { id: 'running', name: 'ランニング', caloriesBurned: 320 },
+  { id: 'cycling', name: 'サイクリング', caloriesBurned: 260 },
+];
+
+const normalizeSports = (sports: unknown): SportDefinition[] => {
+  if (!Array.isArray(sports)) return [];
+
+  return sports
+    .filter(
+      (sport): sport is SportDefinition =>
+        !!sport &&
+        typeof sport === 'object' &&
+        typeof (sport as SportDefinition).id === 'string' &&
+        typeof (sport as SportDefinition).name === 'string' &&
+        typeof (sport as SportDefinition).caloriesBurned === 'number' &&
+        Number.isFinite((sport as SportDefinition).caloriesBurned),
+    )
+    .map(toSportDefinition);
+};
+
+
 export function saveLog(log: DailyLog) {
   const logs = getLogs();
   logs[log.date] = log;
   setStorageItem(STORAGE_KEYS.logs, logs);
   refreshUI();
 }
+
+export function getAdjustedCalorieTarget(date: string): number {
+  const settings = getSettings();
+  const log = getLogForDate(date);
+  const activityCalories = (log.activities || []).reduce(
+    (total, activity) => total + activity.caloriesBurned,
+    0,
+  );
+
+  return Math.max(0, settings.targetPFC.calories + activityCalories);
+}
+
+export function addSportDefinition(sport: SportDefinition) {
+  const settings = getSettings();
+  const sports = [...(settings.sports || [])];
+  const normalized = toSportDefinition(sport);
+
+  if (sports.some((item) => item.id === normalized.id)) return;
+
+  sports.push(normalized);
+  saveSettings({ ...settings, sports });
+}
+
+export function updateSportDefinition(updatedSport: SportDefinition) {
+  const settings = getSettings();
+  const sports = [...(settings.sports || [])];
+  const index = sports.findIndex((item) => item.id === updatedSport.id);
+  if (index === -1) return;
+
+  sports[index] = toSportDefinition(updatedSport);
+  saveSettings({ ...settings, sports });
+}
+
+export function deleteSportDefinition(id: string) {
+  const settings = getSettings();
+  const sports = (settings.sports || []).filter((sport) => sport.id !== id);
+  saveSettings({ ...settings, sports });
+
+  const logs = getLogs();
+  let changed = false;
+
+  Object.values(logs).forEach((log) => {
+    if (!log.activities?.length) return;
+
+    const nextActivities = log.activities.filter((activity) => activity.id !== id);
+    if (nextActivities.length !== log.activities.length) {
+      log.activities = nextActivities;
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    setStorageItem(STORAGE_KEYS.logs, logs);
+    refreshUI();
+  }
+}
+
+export function addSportActivity(date: string, sport: SportDefinition) {
+  const log = getLogForDate(date);
+  const activities = log.activities || [];
+  const activity: SportActivityLog = {
+    ...toSportDefinition(sport),
+    timestamp: Date.now(),
+  };
+
+  log.activities = [...activities, activity];
+  saveLog(log);
+}
+
+export function deleteSportActivity(date: string, timestamp: number) {
+  const log = getLogForDate(date);
+  if (!log.activities?.length) return;
+
+  log.activities = log.activities.filter((activity) => activity.timestamp !== timestamp);
+  saveLog(log);
+}
+
 
 export function getWeeklyLog(): {
   protein: number;
@@ -310,13 +427,34 @@ export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
 }
 
 export function getSettings(): UserSettings {
-  return getStorageItem<UserSettings>(STORAGE_KEYS.settings, {
+  const settings = getStorageItem<UserSettings>(STORAGE_KEYS.settings, {
     targetPFC: DEFAULT_TARGET,
   });
+
+  const savedSports = normalizeSports(
+    getStorageItem<unknown[]>(STORAGE_KEYS.sports, []),
+  );
+  const fallbackSports = normalizeSports(settings.sports);
+  const sports =
+    savedSports.length > 0
+      ? savedSports
+      : fallbackSports.length > 0
+        ? fallbackSports
+        : getDefaultSports();
+
+  return {
+    ...settings,
+    sports,
+  };
 }
 
 export function saveSettings(settings: UserSettings) {
-  setStorageItem(STORAGE_KEYS.settings, settings);
+  const normalizedSports = normalizeSports(settings.sports);
+  setStorageItem(STORAGE_KEYS.settings, {
+    ...settings,
+    sports: normalizedSports,
+  });
+  setStorageItem(STORAGE_KEYS.sports, normalizedSports);
   refreshUI();
 }
 
@@ -362,6 +500,7 @@ export function createBackupPayload(): BackupPayload {
       targetPFC: DEFAULT_TARGET,
     } as unknown as Record<string, unknown>),
     foods: getStorageItem<unknown[]>(STORAGE_KEYS.foods, []),
+    sports: getStorageItem<unknown[]>(STORAGE_KEYS.sports, []),
   };
 }
 
@@ -371,6 +510,7 @@ export function restoreBackupPayload(payload: unknown): boolean {
   setStorageItem(STORAGE_KEYS.logs, payload.logs);
   setStorageItem(STORAGE_KEYS.settings, payload.settings);
   setStorageItem(STORAGE_KEYS.foods, payload.foods);
+  setStorageItem(STORAGE_KEYS.sports, normalizeSports(payload.sports || []));
   refreshUI();
 
   return true;
