@@ -8,7 +8,7 @@ import {
   History,
   Calendar,
   Utensils,
-  CloudUpload,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +21,7 @@ export function BottomNav() {
     { href: '/add', icon: PlusCircle, label: '追加', main: true },
     { href: '/calendar', icon: Calendar, label: 'カレンダー' },
     { href: '/manage-foods', icon: Utensils, label: '食品管理' },
-    { href: '/backup', icon: CloudUpload, label: 'バックアップ' },
+    { href: '/settings', icon: Settings, label: '設定' },
   ];
 
   return (

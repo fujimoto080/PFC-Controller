@@ -1,41 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
 import { QuickAddButtons } from '@/components/dashboard/QuickAddButtons';
 import { PfcDebtCharts } from '@/components/dashboard/PfcDebtCharts';
-import { getTodayString, saveSettings } from '@/lib/storage';
+import { getTodayString } from '@/lib/storage';
 import { format, parseISO, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { GoalEditForm } from '@/components/settings/GoalEditForm';
-import { IconButton } from '@/components/ui/icon-button';
-import { Settings } from 'lucide-react';
-import { PFC, SportDefinition, UserProfile } from '@/lib/types';
-import { toast } from '@/lib/toast';
-import { usePfcData } from '@/hooks/use-pfc-data';
 import { PageTitle } from '@/components/ui/page-title';
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
-  const { settings } = usePfcData();
-
-  const handleSaveGoals = useCallback((
-    newGoals: PFC,
-    newProfile: UserProfile | undefined,
-    sports: SportDefinition[],
-  ) => {
-    if (!settings) return;
-    const newSettings = {
-      ...settings,
-      targetPFC: newGoals,
-      profile: newProfile,
-      sports,
-    };
-    saveSettings(newSettings);
-    toast.success('目標を更新しました');
-  }, [settings]);
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
@@ -51,25 +28,9 @@ export default function Home() {
             ? '今日のバランス'
             : `${format(displayDate, 'M月d日', { locale: ja })}のバランス`}
         </PageTitle>
-        {settings && (
-          <GoalEditForm
-            initialGoals={settings.targetPFC}
-            initialProfile={settings.profile}
-            initialSports={settings.sports || []}
-            onSave={handleSaveGoals}
-            trigger={
-              <IconButton className="rounded-full mr-4">
-                <Settings className="h-5 w-5 text-muted-foreground" />
-              </IconButton>
-            }
-          />
-        )}
       </div>
 
-      <PFCStats
-        selectedDate={selectedDate}
-        onDateChange={handleDateChange}
-      />
+      <PFCStats selectedDate={selectedDate} onDateChange={handleDateChange} />
 
       <QuickAddButtons />
 
