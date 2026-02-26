@@ -32,6 +32,36 @@ GEMINI_API_KEY=your_gemini_api_key
 GitHub Actions で運用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
 `GEMINI_API_KEY` を登録して管理してください。
 
+## 外部連携API（摂取履歴の登録）
+
+外部のAIや自動化ツールから、摂取履歴をサーバーAPIへ登録できます。
+
+- 登録: `POST /api/intake-logs`
+- 取得: `GET /api/intake-logs`
+
+リクエスト例:
+
+```bash
+curl -X POST http://localhost:3000/api/intake-logs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entries": [
+      {
+        "name": "サラダチキン",
+        "protein": 23,
+        "fat": 2,
+        "carbs": 1.5,
+        "calories": 120,
+        "store": "コンビニ",
+        "source": "external-ai",
+        "consumedAt": "2026-02-26T12:30:00+09:00"
+      }
+    ]
+  }'
+```
+
+`consumedAt` は未指定時に現在時刻が使われます。
+
 ## テスト・Lint
 
 ```bash
