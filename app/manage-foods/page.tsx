@@ -110,6 +110,7 @@ export default function ManageFoodsPage() {
     const [isSortLocked, setIsSortLocked] = useState(false);
     const [draggingFoodId, setDraggingFoodId] = useState<string | null>(null);
     const [dropTarget, setDropTarget] = useState<{ storeName: string; groupName: string } | null>(null);
+    const [barcodeInput, setBarcodeInput] = useState('');
     const initialCollapseState = useMemo(() => readCollapseState(), []);
     const [collapsedStores, setCollapsedStores] = useState<string[]>(initialCollapseState.collapsedStores);
     const [collapsedGroups, setCollapsedGroups] = useState<string[]>(initialCollapseState.collapsedGroups);
@@ -137,6 +138,7 @@ export default function ManageFoodsPage() {
     const startAdd = () => {
         setEditingItem(null);
         setIsAdding(true);
+        setBarcodeInput('');
         reset({
             name: '',
             protein: 0,
@@ -151,6 +153,7 @@ export default function ManageFoodsPage() {
     const startEdit = (item: FoodItem) => {
         setEditingItem(item);
         setIsAdding(true);
+        setBarcodeInput('');
         setValue('name', item.name);
         setValue('protein', item.protein);
         setValue('fat', item.fat);
@@ -163,10 +166,34 @@ export default function ManageFoodsPage() {
     const cancelEdit = () => {
         setIsAdding(false);
         setEditingItem(null);
+        setBarcodeInput('');
         reset();
     };
 
-    const onSubmit = (data: FoodItem) => {
+    const saveBarcodeMapping = async (barcode: string, itemData: Omit<FoodItem, 'id' | 'timestamp'>) => {
+        const code = barcode.trim();
+        if (!code) return;
+
+        await fetch('/api/barcode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                barcode: code,
+                foodData: {
+                    name: itemData.name,
+                    protein: itemData.protein,
+                    fat: itemData.fat,
+                    carbs: itemData.carbs,
+                    calories: itemData.calories,
+                    store: itemData.store,
+                },
+            }),
+        });
+    };
+
+    const onSubmit = async (data: FoodItem) => {
         const itemData = {
             name: data.name,
             protein: Number(data.protein),
@@ -184,6 +211,16 @@ export default function ManageFoodsPage() {
         } else {
             addFoodToDictionary({ id: generateId(), ...itemData });
             toast.success('食品を追加しました');
+        }
+
+        if (barcodeInput.trim()) {
+            try {
+                await saveBarcodeMapping(barcodeInput, itemData);
+                toast.success('バーコード情報を保存しました');
+            } catch (error) {
+                console.error('バーコード情報の保存に失敗しました', error);
+                toast.error('バーコード情報の保存に失敗しました');
+            }
         }
 
         cancelEdit();
@@ -405,6 +442,18 @@ export default function ManageFoodsPage() {
                                             <option key={group} value={group} />
                                         ))}
                                     </datalist>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="barcode">バーコード (任意)</Label>
+                                    <Input
+                                        id="barcode"
+                                        value={barcodeInput}
+                                        onChange={(event) => setBarcodeInput(event.target.value)}
+                                        placeholder="例: 4901234567890"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        保存時にこの食品の栄養情報をバーコードに紐づけます。
+                                    </p>
                                 </div>
 
                                 <div className="flex gap-2 pt-4">
