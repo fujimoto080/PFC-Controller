@@ -10,6 +10,12 @@ interface CreateExternalIntakeRequest {
   entries?: unknown;
 }
 
+const parseOptionalNumber = (value: string | null): number | undefined => {
+  if (value === null || value.trim() === '') return undefined;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : undefined;
+};
+
 function createLogId(): string {
   return crypto.randomUUID().replaceAll('-', '');
 }
@@ -63,8 +69,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const limit = Number(searchParams.get('limit') ?? '50');
-    const startAt = Number(searchParams.get('startAt') ?? Number.NEGATIVE_INFINITY);
-    const endAt = Number(searchParams.get('endAt') ?? Number.POSITIVE_INFINITY);
+    const startAt = parseOptionalNumber(searchParams.get('startAt'));
+    const endAt = parseOptionalNumber(searchParams.get('endAt'));
 
     const entries = await listExternalIntakeLogs({ limit, startAt, endAt });
 
