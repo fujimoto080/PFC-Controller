@@ -15,7 +15,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:vrt": "playwright test",
-    "knip": "pnpm dlx knip"
+    "knip": "pnpm dlx knip",
+    "mcp:backup": "node scripts/mcp-backup-server.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
