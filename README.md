@@ -32,32 +32,32 @@ GEMINI_API_KEY=your_gemini_api_key
 GitHub Actions で運用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
 `GEMINI_API_KEY` を登録して管理してください。
 
-## 外部連携API（摂取履歴の登録）
+## 外部連携MCPサーバー（摂取履歴の登録）
 
-外部のAIや自動化ツールから、摂取履歴をサーバーAPIへ登録できます。
+外部のAIや自動化ツールとは、HTTP API ではなく MCP サーバー経由で連携できます。
 
-- 登録: `POST /api/intake-logs`
-- 取得: `GET /api/intake-logs`
+- 起動: `pnpm mcp:intake`
+- 利用ツール:
+  - `register_intakes`（摂取履歴の一括登録）
+  - `list_intakes`（登録済み履歴の取得。`limit/startAt/endAt` 指定可）
 
-リクエスト例:
+`register_intakes` の入力例（arguments）:
 
-```bash
-curl -X POST http://localhost:3000/api/intake-logs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entries": [
-      {
-        "name": "サラダチキン",
-        "protein": 23,
-        "fat": 2,
-        "carbs": 1.5,
-        "calories": 120,
-        "store": "コンビニ",
-        "source": "external-ai",
-        "consumedAt": "2026-02-26T12:30:00+09:00"
-      }
-    ]
-  }'
+```json
+{
+  "entries": [
+    {
+      "name": "サラダチキン",
+      "protein": 23,
+      "fat": 2,
+      "carbs": 1.5,
+      "calories": 120,
+      "store": "コンビニ",
+      "source": "external-ai",
+      "consumedAt": "2026-02-26T12:30:00+09:00"
+    }
+  ]
+}
 ```
 
 `consumedAt` は未指定時に現在時刻が使われます。
