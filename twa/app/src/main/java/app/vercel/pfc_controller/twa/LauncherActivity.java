@@ -20,21 +20,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
-
-
-public class LauncherActivity
-        extends com.google.androidbrowserhelper.trusted.LauncherActivity {
-    
-
-    
-
+public class LauncherActivity extends com.google.androidbrowserhelper.trusted.LauncherActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        syncWidgetData(getIntent() != null ? getIntent().getData() : null);
         super.onCreate(savedInstanceState);
-        // Setting an orientation crashes the app due to the transparent background on Android 8.0
-        // Oreo and below. We only set the orientation on Oreo and above. This only affects the
-        // splash screen and Chrome will still respect the orientation.
-        // See https://github.com/GoogleChromeLabs/bubblewrap/issues/496 for details.
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         } else {
@@ -44,11 +34,30 @@ public class LauncherActivity
 
     @Override
     protected Uri getLaunchingUrl() {
-        // Get the original launch Url.
         Uri uri = super.getLaunchingUrl();
-
-        
-
+        if (uri != null && "pfcwidget".equals(uri.getScheme()) && "sync".equals(uri.getHost())) {
+            return Uri.parse(getString(R.string.launchUrl));
+        }
         return uri;
+    }
+
+    private void syncWidgetData(Uri uri) {
+        if (uri == null || !"pfcwidget".equals(uri.getScheme()) || !"sync".equals(uri.getHost())) {
+            return;
+        }
+
+        String calories = getQueryValue(uri, "calories", "0");
+        String protein = getQueryValue(uri, "protein", "0");
+        String fat = getQueryValue(uri, "fat", "0");
+        String carbs = getQueryValue(uri, "carbs", "0");
+        String date = getQueryValue(uri, "date", "未同期");
+
+        WidgetDataStore.save(this, new WidgetDataStore.WidgetData(calories, protein, fat, carbs, date));
+        NutritionWidgetProvider.updateAllWidgets(this);
+    }
+
+    private String getQueryValue(Uri uri, String key, String defaultValue) {
+        String value = uri.getQueryParameter(key);
+        return value == null || value.trim().isEmpty() ? defaultValue : value;
     }
 }
