@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageTitle } from '@/components/ui/page-title';
 import { GoalSettingsPanel } from '@/components/settings/GoalSettingsPanel';
+import { AndroidWidgetSyncCard } from '@/components/settings/AndroidWidgetSyncCard';
 
 export default function SettingsPage() {
   return (
@@ -21,6 +22,8 @@ export default function SettingsPage() {
           </Link>
         </CardContent>
       </Card>
+
+      <AndroidWidgetSyncCard />
 
       <GoalSettingsPanel />
     </div>
