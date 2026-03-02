@@ -35,6 +35,12 @@ let syncTimer: ReturnType<typeof setTimeout> | null = null;
 let isApplyingCloudData = false;
 let cloudUpdatedAt = 0;
 
+const resetCloudSyncState = () => {
+  hasInitializedCloudSync = false;
+  initializedSyncKey = '';
+  cloudUpdatedAt = 0;
+};
+
 const getDateFromTimestamp = (timestamp: number) =>
   formatDate(new Date(timestamp));
 
@@ -145,7 +151,10 @@ const initializeCloudSync = async () => {
   if (!isClient) return;
 
   const syncKey = getCloudSyncKey();
-  if (!syncKey) return;
+  if (!syncKey) {
+    resetCloudSyncState();
+    return;
+  }
   if (hasInitializedCloudSync && initializedSyncKey === syncKey) return;
 
   hasInitializedCloudSync = true;
@@ -155,7 +164,10 @@ const initializeCloudSync = async () => {
     const response = await fetch(`/api/cloud-data?syncKey=${encodeURIComponent(syncKey)}`, {
       cache: 'no-store',
     });
-    if (!response.ok) return;
+    if (!response.ok) {
+      resetCloudSyncState();
+      return;
+    }
 
     const result = (await response.json()) as {
       payload?: unknown;
@@ -198,7 +210,7 @@ const initializeCloudSync = async () => {
       refreshUI();
     }
   } catch (error) {
-    hasInitializedCloudSync = false;
+    resetCloudSyncState();
     console.error('クラウド初期化エラー', error);
   }
 };
@@ -590,9 +602,16 @@ export function getSettings(): UserSettings {
 }
 
 export function saveSettings(settings: UserSettings) {
+  const previousSyncKey = getCloudSyncKey();
+  const nextSyncKey = normalizeSyncKey(settings.cloudSyncKey);
+  if (previousSyncKey !== nextSyncKey) {
+    resetCloudSyncState();
+  }
+
   const normalizedSports = normalizeSports(settings.sports);
   setStorageItem(STORAGE_KEYS.settings, {
     ...settings,
+    cloudSyncKey: nextSyncKey || undefined,
     sports: normalizedSports,
   });
   setStorageItem(STORAGE_KEYS.sports, normalizedSports);
