@@ -22,6 +22,7 @@ import {
     saveFoodDictionary,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
+import { normalizeBarcodes } from '@/lib/barcode-mapping';
 import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
@@ -172,9 +173,8 @@ export default function ManageFoodsPage() {
         reset();
     };
 
-    const saveBarcodeMapping = async (barcode: string, itemData: Omit<FoodItem, 'id' | 'timestamp'>) => {
-        const code = barcode.trim();
-        if (!code) return;
+    const saveBarcodeMapping = async (barcodes: string[], itemData: Omit<FoodItem, 'id' | 'timestamp'>) => {
+        if (barcodes.length === 0) return;
 
         await fetch('/api/barcode', {
             method: 'POST',
@@ -182,7 +182,7 @@ export default function ManageFoodsPage() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                barcode: code,
+                barcodes,
                 foodData: {
                     name: itemData.name,
                     protein: itemData.protein,
@@ -215,10 +215,12 @@ export default function ManageFoodsPage() {
             toast.success('食品を追加しました');
         }
 
-        if (barcodeInput.trim()) {
+        const barcodes = normalizeBarcodes(barcodeInput);
+
+        if (barcodes.length > 0) {
             try {
-                await saveBarcodeMapping(barcodeInput, itemData);
-                toast.success('バーコード情報を保存しました');
+                await saveBarcodeMapping(barcodes, itemData);
+                toast.success(`バーコード情報を${barcodes.length}件保存しました`);
             } catch (error) {
                 console.error('バーコード情報の保存に失敗しました', error);
                 toast.error('バーコード情報の保存に失敗しました');
@@ -452,7 +454,7 @@ export default function ManageFoodsPage() {
                                     </datalist>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="barcode">バーコード (任意)</Label>
+                                    <Label htmlFor="barcode">バーコード (任意・複数可)</Label>
                                     <div className="flex gap-2">
                                         <Input
                                             id="barcode"
@@ -466,7 +468,7 @@ export default function ManageFoodsPage() {
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        保存時にこの食品の栄養情報をバーコードに紐づけます。
+                                        カンマ・読点・空白区切りで複数バーコードを同時に紐づけできます。
                                     </p>
                                 </div>
 
