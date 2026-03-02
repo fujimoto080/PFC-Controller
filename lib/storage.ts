@@ -16,6 +16,7 @@ const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
 const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
 const STORAGE_KEY_SPORTS = 'pfc_sports';
+const STORAGE_KEY_CLOUD_MIGRATED_PREFIX = 'pfc_cloud_migrated_v1';
 
 const STORAGE_KEYS = {
   logs: STORAGE_KEY_LOGS,
@@ -27,6 +28,12 @@ const STORAGE_KEYS = {
 const isClient = typeof window !== 'undefined';
 
 const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
+
+let hasInitializedCloudSync = false;
+let initializedSyncKey = '';
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let isApplyingCloudData = false;
+let cloudUpdatedAt = 0;
 
 const getDateFromTimestamp = (timestamp: number) =>
   formatDate(new Date(timestamp));
@@ -45,10 +52,160 @@ const getStorageItem = <T>(key: string, fallback: T): T => {
   return stored ? JSON.parse(stored) : fallback;
 };
 
+const normalizeSyncKey = (value: string | undefined): string =>
+  (value || '').trim();
+
+const getCloudSyncKey = (): string => {
+  const settings = getStorageItem<UserSettings>(STORAGE_KEYS.settings, {
+    targetPFC: DEFAULT_TARGET,
+  });
+  return normalizeSyncKey(settings.cloudSyncKey);
+};
+
+const getMigrationFlagKey = (syncKey: string): string =>
+  `${STORAGE_KEY_CLOUD_MIGRATED_PREFIX}:${syncKey}`;
+
+const hasMigratedForSyncKey = (syncKey: string): boolean =>
+  localStorage.getItem(getMigrationFlagKey(syncKey)) === '1';
+
 const setStorageItem = <T>(key: string, value: T) => {
   if (!isClient) return;
   localStorage.setItem(key, JSON.stringify(value));
+  scheduleCloudSync();
 };
+
+const getLocalBackupPayload = (): BackupPayload => ({
+  version: 1,
+  createdAt: Date.now(),
+  logs: getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {}),
+  settings: getStorageItem<Record<string, unknown>>(STORAGE_KEYS.settings, {
+    targetPFC: DEFAULT_TARGET,
+  } as unknown as Record<string, unknown>),
+  foods: getStorageItem<unknown[]>(STORAGE_KEYS.foods, []),
+  sports: getStorageItem<unknown[]>(STORAGE_KEYS.sports, []),
+});
+
+const applyPayloadToLocalStorage = (payload: BackupPayload) => {
+  isApplyingCloudData = true;
+  localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(payload.logs));
+  localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(payload.settings));
+  localStorage.setItem(STORAGE_KEYS.foods, JSON.stringify(payload.foods));
+  localStorage.setItem(
+    STORAGE_KEYS.sports,
+    JSON.stringify(normalizeSports(payload.sports || [])),
+  );
+  isApplyingCloudData = false;
+};
+
+const pushLocalDataToCloud = async (reason: string) => {
+  if (!isClient || isApplyingCloudData) return;
+
+  const syncKey = getCloudSyncKey();
+  if (!syncKey) return;
+
+  const payload = getLocalBackupPayload();
+
+  try {
+    const response = await fetch('/api/cloud-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload, reason, updatedAt: Date.now(), syncKey }),
+    });
+
+    if (!response.ok) return;
+
+    const result = (await response.json()) as { updatedAt?: unknown };
+    if (typeof result.updatedAt === 'number' && Number.isFinite(result.updatedAt)) {
+      cloudUpdatedAt = result.updatedAt;
+    }
+  } catch (error) {
+    console.error('クラウド同期エラー', error);
+  }
+};
+
+const scheduleCloudSync = () => {
+  if (!isClient || isApplyingCloudData) return;
+
+  const syncKey = getCloudSyncKey();
+  if (!syncKey) return;
+
+  if (!hasMigratedForSyncKey(syncKey)) return;
+
+  if (syncTimer) {
+    clearTimeout(syncTimer);
+  }
+
+  syncTimer = setTimeout(() => {
+    syncTimer = null;
+    void pushLocalDataToCloud('auto-sync');
+  }, 300);
+};
+
+const initializeCloudSync = async () => {
+  if (!isClient) return;
+
+  const syncKey = getCloudSyncKey();
+  if (!syncKey) return;
+  if (hasInitializedCloudSync && initializedSyncKey === syncKey) return;
+
+  hasInitializedCloudSync = true;
+  initializedSyncKey = syncKey;
+
+  try {
+    const response = await fetch(`/api/cloud-data?syncKey=${encodeURIComponent(syncKey)}`, {
+      cache: 'no-store',
+    });
+    if (!response.ok) return;
+
+    const result = (await response.json()) as {
+      payload?: unknown;
+      updatedAt?: unknown;
+    };
+
+    const cloudPayload = isBackupPayload(result.payload) ? result.payload : null;
+    const remoteUpdatedAt =
+      typeof result.updatedAt === 'number' && Number.isFinite(result.updatedAt)
+        ? result.updatedAt
+        : 0;
+
+    const migrationFlagKey = getMigrationFlagKey(syncKey);
+    const hasMigrated = localStorage.getItem(migrationFlagKey) === '1';
+
+    if (!hasMigrated) {
+      const hasLocalData =
+        localStorage.getItem(STORAGE_KEYS.logs) !== null ||
+        localStorage.getItem(STORAGE_KEYS.settings) !== null ||
+        localStorage.getItem(STORAGE_KEYS.foods) !== null ||
+        localStorage.getItem(STORAGE_KEYS.sports) !== null;
+
+      if (hasLocalData && !cloudPayload) {
+        await pushLocalDataToCloud('initial-migration');
+      } else if (cloudPayload) {
+        applyPayloadToLocalStorage(cloudPayload);
+        cloudUpdatedAt = remoteUpdatedAt;
+        refreshUI();
+      }
+
+      localStorage.setItem(migrationFlagKey, '1');
+      return;
+    }
+
+    if (!cloudPayload) return;
+
+    if (remoteUpdatedAt > cloudUpdatedAt) {
+      applyPayloadToLocalStorage(cloudPayload);
+      cloudUpdatedAt = remoteUpdatedAt;
+      refreshUI();
+    }
+  } catch (error) {
+    hasInitializedCloudSync = false;
+    console.error('クラウド初期化エラー', error);
+  }
+};
+
+if (isClient) {
+  void initializeCloudSync();
+}
 
 // Helper to get today's date string YYYY-MM-DD in local time
 export function getTodayString(): string {
@@ -108,7 +265,6 @@ const normalizeSports = (sports: unknown): SportDefinition[] => {
     )
     .map(toSportDefinition);
 };
-
 
 export function saveLog(log: DailyLog) {
   const logs = getLogs();
@@ -193,7 +349,6 @@ export function deleteSportActivity(date: string, timestamp: number) {
   saveLog(log);
 }
 
-
 export function getWeeklyLog(): {
   protein: number;
   fat: number;
@@ -244,8 +399,7 @@ export function getBalancedWeeklyTargets(): {
   const logs = getLogs();
   const today = new Date();
 
-  // Find the most recent Sunday
-  const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+  const dayOfWeek = today.getDay();
   const sunday = new Date(today);
   sunday.setDate(today.getDate() - dayOfWeek);
 
@@ -254,7 +408,6 @@ export function getBalancedWeeklyTargets(): {
   let totalCarbs = 0;
   let totalCalories = 0;
 
-  // Aggregate stats from Sunday up to yesterday
   for (let i = 0; i < dayOfWeek; i++) {
     const d = new Date(sunday);
     d.setDate(sunday.getDate() + i);
@@ -300,21 +453,16 @@ export function getPfcDebt(currentDate: string): PFC {
   const target = settings.targetPFC;
   const logs = getLogs();
 
-  // Sort dates chronological to calculate cumulative debt
   const sortedDates = getSortedLogDates(logs, 'asc');
   const cumulativeDebt: PFC = { ...emptyTotals };
 
-  // Helper to get local date string for any Date object
   const toDateStr = (d: Date) => formatDate(d);
 
-  // If there are no logs at all, return zero debt
   if (sortedDates.length === 0) return cumulativeDebt;
 
   const firstLogDate = sortedDates[0];
   const firstDate = new Date(firstLogDate);
 
-  // Iterate from the very first log date up to the day before currentDate
-  // Use a cache for target values to avoid repeated function calls
   const targetProtein = target.protein;
   const targetFat = target.fat;
   const targetCarbs = target.carbs;
@@ -325,9 +473,6 @@ export function getPfcDebt(currentDate: string): PFC {
   while (dateStr < currentDate) {
     const log = logs[dateStr];
 
-    // Calculate daily balance (surplus/deficit relative to target)
-    // Positive result means excess (debt)
-    // Negative result means under target (repayment)
     const dailyExcess =
       log && log.total
         ? {
@@ -338,7 +483,6 @@ export function getPfcDebt(currentDate: string): PFC {
           }
         : emptyTotals;
 
-    // Add to cumulative debt, but cap debt at zero
     cumulativeDebt.protein = Math.max(
       0,
       cumulativeDebt.protein + dailyExcess.protein,
@@ -386,8 +530,6 @@ export function recalculateLogTotals(log: DailyLog): DailyLog {
 }
 
 export function addFoodItem(item: FoodItem) {
-  // Extract date (YYYY-MM-DD) from timestamp
-  // Use local time for date string
   const date = getDateFromTimestamp(item.timestamp);
 
   const log = getLogForDate(date);
@@ -420,7 +562,6 @@ export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
       saveLog(log);
     }
   } else {
-    // Moved to another day
     deleteLogItem(newItem.id, oldTimestamp);
     addFoodItem(newItem);
   }
@@ -456,9 +597,8 @@ export function saveSettings(settings: UserSettings) {
   });
   setStorageItem(STORAGE_KEYS.sports, normalizedSports);
   refreshUI();
+  void initializeCloudSync();
 }
-
-// --- Food Dictionary Management ---
 
 import generatedFoodsRaw from '@/data/generated_foods.json';
 const generatedFoods = generatedFoodsRaw as FoodItem[];
@@ -467,7 +607,6 @@ export function getFoodDictionary(): FoodItem[] {
   if (!isClient) return [];
   const userFoods = getStorageItem<FoodItem[]>(STORAGE_KEYS.foods, []);
 
-  // Merge system foods (defaults) into user foods if they don't exist
   const merged = [...userFoods];
   let changed = false;
 
@@ -542,15 +681,12 @@ export function getHistoryItems(): FoodItem[] {
   const allItems: FoodItem[] = [];
   const seenNames = new Set<string>();
 
-  // Iterate over all logs in reverse chronological order (if keys are dates, sort them)
   const sortedDates = getSortedLogDates(logs);
 
   for (const date of sortedDates) {
     const dayLog = logs[date];
-    // Traverse items in reverse (newest first)
     for (let i = dayLog.items.length - 1; i >= 0; i--) {
       const item = dayLog.items[i];
-      // Key by name + calories (rough uniqueness)
       const key = `${item.name}-${item.calories}`;
       if (!seenNames.has(key)) {
         seenNames.add(key);
@@ -566,12 +702,10 @@ export function getAllLogItems(): FoodItem[] {
   const logs = getLogs();
   const allItems: FoodItem[] = [];
 
-  // Sort dates in reverse chronological order
   const sortedDates = getSortedLogDates(logs);
 
   for (const date of sortedDates) {
     const dayLog = logs[date];
-    // Sort items within the day by timestamp desc
     const sortedDayItems = [...dayLog.items].sort(
       (a, b) => b.timestamp - a.timestamp,
     );
@@ -598,8 +732,6 @@ export function getUniqueStores(): string[] {
   return Array.from(stores).sort();
 }
 
-// --- Favorite Foods Management ---
-
 export function getFavoriteFoods(): FoodItem[] {
   const settings = getSettings();
   const favoriteIds = settings.favoriteFoodIds || [];
@@ -618,10 +750,8 @@ export function toggleFavoriteFood(id: string) {
 
   const index = favoriteIds.indexOf(id);
   if (index === -1) {
-    // Add to favorites
     favoriteIds.push(id);
   } else {
-    // Remove from favorites
     favoriteIds.splice(index, 1);
   }
 
