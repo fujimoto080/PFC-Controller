@@ -83,3 +83,14 @@ curl -X POST http://localhost:3000/api/mcp/intake   -H "Content-Type: applicatio
 pnpm test
 pnpm lint
 ```
+
+## 外部投稿用MCPサーバー
+
+外部クライアントからバックアップデータを投稿・取得する用途は、HTTP API ではなく MCP サーバーとして利用できます。
+
+- 起動コマンド: `pnpm mcp:backup`
+- 提供ツール:
+  - `create_temp_backup`: バックアップデータを投稿して `backupId` と `expiresAt` を取得
+  - `get_temp_backup`: `backupId` を指定してバックアップを取得
+
+MCPサーバーは Upstash Redis を利用するため、既存APIと同様に Redis 用の環境変数設定が必要です。
