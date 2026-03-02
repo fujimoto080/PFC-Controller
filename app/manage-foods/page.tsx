@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Pencil, Trash, Save, X, Star, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash, Save, X, Star, ChevronDown, ChevronRight, ScanBarcode } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { toast } from '@/lib/toast';
@@ -27,6 +27,7 @@ import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { PageTitle } from '@/components/ui/page-title';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 
 const getCurrentTimestamp = () => Date.now();
 const STORAGE_KEY_MANAGE_FOODS_COLLAPSE = 'pfc_manage_foods_collapse_state';
@@ -112,6 +113,7 @@ export default function ManageFoodsPage() {
     const [draggingFoodId, setDraggingFoodId] = useState<string | null>(null);
     const [dropTarget, setDropTarget] = useState<{ storeName: string; groupName: string } | null>(null);
     const [barcodeInput, setBarcodeInput] = useState('');
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
     const initialCollapseState = useMemo(() => readCollapseState(), []);
     const [collapsedStores, setCollapsedStores] = useState<string[]>(initialCollapseState.collapsedStores);
     const [collapsedGroups, setCollapsedGroups] = useState<string[]>(initialCollapseState.collapsedGroups);
@@ -226,6 +228,12 @@ export default function ManageFoodsPage() {
         }
 
         cancelEdit();
+    };
+
+    const handleBarcodeScanSuccess = (code: string) => {
+        setBarcodeInput(code);
+        setIsScannerOpen(false);
+        toast.success(`バーコードを読み取りました: ${code}`);
     };
 
     const handleDelete = (id: string, name: string) => {
@@ -447,12 +455,18 @@ export default function ManageFoodsPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="barcode">バーコード (任意・複数可)</Label>
-                                    <Input
-                                        id="barcode"
-                                        value={barcodeInput}
-                                        onChange={(event) => setBarcodeInput(event.target.value)}
-                                        placeholder="例: 4901234567890, 4909999999999"
-                                    />
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="barcode"
+                                            value={barcodeInput}
+                                            onChange={(event) => setBarcodeInput(event.target.value)}
+                                            placeholder="例: 4901234567890"
+                                        />
+                                        <Button type="button" variant="outline" onClick={() => setIsScannerOpen(true)}>
+                                            <ScanBarcode className="mr-2 h-4 w-4" />
+                                            スキャン
+                                        </Button>
+                                    </div>
                                     <p className="text-xs text-muted-foreground">
                                         カンマ・読点・空白区切りで複数バーコードを同時に紐づけできます。
                                     </p>
@@ -720,6 +734,10 @@ export default function ManageFoodsPage() {
                     </div>
                 )}
             </div>
+
+            {isScannerOpen && (
+                <BarcodeScanner onScanSuccess={handleBarcodeScanSuccess} onClose={() => setIsScannerOpen(false)} />
+            )}
 
             {isSelecting && (
                 <div className="fixed inset-x-0 bottom-16 z-50 px-4">
