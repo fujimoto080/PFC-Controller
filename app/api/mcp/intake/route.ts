@@ -14,6 +14,7 @@ interface JsonRpcRequest {
 }
 
 const TOOL_REGISTER_INTAKES = 'register_intakes';
+const TOOL_REGISTER_INTAKE = 'register_intake';
 const TOOL_LIST_INTAKES = 'list_intakes';
 
 const parseOptionalNumber = (value: unknown): number | undefined => {
@@ -36,6 +37,33 @@ const buildError = (id: string | number | undefined, code: number, message: stri
   id: id ?? null,
   error: { code, message },
 });
+
+const parseToolArguments = (value: unknown): Record<string, unknown> => {
+  if (!value) return {};
+  if (typeof value === 'object') return value as Record<string, unknown>;
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (parsed && typeof parsed === 'object') {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      throw new Error('arguments はオブジェクトまたはJSON文字列で指定してください');
+    }
+  }
+
+  throw new Error('arguments はオブジェクトまたはJSON文字列で指定してください');
+};
+
+const buildStoredExternalIntakeLogs = (entries: ExternalIntakeInput[]) => {
+  const createdAt = Date.now();
+  return entries.map((entry) => ({
+    ...normalizeExternalIntakeInput(entry),
+    id: crypto.randomUUID().replaceAll('-', ''),
+    createdAt,
+  }));
+};
 
 const listToolsResult = {
   tools: [
@@ -70,6 +98,32 @@ const listToolsResult = {
       },
     },
     {
+      name: TOOL_REGISTER_INTAKE,
+      description: '外部で取得した摂取履歴を1件登録します',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          entry: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              protein: { type: 'number' },
+              fat: { type: 'number' },
+              carbs: { type: 'number' },
+              calories: { type: 'number' },
+              store: { type: 'string' },
+              source: { type: 'string' },
+              consumedAt: {
+                description: 'UNIXミリ秒またはISO8601文字列',
+                oneOf: [{ type: 'number' }, { type: 'string' }],
+              },
+            },
+          },
+        },
+        required: ['entry'],
+      },
+    },
+    {
       name: TOOL_LIST_INTAKES,
       description: '登録済み摂取履歴を新しい順で取得します',
       inputSchema: {
@@ -85,6 +139,17 @@ const listToolsResult = {
 };
 
 async function callTool(name: string, args: Record<string, unknown>) {
+  if (name === TOOL_REGISTER_INTAKE) {
+    const entry = args.entry;
+    if (!isExternalIntakeInput(entry)) {
+      throw new Error('entry に摂取履歴オブジェクトを指定してください');
+    }
+
+    const [savedEntry] = buildStoredExternalIntakeLogs([entry]);
+    await saveExternalIntakeLogs([savedEntry]);
+    return { count: 1, entry: savedEntry };
+  }
+
   if (name === TOOL_REGISTER_INTAKES) {
     const entries = args.entries;
     if (!Array.isArray(entries) || entries.length === 0) {
@@ -96,12 +161,7 @@ async function callTool(name: string, args: Record<string, unknown>) {
       throw new Error('摂取履歴の形式が不正です');
     }
 
-    const createdAt = Date.now();
-    const normalizedLogs = (entries as ExternalIntakeInput[]).map((entry) => ({
-      ...normalizeExternalIntakeInput(entry),
-      id: crypto.randomUUID().replaceAll('-', ''),
-      createdAt,
-    }));
+    const normalizedLogs = buildStoredExternalIntakeLogs(entries as ExternalIntakeInput[]);
 
     await saveExternalIntakeLogs(normalizedLogs);
     return { count: normalizedLogs.length, entries: normalizedLogs };
@@ -152,7 +212,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(buildError(body.id, -32602, 'ツール名が不正です'));
       }
 
-      const args = (body.params?.arguments ?? {}) as Record<string, unknown>;
+      const args = parseToolArguments(body.params?.arguments);
       const result = await callTool(name, args);
       return NextResponse.json(
         buildResult(body.id, {

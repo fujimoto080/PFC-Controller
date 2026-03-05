@@ -39,6 +39,7 @@ GitHub Actions で運用する場合は、リポジトリの **Settings > Secret
 - MCPエンドポイント: `POST /api/mcp/intake`
 - URL例（ローカル）: `http://localhost:3000/api/mcp/intake`
 - 利用ツール:
+  - `register_intake`（摂取履歴の1件登録）
   - `register_intakes`（摂取履歴の一括登録）
   - `list_intakes`（登録済み履歴の取得。`limit/startAt/endAt` 指定可）
 
@@ -48,7 +49,7 @@ GitHub Actions で運用する場合は、リポジトリの **Settings > Secret
 curl -X POST http://localhost:3000/api/mcp/intake   -H "Content-Type: application/json"   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 ```
 
-`tools/call`（`register_intakes`）例:
+`tools/call`（`register_intake`）例:
 
 ```bash
 curl -X POST http://localhost:3000/api/mcp/intake   -H "Content-Type: application/json"   -d '{
@@ -56,26 +57,26 @@ curl -X POST http://localhost:3000/api/mcp/intake   -H "Content-Type: applicatio
     "id": 2,
     "method": "tools/call",
     "params": {
-      "name": "register_intakes",
+      "name": "register_intake",
       "arguments": {
-        "entries": [
-          {
-            "name": "サラダチキン",
-            "protein": 23,
-            "fat": 2,
-            "carbs": 1.5,
-            "calories": 120,
-            "store": "コンビニ",
-            "source": "external-ai",
-            "consumedAt": "2026-02-26T12:30:00+09:00"
-          }
-        ]
+        "entry": {
+          "name": "サラダチキン",
+          "protein": 23,
+          "fat": 2,
+          "carbs": 1.5,
+          "calories": 120,
+          "store": "コンビニ",
+          "source": "external-ai",
+          "consumedAt": "2026-02-26T12:30:00+09:00"
+        }
       }
     }
   }'
 ```
 
 `consumedAt` は未指定時に現在時刻が使われます。
+
+`tools/call` の `arguments` は、オブジェクトに加えてJSON文字列でも指定できます。
 
 ## テスト・Lint
 
