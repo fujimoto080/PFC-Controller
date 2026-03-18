@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Camera, Plus, ScanBarcode } from 'lucide-react';
 import Link from 'next/link';
@@ -20,6 +20,7 @@ import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { toast } from '@/lib/toast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
+import { getSimilarFoodSuggestions } from '@/lib/food-suggestions';
 
 export interface AddFoodFormProps {
   onSuccess?: () => void;
@@ -47,7 +48,7 @@ interface BarcodeMappedFood {
 export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('manual');
-  const { uniqueStores } = useFoodDictionary();
+  const { foods, uniqueStores } = useFoodDictionary();
   const [saveToDictionary, setSaveToDictionary] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     useEatDateTime();
 
   // Form for manual entry
-  const { register, handleSubmit, reset, getValues } =
+  const { register, handleSubmit, reset, getValues, setValue, watch } =
     useForm<ManualFoodFormValues>({
       defaultValues: initialData
         ? {
@@ -76,6 +77,11 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
           }
         : undefined,
     });
+  const watchedName = watch('name') ?? '';
+  const similarFoods = useMemo(
+    () => getSimilarFoodSuggestions(foods, watchedName),
+    [foods, watchedName],
+  );
 
   const applyFoodDataToForm = (data: BarcodeMappedFood) => {
     reset({
@@ -187,6 +193,16 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     } else {
       router.push('/');
     }
+  };
+
+  const handleApplySuggestion = (food: FoodItem) => {
+    setValue('name', food.name, { shouldDirty: true });
+    setValue('protein', food.protein, { shouldDirty: true });
+    setValue('fat', food.fat, { shouldDirty: true });
+    setValue('carbs', food.carbs, { shouldDirty: true });
+    setValue('calories', food.calories, { shouldDirty: true });
+    setValue('store', food.store ?? '', { shouldDirty: true });
+    toast.success(`「${food.name}」を入力しました`);
   };
 
   const handleScanSuccess = async (code: string) => {
@@ -485,6 +501,32 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                         {...register('name', { required: true })}
                         placeholder="例: ランチセット"
                       />
+                      {similarFoods.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          <p className="text-muted-foreground text-xs">
+                            似ている食品候補
+                          </p>
+                          <div className="space-y-2">
+                            {similarFoods.map((food) => (
+                              <button
+                                key={food.id}
+                                type="button"
+                                className="hover:bg-muted/80 w-full rounded-md border p-2 text-left transition-colors"
+                                onClick={() => handleApplySuggestion(food)}
+                              >
+                                <p className="text-sm font-medium">
+                                  {food.name}
+                                </p>
+                                <p className="text-muted-foreground text-xs">
+                                  P:{food.protein} F:{food.fat} C:{food.carbs}{' '}
+                                  / {food.calories}kcal
+                                  {food.store ? ` / ${food.store}` : ''}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
