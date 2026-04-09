@@ -22,7 +22,7 @@ import {
     saveFoodDictionary,
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
-import { normalizeBarcodes } from '@/lib/barcode-mapping';
+import { buildFoodMatchKey, normalizeBarcodes, type BarcodeMappingRow } from '@/lib/barcode-mapping';
 import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
@@ -114,6 +114,7 @@ export default function ManageFoodsPage() {
     const [dropTarget, setDropTarget] = useState<{ storeName: string; groupName: string } | null>(null);
     const [barcodeInput, setBarcodeInput] = useState('');
     const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const [barcodeMappingsByFoodKey, setBarcodeMappingsByFoodKey] = useState<Record<string, string[]>>({});
     const initialCollapseState = useMemo(() => readCollapseState(), []);
     const [collapsedStores, setCollapsedStores] = useState<string[]>(initialCollapseState.collapsedStores);
     const [collapsedGroups, setCollapsedGroups] = useState<string[]>(initialCollapseState.collapsedGroups);
@@ -138,6 +139,35 @@ export default function ManageFoodsPage() {
         );
     }, [collapsedStores, collapsedGroups]);
 
+    useEffect(() => {
+        const loadBarcodeMappings = async () => {
+            try {
+                const response = await fetch('/api/barcode/mappings', { cache: 'no-store' });
+
+                if (!response.ok) {
+                    throw new Error('バーコードマッピングの取得に失敗しました');
+                }
+
+                const rows = (await response.json()) as BarcodeMappingRow[];
+                const mappings = rows.reduce<Record<string, string[]>>((acc, row) => {
+                    const key = buildFoodMatchKey(row.food);
+                    const current = acc[key] ?? [];
+                    if (!current.includes(row.barcode)) {
+                        current.push(row.barcode);
+                    }
+                    acc[key] = current;
+                    return acc;
+                }, {});
+
+                setBarcodeMappingsByFoodKey(mappings);
+            } catch (error) {
+                console.error('バーコードマッピングの取得に失敗しました', error);
+            }
+        };
+
+        loadBarcodeMappings();
+    }, []);
+
     const startAdd = () => {
         setEditingItem(null);
         setIsAdding(true);
@@ -156,7 +186,8 @@ export default function ManageFoodsPage() {
     const startEdit = (item: FoodItem) => {
         setEditingItem(item);
         setIsAdding(true);
-        setBarcodeInput(item.barcodes?.join(', ') || '');
+        const key = buildFoodMatchKey(item);
+        setBarcodeInput((barcodeMappingsByFoodKey[key] ?? []).join(', '));
         setValue('name', item.name);
         setValue('protein', item.protein);
         setValue('fat', item.fat);
@@ -207,7 +238,6 @@ export default function ManageFoodsPage() {
             store: data.store || undefined,
             storeGroup: data.storeGroup || undefined,
             timestamp: getCurrentTimestamp(),
-            barcodes: normalizedBarcodes.length > 0 ? normalizedBarcodes : undefined,
         };
 
         if (editingItem) {
@@ -222,6 +252,11 @@ export default function ManageFoodsPage() {
             try {
                 await saveBarcodeMapping(normalizedBarcodes, itemData);
                 toast.success(`バーコード情報を${normalizedBarcodes.length}件保存しました`);
+                const foodKey = buildFoodMatchKey(itemData);
+                setBarcodeMappingsByFoodKey((prev) => ({
+                    ...prev,
+                    [foodKey]: Array.from(new Set([...(prev[foodKey] ?? []), ...normalizedBarcodes])),
+                }));
             } catch (error) {
                 console.error('バーコード情報の保存に失敗しました', error);
                 toast.error('バーコード情報の保存に失敗しました');
@@ -688,9 +723,9 @@ export default function ManageFoodsPage() {
                                                                                     P:{food.protein} F:{food.fat} C:{food.carbs} | {food.calories}
                                                                                     kcal
                                                                                 </div>
-                                                                                {food.barcodes && food.barcodes.length > 0 && (
+                                                                                {(barcodeMappingsByFoodKey[buildFoodMatchKey(food)] ?? []).length > 0 && (
                                                                                     <div className="text-xs text-muted-foreground">
-                                                                                        バーコード: {food.barcodes.join(', ')}
+                                                                                        バーコード: {(barcodeMappingsByFoodKey[buildFoodMatchKey(food)] ?? []).join(', ')}
                                                                                     </div>
                                                                                 )}
                                                                             </div>

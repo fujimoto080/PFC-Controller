@@ -12,7 +12,6 @@ export interface FoodItem extends PFC {
   store?: string;
   storeGroup?: string;
   timestamp: number;
-  barcodes?: string[];
 }
 
 export interface DailyLog {

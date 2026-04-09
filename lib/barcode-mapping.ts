@@ -12,6 +12,8 @@ export interface BarcodeMappingRow {
   food: FoodItemForKVS;
 }
 
+export type FoodMatchKeyInput = Pick<FoodItemForKVS, 'name' | 'protein' | 'fat' | 'carbs' | 'calories'>;
+
 export function normalizeBarcodes(value: string | string[]): string[] {
   const source = Array.isArray(value) ? value : [value];
 
@@ -23,4 +25,14 @@ export function normalizeBarcodes(value: string | string[]): string[] {
         .filter(Boolean),
     ),
   );
+}
+
+export function buildFoodMatchKey(food: FoodMatchKeyInput): string {
+  return [
+    food.name.trim().toLowerCase(),
+    Number(food.protein),
+    Number(food.fat),
+    Number(food.carbs),
+    Number(food.calories),
+  ].join('|');
 }
