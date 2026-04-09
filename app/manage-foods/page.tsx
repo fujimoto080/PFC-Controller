@@ -156,7 +156,7 @@ export default function ManageFoodsPage() {
     const startEdit = (item: FoodItem) => {
         setEditingItem(item);
         setIsAdding(true);
-        setBarcodeInput('');
+        setBarcodeInput(item.barcodes?.join(', ') || '');
         setValue('name', item.name);
         setValue('protein', item.protein);
         setValue('fat', item.fat);
@@ -196,6 +196,8 @@ export default function ManageFoodsPage() {
     };
 
     const onSubmit = async (data: FoodItem) => {
+        const normalizedBarcodes = normalizeBarcodes(barcodeInput);
+
         const itemData = {
             name: data.name,
             protein: Number(data.protein),
@@ -205,6 +207,7 @@ export default function ManageFoodsPage() {
             store: data.store || undefined,
             storeGroup: data.storeGroup || undefined,
             timestamp: getCurrentTimestamp(),
+            barcodes: normalizedBarcodes.length > 0 ? normalizedBarcodes : undefined,
         };
 
         if (editingItem) {
@@ -215,12 +218,10 @@ export default function ManageFoodsPage() {
             toast.success('食品を追加しました');
         }
 
-        const barcodes = normalizeBarcodes(barcodeInput);
-
-        if (barcodes.length > 0) {
+        if (normalizedBarcodes.length > 0) {
             try {
-                await saveBarcodeMapping(barcodes, itemData);
-                toast.success(`バーコード情報を${barcodes.length}件保存しました`);
+                await saveBarcodeMapping(normalizedBarcodes, itemData);
+                toast.success(`バーコード情報を${normalizedBarcodes.length}件保存しました`);
             } catch (error) {
                 console.error('バーコード情報の保存に失敗しました', error);
                 toast.error('バーコード情報の保存に失敗しました');
@@ -687,6 +688,11 @@ export default function ManageFoodsPage() {
                                                                                     P:{food.protein} F:{food.fat} C:{food.carbs} | {food.calories}
                                                                                     kcal
                                                                                 </div>
+                                                                                {food.barcodes && food.barcodes.length > 0 && (
+                                                                                    <div className="text-xs text-muted-foreground">
+                                                                                        バーコード: {food.barcodes.join(', ')}
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                             {!isSelecting ? (
                                                                                 <div className="flex gap-1">
