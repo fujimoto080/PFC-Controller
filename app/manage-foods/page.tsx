@@ -109,7 +109,7 @@ export default function ManageFoodsPage() {
     const [selectedFoodIds, setSelectedFoodIds] = useState<string[]>([]);
     const [bulkStoreName, setBulkStoreName] = useState('');
     const [bulkGroupName, setBulkGroupName] = useState('');
-    const [isSortLocked, setIsSortLocked] = useState(false);
+    const [isSortLocked, setIsSortLocked] = useState(true);
     const [draggingFoodId, setDraggingFoodId] = useState<string | null>(null);
     const [dropTarget, setDropTarget] = useState<{ storeName: string; groupName: string } | null>(null);
     const [barcodeInput, setBarcodeInput] = useState('');
