@@ -40,6 +40,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
       - name: Knip
         run: pnpm knip
 
