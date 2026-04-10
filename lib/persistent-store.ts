@@ -27,8 +27,12 @@ function getDatabaseUrl(): string {
 }
 
 class PostgresCloudDataStore implements CloudDataStore {
-  private readonly pool = new Pool({ connectionString: getDatabaseUrl() });
+  private readonly pool: Pool;
   private initPromise: Promise<void> | null = null;
+
+  constructor() {
+    this.pool = new Pool({ connectionString: getDatabaseUrl() });
+  }
 
   private async ensureTable() {
     if (!this.initPromise) {
@@ -87,8 +91,12 @@ class PostgresCloudDataStore implements CloudDataStore {
   }
 }
 
-const store = new PostgresCloudDataStore();
+let store: CloudDataStore | null = null;
 
 export function getCloudDataStore(): CloudDataStore {
+  if (!store) {
+    store = new PostgresCloudDataStore();
+  }
+
   return store;
 }
