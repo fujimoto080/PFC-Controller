@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,21 +14,100 @@ const MIN_SYNC_KEY_LENGTH = 8;
 export function CloudSyncSettings() {
   const { settings } = usePfcData();
   const [syncKey, setSyncKey] = useState(settings?.cloudSyncKey || '');
+  const [hasLegacyBackup, setHasLegacyBackup] = useState(false);
+  const [hasRdbData, setHasRdbData] = useState(false);
+  const [isCheckingMigration, setIsCheckingMigration] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+
+  const normalizedSyncKey = useMemo(() => syncKey.trim(), [syncKey]);
 
   const handleSave = () => {
     if (!settings) return;
 
-    const normalizedKey = syncKey.trim();
-    if (normalizedKey && normalizedKey.length < MIN_SYNC_KEY_LENGTH) {
+    if (normalizedSyncKey && normalizedSyncKey.length < MIN_SYNC_KEY_LENGTH) {
       toast.error(`同期キーは${MIN_SYNC_KEY_LENGTH}文字以上で入力してください`);
       return;
     }
 
     saveSettings({
       ...settings,
-      cloudSyncKey: normalizedKey || undefined,
+      cloudSyncKey: normalizedSyncKey || undefined,
     });
     toast.success('クラウド同期キーを保存しました');
+  };
+
+  const handleCheckMigration = async () => {
+    if (normalizedSyncKey.length < MIN_SYNC_KEY_LENGTH) {
+      toast.error(`同期キーは${MIN_SYNC_KEY_LENGTH}文字以上で入力してください`);
+      return;
+    }
+
+    setIsCheckingMigration(true);
+    try {
+      const response = await fetch(
+        `/api/cloud-data/migration?syncKey=${encodeURIComponent(normalizedSyncKey)}`,
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '移行チェックに失敗しました');
+      }
+
+      setHasLegacyBackup(!!data.hasLegacyBackup);
+      setHasRdbData(!!data.hasRdbData);
+
+      if (!data.hasLegacyBackup) {
+        toast.info('移行対象の旧バックアップは見つかりませんでした');
+        return;
+      }
+
+      if (data.hasRdbData) {
+        toast.warning('RDBに既存データがあります。移行すると上書きされます');
+        return;
+      }
+
+      toast.success('移行可能な旧バックアップが見つかりました');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '移行チェックに失敗しました');
+    } finally {
+      setIsCheckingMigration(false);
+    }
+  };
+
+  const handleMigrateToRdb = async () => {
+    if (!hasLegacyBackup) {
+      toast.warning('先に移行チェックを実行してください');
+      return;
+    }
+
+    const force =
+      hasRdbData &&
+      window.confirm('RDBに既存データがあります。旧バックアップで上書きしますか？');
+
+    if (hasRdbData && !force) {
+      return;
+    }
+
+    setIsMigrating(true);
+    try {
+      const response = await fetch('/api/cloud-data/migration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ syncKey: normalizedSyncKey, force }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || '移行に失敗しました');
+      }
+
+      setHasRdbData(true);
+      toast.success('旧バックアップをRDBへ移行しました');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '移行に失敗しました');
+    } finally {
+      setIsMigrating(false);
+    }
   };
 
   return (
@@ -45,13 +124,30 @@ export function CloudSyncSettings() {
           <Input
             id="cloud-sync-key"
             value={syncKey}
-            onChange={(event) => setSyncKey(event.target.value)}
+            onChange={(event) => {
+              setSyncKey(event.target.value);
+              setHasLegacyBackup(false);
+              setHasRdbData(false);
+            }}
             placeholder="8文字以上で入力"
           />
         </div>
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button onClick={handleCheckMigration} variant="secondary" disabled={isCheckingMigration}>
+            {isCheckingMigration ? '確認中...' : '旧バックアップを確認'}
+          </Button>
           <Button onClick={handleSave}>同期キーを保存</Button>
         </div>
+        {hasLegacyBackup && (
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm">
+              旧バックアップが見つかりました。{hasRdbData && 'RDBの既存データは上書きされます。'}
+            </p>
+            <Button onClick={handleMigrateToRdb} disabled={isMigrating} className="w-full">
+              {isMigrating ? '移行中...' : '旧バックアップをRDBに移行'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
