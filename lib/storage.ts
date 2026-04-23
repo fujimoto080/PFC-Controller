@@ -31,7 +31,9 @@ const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
 let hasInitializedCloudSync = false;
 let initializedSyncKey = '';
-let syncTimer: ReturnType<typeof setTimeout> | null = null;
+type CloudSyncTarget = keyof typeof STORAGE_KEYS;
+
+const syncTimers: Partial<Record<CloudSyncTarget, ReturnType<typeof setTimeout>>> = {};
 let isApplyingCloudData = false;
 let cloudUpdatedAt = 0;
 
@@ -77,19 +79,14 @@ const hasMigratedForSyncKey = (syncKey: string): boolean =>
 const setStorageItem = <T>(key: string, value: T) => {
   if (!isClient) return;
   localStorage.setItem(key, JSON.stringify(value));
-  scheduleCloudSync();
-};
+  const syncTarget = Object.entries(STORAGE_KEYS).find(([, storageKey]) => storageKey === key)?.[0] as
+    | CloudSyncTarget
+    | undefined;
 
-const getLocalCloudDataPayload = (): CloudDataPayload => ({
-  version: 1,
-  createdAt: Date.now(),
-  logs: getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {}),
-  settings: getStorageItem<Record<string, unknown>>(STORAGE_KEYS.settings, {
-    targetPFC: DEFAULT_TARGET,
-  } as unknown as Record<string, unknown>),
-  foods: getStorageItem<unknown[]>(STORAGE_KEYS.foods, []),
-  sports: getStorageItem<unknown[]>(STORAGE_KEYS.sports, []),
-});
+  if (syncTarget) {
+    scheduleCloudSync(syncTarget);
+  }
+};
 
 const applyPayloadToLocalStorage = (payload: CloudDataPayload) => {
   isApplyingCloudData = true;
@@ -103,19 +100,37 @@ const applyPayloadToLocalStorage = (payload: CloudDataPayload) => {
   isApplyingCloudData = false;
 };
 
-const pushLocalDataToCloud = async (reason: string) => {
+const postCloudSync = async (target: CloudSyncTarget) => {
   if (!isClient || isApplyingCloudData) return;
 
   const syncKey = getCloudSyncKey();
   if (!syncKey) return;
 
-  const payload = getLocalCloudDataPayload();
+  const updatedAt = Date.now();
+
+  const endpointMap: Record<CloudSyncTarget, string> = {
+    logs: '/api/cloud-data/logs',
+    settings: '/api/cloud-data/settings',
+    foods: '/api/cloud-data/foods',
+    sports: '/api/cloud-data/sports',
+  };
+
+  const bodyMap: Record<CloudSyncTarget, Record<string, unknown>> = {
+    logs: { logs: getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {}) },
+    settings: {
+      settings: getStorageItem<Record<string, unknown>>(STORAGE_KEYS.settings, {
+        targetPFC: DEFAULT_TARGET,
+      } as unknown as Record<string, unknown>),
+    },
+    foods: { foods: getStorageItem<unknown[]>(STORAGE_KEYS.foods, []) },
+    sports: { sports: getStorageItem<unknown[]>(STORAGE_KEYS.sports, []) },
+  };
 
   try {
-    const response = await fetch('/api/cloud-data', {
+    const response = await fetch(endpointMap[target], {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payload, reason, updatedAt: Date.now(), syncKey }),
+      body: JSON.stringify({ ...bodyMap[target], updatedAt, syncKey }),
     });
 
     if (!response.ok) return;
@@ -129,7 +144,14 @@ const pushLocalDataToCloud = async (reason: string) => {
   }
 };
 
-const scheduleCloudSync = () => {
+const pushAllLocalDataToCloud = async () => {
+  await postCloudSync('settings');
+  await postCloudSync('logs');
+  await postCloudSync('foods');
+  await postCloudSync('sports');
+};
+
+const scheduleCloudSync = (target: CloudSyncTarget) => {
   if (!isClient || isApplyingCloudData) return;
 
   const syncKey = getCloudSyncKey();
@@ -137,13 +159,13 @@ const scheduleCloudSync = () => {
 
   if (!hasMigratedForSyncKey(syncKey)) return;
 
-  if (syncTimer) {
-    clearTimeout(syncTimer);
+  if (syncTimers[target]) {
+    clearTimeout(syncTimers[target]);
   }
 
-  syncTimer = setTimeout(() => {
-    syncTimer = null;
-    void pushLocalDataToCloud('auto-sync');
+  syncTimers[target] = setTimeout(() => {
+    delete syncTimers[target];
+    void postCloudSync(target);
   }, 300);
 };
 
@@ -191,7 +213,7 @@ const initializeCloudSync = async () => {
         localStorage.getItem(STORAGE_KEYS.sports) !== null;
 
       if (hasLocalData && !cloudPayload) {
-        await pushLocalDataToCloud('initial-migration');
+        await pushAllLocalDataToCloud();
       } else if (cloudPayload) {
         applyPayloadToLocalStorage(cloudPayload);
         cloudUpdatedAt = remoteUpdatedAt;
