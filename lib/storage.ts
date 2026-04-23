@@ -10,14 +10,11 @@ import {
   SportDefinition,
 } from './types';
 import { formatDate, roundPFC } from './utils';
-import { CloudDataPayload, isCloudDataPayload } from './cloud-payload';
 
 const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
 const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
 const STORAGE_KEY_SPORTS = 'pfc_sports';
-const STORAGE_KEY_CLOUD_MIGRATED_PREFIX = 'pfc_cloud_migrated_v1';
-
 const STORAGE_KEYS = {
   logs: STORAGE_KEY_LOGS,
   settings: STORAGE_KEY_SETTINGS,
@@ -28,18 +25,7 @@ const STORAGE_KEYS = {
 const isClient = typeof window !== 'undefined';
 
 const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
-
-let hasInitializedCloudSync = false;
-let initializedSyncKey = '';
-let syncTimer: ReturnType<typeof setTimeout> | null = null;
-let isApplyingCloudData = false;
-let cloudUpdatedAt = 0;
-
-const resetCloudSyncState = () => {
-  hasInitializedCloudSync = false;
-  initializedSyncKey = '';
-  cloudUpdatedAt = 0;
-};
+const inMemoryStorage: Partial<Record<(typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS], string>> = {};
 
 const getDateFromTimestamp = (timestamp: number) =>
   formatDate(new Date(timestamp));
@@ -53,171 +39,16 @@ const getSortedLogDates = (
   );
 
 const getStorageItem = <T>(key: string, fallback: T): T => {
-  if (!isClient) return fallback;
-  const stored = localStorage.getItem(key);
+  const stored = inMemoryStorage[key as (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]];
   return stored ? JSON.parse(stored) : fallback;
 };
 
 const normalizeSyncKey = (value: string | undefined): string =>
   (value || '').trim();
 
-const getCloudSyncKey = (): string => {
-  const settings = getStorageItem<UserSettings>(STORAGE_KEYS.settings, {
-    targetPFC: DEFAULT_TARGET,
-  });
-  return normalizeSyncKey(settings.cloudSyncKey);
-};
-
-const getMigrationFlagKey = (syncKey: string): string =>
-  `${STORAGE_KEY_CLOUD_MIGRATED_PREFIX}:${syncKey}`;
-
-const hasMigratedForSyncKey = (syncKey: string): boolean =>
-  localStorage.getItem(getMigrationFlagKey(syncKey)) === '1';
-
 const setStorageItem = <T>(key: string, value: T) => {
-  if (!isClient) return;
-  localStorage.setItem(key, JSON.stringify(value));
-  scheduleCloudSync();
+  inMemoryStorage[key as (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]] = JSON.stringify(value);
 };
-
-const getLocalCloudDataPayload = (): CloudDataPayload => ({
-  version: 1,
-  createdAt: Date.now(),
-  logs: getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {}),
-  settings: getStorageItem<Record<string, unknown>>(STORAGE_KEYS.settings, {
-    targetPFC: DEFAULT_TARGET,
-  } as unknown as Record<string, unknown>),
-  foods: getStorageItem<unknown[]>(STORAGE_KEYS.foods, []),
-  sports: getStorageItem<unknown[]>(STORAGE_KEYS.sports, []),
-});
-
-const applyPayloadToLocalStorage = (payload: CloudDataPayload) => {
-  isApplyingCloudData = true;
-  localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(payload.logs));
-  localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(payload.settings));
-  localStorage.setItem(STORAGE_KEYS.foods, JSON.stringify(payload.foods));
-  localStorage.setItem(
-    STORAGE_KEYS.sports,
-    JSON.stringify(normalizeSports(payload.sports || [])),
-  );
-  isApplyingCloudData = false;
-};
-
-const pushLocalDataToCloud = async (reason: string) => {
-  if (!isClient || isApplyingCloudData) return;
-
-  const syncKey = getCloudSyncKey();
-  if (!syncKey) return;
-
-  const payload = getLocalCloudDataPayload();
-
-  try {
-    const response = await fetch('/api/cloud-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payload, reason, updatedAt: Date.now(), syncKey }),
-    });
-
-    if (!response.ok) return;
-
-    const result = (await response.json()) as { updatedAt?: unknown };
-    if (typeof result.updatedAt === 'number' && Number.isFinite(result.updatedAt)) {
-      cloudUpdatedAt = result.updatedAt;
-    }
-  } catch (error) {
-    console.error('クラウド同期エラー', error);
-  }
-};
-
-const scheduleCloudSync = () => {
-  if (!isClient || isApplyingCloudData) return;
-
-  const syncKey = getCloudSyncKey();
-  if (!syncKey) return;
-
-  if (!hasMigratedForSyncKey(syncKey)) return;
-
-  if (syncTimer) {
-    clearTimeout(syncTimer);
-  }
-
-  syncTimer = setTimeout(() => {
-    syncTimer = null;
-    void pushLocalDataToCloud('auto-sync');
-  }, 300);
-};
-
-const initializeCloudSync = async () => {
-  if (!isClient) return;
-
-  const syncKey = getCloudSyncKey();
-  if (!syncKey) {
-    resetCloudSyncState();
-    return;
-  }
-  if (hasInitializedCloudSync && initializedSyncKey === syncKey) return;
-
-  hasInitializedCloudSync = true;
-  initializedSyncKey = syncKey;
-
-  try {
-    const response = await fetch(`/api/cloud-data?syncKey=${encodeURIComponent(syncKey)}`, {
-      cache: 'no-store',
-    });
-    if (!response.ok) {
-      resetCloudSyncState();
-      return;
-    }
-
-    const result = (await response.json()) as {
-      payload?: unknown;
-      updatedAt?: unknown;
-    };
-
-    const cloudPayload = isCloudDataPayload(result.payload) ? result.payload : null;
-    const remoteUpdatedAt =
-      typeof result.updatedAt === 'number' && Number.isFinite(result.updatedAt)
-        ? result.updatedAt
-        : 0;
-
-    const migrationFlagKey = getMigrationFlagKey(syncKey);
-    const hasMigrated = localStorage.getItem(migrationFlagKey) === '1';
-
-    if (!hasMigrated) {
-      const hasLocalData =
-        localStorage.getItem(STORAGE_KEYS.logs) !== null ||
-        localStorage.getItem(STORAGE_KEYS.settings) !== null ||
-        localStorage.getItem(STORAGE_KEYS.foods) !== null ||
-        localStorage.getItem(STORAGE_KEYS.sports) !== null;
-
-      if (hasLocalData && !cloudPayload) {
-        await pushLocalDataToCloud('initial-migration');
-      } else if (cloudPayload) {
-        applyPayloadToLocalStorage(cloudPayload);
-        cloudUpdatedAt = remoteUpdatedAt;
-        refreshUI();
-      }
-
-      localStorage.setItem(migrationFlagKey, '1');
-      return;
-    }
-
-    if (!cloudPayload) return;
-
-    if (remoteUpdatedAt > cloudUpdatedAt) {
-      applyPayloadToLocalStorage(cloudPayload);
-      cloudUpdatedAt = remoteUpdatedAt;
-      refreshUI();
-    }
-  } catch (error) {
-    resetCloudSyncState();
-    console.error('クラウド初期化エラー', error);
-  }
-};
-
-if (isClient) {
-  void initializeCloudSync();
-}
 
 // Helper to get today's date string YYYY-MM-DD in local time
 export function getTodayString(): string {
@@ -602,12 +433,7 @@ export function getSettings(): UserSettings {
 }
 
 export function saveSettings(settings: UserSettings) {
-  const previousSyncKey = getCloudSyncKey();
   const nextSyncKey = normalizeSyncKey(settings.cloudSyncKey);
-  if (previousSyncKey !== nextSyncKey) {
-    resetCloudSyncState();
-  }
-
   const normalizedSports = normalizeSports(settings.sports);
   setStorageItem(STORAGE_KEYS.settings, {
     ...settings,
@@ -616,7 +442,6 @@ export function saveSettings(settings: UserSettings) {
   });
   setStorageItem(STORAGE_KEYS.sports, normalizedSports);
   refreshUI();
-  void initializeCloudSync();
 }
 
 import generatedFoodsRaw from '@/data/generated_foods.json';

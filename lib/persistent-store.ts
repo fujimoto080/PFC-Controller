@@ -11,6 +11,10 @@ interface PersistentData {
 interface CloudDataStore {
   get(syncKey: string): Promise<PersistentData>;
   set(syncKey: string, payload: CloudDataPayload, updatedAt: number): Promise<void>;
+  setSettings(syncKey: string, settings: Record<string, unknown>, updatedAt: number): Promise<void>;
+  setLogs(syncKey: string, logs: Record<string, unknown>, updatedAt: number): Promise<void>;
+  setFoods(syncKey: string, foods: unknown[], updatedAt: number): Promise<void>;
+  setSports(syncKey: string, sports: unknown[], updatedAt: number): Promise<void>;
 }
 
 interface SnapshotRow {
@@ -326,6 +330,46 @@ class PostgresCloudDataStore implements CloudDataStore {
     }
   }
 
+  private async upsertSnapshot(
+    client: PoolClient,
+    syncKey: string,
+    updatedAt: number,
+    createdAt?: number,
+  ) {
+    const snapshotResult = await client.query<SnapshotRow>(
+      `
+      SELECT created_at_ms
+      FROM pfc_cloud_snapshots
+      WHERE sync_key = $1
+      LIMIT 1
+      `,
+      [syncKey],
+    );
+
+    const existingCreatedAt = snapshotResult.rows[0]
+      ? Number(snapshotResult.rows[0].created_at_ms)
+      : 0;
+
+    const createdAtValue =
+      typeof createdAt === 'number' && Number.isFinite(createdAt) && createdAt > 0
+        ? createdAt
+        : existingCreatedAt > 0
+          ? existingCreatedAt
+          : updatedAt;
+
+    await client.query(
+      `
+      INSERT INTO pfc_cloud_snapshots (sync_key, version, created_at_ms, updated_at_ms)
+      VALUES ($1, 1, $2, $3)
+      ON CONFLICT (sync_key)
+      DO UPDATE SET
+        updated_at_ms = EXCLUDED.updated_at_ms,
+        modified_at = NOW()
+      `,
+      [syncKey, createdAtValue, updatedAt],
+    );
+  }
+
   private buildSettings(row?: SettingsRow): Record<string, unknown> {
     if (!row) return {};
 
@@ -495,25 +539,89 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
 
-      await client.query(
-        `
-        INSERT INTO pfc_cloud_snapshots (sync_key, version, created_at_ms, updated_at_ms)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (sync_key)
-        DO UPDATE SET
-          version = EXCLUDED.version,
-          created_at_ms = EXCLUDED.created_at_ms,
-          updated_at_ms = EXCLUDED.updated_at_ms,
-          modified_at = NOW()
-        `,
-        [normalizedKey, payload.version, payload.createdAt, updatedAt],
-      );
+      await this.upsertSnapshot(client, normalizedKey, updatedAt, payload.createdAt);
 
       await this.replaceSettings(client, normalizedKey, asRecord(payload.settings));
       await this.replaceLogs(client, normalizedKey, asRecord(payload.logs));
       await this.replaceFoods(client, normalizedKey, asArray(payload.foods));
       await this.replaceSports(client, normalizedKey, asArray(payload.sports));
 
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async setSettings(syncKey: string, settings: Record<string, unknown>, updatedAt: number) {
+    await this.ensureTables();
+
+    const normalizedKey = normalizeSyncKey(syncKey);
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await this.upsertSnapshot(client, normalizedKey, updatedAt);
+      await this.replaceSettings(client, normalizedKey, settings);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async setLogs(syncKey: string, logs: Record<string, unknown>, updatedAt: number) {
+    await this.ensureTables();
+
+    const normalizedKey = normalizeSyncKey(syncKey);
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await this.upsertSnapshot(client, normalizedKey, updatedAt);
+      await this.replaceLogs(client, normalizedKey, logs);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async setFoods(syncKey: string, foods: unknown[], updatedAt: number) {
+    await this.ensureTables();
+
+    const normalizedKey = normalizeSyncKey(syncKey);
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await this.upsertSnapshot(client, normalizedKey, updatedAt);
+      await this.replaceFoods(client, normalizedKey, foods);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async setSports(syncKey: string, sports: unknown[], updatedAt: number) {
+    await this.ensureTables();
+
+    const normalizedKey = normalizeSyncKey(syncKey);
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await this.upsertSnapshot(client, normalizedKey, updatedAt);
+      await this.replaceSports(client, normalizedKey, sports);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');

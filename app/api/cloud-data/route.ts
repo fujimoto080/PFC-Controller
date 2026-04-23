@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudData, setCloudData } from '@/lib/cloud-data';
 import { hasMeaningfulCloudData, isCloudDataPayload } from '@/lib/cloud-payload';
+import {
+  invalidSyncKeyResponse,
+  isValidSyncKey,
+  normalizeSyncKey,
+  parseUpdatedAt,
+} from '@/lib/cloud-sync-api';
 
 interface CloudDataRequest {
   payload?: unknown;
@@ -8,22 +14,11 @@ interface CloudDataRequest {
   syncKey?: unknown;
 }
 
-function normalizeSyncKey(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function isValidSyncKey(syncKey: string): boolean {
-  return syncKey.length >= 8;
-}
-
 export async function GET(request: NextRequest) {
   try {
     const syncKey = normalizeSyncKey(request.nextUrl.searchParams.get('syncKey'));
     if (!isValidSyncKey(syncKey)) {
-      return NextResponse.json(
-        { error: '同期キーが不正です' },
-        { status: 400 },
-      );
+      return invalidSyncKeyResponse();
     }
 
     const { payload, updatedAt } = await getCloudData(syncKey);
@@ -50,16 +45,10 @@ export async function POST(request: NextRequest) {
 
     const syncKey = normalizeSyncKey(body.syncKey);
     if (!isValidSyncKey(syncKey)) {
-      return NextResponse.json(
-        { error: '同期キーが不正です' },
-        { status: 400 },
-      );
+      return invalidSyncKeyResponse();
     }
 
-    const updatedAt =
-      typeof body.updatedAt === 'number' && Number.isFinite(body.updatedAt)
-        ? body.updatedAt
-        : Date.now();
+    const updatedAt = parseUpdatedAt(body.updatedAt);
 
     const current = await getCloudData(syncKey);
     const isIncomingEmpty = !hasMeaningfulCloudData(body.payload);
