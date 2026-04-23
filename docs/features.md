@@ -173,7 +173,8 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 - `GET /api/barcode?code=...` : バーコードから食品情報を取得
 - `POST /api/barcode` : バーコードへ食品情報を保存
 - `POST /api/mcp/intake` : URL接続MCPサーバー（`initialize`/`tools/list`/`tools/call`）
-  - `register_intakes` : 外部AIなどから摂取履歴を登録
+  - `register_intake` : 外部AIなどから摂取履歴を1件登録
+  - `register_intakes` : 外部AIなどから摂取履歴を一括登録
   - `list_intakes` : 登録済みの摂取履歴を取得（limit/startAt/endAt対応）
 
 ### 9.2 永続化
