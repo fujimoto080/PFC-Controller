@@ -10,7 +10,7 @@ import {
   SportDefinition,
 } from './types';
 import { formatDate, roundPFC } from './utils';
-import { BackupPayload, isBackupPayload } from './backup';
+import { CloudDataPayload, isCloudDataPayload } from './cloud-payload';
 
 const STORAGE_KEY_LOGS = 'pfc_logs';
 const STORAGE_KEY_SETTINGS = 'pfc_settings';
@@ -80,7 +80,7 @@ const setStorageItem = <T>(key: string, value: T) => {
   scheduleCloudSync();
 };
 
-const getLocalBackupPayload = (): BackupPayload => ({
+const getLocalCloudDataPayload = (): CloudDataPayload => ({
   version: 1,
   createdAt: Date.now(),
   logs: getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {}),
@@ -91,7 +91,7 @@ const getLocalBackupPayload = (): BackupPayload => ({
   sports: getStorageItem<unknown[]>(STORAGE_KEYS.sports, []),
 });
 
-const applyPayloadToLocalStorage = (payload: BackupPayload) => {
+const applyPayloadToLocalStorage = (payload: CloudDataPayload) => {
   isApplyingCloudData = true;
   localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(payload.logs));
   localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(payload.settings));
@@ -109,7 +109,7 @@ const pushLocalDataToCloud = async (reason: string) => {
   const syncKey = getCloudSyncKey();
   if (!syncKey) return;
 
-  const payload = getLocalBackupPayload();
+  const payload = getLocalCloudDataPayload();
 
   try {
     const response = await fetch('/api/cloud-data', {
@@ -174,7 +174,7 @@ const initializeCloudSync = async () => {
       updatedAt?: unknown;
     };
 
-    const cloudPayload = isBackupPayload(result.payload) ? result.payload : null;
+    const cloudPayload = isCloudDataPayload(result.payload) ? result.payload : null;
     const remoteUpdatedAt =
       typeof result.updatedAt === 'number' && Number.isFinite(result.updatedAt)
         ? result.updatedAt
@@ -647,31 +647,6 @@ export function getFoodDictionary(): FoodItem[] {
 export function saveFoodDictionary(foods: FoodItem[]) {
   setStorageItem(STORAGE_KEYS.foods, foods);
   refreshUI();
-}
-
-export function createBackupPayload(): BackupPayload {
-  return {
-    version: 1,
-    createdAt: Date.now(),
-    logs: getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {}),
-    settings: getStorageItem<Record<string, unknown>>(STORAGE_KEYS.settings, {
-      targetPFC: DEFAULT_TARGET,
-    } as unknown as Record<string, unknown>),
-    foods: getStorageItem<unknown[]>(STORAGE_KEYS.foods, []),
-    sports: getStorageItem<unknown[]>(STORAGE_KEYS.sports, []),
-  };
-}
-
-export function restoreBackupPayload(payload: unknown): boolean {
-  if (!isBackupPayload(payload)) return false;
-
-  setStorageItem(STORAGE_KEYS.logs, payload.logs);
-  setStorageItem(STORAGE_KEYS.settings, payload.settings);
-  setStorageItem(STORAGE_KEYS.foods, payload.foods);
-  setStorageItem(STORAGE_KEYS.sports, normalizeSports(payload.sports || []));
-  refreshUI();
-
-  return true;
 }
 
 export function addFoodToDictionary(item: FoodItem) {

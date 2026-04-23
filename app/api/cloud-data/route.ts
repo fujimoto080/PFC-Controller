@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudData, setCloudData } from '@/lib/cloud-data';
-import { isBackupPayload } from '@/lib/backup';
+import { hasMeaningfulCloudData, isCloudDataPayload } from '@/lib/cloud-payload';
 
 interface CloudDataRequest {
   payload?: unknown;
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as CloudDataRequest;
 
-    if (!isBackupPayload(body.payload)) {
+    if (!isCloudDataPayload(body.payload)) {
       return NextResponse.json(
         { error: 'クラウドデータの形式が不正です' },
         { status: 400 },
@@ -60,6 +60,18 @@ export async function POST(request: NextRequest) {
       typeof body.updatedAt === 'number' && Number.isFinite(body.updatedAt)
         ? body.updatedAt
         : Date.now();
+
+    const current = await getCloudData(syncKey);
+    const isIncomingEmpty = !hasMeaningfulCloudData(body.payload);
+    const hasCurrentData =
+      !!current.payload && hasMeaningfulCloudData(current.payload);
+
+    if (isIncomingEmpty && hasCurrentData) {
+      return NextResponse.json(
+        { error: '空データによる上書きを防止しました。' },
+        { status: 409 },
+      );
+    }
 
     await setCloudData(syncKey, body.payload, updatedAt);
 

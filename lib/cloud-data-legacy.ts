@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { Redis } from '@upstash/redis';
-import { BackupPayload, isBackupPayload } from '@/lib/backup';
+import { CloudDataPayload, isCloudDataPayload } from '@/lib/cloud-payload';
 
 const redis = Redis.fromEnv();
 
@@ -18,7 +18,7 @@ interface LegacyCloudRawRecord {
 }
 
 export interface LegacyCloudData {
-  payload: BackupPayload;
+  payload: CloudDataPayload;
   updatedAt: number;
 }
 
@@ -27,7 +27,7 @@ function normalizeSyncKey(syncKey: string): string {
 }
 
 function parseLegacyValue(value: unknown): LegacyCloudData | null {
-  if (isBackupPayload(value)) {
+  if (isCloudDataPayload(value)) {
     return {
       payload: value,
       updatedAt: Date.now(),
@@ -37,7 +37,7 @@ function parseLegacyValue(value: unknown): LegacyCloudData | null {
   if (!value || typeof value !== 'object') return null;
 
   const record = value as LegacyCloudRawRecord;
-  if (!isBackupPayload(record.payload)) return null;
+  if (!isCloudDataPayload(record.payload)) return null;
 
   const updatedAt =
     typeof record.updatedAt === 'number' && Number.isFinite(record.updatedAt)

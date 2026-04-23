@@ -14,7 +14,7 @@ const MIN_SYNC_KEY_LENGTH = 8;
 export function CloudSyncSettings() {
   const { settings } = usePfcData();
   const [syncKey, setSyncKey] = useState(settings?.cloudSyncKey || '');
-  const [hasLegacyBackup, setHasLegacyBackup] = useState(false);
+  const [hasLegacyCloudData, setHasLegacyCloudData] = useState(false);
   const [hasRdbData, setHasRdbData] = useState(false);
   const [isCheckingMigration, setIsCheckingMigration] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
@@ -53,11 +53,11 @@ export function CloudSyncSettings() {
         throw new Error(data.error || '移行チェックに失敗しました');
       }
 
-      setHasLegacyBackup(!!data.hasLegacyBackup);
+      setHasLegacyCloudData(!!data.hasLegacyCloudData);
       setHasRdbData(!!data.hasRdbData);
 
-      if (!data.hasLegacyBackup) {
-        toast.info('移行対象の旧バックアップは見つかりませんでした');
+      if (!data.hasLegacyCloudData) {
+        toast.info('移行対象の旧クラウドデータは見つかりませんでした');
         return;
       }
 
@@ -66,7 +66,7 @@ export function CloudSyncSettings() {
         return;
       }
 
-      toast.success('移行可能な旧バックアップが見つかりました');
+      toast.success('移行可能な旧クラウドデータが見つかりました');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '移行チェックに失敗しました');
     } finally {
@@ -75,14 +75,14 @@ export function CloudSyncSettings() {
   };
 
   const handleMigrateToRdb = async () => {
-    if (!hasLegacyBackup) {
+    if (!hasLegacyCloudData) {
       toast.warning('先に移行チェックを実行してください');
       return;
     }
 
     const force =
       hasRdbData &&
-      window.confirm('RDBに既存データがあります。旧バックアップで上書きしますか？');
+      window.confirm('RDBに既存データがあります。旧クラウドデータで上書きしますか？');
 
     if (hasRdbData && !force) {
       return;
@@ -102,7 +102,7 @@ export function CloudSyncSettings() {
       }
 
       setHasRdbData(true);
-      toast.success('旧バックアップをRDBへ移行しました');
+      toast.success('旧クラウドデータをRDBへ移行しました');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '移行に失敗しました');
     } finally {
@@ -126,7 +126,7 @@ export function CloudSyncSettings() {
             value={syncKey}
             onChange={(event) => {
               setSyncKey(event.target.value);
-              setHasLegacyBackup(false);
+              setHasLegacyCloudData(false);
               setHasRdbData(false);
             }}
             placeholder="8文字以上で入力"
@@ -134,17 +134,17 @@ export function CloudSyncSettings() {
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button onClick={handleCheckMigration} variant="secondary" disabled={isCheckingMigration}>
-            {isCheckingMigration ? '確認中...' : '旧バックアップを確認'}
+            {isCheckingMigration ? '確認中...' : '旧クラウドデータを確認'}
           </Button>
           <Button onClick={handleSave}>同期キーを保存</Button>
         </div>
-        {hasLegacyBackup && (
+        {hasLegacyCloudData && (
           <div className="space-y-2 rounded-md border p-3">
             <p className="text-sm">
-              旧バックアップが見つかりました。{hasRdbData && 'RDBの既存データは上書きされます。'}
+              旧クラウドデータが見つかりました。{hasRdbData && 'RDBの既存データは上書きされます。'}
             </p>
             <Button onClick={handleMigrateToRdb} disabled={isMigrating} className="w-full">
-              {isMigrating ? '移行中...' : '旧バックアップをRDBに移行'}
+              {isMigrating ? '移行中...' : '旧クラウドデータをRDBに移行'}
             </Button>
           </div>
         )}

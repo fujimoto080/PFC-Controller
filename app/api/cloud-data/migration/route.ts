@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({
-      hasLegacyBackup: !!legacy,
+      hasLegacyCloudData: !!legacy,
       hasRdbData: !!current.payload,
       legacyUpdatedAt: legacy?.updatedAt ?? null,
       rdbUpdatedAt: current.updatedAt,
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (!legacy) {
-      return NextResponse.json({ error: '移行対象の旧バックアップが見つかりません' }, { status: 404 });
+      return NextResponse.json({ error: '移行対象の旧クラウドデータが見つかりません' }, { status: 404 });
     }
 
     const hasRdbData = !!current.payload;

@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-base font-semibold">1. 取得する情報</h2>
         <p>
           本アプリでは、食事ログ、目標PFC、ユーザー設定など、ユーザーが入力した情報を端末内に保存します。
-          また、ユーザーが明示的に操作した場合に限り、端末移行用途の一時バックアップをクラウドに保存します。
+          また、ユーザーが同期キーを設定した場合に限り、同データをクラウド（PostgreSQL）へ保存します。
         </p>
       </section>
 
@@ -47,7 +47,7 @@ export default function PrivacyPolicyPage() {
         <h2 className="text-base font-semibold">4. 情報の管理</h2>
         <p>
           本アプリのデータは主にユーザー端末内で管理されます。ユーザーは端末の操作により、保存データを削除できます。
-          クラウド一時バックアップは作成から24時間後に自動削除されます。
+          同期キーで保存されたクラウドデータは、ユーザーが同期キーを保持する限り継続して利用されます。
         </p>
       </section>
 
