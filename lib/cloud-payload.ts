@@ -1,6 +1,4 @@
-export const BACKUP_TTL_SECONDS = 60 * 60 * 24;
-
-export interface BackupPayload {
+export interface CloudDataPayload {
   version: 1;
   createdAt: number;
   logs: Record<string, unknown>;
@@ -9,7 +7,7 @@ export interface BackupPayload {
   sports?: unknown[];
 }
 
-export function isBackupPayload(value: unknown): value is BackupPayload {
+export function isCloudDataPayload(value: unknown): value is CloudDataPayload {
   if (!value || typeof value !== 'object') return false;
   const data = value as Record<string, unknown>;
 
@@ -26,11 +24,10 @@ export function isBackupPayload(value: unknown): value is BackupPayload {
   );
 }
 
-export function normalizeBackupId(value: string): string {
-  return value.trim();
-}
-
-export function createQrCodeUrl(text: string): string {
-  const encoded = encodeURIComponent(text);
-  return `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encoded}`;
+export function hasMeaningfulCloudData(payload: CloudDataPayload): boolean {
+  return (
+    Object.keys(payload.logs).length > 0 ||
+    payload.foods.length > 0 ||
+    (payload.sports?.length ?? 0) > 0
+  );
 }

@@ -1,16 +1,16 @@
 import 'server-only';
 
 import { Pool, PoolClient } from 'pg';
-import { BackupPayload } from '@/lib/backup';
+import { CloudDataPayload } from '@/lib/cloud-payload';
 
 interface PersistentData {
-  payload: BackupPayload | null;
+  payload: CloudDataPayload | null;
   updatedAt: number;
 }
 
 interface CloudDataStore {
   get(syncKey: string): Promise<PersistentData>;
-  set(syncKey: string, payload: BackupPayload, updatedAt: number): Promise<void>;
+  set(syncKey: string, payload: CloudDataPayload, updatedAt: number): Promise<void>;
 }
 
 interface SnapshotRow {
@@ -471,7 +471,7 @@ class PostgresCloudDataStore implements CloudDataStore {
       return acc;
     }, {});
 
-    const payload: BackupPayload = {
+    const payload: CloudDataPayload = {
       version: 1,
       createdAt: Number(snapshot.created_at_ms),
       logs,
@@ -486,7 +486,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     };
   }
 
-  async set(syncKey: string, payload: BackupPayload, updatedAt: number) {
+  async set(syncKey: string, payload: CloudDataPayload, updatedAt: number) {
     await this.ensureTables();
 
     const normalizedKey = normalizeSyncKey(syncKey);

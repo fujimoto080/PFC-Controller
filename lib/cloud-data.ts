@@ -1,10 +1,10 @@
 import 'server-only';
 
-import { BackupPayload } from '@/lib/backup';
+import { CloudDataPayload } from '@/lib/cloud-payload';
 import { getCloudDataStore } from '@/lib/persistent-store';
 
 export async function getCloudData(syncKey: string): Promise<{
-  payload: BackupPayload | null;
+  payload: CloudDataPayload | null;
   updatedAt: number;
 }> {
   const store = getCloudDataStore();
@@ -13,7 +13,7 @@ export async function getCloudData(syncKey: string): Promise<{
 
 export async function setCloudData(
   syncKey: string,
-  payload: BackupPayload,
+  payload: CloudDataPayload,
   updatedAt: number,
 ) {
   const store = getCloudDataStore();
