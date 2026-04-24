@@ -11,10 +11,14 @@ interface PersistentData {
 interface CloudDataStore {
   get(syncKey: string): Promise<PersistentData>;
   set(syncKey: string, payload: CloudDataPayload, updatedAt: number): Promise<void>;
-  setSettings(syncKey: string, settings: Record<string, unknown>, updatedAt: number): Promise<void>;
-  setLogs(syncKey: string, logs: Record<string, unknown>, updatedAt: number): Promise<void>;
-  setFoods(syncKey: string, foods: unknown[], updatedAt: number): Promise<void>;
-  setSports(syncKey: string, sports: unknown[], updatedAt: number): Promise<void>;
+  insertSettings(syncKey: string, settings: Record<string, unknown>, updatedAt: number): Promise<void>;
+  updateSettings(syncKey: string, settings: Record<string, unknown>, updatedAt: number): Promise<void>;
+  insertLogs(syncKey: string, logs: Record<string, unknown>, updatedAt: number): Promise<void>;
+  updateLogs(syncKey: string, logs: Record<string, unknown>, updatedAt: number): Promise<void>;
+  insertFoods(syncKey: string, foods: unknown[], updatedAt: number): Promise<void>;
+  updateFoods(syncKey: string, foods: unknown[], updatedAt: number): Promise<void>;
+  insertSports(syncKey: string, sports: unknown[], updatedAt: number): Promise<void>;
+  updateSports(syncKey: string, sports: unknown[], updatedAt: number): Promise<void>;
 }
 
 interface SnapshotRow {
@@ -63,6 +67,8 @@ interface SportRow {
   name: string;
   calories_burned: number;
 }
+
+type WriteMode = 'insert' | 'update' | 'upsert';
 
 function normalizeSyncKey(syncKey: string): string {
   return syncKey.trim();
@@ -171,33 +177,55 @@ class PostgresCloudDataStore implements CloudDataStore {
     client: PoolClient,
     syncKey: string,
     settings: Record<string, unknown>,
+    mode: WriteMode = 'upsert',
   ) {
     const target = asRecord(settings.targetPFC);
+    const params = [
+      syncKey,
+      toFiniteNumber(target.protein),
+      toFiniteNumber(target.fat),
+      toFiniteNumber(target.carbs),
+      toFiniteNumber(target.calories),
+      typeof settings.cloudSyncKey === 'string' ? settings.cloudSyncKey : null,
+      JSON.stringify(settings.profile ?? null),
+      JSON.stringify(asArray(settings.favoriteFoodIds)),
+    ];
 
-    await client.query('DELETE FROM pfc_cloud_settings WHERE sync_key = $1', [syncKey]);
+    if (mode !== 'insert') {
+      const updated = await client.query(
+        `
+        UPDATE pfc_cloud_settings
+        SET
+          target_protein = $2,
+          target_fat = $3,
+          target_carbs = $4,
+          target_calories = $5,
+          cloud_sync_key = $6,
+          profile_json = $7::jsonb,
+          favorite_food_ids_json = $8::jsonb
+        WHERE sync_key = $1
+        `,
+        params,
+      );
+
+      if (updated.rowCount && updated.rowCount > 0) return;
+      if (mode === 'update') return;
+    }
+
     await client.query(
       `
-      INSERT INTO pfc_cloud_settings (
-        sync_key,
-        target_protein,
-        target_fat,
-        target_carbs,
-        target_calories,
-        cloud_sync_key,
-        profile_json,
-        favorite_food_ids_json
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
-      `,
-      [
-        syncKey,
-        toFiniteNumber(target.protein),
-        toFiniteNumber(target.fat),
-        toFiniteNumber(target.carbs),
-        toFiniteNumber(target.calories),
-        typeof settings.cloudSyncKey === 'string' ? settings.cloudSyncKey : null,
-        JSON.stringify(settings.profile ?? null),
-        JSON.stringify(asArray(settings.favoriteFoodIds)),
-      ],
+        INSERT INTO pfc_cloud_settings (
+          sync_key,
+          target_protein,
+          target_fat,
+          target_carbs,
+          target_calories,
+          cloud_sync_key,
+          profile_json,
+          favorite_food_ids_json
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
+        `,
+      params,
     );
   }
 
@@ -205,127 +233,185 @@ class PostgresCloudDataStore implements CloudDataStore {
     client: PoolClient,
     syncKey: string,
     logs: Record<string, unknown>,
+    mode: WriteMode = 'upsert',
   ) {
-    await client.query('DELETE FROM pfc_cloud_daily_logs WHERE sync_key = $1', [syncKey]);
-
     for (const [date, logRaw] of Object.entries(logs)) {
       const log = asRecord(logRaw);
       const total = asRecord(log.total);
       const items = asArray(log.items);
       const activities = asArray(log.activities);
 
+      const params = [
+        syncKey,
+        date,
+        toFiniteNumber(total.protein),
+        toFiniteNumber(total.fat),
+        toFiniteNumber(total.carbs),
+        toFiniteNumber(total.calories),
+        JSON.stringify(items),
+        JSON.stringify(activities),
+      ];
+
+      if (mode !== 'insert') {
+        const updated = await client.query(
+          `
+          UPDATE pfc_cloud_daily_logs
+          SET
+            total_protein = $3,
+            total_fat = $4,
+            total_carbs = $5,
+            total_calories = $6,
+            items_json = $7::jsonb,
+            activities_json = $8::jsonb
+          WHERE sync_key = $1
+            AND date = $2
+          `,
+          params,
+        );
+
+        if (updated.rowCount && updated.rowCount > 0) continue;
+        if (mode === 'update') continue;
+      }
+
       await client.query(
         `
-        INSERT INTO pfc_cloud_daily_logs (
-          sync_key,
-          date,
-          total_protein,
-          total_fat,
-          total_carbs,
-          total_calories,
-          items_json,
-          activities_json
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
-        `,
-        [
-          syncKey,
-          date,
-          toFiniteNumber(total.protein),
-          toFiniteNumber(total.fat),
-          toFiniteNumber(total.carbs),
-          toFiniteNumber(total.calories),
-          JSON.stringify(items),
-          JSON.stringify(activities),
-        ],
+          INSERT INTO pfc_cloud_daily_logs (
+            sync_key,
+            date,
+            total_protein,
+            total_fat,
+            total_carbs,
+            total_calories,
+            items_json,
+            activities_json
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
+          `,
+        params,
       );
     }
   }
 
-  private async replaceFoods(client: PoolClient, syncKey: string, foods: unknown[]) {
-    await client.query('DELETE FROM pfc_cloud_foods WHERE sync_key = $1', [syncKey]);
-
+  private async replaceFoods(
+    client: PoolClient,
+    syncKey: string,
+    foods: unknown[],
+    mode: WriteMode = 'upsert',
+  ) {
     for (const [position, foodRaw] of foods.entries()) {
       const food = asRecord(foodRaw);
       const foodId =
         typeof food.id === 'string' && food.id.trim() ? food.id.trim() : `food-${position}`;
 
+      const params = [
+        syncKey,
+        foodId,
+        position,
+        typeof food.name === 'string' ? food.name : '',
+        toFiniteNumber(food.protein),
+        toFiniteNumber(food.fat),
+        toFiniteNumber(food.carbs),
+        toFiniteNumber(food.calories),
+        toFiniteNumber(food.timestamp),
+        typeof food.store === 'string' ? food.store : null,
+        typeof food.storeGroup === 'string' ? food.storeGroup : null,
+        typeof food.image === 'string' ? food.image : null,
+      ];
+
+      if (mode !== 'insert') {
+        const updated = await client.query(
+          `
+          UPDATE pfc_cloud_foods
+          SET
+            position = $3,
+            name = $4,
+            protein = $5,
+            fat = $6,
+            carbs = $7,
+            calories = $8,
+            timestamp_ms = $9,
+            store = $10,
+            store_group = $11,
+            image = $12
+          WHERE sync_key = $1
+            AND food_id = $2
+          `,
+          params,
+        );
+
+        if (updated.rowCount && updated.rowCount > 0) continue;
+        if (mode === 'update') continue;
+      }
+
       await client.query(
         `
-        INSERT INTO pfc_cloud_foods (
-          sync_key,
-          food_id,
-          position,
-          name,
-          protein,
-          fat,
-          carbs,
-          calories,
-          timestamp_ms,
-          store,
-          store_group,
-          image
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        ON CONFLICT (sync_key, food_id)
-        DO UPDATE SET
-          position = EXCLUDED.position,
-          name = EXCLUDED.name,
-          protein = EXCLUDED.protein,
-          fat = EXCLUDED.fat,
-          carbs = EXCLUDED.carbs,
-          calories = EXCLUDED.calories,
-          timestamp_ms = EXCLUDED.timestamp_ms,
-          store = EXCLUDED.store,
-          store_group = EXCLUDED.store_group,
-          image = EXCLUDED.image
-        `,
-        [
-          syncKey,
-          foodId,
-          position,
-          typeof food.name === 'string' ? food.name : '',
-          toFiniteNumber(food.protein),
-          toFiniteNumber(food.fat),
-          toFiniteNumber(food.carbs),
-          toFiniteNumber(food.calories),
-          toFiniteNumber(food.timestamp),
-          typeof food.store === 'string' ? food.store : null,
-          typeof food.storeGroup === 'string' ? food.storeGroup : null,
-          typeof food.image === 'string' ? food.image : null,
-        ],
+          INSERT INTO pfc_cloud_foods (
+            sync_key,
+            food_id,
+            position,
+            name,
+            protein,
+            fat,
+            carbs,
+            calories,
+            timestamp_ms,
+            store,
+            store_group,
+            image
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          `,
+        params,
       );
     }
   }
 
-  private async replaceSports(client: PoolClient, syncKey: string, sports: unknown[]) {
-    await client.query('DELETE FROM pfc_cloud_sports WHERE sync_key = $1', [syncKey]);
-
+  private async replaceSports(
+    client: PoolClient,
+    syncKey: string,
+    sports: unknown[],
+    mode: WriteMode = 'upsert',
+  ) {
     for (const [position, sportRaw] of sports.entries()) {
       const sport = asRecord(sportRaw);
       const sportId =
         typeof sport.id === 'string' && sport.id.trim() ? sport.id.trim() : `sport-${position}`;
 
+      const params = [
+        syncKey,
+        sportId,
+        position,
+        typeof sport.name === 'string' ? sport.name : '',
+        toFiniteNumber(sport.caloriesBurned),
+      ];
+
+      if (mode !== 'insert') {
+        const updated = await client.query(
+          `
+          UPDATE pfc_cloud_sports
+          SET
+            position = $3,
+            name = $4,
+            calories_burned = $5
+          WHERE sync_key = $1
+            AND sport_id = $2
+          `,
+          params,
+        );
+
+        if (updated.rowCount && updated.rowCount > 0) continue;
+        if (mode === 'update') continue;
+      }
+
       await client.query(
         `
-        INSERT INTO pfc_cloud_sports (
-          sync_key,
-          sport_id,
-          position,
-          name,
-          calories_burned
-        ) VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (sync_key, sport_id)
-        DO UPDATE SET
-          position = EXCLUDED.position,
-          name = EXCLUDED.name,
-          calories_burned = EXCLUDED.calories_burned
-        `,
-        [
-          syncKey,
-          sportId,
-          position,
-          typeof sport.name === 'string' ? sport.name : '',
-          toFiniteNumber(sport.caloriesBurned),
-        ],
+          INSERT INTO pfc_cloud_sports (
+            sync_key,
+            sport_id,
+            position,
+            name,
+            calories_burned
+          ) VALUES ($1, $2, $3, $4, $5)
+          `,
+        params,
       );
     }
   }
@@ -555,7 +641,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     }
   }
 
-  async setSettings(syncKey: string, settings: Record<string, unknown>, updatedAt: number) {
+  async insertSettings(syncKey: string, settings: Record<string, unknown>, updatedAt: number) {
     await this.ensureTables();
 
     const normalizedKey = normalizeSyncKey(syncKey);
@@ -564,7 +650,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceSettings(client, normalizedKey, settings);
+      await this.replaceSettings(client, normalizedKey, settings, 'insert');
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -574,7 +660,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     }
   }
 
-  async setLogs(syncKey: string, logs: Record<string, unknown>, updatedAt: number) {
+  async updateSettings(syncKey: string, settings: Record<string, unknown>, updatedAt: number) {
     await this.ensureTables();
 
     const normalizedKey = normalizeSyncKey(syncKey);
@@ -583,7 +669,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceLogs(client, normalizedKey, logs);
+      await this.replaceSettings(client, normalizedKey, settings, 'update');
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -593,7 +679,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     }
   }
 
-  async setFoods(syncKey: string, foods: unknown[], updatedAt: number) {
+  async insertLogs(syncKey: string, logs: Record<string, unknown>, updatedAt: number) {
     await this.ensureTables();
 
     const normalizedKey = normalizeSyncKey(syncKey);
@@ -602,7 +688,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceFoods(client, normalizedKey, foods);
+      await this.replaceLogs(client, normalizedKey, logs, 'insert');
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -612,7 +698,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     }
   }
 
-  async setSports(syncKey: string, sports: unknown[], updatedAt: number) {
+  async updateLogs(syncKey: string, logs: Record<string, unknown>, updatedAt: number) {
     await this.ensureTables();
 
     const normalizedKey = normalizeSyncKey(syncKey);
@@ -621,7 +707,83 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceSports(client, normalizedKey, sports);
+      await this.replaceLogs(client, normalizedKey, logs, 'update');
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async insertFoods(syncKey: string, foods: unknown[], updatedAt: number) {
+    await this.ensureTables();
+
+    const normalizedKey = normalizeSyncKey(syncKey);
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await this.upsertSnapshot(client, normalizedKey, updatedAt);
+      await this.replaceFoods(client, normalizedKey, foods, 'insert');
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async updateFoods(syncKey: string, foods: unknown[], updatedAt: number) {
+    await this.ensureTables();
+
+    const normalizedKey = normalizeSyncKey(syncKey);
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await this.upsertSnapshot(client, normalizedKey, updatedAt);
+      await this.replaceFoods(client, normalizedKey, foods, 'update');
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async insertSports(syncKey: string, sports: unknown[], updatedAt: number) {
+    await this.ensureTables();
+
+    const normalizedKey = normalizeSyncKey(syncKey);
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await this.upsertSnapshot(client, normalizedKey, updatedAt);
+      await this.replaceSports(client, normalizedKey, sports, 'insert');
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async updateSports(syncKey: string, sports: unknown[], updatedAt: number) {
+    await this.ensureTables();
+
+    const normalizedKey = normalizeSyncKey(syncKey);
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      await this.upsertSnapshot(client, normalizedKey, updatedAt);
+      await this.replaceSports(client, normalizedKey, sports, 'update');
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
