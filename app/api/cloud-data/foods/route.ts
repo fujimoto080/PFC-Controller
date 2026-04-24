@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { setCloudFoods } from '@/lib/cloud-data';
+import { insertCloudFoods, updateCloudFoods } from '@/lib/cloud-data';
 import {
   invalidSyncKeyResponse,
   isValidSyncKey,
@@ -13,28 +13,49 @@ interface FoodsRequest {
   syncKey?: unknown;
 }
 
+async function parseAndValidate(request: NextRequest) {
+  const body = (await request.json()) as FoodsRequest;
+  const syncKey = normalizeSyncKey(body.syncKey);
+
+  if (!isValidSyncKey(syncKey)) {
+    return { error: invalidSyncKeyResponse() } as const;
+  }
+
+  if (!Array.isArray(body.foods)) {
+    return {
+      error: NextResponse.json({ error: 'foods の形式が不正です' }, { status: 400 }),
+    } as const;
+  }
+
+  return {
+    syncKey,
+    foods: body.foods,
+    updatedAt: parseUpdatedAt(body.updatedAt),
+  } as const;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as FoodsRequest;
-    const syncKey = normalizeSyncKey(body.syncKey);
+    const parsed = await parseAndValidate(request);
+    if ('error' in parsed) return parsed.error;
 
-    if (!isValidSyncKey(syncKey)) {
-      return invalidSyncKeyResponse();
-    }
-
-    if (!Array.isArray(body.foods)) {
-      return NextResponse.json({ error: 'foods の形式が不正です' }, { status: 400 });
-    }
-
-    const updatedAt = parseUpdatedAt(body.updatedAt);
-    await setCloudFoods(syncKey, body.foods, updatedAt);
-
-    return NextResponse.json({ ok: true, updatedAt });
+    await insertCloudFoods(parsed.syncKey, parsed.foods, parsed.updatedAt);
+    return NextResponse.json({ ok: true, updatedAt: parsed.updatedAt, method: 'POST' });
   } catch (error) {
-    console.error('クラウド食品辞書保存エラー', error);
-    return NextResponse.json(
-      { error: 'クラウド食品辞書の保存に失敗しました' },
-      { status: 500 },
-    );
+    console.error('クラウド食品辞書insertエラー', error);
+    return NextResponse.json({ error: 'クラウド食品辞書のinsertに失敗しました' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const parsed = await parseAndValidate(request);
+    if ('error' in parsed) return parsed.error;
+
+    await updateCloudFoods(parsed.syncKey, parsed.foods, parsed.updatedAt);
+    return NextResponse.json({ ok: true, updatedAt: parsed.updatedAt, method: 'PUT' });
+  } catch (error) {
+    console.error('クラウド食品辞書updateエラー', error);
+    return NextResponse.json({ error: 'クラウド食品辞書のupdateに失敗しました' }, { status: 500 });
   }
 }

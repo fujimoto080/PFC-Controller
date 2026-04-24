@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { setCloudLogs } from '@/lib/cloud-data';
+import { insertCloudLogs, updateCloudLogs } from '@/lib/cloud-data';
 import {
   invalidSyncKeyResponse,
   isValidSyncKey,
@@ -13,28 +13,49 @@ interface LogsRequest {
   syncKey?: unknown;
 }
 
+async function parseAndValidate(request: NextRequest) {
+  const body = (await request.json()) as LogsRequest;
+  const syncKey = normalizeSyncKey(body.syncKey);
+
+  if (!isValidSyncKey(syncKey)) {
+    return { error: invalidSyncKeyResponse() } as const;
+  }
+
+  if (!body.logs || typeof body.logs !== 'object' || Array.isArray(body.logs)) {
+    return {
+      error: NextResponse.json({ error: 'logs の形式が不正です' }, { status: 400 }),
+    } as const;
+  }
+
+  return {
+    syncKey,
+    logs: body.logs as Record<string, unknown>,
+    updatedAt: parseUpdatedAt(body.updatedAt),
+  } as const;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as LogsRequest;
-    const syncKey = normalizeSyncKey(body.syncKey);
+    const parsed = await parseAndValidate(request);
+    if ('error' in parsed) return parsed.error;
 
-    if (!isValidSyncKey(syncKey)) {
-      return invalidSyncKeyResponse();
-    }
-
-    if (!body.logs || typeof body.logs !== 'object' || Array.isArray(body.logs)) {
-      return NextResponse.json({ error: 'logs の形式が不正です' }, { status: 400 });
-    }
-
-    const updatedAt = parseUpdatedAt(body.updatedAt);
-    await setCloudLogs(syncKey, body.logs as Record<string, unknown>, updatedAt);
-
-    return NextResponse.json({ ok: true, updatedAt });
+    await insertCloudLogs(parsed.syncKey, parsed.logs, parsed.updatedAt);
+    return NextResponse.json({ ok: true, updatedAt: parsed.updatedAt, method: 'POST' });
   } catch (error) {
-    console.error('クラウドログ保存エラー', error);
-    return NextResponse.json(
-      { error: 'クラウドログの保存に失敗しました' },
-      { status: 500 },
-    );
+    console.error('クラウドログinsertエラー', error);
+    return NextResponse.json({ error: 'クラウドログのinsertに失敗しました' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const parsed = await parseAndValidate(request);
+    if ('error' in parsed) return parsed.error;
+
+    await updateCloudLogs(parsed.syncKey, parsed.logs, parsed.updatedAt);
+    return NextResponse.json({ ok: true, updatedAt: parsed.updatedAt, method: 'PUT' });
+  } catch (error) {
+    console.error('クラウドログupdateエラー', error);
+    return NextResponse.json({ error: 'クラウドログのupdateに失敗しました' }, { status: 500 });
   }
 }

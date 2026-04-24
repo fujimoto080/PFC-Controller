@@ -27,34 +27,66 @@ async function runCloudDataWrite(
   await writer(db);
 }
 
-export async function setCloudSettings(
+export async function insertCloudSettings(
   syncKey: string,
   settings: Record<string, unknown>,
   updatedAt: number,
 ) {
-  await runCloudDataWrite((db) => db.setSettings(syncKey, settings, updatedAt));
+  await runCloudDataWrite((db) => db.insertSettings(syncKey, settings, updatedAt));
 }
 
-export async function setCloudLogs(
+export async function updateCloudSettings(
+  syncKey: string,
+  settings: Record<string, unknown>,
+  updatedAt: number,
+) {
+  await runCloudDataWrite((db) => db.updateSettings(syncKey, settings, updatedAt));
+}
+
+export async function insertCloudLogs(
   syncKey: string,
   logs: Record<string, unknown>,
   updatedAt: number,
 ) {
-  await runCloudDataWrite((db) => db.setLogs(syncKey, logs, updatedAt));
+  await runCloudDataWrite((db) => db.insertLogs(syncKey, logs, updatedAt));
 }
 
-export async function setCloudFoods(
+export async function updateCloudLogs(
+  syncKey: string,
+  logs: Record<string, unknown>,
+  updatedAt: number,
+) {
+  await runCloudDataWrite((db) => db.updateLogs(syncKey, logs, updatedAt));
+}
+
+export async function insertCloudFoods(
   syncKey: string,
   foods: unknown[],
   updatedAt: number,
 ) {
-  await runCloudDataWrite((db) => db.setFoods(syncKey, foods, updatedAt));
+  await runCloudDataWrite((db) => db.insertFoods(syncKey, foods, updatedAt));
 }
 
-export async function setCloudSports(
+export async function updateCloudFoods(
+  syncKey: string,
+  foods: unknown[],
+  updatedAt: number,
+) {
+  await runCloudDataWrite((db) => db.updateFoods(syncKey, foods, updatedAt));
+}
+
+export async function insertCloudSports(
   syncKey: string,
   sports: unknown[],
   updatedAt: number,
 ) {
-  await runCloudDataWrite((db) => db.setSports(syncKey, sports, updatedAt));
+  await runCloudDataWrite((db) => db.insertSports(syncKey, sports, updatedAt));
+}
+
+export async function updateCloudSports(
+  syncKey: string,
+  sports: unknown[],
+  updatedAt: number,
+) {
+  await runCloudDataWrite((db) => db.updateSports(syncKey, sports, updatedAt));
 }
