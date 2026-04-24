@@ -68,7 +68,10 @@ interface SportRow {
   calories_burned: number;
 }
 
-type WriteMode = 'insert' | 'update' | 'upsert';
+interface WriteOptions {
+  allowInsert: boolean;
+  allowUpdate: boolean;
+}
 
 function normalizeSyncKey(syncKey: string): string {
   return syncKey.trim();
@@ -177,7 +180,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     client: PoolClient,
     syncKey: string,
     settings: Record<string, unknown>,
-    mode: WriteMode = 'upsert',
+    options: WriteOptions,
   ) {
     const target = asRecord(settings.targetPFC);
     const params = [
@@ -191,7 +194,7 @@ class PostgresCloudDataStore implements CloudDataStore {
       JSON.stringify(asArray(settings.favoriteFoodIds)),
     ];
 
-    if (mode !== 'insert') {
+    if (options.allowUpdate) {
       const updated = await client.query(
         `
         UPDATE pfc_cloud_settings
@@ -209,8 +212,9 @@ class PostgresCloudDataStore implements CloudDataStore {
       );
 
       if (updated.rowCount && updated.rowCount > 0) return;
-      if (mode === 'update') return;
     }
+
+    if (!options.allowInsert) return;
 
     await client.query(
       `
@@ -233,7 +237,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     client: PoolClient,
     syncKey: string,
     logs: Record<string, unknown>,
-    mode: WriteMode = 'upsert',
+    options: WriteOptions,
   ) {
     for (const [date, logRaw] of Object.entries(logs)) {
       const log = asRecord(logRaw);
@@ -252,7 +256,7 @@ class PostgresCloudDataStore implements CloudDataStore {
         JSON.stringify(activities),
       ];
 
-      if (mode !== 'insert') {
+      if (options.allowUpdate) {
         const updated = await client.query(
           `
           UPDATE pfc_cloud_daily_logs
@@ -270,8 +274,9 @@ class PostgresCloudDataStore implements CloudDataStore {
         );
 
         if (updated.rowCount && updated.rowCount > 0) continue;
-        if (mode === 'update') continue;
       }
+
+      if (!options.allowInsert) continue;
 
       await client.query(
         `
@@ -295,7 +300,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     client: PoolClient,
     syncKey: string,
     foods: unknown[],
-    mode: WriteMode = 'upsert',
+    options: WriteOptions,
   ) {
     for (const [position, foodRaw] of foods.entries()) {
       const food = asRecord(foodRaw);
@@ -317,7 +322,7 @@ class PostgresCloudDataStore implements CloudDataStore {
         typeof food.image === 'string' ? food.image : null,
       ];
 
-      if (mode !== 'insert') {
+      if (options.allowUpdate) {
         const updated = await client.query(
           `
           UPDATE pfc_cloud_foods
@@ -339,8 +344,9 @@ class PostgresCloudDataStore implements CloudDataStore {
         );
 
         if (updated.rowCount && updated.rowCount > 0) continue;
-        if (mode === 'update') continue;
       }
+
+      if (!options.allowInsert) continue;
 
       await client.query(
         `
@@ -368,7 +374,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     client: PoolClient,
     syncKey: string,
     sports: unknown[],
-    mode: WriteMode = 'upsert',
+    options: WriteOptions,
   ) {
     for (const [position, sportRaw] of sports.entries()) {
       const sport = asRecord(sportRaw);
@@ -383,7 +389,7 @@ class PostgresCloudDataStore implements CloudDataStore {
         toFiniteNumber(sport.caloriesBurned),
       ];
 
-      if (mode !== 'insert') {
+      if (options.allowUpdate) {
         const updated = await client.query(
           `
           UPDATE pfc_cloud_sports
@@ -398,8 +404,9 @@ class PostgresCloudDataStore implements CloudDataStore {
         );
 
         if (updated.rowCount && updated.rowCount > 0) continue;
-        if (mode === 'update') continue;
       }
+
+      if (!options.allowInsert) continue;
 
       await client.query(
         `
@@ -627,10 +634,22 @@ class PostgresCloudDataStore implements CloudDataStore {
 
       await this.upsertSnapshot(client, normalizedKey, updatedAt, payload.createdAt);
 
-      await this.replaceSettings(client, normalizedKey, asRecord(payload.settings));
-      await this.replaceLogs(client, normalizedKey, asRecord(payload.logs));
-      await this.replaceFoods(client, normalizedKey, asArray(payload.foods));
-      await this.replaceSports(client, normalizedKey, asArray(payload.sports));
+      await this.replaceSettings(client, normalizedKey, asRecord(payload.settings), {
+        allowInsert: true,
+        allowUpdate: true,
+      });
+      await this.replaceLogs(client, normalizedKey, asRecord(payload.logs), {
+        allowInsert: true,
+        allowUpdate: true,
+      });
+      await this.replaceFoods(client, normalizedKey, asArray(payload.foods), {
+        allowInsert: true,
+        allowUpdate: true,
+      });
+      await this.replaceSports(client, normalizedKey, asArray(payload.sports), {
+        allowInsert: true,
+        allowUpdate: true,
+      });
 
       await client.query('COMMIT');
     } catch (error) {
@@ -650,7 +669,10 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceSettings(client, normalizedKey, settings, 'insert');
+      await this.replaceSettings(client, normalizedKey, settings, {
+        allowInsert: true,
+        allowUpdate: false,
+      });
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -669,7 +691,10 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceSettings(client, normalizedKey, settings, 'update');
+      await this.replaceSettings(client, normalizedKey, settings, {
+        allowInsert: false,
+        allowUpdate: true,
+      });
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -688,7 +713,10 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceLogs(client, normalizedKey, logs, 'insert');
+      await this.replaceLogs(client, normalizedKey, logs, {
+        allowInsert: true,
+        allowUpdate: false,
+      });
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -707,7 +735,10 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceLogs(client, normalizedKey, logs, 'update');
+      await this.replaceLogs(client, normalizedKey, logs, {
+        allowInsert: false,
+        allowUpdate: true,
+      });
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -726,7 +757,10 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceFoods(client, normalizedKey, foods, 'insert');
+      await this.replaceFoods(client, normalizedKey, foods, {
+        allowInsert: true,
+        allowUpdate: false,
+      });
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -745,7 +779,10 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceFoods(client, normalizedKey, foods, 'update');
+      await this.replaceFoods(client, normalizedKey, foods, {
+        allowInsert: false,
+        allowUpdate: true,
+      });
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -764,7 +801,10 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceSports(client, normalizedKey, sports, 'insert');
+      await this.replaceSports(client, normalizedKey, sports, {
+        allowInsert: true,
+        allowUpdate: false,
+      });
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -783,7 +823,10 @@ class PostgresCloudDataStore implements CloudDataStore {
     try {
       await client.query('BEGIN');
       await this.upsertSnapshot(client, normalizedKey, updatedAt);
-      await this.replaceSports(client, normalizedKey, sports, 'update');
+      await this.replaceSports(client, normalizedKey, sports, {
+        allowInsert: false,
+        allowUpdate: true,
+      });
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
