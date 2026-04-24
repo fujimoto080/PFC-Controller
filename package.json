@@ -8,6 +8,8 @@
     "predev": "node scripts/generate-food-data.mjs",
     "build": "next build --webpack",
     "prebuild": "node scripts/generate-food-data.mjs",
+    "vercel-build": "node scripts/migrate.mjs && next build --webpack",
+    "migrate": "node scripts/migrate.mjs",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

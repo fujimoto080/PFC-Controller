@@ -41,9 +41,16 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
    - `https://<vercel-domain>/api/auth/callback/google`（本番）
 3. 取得した Client ID / Secret を `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` に設定。
 
-### DB スキーマ
+### DB マイグレーション
 
-起動時に NextAuth Adapter が `users` / `accounts` / `sessions` / `verification_token` を作成し、API 初回アクセス時に `pfc_user_settings` / `pfc_daily_logs` / `pfc_foods` / `pfc_sports` を自動で作成します（`CREATE TABLE IF NOT EXISTS`）。
+スキーマは `scripts/migrate.mjs` で管理します。内容は冪等 (`CREATE TABLE IF NOT EXISTS` + `CREATE EXTENSION IF NOT EXISTS pgcrypto`)。
+
+- **ローカル**: `pnpm migrate`
+- **Vercel**: デプロイ毎に `pnpm vercel-build` が走る（Vercel は `scripts.vercel-build` を自動検出）。マイグレーション → Next.js ビルドの順に実行される。Vercel のビルド環境から `DATABASE_URL` にネットワーク到達できる必要があります。
+
+生成されるテーブル:
+- NextAuth 用: `users`, `accounts`, `sessions`, `verification_token`
+- アプリ用: `pfc_user_settings`, `pfc_daily_logs`, `pfc_foods`, `pfc_sports`
 
 ## Gemini 連携設定（AIでPFC推定）
 

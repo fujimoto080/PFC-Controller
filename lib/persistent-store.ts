@@ -2,7 +2,6 @@ import 'server-only';
 
 import { PoolClient } from 'pg';
 import { getPool } from '@/lib/pg-pool';
-import { ensureAuthSchema } from '@/lib/auth-schema';
 
 interface UserDataPayload {
   logs: Record<string, unknown>;
@@ -75,65 +74,6 @@ function asArray(value: unknown): unknown[] {
 }
 
 class PostgresCloudDataStore implements CloudDataStore {
-  private initPromise: Promise<void> | null = null;
-
-  private async ensureTables() {
-    if (!this.initPromise) {
-      this.initPromise = (async () => {
-        await ensureAuthSchema();
-        await getPool().query(`
-          CREATE TABLE IF NOT EXISTS pfc_user_settings (
-            user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-            target_protein DOUBLE PRECISION NOT NULL,
-            target_fat DOUBLE PRECISION NOT NULL,
-            target_carbs DOUBLE PRECISION NOT NULL,
-            target_calories DOUBLE PRECISION NOT NULL,
-            profile_json JSONB,
-            favorite_food_ids_json JSONB
-          );
-
-          CREATE TABLE IF NOT EXISTS pfc_daily_logs (
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            date TEXT NOT NULL,
-            total_protein DOUBLE PRECISION NOT NULL,
-            total_fat DOUBLE PRECISION NOT NULL,
-            total_carbs DOUBLE PRECISION NOT NULL,
-            total_calories DOUBLE PRECISION NOT NULL,
-            items_json JSONB NOT NULL,
-            activities_json JSONB,
-            PRIMARY KEY (user_id, date)
-          );
-
-          CREATE TABLE IF NOT EXISTS pfc_foods (
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            food_id TEXT NOT NULL,
-            position INT NOT NULL,
-            name TEXT NOT NULL,
-            protein DOUBLE PRECISION NOT NULL,
-            fat DOUBLE PRECISION NOT NULL,
-            carbs DOUBLE PRECISION NOT NULL,
-            calories DOUBLE PRECISION NOT NULL,
-            timestamp_ms BIGINT NOT NULL,
-            store TEXT,
-            store_group TEXT,
-            image TEXT,
-            PRIMARY KEY (user_id, food_id)
-          );
-
-          CREATE TABLE IF NOT EXISTS pfc_sports (
-            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            sport_id TEXT NOT NULL,
-            position INT NOT NULL,
-            name TEXT NOT NULL,
-            calories_burned DOUBLE PRECISION NOT NULL,
-            PRIMARY KEY (user_id, sport_id)
-          );
-        `);
-      })();
-    }
-
-    await this.initPromise;
-  }
 
   private buildSettings(row?: SettingsRow): Record<string, unknown> {
     if (!row) return {};
@@ -347,7 +287,6 @@ class PostgresCloudDataStore implements CloudDataStore {
   }
 
   async get(userId: string): Promise<UserDataPayload> {
-    await this.ensureTables();
 
     const pool = getPool();
     const [settingsResult, logsResult, foodsResult, sportsResult] = await Promise.all([
@@ -431,7 +370,6 @@ class PostgresCloudDataStore implements CloudDataStore {
   }
 
   async replaceSettings(userId: string, settings: Record<string, unknown>) {
-    await this.ensureTables();
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
@@ -446,7 +384,6 @@ class PostgresCloudDataStore implements CloudDataStore {
   }
 
   async replaceLogs(userId: string, logs: Record<string, unknown>) {
-    await this.ensureTables();
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
@@ -461,7 +398,6 @@ class PostgresCloudDataStore implements CloudDataStore {
   }
 
   async replaceFoods(userId: string, foods: unknown[]) {
-    await this.ensureTables();
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
@@ -476,7 +412,6 @@ class PostgresCloudDataStore implements CloudDataStore {
   }
 
   async replaceSports(userId: string, sports: unknown[]) {
-    await this.ensureTables();
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
