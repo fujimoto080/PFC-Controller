@@ -26,11 +26,14 @@ interface CloudState {
   loaded: boolean;
 }
 
-const getDefaultSports = (): SportDefinition[] => [
+const DEFAULT_SPORTS: readonly SportDefinition[] = [
   { id: 'walking', name: 'ウォーキング', caloriesBurned: 180 },
   { id: 'running', name: 'ランニング', caloriesBurned: 320 },
   { id: 'cycling', name: 'サイクリング', caloriesBurned: 260 },
 ];
+
+const getDefaultSports = (): SportDefinition[] =>
+  DEFAULT_SPORTS.map((sport) => ({ ...sport }));
 
 const cloudState: CloudState = {
   logs: {},
@@ -105,6 +108,18 @@ function serializeSettings(settings: UserSettings): Record<string, unknown> {
   };
 }
 
+async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const data = (await response.json()) as { error?: unknown } | null;
+    if (data && typeof data.error === 'string' && data.error) {
+      return data.error;
+    }
+  } catch {
+    // JSON 以外のレスポンスはそのまま fallback を使う
+  }
+  return fallback;
+}
+
 async function syncResource(resource: ResourceKey) {
   if (!cloudState.loaded) return;
 
@@ -115,8 +130,7 @@ async function syncResource(resource: ResourceKey) {
       body: JSON.stringify(payloadFor(resource)),
     });
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data?.error || 'クラウド保存に失敗しました');
+      throw new Error(await readErrorMessage(response, 'クラウド保存に失敗しました'));
     }
   } catch (error) {
     console.error(`クラウド同期失敗 (${resource})`, error);
@@ -139,8 +153,7 @@ export async function loadCloudData(): Promise<boolean> {
   try {
     const response = await fetch('/api/cloud-data');
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data?.error || 'ユーザーデータ取得に失敗しました');
+      throw new Error(await readErrorMessage(response, 'ユーザーデータ取得に失敗しました'));
     }
     const data = (await response.json()) as CloudFetchResponse;
 
@@ -203,10 +216,6 @@ export function getLogForDate(date: string): DailyLog {
       total: { protein: 0, fat: 0, carbs: 0, calories: 0 },
     }
   );
-}
-
-export function getTodayLog(): DailyLog {
-  return getLogForDate(getTodayString());
 }
 
 export function saveLog(log: DailyLog) {
@@ -604,7 +613,7 @@ export function deleteFoodFromDictionary(id: string) {
   saveFoodDictionary(cloudState.foods.filter((f) => f.id !== id));
 }
 
-export function getHistoryItems(): FoodItem[] {
+function getHistoryItems(): FoodItem[] {
   const logs = getLogs();
   const allItems: FoodItem[] = [];
   const seenNames = new Set<string>();
