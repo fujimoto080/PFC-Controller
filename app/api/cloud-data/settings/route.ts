@@ -1,61 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { insertCloudSettings, updateCloudSettings } from '@/lib/cloud-data';
-import {
-  invalidSyncKeyResponse,
-  isValidSyncKey,
-  normalizeSyncKey,
-  parseUpdatedAt,
-} from '@/lib/cloud-sync-api';
-
-interface SettingsRequest {
-  settings?: unknown;
-  updatedAt?: unknown;
-  syncKey?: unknown;
-}
-
-async function parseAndValidate(request: NextRequest) {
-  const body = (await request.json()) as SettingsRequest;
-  const syncKey = normalizeSyncKey(body.syncKey);
-
-  if (!isValidSyncKey(syncKey)) {
-    return { error: invalidSyncKeyResponse() } as const;
-  }
-
-  if (!body.settings || typeof body.settings !== 'object' || Array.isArray(body.settings)) {
-    return {
-      error: NextResponse.json({ error: 'settings の形式が不正です' }, { status: 400 }),
-    } as const;
-  }
-
-  return {
-    syncKey,
-    settings: body.settings as Record<string, unknown>,
-    updatedAt: parseUpdatedAt(body.updatedAt),
-  } as const;
-}
+import { auth } from '@/auth';
+import { saveUserSettings } from '@/lib/cloud-data';
 
 export async function POST(request: NextRequest) {
-  try {
-    const parsed = await parseAndValidate(request);
-    if ('error' in parsed) return parsed.error;
-
-    await insertCloudSettings(parsed.syncKey, parsed.settings, parsed.updatedAt);
-    return NextResponse.json({ ok: true, updatedAt: parsed.updatedAt, method: 'POST' });
-  } catch (error) {
-    console.error('クラウド設定insertエラー', error);
-    return NextResponse.json({ error: 'クラウド設定のinsertに失敗しました' }, { status: 500 });
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
   }
-}
 
-export async function PUT(request: NextRequest) {
   try {
-    const parsed = await parseAndValidate(request);
-    if ('error' in parsed) return parsed.error;
+    const body = (await request.json()) as { settings?: unknown };
+    if (!body.settings || typeof body.settings !== 'object' || Array.isArray(body.settings)) {
+      return NextResponse.json({ error: 'settings の形式が不正です' }, { status: 400 });
+    }
 
-    await updateCloudSettings(parsed.syncKey, parsed.settings, parsed.updatedAt);
-    return NextResponse.json({ ok: true, updatedAt: parsed.updatedAt, method: 'PUT' });
+    await saveUserSettings(
+      session.user.id,
+      body.settings as Record<string, unknown>,
+    );
+    return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('クラウド設定updateエラー', error);
-    return NextResponse.json({ error: 'クラウド設定のupdateに失敗しました' }, { status: 500 });
+    console.error('設定保存エラー', error);
+    return NextResponse.json({ error: '設定の保存に失敗しました' }, { status: 500 });
   }
 }

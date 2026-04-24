@@ -1,26 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { loadCloudData, getStoredSyncKey } from '@/lib/storage';
+import { usePathname } from 'next/navigation';
+import { loadCloudData, isCloudDataLoaded } from '@/lib/storage';
 
-type Status = 'loading' | 'ready-with-key' | 'ready-without-key';
+type Status = 'loading' | 'ready';
 
-function resolveInitialStatus(): Status {
-  if (typeof window === 'undefined') return 'loading';
-  return getStoredSyncKey() ? 'loading' : 'ready-without-key';
+interface Props {
+  children: React.ReactNode;
+  isAuthenticated: boolean;
 }
 
-export function CloudDataProvider({ children }: { children: React.ReactNode }) {
-  const [status, setStatus] = useState<Status>(resolveInitialStatus);
+export function CloudDataProvider({ children, isAuthenticated }: Props) {
+  const pathname = usePathname();
+  const [status, setStatus] = useState<Status>(() =>
+    isAuthenticated && !isCloudDataLoaded() ? 'loading' : 'ready',
+  );
 
   useEffect(() => {
     if (status !== 'loading') return;
-
-    const syncKey = getStoredSyncKey();
-    if (!syncKey) return;
-
-    loadCloudData(syncKey).finally(() => setStatus('ready-with-key'));
+    loadCloudData().finally(() => setStatus('ready'));
   }, [status]);
+
+  if (!isAuthenticated) {
+    if (pathname === '/login') return <>{children}</>;
+    return <UnauthenticatedGate />;
+  }
 
   if (status === 'loading') {
     return (
@@ -30,16 +35,22 @@ export function CloudDataProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (status === 'ready-without-key') {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          データを保存するには「設定」画面でクラウド同期キー（8文字以上）を設定してください。同期キーを設定するまで、記録はリロードで失われます。
-        </div>
-        {children}
-      </div>
-    );
-  }
-
   return <>{children}</>;
+}
+
+function UnauthenticatedGate() {
+  return (
+    <div className="space-y-4 py-10 text-center">
+      <h1 className="text-xl font-semibold">ログインが必要です</h1>
+      <p className="text-muted-foreground text-sm">
+        食事記録を保存するには Google アカウントでログインしてください。
+      </p>
+      <a
+        href="/login"
+        className="bg-primary text-primary-foreground inline-block rounded-md px-4 py-2 text-sm"
+      >
+        ログイン画面へ
+      </a>
+    </div>
+  );
 }

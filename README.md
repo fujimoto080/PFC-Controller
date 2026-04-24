@@ -16,6 +16,35 @@ pnpm dev
 
 ブラウザで `http://localhost:3000` を開いて確認できます。
 
+## 認証・DB設定
+
+データ永続化と認証に Postgres + NextAuth v5 (Google) を使います。
+
+### 必要な環境変数
+
+`.env.local`（開発時）と Vercel の Environment Variables（本番）に以下を設定します。
+
+```bash
+DATABASE_URL=postgres://user:password@host:5432/dbname
+AUTH_SECRET=$(openssl rand -base64 32)   # 本番とローカルで別値を推奨
+AUTH_GOOGLE_ID=<Google OAuth Client ID>
+AUTH_GOOGLE_SECRET=<Google OAuth Client Secret>
+AUTH_URL=http://localhost:3000           # 本番は https://<your-domain>
+AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場合に必要
+```
+
+### Google OAuth のセットアップ
+
+1. Google Cloud Console で OAuth 2.0 クライアント ID を作成（Web アプリケーション）。
+2. 承認済みのリダイレクト URI に以下を追加:
+   - `http://localhost:3000/api/auth/callback/google`（開発）
+   - `https://<vercel-domain>/api/auth/callback/google`（本番）
+3. 取得した Client ID / Secret を `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` に設定。
+
+### DB スキーマ
+
+起動時に NextAuth Adapter が `users` / `accounts` / `sessions` / `verification_token` を作成し、API 初回アクセス時に `pfc_user_settings` / `pfc_daily_logs` / `pfc_foods` / `pfc_sports` を自動で作成します（`CREATE TABLE IF NOT EXISTS`）。
+
 ## Gemini 連携設定（AIでPFC推定）
 
 追加画面の「写真」タブでは、食べた内容をテキスト入力して Gemini で **P/F/C とカロリーを推定**できます。

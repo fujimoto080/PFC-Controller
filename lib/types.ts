@@ -45,7 +45,6 @@ export interface UserSettings {
   profile?: UserProfile;
   favoriteFoodIds?: string[];
   sports?: SportDefinition[];
-  cloudSyncKey?: string;
 }
 
 export const DEFAULT_TARGET: PFC = {

@@ -1,6 +1,7 @@
 import { Toaster } from '@/components/ui/sonner';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { CloudDataProvider } from '@/components/layout/CloudDataProvider';
+import { auth } from '@/auth';
 import './globals.css';
 
 export const metadata = {
@@ -17,18 +18,23 @@ export const viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  const isAuthenticated = !!session?.user?.id;
+
   return (
     <html lang="ja">
       <body className="bg-background text-foreground min-h-screen pb-20 antialiased">
         <main className="container mx-auto max-w-md px-4 py-4">
-          <CloudDataProvider>{children}</CloudDataProvider>
+          <CloudDataProvider isAuthenticated={isAuthenticated}>
+            {children}
+          </CloudDataProvider>
         </main>
-        <BottomNav />
+        {isAuthenticated && <BottomNav />}
         <Toaster position="top-center" />
       </body>
     </html>

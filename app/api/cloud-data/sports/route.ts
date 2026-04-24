@@ -1,61 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { insertCloudSports, updateCloudSports } from '@/lib/cloud-data';
-import {
-  invalidSyncKeyResponse,
-  isValidSyncKey,
-  normalizeSyncKey,
-  parseUpdatedAt,
-} from '@/lib/cloud-sync-api';
-
-interface SportsRequest {
-  sports?: unknown;
-  updatedAt?: unknown;
-  syncKey?: unknown;
-}
-
-async function parseAndValidate(request: NextRequest) {
-  const body = (await request.json()) as SportsRequest;
-  const syncKey = normalizeSyncKey(body.syncKey);
-
-  if (!isValidSyncKey(syncKey)) {
-    return { error: invalidSyncKeyResponse() } as const;
-  }
-
-  if (!Array.isArray(body.sports)) {
-    return {
-      error: NextResponse.json({ error: 'sports の形式が不正です' }, { status: 400 }),
-    } as const;
-  }
-
-  return {
-    syncKey,
-    sports: body.sports,
-    updatedAt: parseUpdatedAt(body.updatedAt),
-  } as const;
-}
+import { auth } from '@/auth';
+import { saveUserSports } from '@/lib/cloud-data';
 
 export async function POST(request: NextRequest) {
-  try {
-    const parsed = await parseAndValidate(request);
-    if ('error' in parsed) return parsed.error;
-
-    await insertCloudSports(parsed.syncKey, parsed.sports, parsed.updatedAt);
-    return NextResponse.json({ ok: true, updatedAt: parsed.updatedAt, method: 'POST' });
-  } catch (error) {
-    console.error('クラウド運動辞書insertエラー', error);
-    return NextResponse.json({ error: 'クラウド運動辞書のinsertに失敗しました' }, { status: 500 });
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
   }
-}
 
-export async function PUT(request: NextRequest) {
   try {
-    const parsed = await parseAndValidate(request);
-    if ('error' in parsed) return parsed.error;
+    const body = (await request.json()) as { sports?: unknown };
+    if (!Array.isArray(body.sports)) {
+      return NextResponse.json({ error: 'sports の形式が不正です' }, { status: 400 });
+    }
 
-    await updateCloudSports(parsed.syncKey, parsed.sports, parsed.updatedAt);
-    return NextResponse.json({ ok: true, updatedAt: parsed.updatedAt, method: 'PUT' });
+    await saveUserSports(session.user.id, body.sports);
+    return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('クラウド運動辞書updateエラー', error);
-    return NextResponse.json({ error: 'クラウド運動辞書のupdateに失敗しました' }, { status: 500 });
+    console.error('スポーツ保存エラー', error);
+    return NextResponse.json({ error: 'スポーツの保存に失敗しました' }, { status: 500 });
   }
 }

@@ -12,8 +12,6 @@ import {
 import { formatDate, roundPFC } from './utils';
 import { toast } from './toast';
 
-const SYNC_KEY_STORAGE_KEY = 'pfc_cloud_sync_key';
-
 const isClient = typeof window !== 'undefined';
 
 const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
@@ -21,8 +19,6 @@ const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 type ResourceKey = 'logs' | 'settings' | 'foods' | 'sports';
 
 interface CloudState {
-  syncKey: string | null;
-  snapshotExists: boolean;
   logs: Record<string, DailyLog>;
   settings: UserSettings;
   foods: FoodItem[];
@@ -37,8 +33,6 @@ const getDefaultSports = (): SportDefinition[] => [
 ];
 
 const cloudState: CloudState = {
-  syncKey: null,
-  snapshotExists: false,
   logs: {},
   settings: { targetPFC: DEFAULT_TARGET, sports: getDefaultSports() },
   foods: [],
@@ -56,9 +50,6 @@ const getSortedLogDates = (
   Object.keys(logs).sort((a, b) =>
     order === 'asc' ? a.localeCompare(b) : b.localeCompare(a),
   );
-
-const normalizeSyncKeyValue = (value: string | undefined | null): string =>
-  (value || '').trim();
 
 const toSportDefinition = (sport: SportDefinition): SportDefinition => ({
   id: sport.id,
@@ -88,47 +79,6 @@ export function refreshUI() {
   }
 }
 
-export function getStoredSyncKey(): string {
-  if (!isClient) return '';
-  try {
-    return normalizeSyncKeyValue(window.localStorage.getItem(SYNC_KEY_STORAGE_KEY));
-  } catch {
-    return '';
-  }
-}
-
-function persistSyncKeyToDevice(syncKey: string) {
-  if (!isClient) return;
-  try {
-    if (syncKey) {
-      window.localStorage.setItem(SYNC_KEY_STORAGE_KEY, syncKey);
-    } else {
-      window.localStorage.removeItem(SYNC_KEY_STORAGE_KEY);
-    }
-  } catch {
-    /* noop */
-  }
-}
-
-function getActiveSyncKey(): string | null {
-  return cloudState.syncKey;
-}
-
-async function postJSON(url: string, body: unknown, method: 'POST' | 'PUT') {
-  const response = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data?.error || 'クラウド保存に失敗しました');
-  }
-
-  return response.json();
-}
-
 function endpointFor(resource: ResourceKey): string {
   return `/api/cloud-data/${resource}`;
 }
@@ -152,25 +102,22 @@ function serializeSettings(settings: UserSettings): Record<string, unknown> {
     profile: settings.profile,
     favoriteFoodIds: settings.favoriteFoodIds ?? [],
     sports: settings.sports ?? [],
-    cloudSyncKey: settings.cloudSyncKey,
   };
 }
 
 async function syncResource(resource: ResourceKey) {
-  const syncKey = getActiveSyncKey();
-  if (!syncKey) return;
-
-  const body = {
-    ...payloadFor(resource),
-    syncKey,
-    updatedAt: Date.now(),
-  };
-
-  const method: 'POST' | 'PUT' = cloudState.snapshotExists ? 'PUT' : 'POST';
+  if (!cloudState.loaded) return;
 
   try {
-    await postJSON(endpointFor(resource), body, method);
-    cloudState.snapshotExists = true;
+    const response = await fetch(endpointFor(resource), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payloadFor(resource)),
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data?.error || 'クラウド保存に失敗しました');
+    }
   } catch (error) {
     console.error(`クラウド同期失敗 (${resource})`, error);
     toast.error(
@@ -186,26 +133,16 @@ interface CloudFetchResponse {
     foods?: FoodItem[];
     sports?: SportDefinition[];
   } | null;
-  updatedAt: number;
 }
 
-export async function loadCloudData(syncKey: string): Promise<boolean> {
-  const normalized = normalizeSyncKeyValue(syncKey);
-  if (!normalized) return false;
-
+export async function loadCloudData(): Promise<boolean> {
   try {
-    const response = await fetch(
-      `/api/cloud-data?syncKey=${encodeURIComponent(normalized)}`,
-    );
+    const response = await fetch('/api/cloud-data');
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data?.error || 'クラウドデータ取得に失敗しました');
+      throw new Error(data?.error || 'ユーザーデータ取得に失敗しました');
     }
     const data = (await response.json()) as CloudFetchResponse;
-
-    cloudState.syncKey = normalized;
-    persistSyncKeyToDevice(normalized);
-    cloudState.snapshotExists = data.updatedAt > 0 && !!data.payload;
 
     const payload = data.payload;
     const settingsFromCloud = (payload?.settings ?? null) as
@@ -230,16 +167,15 @@ export async function loadCloudData(syncKey: string): Promise<boolean> {
         ? (settingsFromCloud.favoriteFoodIds as string[])
         : [],
       sports: resolvedSports,
-      cloudSyncKey: normalized,
     };
     cloudState.loaded = true;
 
     refreshUI();
     return true;
   } catch (error) {
-    console.error('クラウドデータ読み込み失敗', error);
+    console.error('ユーザーデータ読み込み失敗', error);
     toast.error(
-      error instanceof Error ? error.message : 'クラウドデータ取得に失敗しました',
+      error instanceof Error ? error.message : 'ユーザーデータ取得に失敗しました',
     );
     return false;
   }
@@ -247,18 +183,6 @@ export async function loadCloudData(syncKey: string): Promise<boolean> {
 
 export function isCloudDataLoaded(): boolean {
   return cloudState.loaded;
-}
-
-export function clearCloudData() {
-  cloudState.syncKey = null;
-  cloudState.snapshotExists = false;
-  cloudState.logs = {};
-  cloudState.foods = [];
-  cloudState.sports = getDefaultSports();
-  cloudState.settings = { targetPFC: DEFAULT_TARGET, sports: getDefaultSports() };
-  cloudState.loaded = false;
-  persistSyncKeyToDevice('');
-  refreshUI();
 }
 
 export function getTodayString(): string {
@@ -621,12 +545,10 @@ export function getSettings(): UserSettings {
 }
 
 export function saveSettings(settings: UserSettings) {
-  const nextSyncKey = normalizeSyncKeyValue(settings.cloudSyncKey);
   const normalizedSports = normalizeSports(settings.sports);
 
   cloudState.settings = {
     ...settings,
-    cloudSyncKey: nextSyncKey || undefined,
     sports: normalizedSports,
   };
   cloudState.sports = normalizedSports;
