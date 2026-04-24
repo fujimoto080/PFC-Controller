@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { getLogForDate, getSettings, getPfcDebt, getTodayString } from '@/lib/storage';
+import { useSubscribeToPfcUpdate } from './use-pfc-update';
 
 export function usePfcData(selectedDate: string = getTodayString()) {
     const [version, setVersion] = useState(0);
@@ -15,11 +16,7 @@ export function usePfcData(selectedDate: string = getTodayString()) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debt = useMemo(() => getPfcDebt(selectedDate), [selectedDate, version]);
 
-    useEffect(() => {
-        const handleUpdate = () => refresh();
-        window.addEventListener('pfc-update', handleUpdate);
-        return () => window.removeEventListener('pfc-update', handleUpdate);
-    }, [refresh]);
+    useSubscribeToPfcUpdate(refresh);
 
     return { log, settings, debt, isLoading: false, refresh };
 }

@@ -23,6 +23,7 @@ import {
 } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
 import { buildFoodMatchKey, normalizeBarcodes, type BarcodeMappingRow } from '@/lib/barcode-mapping';
+import { saveBarcodeMappingRequest } from '@/lib/barcode-client';
 import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
@@ -204,28 +205,6 @@ export default function ManageFoodsPage() {
         reset();
     };
 
-    const saveBarcodeMapping = async (barcodes: string[], itemData: Omit<FoodItem, 'id' | 'timestamp'>) => {
-        if (barcodes.length === 0) return;
-
-        await fetch('/api/barcode', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                barcodes,
-                foodData: {
-                    name: itemData.name,
-                    protein: itemData.protein,
-                    fat: itemData.fat,
-                    carbs: itemData.carbs,
-                    calories: itemData.calories,
-                    store: itemData.store,
-                },
-            }),
-        });
-    };
-
     const onSubmit = async (data: FoodItem) => {
         const normalizedBarcodes = normalizeBarcodes(barcodeInput);
 
@@ -250,7 +229,7 @@ export default function ManageFoodsPage() {
 
         if (normalizedBarcodes.length > 0) {
             try {
-                await saveBarcodeMapping(normalizedBarcodes, itemData);
+                await saveBarcodeMappingRequest(normalizedBarcodes, itemData);
                 toast.success(`バーコード情報を${normalizedBarcodes.length}件保存しました`);
                 const foodKey = buildFoodMatchKey(itemData);
                 setBarcodeMappingsByFoodKey((prev) => ({

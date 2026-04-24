@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FoodItem } from '@/lib/types';
 import { getFoodDictionary, getUniqueStores } from '@/lib/storage';
+import { useSubscribeToPfcUpdate } from './use-pfc-update';
 
 export function useFoodDictionary() {
     const [foods, setFoods] = useState<FoodItem[]>([]);
@@ -16,12 +17,10 @@ export function useFoodDictionary() {
     }, []);
 
     useEffect(() => {
-        refresh(); // Initial load
-
-        const handleUpdate = () => refresh();
-        window.addEventListener('pfc-update', handleUpdate);
-        return () => window.removeEventListener('pfc-update', handleUpdate);
+        refresh();
     }, [refresh]);
+
+    useSubscribeToPfcUpdate(refresh);
 
     return { foods, uniqueStores, isLoading, refresh };
 }

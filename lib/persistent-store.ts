@@ -369,11 +369,13 @@ class PostgresCloudDataStore implements CloudDataStore {
     };
   }
 
-  async replaceSettings(userId: string, settings: Record<string, unknown>) {
+  private async transaction(
+    fn: (client: PoolClient) => Promise<void>,
+  ): Promise<void> {
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
-      await this.writeSettings(client, userId, settings);
+      await fn(client);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -383,46 +385,20 @@ class PostgresCloudDataStore implements CloudDataStore {
     }
   }
 
-  async replaceLogs(userId: string, logs: Record<string, unknown>) {
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await this.writeLogs(client, userId, logs);
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+  replaceSettings(userId: string, settings: Record<string, unknown>) {
+    return this.transaction((client) => this.writeSettings(client, userId, settings));
   }
 
-  async replaceFoods(userId: string, foods: unknown[]) {
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await this.writeFoods(client, userId, foods);
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+  replaceLogs(userId: string, logs: Record<string, unknown>) {
+    return this.transaction((client) => this.writeLogs(client, userId, logs));
   }
 
-  async replaceSports(userId: string, sports: unknown[]) {
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await this.writeSports(client, userId, sports);
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+  replaceFoods(userId: string, foods: unknown[]) {
+    return this.transaction((client) => this.writeFoods(client, userId, foods));
+  }
+
+  replaceSports(userId: string, sports: unknown[]) {
+    return this.transaction((client) => this.writeSports(client, userId, sports));
   }
 }
 

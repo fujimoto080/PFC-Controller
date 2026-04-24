@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { getLogs } from '@/lib/storage';
+import { useSubscribeToPfcUpdate } from './use-pfc-update';
 
 export function useAllLogs() {
     const [version, setVersion] = useState(0);
@@ -11,11 +12,7 @@ export function useAllLogs() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const logs = useMemo(() => getLogs(), [version]);
 
-    useEffect(() => {
-        const handleUpdate = () => refresh();
-        window.addEventListener('pfc-update', handleUpdate);
-        return () => window.removeEventListener('pfc-update', handleUpdate);
-    }, [refresh]);
+    useSubscribeToPfcUpdate(refresh);
 
     return { logs, refresh };
 }

@@ -18,9 +18,11 @@ const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
 type ResourceKey = 'logs' | 'settings' | 'foods' | 'sports';
 
+type StoredSettings = Omit<UserSettings, 'sports'>;
+
 interface CloudState {
   logs: Record<string, DailyLog>;
-  settings: UserSettings;
+  settings: StoredSettings;
   foods: FoodItem[];
   sports: SportDefinition[];
   loaded: boolean;
@@ -32,14 +34,11 @@ const DEFAULT_SPORTS: readonly SportDefinition[] = [
   { id: 'cycling', name: 'サイクリング', caloriesBurned: 260 },
 ];
 
-const getDefaultSports = (): SportDefinition[] =>
-  DEFAULT_SPORTS.map((sport) => ({ ...sport }));
-
 const cloudState: CloudState = {
   logs: {},
-  settings: { targetPFC: DEFAULT_TARGET, sports: getDefaultSports() },
+  settings: { targetPFC: DEFAULT_TARGET },
   foods: [],
-  sports: getDefaultSports(),
+  sports: [...DEFAULT_SPORTS],
   loaded: false,
 };
 
@@ -99,12 +98,11 @@ function payloadFor(resource: ResourceKey): Record<string, unknown> {
   }
 }
 
-function serializeSettings(settings: UserSettings): Record<string, unknown> {
+function serializeSettings(settings: StoredSettings): Record<string, unknown> {
   return {
     targetPFC: settings.targetPFC,
     profile: settings.profile,
     favoriteFoodIds: settings.favoriteFoodIds ?? [],
-    sports: settings.sports ?? [],
   };
 }
 
@@ -161,28 +159,29 @@ export async function loadCloudData(): Promise<boolean> {
     const settingsFromCloud = (payload?.settings ?? null) as
       | (UserSettings & Record<string, unknown>)
       | null;
-    const sportsFromSettings = normalizeSports(settingsFromCloud?.sports);
-    const sportsTopLevel = normalizeSports(payload?.sports);
-    const resolvedSports =
-      sportsTopLevel.length > 0
-        ? sportsTopLevel
-        : sportsFromSettings.length > 0
-          ? sportsFromSettings
-          : getDefaultSports();
+    const storedSports = normalizeSports(payload?.sports);
 
     cloudState.logs = (payload?.logs ?? {}) as Record<string, DailyLog>;
-    cloudState.foods = Array.isArray(payload?.foods) ? (payload!.foods as FoodItem[]) : [];
-    cloudState.sports = resolvedSports;
+    const rawFoods = Array.isArray(payload?.foods)
+      ? (payload!.foods as FoodItem[])
+      : [];
+    const mergedFoods = mergeGeneratedFoods(rawFoods);
+    const foodsChanged = mergedFoods.length !== rawFoods.length;
+    cloudState.foods = mergedFoods;
+    cloudState.sports =
+      storedSports.length > 0 ? storedSports : [...DEFAULT_SPORTS];
     cloudState.settings = {
       targetPFC: settingsFromCloud?.targetPFC ?? DEFAULT_TARGET,
       profile: settingsFromCloud?.profile,
       favoriteFoodIds: Array.isArray(settingsFromCloud?.favoriteFoodIds)
         ? (settingsFromCloud.favoriteFoodIds as string[])
         : [],
-      sports: resolvedSports,
     };
     cloudState.loaded = true;
 
+    if (foodsChanged) {
+      void syncResource('foods');
+    }
     refreshUI();
     return true;
   } catch (error) {
@@ -538,56 +537,54 @@ export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
 }
 
 export function getSettings(): UserSettings {
-  const savedSports = normalizeSports(cloudState.sports);
-  const fallbackSports = normalizeSports(cloudState.settings.sports);
-  const sports =
-    savedSports.length > 0
-      ? savedSports
-      : fallbackSports.length > 0
-        ? fallbackSports
-        : getDefaultSports();
-
   return {
     ...cloudState.settings,
-    sports,
+    sports: cloudState.sports,
   };
 }
 
 export function saveSettings(settings: UserSettings) {
-  const normalizedSports = normalizeSports(settings.sports);
+  const { sports, ...rest } = settings;
+  const normalizedSports = normalizeSports(sports);
+  const sportsChanged =
+    normalizedSports.length !== cloudState.sports.length ||
+    normalizedSports.some((sport, i) => {
+      const prev = cloudState.sports[i];
+      return (
+        !prev ||
+        prev.id !== sport.id ||
+        prev.name !== sport.name ||
+        prev.caloriesBurned !== sport.caloriesBurned
+      );
+    });
 
-  cloudState.settings = {
-    ...settings,
-    sports: normalizedSports,
-  };
+  cloudState.settings = rest;
   cloudState.sports = normalizedSports;
   refreshUI();
   void syncResource('settings');
-  void syncResource('sports');
+  if (sportsChanged) {
+    void syncResource('sports');
+  }
 }
 
 import generatedFoodsRaw from '@/data/generated_foods.json';
 const generatedFoods = generatedFoodsRaw as FoodItem[];
 
+function mergeGeneratedFoods(existing: FoodItem[]): FoodItem[] {
+  const merged = [...existing];
+  const seen = new Set(merged.map((item) => item.id));
+  for (const defaultItem of generatedFoods) {
+    if (!seen.has(defaultItem.id)) {
+      merged.push(defaultItem);
+      seen.add(defaultItem.id);
+    }
+  }
+  return merged;
+}
+
 export function getFoodDictionary(): FoodItem[] {
   if (!isClient) return [];
-
-  const merged = [...cloudState.foods];
-  let changed = false;
-
-  generatedFoods.forEach((defaultItem) => {
-    const exists = merged.some((item) => item.id === defaultItem.id);
-    if (!exists) {
-      merged.push(defaultItem);
-      changed = true;
-    }
-  });
-
-  if (changed) {
-    saveFoodDictionary(merged);
-  }
-
-  return merged;
+  return cloudState.foods;
 }
 
 export function saveFoodDictionary(foods: FoodItem[]) {
@@ -613,28 +610,6 @@ export function deleteFoodFromDictionary(id: string) {
   saveFoodDictionary(cloudState.foods.filter((f) => f.id !== id));
 }
 
-function getHistoryItems(): FoodItem[] {
-  const logs = getLogs();
-  const allItems: FoodItem[] = [];
-  const seenNames = new Set<string>();
-
-  const sortedDates = getSortedLogDates(logs);
-
-  for (const date of sortedDates) {
-    const dayLog = logs[date];
-    for (let i = dayLog.items.length - 1; i >= 0; i--) {
-      const item = dayLog.items[i];
-      const key = `${item.name}-${item.calories}`;
-      if (!seenNames.has(key)) {
-        seenNames.add(key);
-        allItems.push(item);
-      }
-    }
-  }
-
-  return allItems;
-}
-
 export function getAllLogItems(): FoodItem[] {
   const logs = getLogs();
   const allItems: FoodItem[] = [];
@@ -653,15 +628,15 @@ export function getAllLogItems(): FoodItem[] {
 }
 
 export function getUniqueStores(): string[] {
-  const dictionary = getFoodDictionary();
-  const history = getHistoryItems();
   const stores = new Set<string>();
-  [...dictionary, ...history].forEach((item) => {
-    if (item.store) {
-      stores.add(item.store);
+  for (const item of getFoodDictionary()) {
+    if (item.store) stores.add(item.store);
+  }
+  for (const log of Object.values(getLogs())) {
+    for (const item of log.items) {
+      if (item.store) stores.add(item.store);
     }
-  });
-
+  }
   return Array.from(stores).sort();
 }
 

@@ -21,6 +21,7 @@ import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { toast } from '@/lib/toast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { getSimilarFoodSuggestions } from '@/lib/food-suggestions';
+import { saveBarcodeMappingRequest } from '@/lib/barcode-client';
 
 export interface AddFoodFormProps {
   onSuccess?: () => void;
@@ -154,33 +155,22 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     }
     toast.success(item.name + 'を追加しました');
 
-    // KVSにバーコードデータを保存する
     if (scannedBarcode) {
       try {
-        const kvsFoodData = {
+        await saveBarcodeMappingRequest([scannedBarcode], {
           name: item.name,
           protein: item.protein,
           fat: item.fat,
           carbs: item.carbs,
           calories: item.calories,
           store: item.store,
-        };
-        await fetch('/api/barcode', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            barcode: scannedBarcode,
-            foodData: kvsFoodData,
-          }),
         });
         toast.success('バーコード情報も保存しました');
       } catch (error) {
         console.error('Failed to save barcode data to KVS:', error);
         toast.error('バーコード情報の保存に失敗しました');
       } finally {
-        setScannedBarcode(null); // KVS保存後、scannedBarcodeをクリア
+        setScannedBarcode(null);
         setMappedFoodData(null);
         setBarcodeLookupInput('');
       }
