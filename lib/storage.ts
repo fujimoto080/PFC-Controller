@@ -537,23 +537,22 @@ export function getAllLogItems(): FoodItem[] {
 export function getUniqueStores(): string[] {
   const dictionary = getFoodDictionary();
   const history = getHistoryItems();
-
   const stores = new Set<string>();
-
-  dictionary.forEach((item) => {
-    if (item.store) stores.add(item.store);
-  });
-
-  history.forEach((item) => {
-    if (item.store) stores.add(item.store);
+  [...dictionary, ...history].forEach((item) => {
+    if (item.store) {
+      stores.add(item.store);
+    }
   });
 
   return Array.from(stores).sort();
 }
 
+const getFavoriteFoodIds = (settings: UserSettings): string[] =>
+  Array.isArray(settings.favoriteFoodIds) ? [...settings.favoriteFoodIds] : [];
+
 export function getFavoriteFoods(): FoodItem[] {
   const settings = getSettings();
-  const favoriteIds = settings.favoriteFoodIds || [];
+  const favoriteIds = getFavoriteFoodIds(settings);
 
   if (favoriteIds.length === 0) return [];
 
@@ -565,7 +564,7 @@ export function getFavoriteFoods(): FoodItem[] {
 
 export function toggleFavoriteFood(id: string) {
   const settings = getSettings();
-  const favoriteIds = settings.favoriteFoodIds || [];
+  const favoriteIds = getFavoriteFoodIds(settings);
 
   const index = favoriteIds.indexOf(id);
   if (index === -1) {
@@ -579,6 +578,6 @@ export function toggleFavoriteFood(id: string) {
 
 export function isFavoriteFood(id: string): boolean {
   const settings = getSettings();
-  const favoriteIds = settings.favoriteFoodIds || [];
+  const favoriteIds = getFavoriteFoodIds(settings);
   return favoriteIds.includes(id);
 }

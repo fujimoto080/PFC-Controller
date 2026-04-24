@@ -1,14 +1,21 @@
 import 'server-only';
 
 import { CloudDataPayload } from '@/lib/cloud-payload';
-import { getCloudDataStore } from '@/lib/persistent-store';
+import { getDb } from '@/lib/db';
+
+type CloudDataWriteInput = {
+  setSettings: Record<string, unknown>;
+  setLogs: Record<string, unknown>;
+  setFoods: unknown[];
+  setSports: unknown[];
+};
 
 export async function getCloudData(syncKey: string): Promise<{
   payload: CloudDataPayload | null;
   updatedAt: number;
 }> {
-  const store = getCloudDataStore();
-  return store.get(syncKey);
+  const db = getDb();
+  return db.get(syncKey);
 }
 
 export async function setCloudData(
@@ -16,8 +23,34 @@ export async function setCloudData(
   payload: CloudDataPayload,
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.set(syncKey, payload, updatedAt);
+  const db = getDb();
+  await db.set(syncKey, payload, updatedAt);
+}
+
+async function writeCloudDataByKey<K extends keyof CloudDataWriteInput>(
+  key: K,
+  syncKey: string,
+  value: CloudDataWriteInput[K],
+  updatedAt: number,
+) {
+  const db = getDb();
+
+  switch (key) {
+    case 'setSettings':
+      await db.setSettings(syncKey, value, updatedAt);
+      break;
+    case 'setLogs':
+      await db.setLogs(syncKey, value, updatedAt);
+      break;
+    case 'setFoods':
+      await db.setFoods(syncKey, value, updatedAt);
+      break;
+    case 'setSports':
+      await db.setSports(syncKey, value, updatedAt);
+      break;
+    default:
+      key satisfies never;
+  }
 }
 
 export async function setCloudSettings(
@@ -25,8 +58,7 @@ export async function setCloudSettings(
   settings: Record<string, unknown>,
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.setSettings(syncKey, settings, updatedAt);
+  await writeCloudDataByKey('setSettings', syncKey, settings, updatedAt);
 }
 
 export async function setCloudLogs(
@@ -34,8 +66,7 @@ export async function setCloudLogs(
   logs: Record<string, unknown>,
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.setLogs(syncKey, logs, updatedAt);
+  await writeCloudDataByKey('setLogs', syncKey, logs, updatedAt);
 }
 
 export async function setCloudFoods(
@@ -43,8 +74,7 @@ export async function setCloudFoods(
   foods: unknown[],
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.setFoods(syncKey, foods, updatedAt);
+  await writeCloudDataByKey('setFoods', syncKey, foods, updatedAt);
 }
 
 export async function setCloudSports(
@@ -52,6 +82,5 @@ export async function setCloudSports(
   sports: unknown[],
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.setSports(syncKey, sports, updatedAt);
+  await writeCloudDataByKey('setSports', syncKey, sports, updatedAt);
 }
