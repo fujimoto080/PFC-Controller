@@ -1,14 +1,14 @@
 import 'server-only';
 
 import { CloudDataPayload } from '@/lib/cloud-payload';
-import { getCloudDataStore } from '@/lib/persistent-store';
+import { getDb } from '@/lib/db';
 
 export async function getCloudData(syncKey: string): Promise<{
   payload: CloudDataPayload | null;
   updatedAt: number;
 }> {
-  const store = getCloudDataStore();
-  return store.get(syncKey);
+  const db = getDb();
+  return db.get(syncKey);
 }
 
 export async function setCloudData(
@@ -16,8 +16,15 @@ export async function setCloudData(
   payload: CloudDataPayload,
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.set(syncKey, payload, updatedAt);
+  const db = getDb();
+  await db.set(syncKey, payload, updatedAt);
+}
+
+async function runCloudDataWrite(
+  writer: (db: ReturnType<typeof getDb>) => Promise<void>,
+) {
+  const db = getDb();
+  await writer(db);
 }
 
 export async function setCloudSettings(
@@ -25,8 +32,7 @@ export async function setCloudSettings(
   settings: Record<string, unknown>,
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.setSettings(syncKey, settings, updatedAt);
+  await runCloudDataWrite((db) => db.setSettings(syncKey, settings, updatedAt));
 }
 
 export async function setCloudLogs(
@@ -34,8 +40,7 @@ export async function setCloudLogs(
   logs: Record<string, unknown>,
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.setLogs(syncKey, logs, updatedAt);
+  await runCloudDataWrite((db) => db.setLogs(syncKey, logs, updatedAt));
 }
 
 export async function setCloudFoods(
@@ -43,8 +48,7 @@ export async function setCloudFoods(
   foods: unknown[],
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.setFoods(syncKey, foods, updatedAt);
+  await runCloudDataWrite((db) => db.setFoods(syncKey, foods, updatedAt));
 }
 
 export async function setCloudSports(
@@ -52,6 +56,5 @@ export async function setCloudSports(
   sports: unknown[],
   updatedAt: number,
 ) {
-  const store = getCloudDataStore();
-  await store.setSports(syncKey, sports, updatedAt);
+  await runCloudDataWrite((db) => db.setSports(syncKey, sports, updatedAt));
 }
