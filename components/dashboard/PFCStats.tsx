@@ -104,7 +104,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.6}
-          onDragEnd={(e, { offset, }) => {
+          onDragEnd={(_e, { offset }) => {
             const swipe = offset.x;
             if (swipe < -50) {
               navigateDate(1);

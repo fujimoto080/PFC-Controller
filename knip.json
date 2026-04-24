@@ -17,8 +17,6 @@
   ],
   "ignoreDependencies": [
     "@radix-ui/react-dialog",
-    "add",
-    "pnpm",
     "tailwindcss",
     "ts-node",
     "tw-animate-css",

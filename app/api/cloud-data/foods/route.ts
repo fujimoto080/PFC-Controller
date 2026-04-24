@@ -1,9 +1,10 @@
+import { z } from 'zod';
 import { saveUserFoods } from '@/lib/cloud-data';
-import { createCloudDataRoute, isUnknownArray } from '../route-factory';
+import { createCloudDataRoute } from '@/lib/api/cloud-data-handler';
 
 export const POST = createCloudDataRoute({
   key: 'foods',
   label: '食品辞書',
-  validate: isUnknownArray,
+  schema: z.array(z.unknown()),
   save: saveUserFoods,
 });

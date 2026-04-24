@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
-
 import { listBarcodeMappings } from '@/lib/barcode-kv';
+import { defineRoute } from '@/lib/api/handler';
 
-export async function GET() {
-  try {
+export const GET = defineRoute(
+  { label: 'バーコードマッピング一覧' },
+  async () => {
     const mappings = await listBarcodeMappings();
-    return NextResponse.json(mappings, { status: 200 });
-  } catch (error) {
-    console.error('Error in GET /api/barcode/mappings:', error);
-    return NextResponse.json({ error: 'Failed to retrieve barcode mappings' }, { status: 500 });
-  }
-}
+    return NextResponse.json(mappings);
+  },
+);

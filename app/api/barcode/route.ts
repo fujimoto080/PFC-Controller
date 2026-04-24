@@ -1,51 +1,48 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { normalizeBarcodes, type FoodItemForKVS } from '@/lib/barcode-mapping';
 import { getBarcodeMapping, saveBarcodeMapping } from '@/lib/barcode-kv';
+import { ApiError, defineRoute } from '@/lib/api/handler';
 
-// GET request to retrieve food data by barcode
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const code = searchParams.get('code');
-
-  if (!code) {
-    return NextResponse.json({ error: 'Barcode is required' }, { status: 400 });
-  }
-
-  try {
-    const foodData = await getBarcodeMapping(code);
-
-    if (foodData) {
-      return NextResponse.json(foodData);
+export const GET = defineRoute(
+  { label: 'バーコード取得' },
+  async (request) => {
+    const code = request.nextUrl.searchParams.get('code');
+    if (!code) {
+      throw new ApiError('バーコードが指定されていません', 400);
     }
 
-    return NextResponse.json({ error: 'Product not found in KVS' }, { status: 404 });
-  } catch (error) {
-    console.error('Error in GET /api/barcode:', error);
-    return NextResponse.json({ error: 'Failed to retrieve product data' }, { status: 500 });
-  }
-}
+    const foodData = await getBarcodeMapping(code);
+    if (!foodData) {
+      throw new ApiError('該当する商品が見つかりません', 404);
+    }
+    return NextResponse.json(foodData);
+  },
+);
 
-// POST request to save food data for a barcode
-export async function POST(request: NextRequest) {
-  const { barcode, barcodes, foodData }: { barcode?: string; barcodes?: string[]; foodData?: FoodItemForKVS } =
-    await request.json();
+const postSchema = z.object({
+  barcode: z.string().optional(),
+  barcodes: z.array(z.string()).optional(),
+  foodData: z.custom<FoodItemForKVS>((v) => !!v && typeof v === 'object', {
+    message: 'foodData は必須です',
+  }),
+});
 
-  if (!foodData) {
-    return NextResponse.json({ error: 'foodData is required' }, { status: 400 });
-  }
+export const POST = defineRoute(
+  { label: 'バーコード保存', body: postSchema },
+  async (_req, { body }) => {
+    const normalizedBarcodes = normalizeBarcodes(body.barcodes ?? body.barcode ?? '');
+    if (normalizedBarcodes.length === 0) {
+      throw new ApiError('バーコードを1件以上指定してください', 400);
+    }
 
-  const normalizedBarcodes = normalizeBarcodes(barcodes ?? (barcode ?? ''));
-
-  if (normalizedBarcodes.length === 0) {
-    return NextResponse.json({ error: 'At least one barcode is required' }, { status: 400 });
-  }
-
-  try {
-    await Promise.all(normalizedBarcodes.map((code) => saveBarcodeMapping(code, foodData)));
-    return NextResponse.json({ message: 'Barcode data saved successfully', count: normalizedBarcodes.length }, { status: 200 });
-  } catch (error) {
-    console.error('Error in POST /api/barcode:', error);
-    return NextResponse.json({ error: 'Failed to save barcode data' }, { status: 500 });
-  }
-}
+    await Promise.all(
+      normalizedBarcodes.map((code) => saveBarcodeMapping(code, body.foodData)),
+    );
+    return NextResponse.json({
+      message: 'Barcode data saved successfully',
+      count: normalizedBarcodes.length,
+    });
+  },
+);

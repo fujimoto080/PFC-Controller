@@ -1,9 +1,10 @@
+import { z } from 'zod';
 import { saveUserSettings } from '@/lib/cloud-data';
-import { createCloudDataRoute, isPlainObject } from '../route-factory';
+import { createCloudDataRoute } from '@/lib/api/cloud-data-handler';
 
 export const POST = createCloudDataRoute({
   key: 'settings',
   label: '設定',
-  validate: isPlainObject,
+  schema: z.record(z.string(), z.unknown()),
   save: saveUserSettings,
 });

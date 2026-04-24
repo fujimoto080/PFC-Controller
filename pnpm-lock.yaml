@@ -89,6 +89,9 @@ importers:
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@ducanh2912/next-pwa':
         specifier: ^10.2.9
@@ -123,9 +126,6 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.7)
-      add:
-        specifier: ^2.0.6
-        version: 2.0.6
       eslint:
         specifier: ^9
         version: 9.39.2(jiti@2.6.1)
@@ -144,9 +144,6 @@ importers:
       jest-environment-jsdom:
         specifier: ^30.2.0
         version: 30.2.0
-      pnpm:
-        specifier: ^10.29.3
-        version: 10.29.3
       prettier:
         specifier: ^3.7.4
         version: 3.7.4
@@ -2257,9 +2254,6 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  add@2.0.6:
-    resolution: {integrity: sha512-j5QzrmsokwWWp6kUcJQySpbG+xfOBqqKnup3OIk1pz+kB/80SLorZ9V8zHFLO92Lcd+hbvq8bT+zOGoPkmBV0Q==}
-
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
@@ -4099,11 +4093,6 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  pnpm@10.29.3:
-    resolution: {integrity: sha512-SY4ftMylqgbB3PJhHm+vxQly/+cYmZjECekN50VmREKY/+Q+bNKs3Hdboap8xeCSqLcFTIEbqMV3D4RpPTPS3A==}
-    engines: {node: '>=18.12'}
-    hasBin: true
-
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
@@ -5075,8 +5064,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.2.1:
-    resolution: {integrity: sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw==}
+  zod@4.3.6:
+    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
 snapshots:
 
@@ -7361,8 +7350,6 @@ snapshots:
 
   acorn@8.15.0: {}
 
-  add@2.0.6: {}
-
   agent-base@7.1.4: {}
 
   ajv-formats@2.1.1(ajv@8.17.1):
@@ -8085,8 +8072,8 @@ snapshots:
       '@babel/parser': 7.28.5
       eslint: 9.39.2(jiti@2.6.1)
       hermes-parser: 0.25.1
-      zod: 4.2.1
-      zod-validation-error: 4.0.2(zod@4.2.1)
+      zod: 4.3.6
+      zod-validation-error: 4.0.2(zod@4.3.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -9495,8 +9482,6 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
-  pnpm@10.29.3: {}
-
   possible-typed-array-names@1.1.0: {}
 
   postcss@8.4.31:
@@ -10634,8 +10619,8 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-validation-error@4.0.2(zod@4.2.1):
+  zod-validation-error@4.0.2(zod@4.3.6):
     dependencies:
-      zod: 4.2.1
+      zod: 4.3.6
 
-  zod@4.2.1: {}
+  zod@4.3.6: {}
