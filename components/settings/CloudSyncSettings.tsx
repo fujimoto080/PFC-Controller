@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { saveSettings } from '@/lib/storage';
+import { saveSettings, loadCloudData, clearCloudData } from '@/lib/storage';
 import { toast } from '@/lib/toast';
 import { usePfcData } from '@/hooks/use-pfc-data';
 
@@ -18,22 +18,37 @@ export function CloudSyncSettings() {
   const [hasRdbData, setHasRdbData] = useState(false);
   const [isCheckingMigration, setIsCheckingMigration] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const normalizedSyncKey = useMemo(() => syncKey.trim(), [syncKey]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!settings) return;
 
-    if (normalizedSyncKey && normalizedSyncKey.length < MIN_SYNC_KEY_LENGTH) {
+    if (!normalizedSyncKey) {
+      clearCloudData();
+      toast.success('クラウド同期キーを解除しました');
+      return;
+    }
+
+    if (normalizedSyncKey.length < MIN_SYNC_KEY_LENGTH) {
       toast.error(`同期キーは${MIN_SYNC_KEY_LENGTH}文字以上で入力してください`);
       return;
     }
 
-    saveSettings({
-      ...settings,
-      cloudSyncKey: normalizedSyncKey || undefined,
-    });
-    toast.success('クラウド同期キーを保存しました');
+    setIsSaving(true);
+    try {
+      const ok = await loadCloudData(normalizedSyncKey);
+      if (!ok) return;
+
+      saveSettings({
+        ...settings,
+        cloudSyncKey: normalizedSyncKey,
+      });
+      toast.success('クラウド同期キーを保存しました');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCheckMigration = async () => {
@@ -136,7 +151,9 @@ export function CloudSyncSettings() {
           <Button onClick={handleCheckMigration} variant="secondary" disabled={isCheckingMigration}>
             {isCheckingMigration ? '確認中...' : '旧クラウドデータを確認'}
           </Button>
-          <Button onClick={handleSave}>同期キーを保存</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? '保存中...' : '同期キーを保存'}
+          </Button>
         </div>
         {hasLegacyCloudData && (
           <div className="space-y-2 rounded-md border p-3">

@@ -1,5 +1,6 @@
 import { Toaster } from '@/components/ui/sonner';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { CloudDataProvider } from '@/components/layout/CloudDataProvider';
 import './globals.css';
 
 export const metadata = {
@@ -24,7 +25,9 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className="bg-background text-foreground min-h-screen pb-20 antialiased">
-        <main className="container mx-auto max-w-md px-4 py-4">{children}</main>
+        <main className="container mx-auto max-w-md px-4 py-4">
+          <CloudDataProvider>{children}</CloudDataProvider>
+        </main>
         <BottomNav />
         <Toaster position="top-center" />
       </body>

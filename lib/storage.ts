@@ -10,22 +10,41 @@ import {
   SportDefinition,
 } from './types';
 import { formatDate, roundPFC } from './utils';
+import { toast } from './toast';
 
-const STORAGE_KEY_LOGS = 'pfc_logs';
-const STORAGE_KEY_SETTINGS = 'pfc_settings';
-const STORAGE_KEY_FOODS = 'pfc_food_dictionary';
-const STORAGE_KEY_SPORTS = 'pfc_sports';
-const STORAGE_KEYS = {
-  logs: STORAGE_KEY_LOGS,
-  settings: STORAGE_KEY_SETTINGS,
-  foods: STORAGE_KEY_FOODS,
-  sports: STORAGE_KEY_SPORTS,
-} as const;
+const SYNC_KEY_STORAGE_KEY = 'pfc_cloud_sync_key';
 
 const isClient = typeof window !== 'undefined';
 
 const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
-const inMemoryStorage: Partial<Record<(typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS], string>> = {};
+
+type ResourceKey = 'logs' | 'settings' | 'foods' | 'sports';
+
+interface CloudState {
+  syncKey: string | null;
+  snapshotExists: boolean;
+  logs: Record<string, DailyLog>;
+  settings: UserSettings;
+  foods: FoodItem[];
+  sports: SportDefinition[];
+  loaded: boolean;
+}
+
+const getDefaultSports = (): SportDefinition[] => [
+  { id: 'walking', name: 'ウォーキング', caloriesBurned: 180 },
+  { id: 'running', name: 'ランニング', caloriesBurned: 320 },
+  { id: 'cycling', name: 'サイクリング', caloriesBurned: 260 },
+];
+
+const cloudState: CloudState = {
+  syncKey: null,
+  snapshotExists: false,
+  logs: {},
+  settings: { targetPFC: DEFAULT_TARGET, sports: getDefaultSports() },
+  foods: [],
+  sports: getDefaultSports(),
+  loaded: false,
+};
 
 const getDateFromTimestamp = (timestamp: number) =>
   formatDate(new Date(timestamp));
@@ -38,25 +57,216 @@ const getSortedLogDates = (
     order === 'asc' ? a.localeCompare(b) : b.localeCompare(a),
   );
 
-const getStorageItem = <T>(key: string, fallback: T): T => {
-  const stored = inMemoryStorage[key as (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]];
-  return stored ? JSON.parse(stored) : fallback;
-};
-
-const normalizeSyncKey = (value: string | undefined): string =>
+const normalizeSyncKeyValue = (value: string | undefined | null): string =>
   (value || '').trim();
 
-const setStorageItem = <T>(key: string, value: T) => {
-  inMemoryStorage[key as (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]] = JSON.stringify(value);
+const toSportDefinition = (sport: SportDefinition): SportDefinition => ({
+  id: sport.id,
+  name: sport.name,
+  caloriesBurned: Math.max(0, roundPFC(sport.caloriesBurned)),
+});
+
+const normalizeSports = (sports: unknown): SportDefinition[] => {
+  if (!Array.isArray(sports)) return [];
+
+  return sports
+    .filter(
+      (sport): sport is SportDefinition =>
+        !!sport &&
+        typeof sport === 'object' &&
+        typeof (sport as SportDefinition).id === 'string' &&
+        typeof (sport as SportDefinition).name === 'string' &&
+        typeof (sport as SportDefinition).caloriesBurned === 'number' &&
+        Number.isFinite((sport as SportDefinition).caloriesBurned),
+    )
+    .map(toSportDefinition);
 };
 
-// Helper to get today's date string YYYY-MM-DD in local time
+export function refreshUI() {
+  if (isClient) {
+    window.dispatchEvent(new Event('pfc-update'));
+  }
+}
+
+export function getStoredSyncKey(): string {
+  if (!isClient) return '';
+  try {
+    return normalizeSyncKeyValue(window.localStorage.getItem(SYNC_KEY_STORAGE_KEY));
+  } catch {
+    return '';
+  }
+}
+
+function persistSyncKeyToDevice(syncKey: string) {
+  if (!isClient) return;
+  try {
+    if (syncKey) {
+      window.localStorage.setItem(SYNC_KEY_STORAGE_KEY, syncKey);
+    } else {
+      window.localStorage.removeItem(SYNC_KEY_STORAGE_KEY);
+    }
+  } catch {
+    /* noop */
+  }
+}
+
+function getActiveSyncKey(): string | null {
+  return cloudState.syncKey;
+}
+
+async function postJSON(url: string, body: unknown, method: 'POST' | 'PUT') {
+  const response = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data?.error || 'クラウド保存に失敗しました');
+  }
+
+  return response.json();
+}
+
+function endpointFor(resource: ResourceKey): string {
+  return `/api/cloud-data/${resource}`;
+}
+
+function payloadFor(resource: ResourceKey): Record<string, unknown> {
+  switch (resource) {
+    case 'logs':
+      return { logs: cloudState.logs };
+    case 'settings':
+      return { settings: serializeSettings(cloudState.settings) };
+    case 'foods':
+      return { foods: cloudState.foods };
+    case 'sports':
+      return { sports: cloudState.sports };
+  }
+}
+
+function serializeSettings(settings: UserSettings): Record<string, unknown> {
+  return {
+    targetPFC: settings.targetPFC,
+    profile: settings.profile,
+    favoriteFoodIds: settings.favoriteFoodIds ?? [],
+    sports: settings.sports ?? [],
+    cloudSyncKey: settings.cloudSyncKey,
+  };
+}
+
+async function syncResource(resource: ResourceKey) {
+  const syncKey = getActiveSyncKey();
+  if (!syncKey) return;
+
+  const body = {
+    ...payloadFor(resource),
+    syncKey,
+    updatedAt: Date.now(),
+  };
+
+  const method: 'POST' | 'PUT' = cloudState.snapshotExists ? 'PUT' : 'POST';
+
+  try {
+    await postJSON(endpointFor(resource), body, method);
+    cloudState.snapshotExists = true;
+  } catch (error) {
+    console.error(`クラウド同期失敗 (${resource})`, error);
+    toast.error(
+      error instanceof Error ? error.message : 'クラウド保存に失敗しました',
+    );
+  }
+}
+
+interface CloudFetchResponse {
+  payload: {
+    logs?: Record<string, DailyLog>;
+    settings?: UserSettings & Record<string, unknown>;
+    foods?: FoodItem[];
+    sports?: SportDefinition[];
+  } | null;
+  updatedAt: number;
+}
+
+export async function loadCloudData(syncKey: string): Promise<boolean> {
+  const normalized = normalizeSyncKeyValue(syncKey);
+  if (!normalized) return false;
+
+  try {
+    const response = await fetch(
+      `/api/cloud-data?syncKey=${encodeURIComponent(normalized)}`,
+    );
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data?.error || 'クラウドデータ取得に失敗しました');
+    }
+    const data = (await response.json()) as CloudFetchResponse;
+
+    cloudState.syncKey = normalized;
+    persistSyncKeyToDevice(normalized);
+    cloudState.snapshotExists = data.updatedAt > 0 && !!data.payload;
+
+    const payload = data.payload;
+    const settingsFromCloud = (payload?.settings ?? null) as
+      | (UserSettings & Record<string, unknown>)
+      | null;
+    const sportsFromSettings = normalizeSports(settingsFromCloud?.sports);
+    const sportsTopLevel = normalizeSports(payload?.sports);
+    const resolvedSports =
+      sportsTopLevel.length > 0
+        ? sportsTopLevel
+        : sportsFromSettings.length > 0
+          ? sportsFromSettings
+          : getDefaultSports();
+
+    cloudState.logs = (payload?.logs ?? {}) as Record<string, DailyLog>;
+    cloudState.foods = Array.isArray(payload?.foods) ? (payload!.foods as FoodItem[]) : [];
+    cloudState.sports = resolvedSports;
+    cloudState.settings = {
+      targetPFC: settingsFromCloud?.targetPFC ?? DEFAULT_TARGET,
+      profile: settingsFromCloud?.profile,
+      favoriteFoodIds: Array.isArray(settingsFromCloud?.favoriteFoodIds)
+        ? (settingsFromCloud.favoriteFoodIds as string[])
+        : [],
+      sports: resolvedSports,
+      cloudSyncKey: normalized,
+    };
+    cloudState.loaded = true;
+
+    refreshUI();
+    return true;
+  } catch (error) {
+    console.error('クラウドデータ読み込み失敗', error);
+    toast.error(
+      error instanceof Error ? error.message : 'クラウドデータ取得に失敗しました',
+    );
+    return false;
+  }
+}
+
+export function isCloudDataLoaded(): boolean {
+  return cloudState.loaded;
+}
+
+export function clearCloudData() {
+  cloudState.syncKey = null;
+  cloudState.snapshotExists = false;
+  cloudState.logs = {};
+  cloudState.foods = [];
+  cloudState.sports = getDefaultSports();
+  cloudState.settings = { targetPFC: DEFAULT_TARGET, sports: getDefaultSports() };
+  cloudState.loaded = false;
+  persistSyncKeyToDevice('');
+  refreshUI();
+}
+
 export function getTodayString(): string {
   return formatDate(new Date());
 }
 
 export function getLogs(): Record<string, DailyLog> {
-  return getStorageItem<Record<string, DailyLog>>(STORAGE_KEYS.logs, {});
+  return cloudState.logs;
 }
 
 export function getLogForDate(date: string): DailyLog {
@@ -75,45 +285,10 @@ export function getTodayLog(): DailyLog {
   return getLogForDate(getTodayString());
 }
 
-export function refreshUI() {
-  if (isClient) {
-    window.dispatchEvent(new Event('pfc-update'));
-  }
-}
-
-const toSportDefinition = (sport: SportDefinition): SportDefinition => ({
-  id: sport.id,
-  name: sport.name,
-  caloriesBurned: Math.max(0, roundPFC(sport.caloriesBurned)),
-});
-
-const getDefaultSports = (): SportDefinition[] => [
-  { id: 'walking', name: 'ウォーキング', caloriesBurned: 180 },
-  { id: 'running', name: 'ランニング', caloriesBurned: 320 },
-  { id: 'cycling', name: 'サイクリング', caloriesBurned: 260 },
-];
-
-const normalizeSports = (sports: unknown): SportDefinition[] => {
-  if (!Array.isArray(sports)) return [];
-
-  return sports
-    .filter(
-      (sport): sport is SportDefinition =>
-        !!sport &&
-        typeof sport === 'object' &&
-        typeof (sport as SportDefinition).id === 'string' &&
-        typeof (sport as SportDefinition).name === 'string' &&
-        typeof (sport as SportDefinition).caloriesBurned === 'number' &&
-        Number.isFinite((sport as SportDefinition).caloriesBurned),
-    )
-    .map(toSportDefinition);
-};
-
 export function saveLog(log: DailyLog) {
-  const logs = getLogs();
-  logs[log.date] = log;
-  setStorageItem(STORAGE_KEYS.logs, logs);
+  cloudState.logs = { ...cloudState.logs, [log.date]: log };
   refreshUI();
+  void syncResource('logs');
 }
 
 export function getAdjustedCalorieTarget(date: string): number {
@@ -153,22 +328,29 @@ export function deleteSportDefinition(id: string) {
   const sports = (settings.sports || []).filter((sport) => sport.id !== id);
   saveSettings({ ...settings, sports });
 
-  const logs = getLogs();
+  const logs = cloudState.logs;
   let changed = false;
+  const nextLogs: Record<string, DailyLog> = {};
 
-  Object.values(logs).forEach((log) => {
-    if (!log.activities?.length) return;
+  Object.entries(logs).forEach(([date, log]) => {
+    if (!log.activities?.length) {
+      nextLogs[date] = log;
+      return;
+    }
 
     const nextActivities = log.activities.filter((activity) => activity.id !== id);
     if (nextActivities.length !== log.activities.length) {
-      log.activities = nextActivities;
+      nextLogs[date] = { ...log, activities: nextActivities };
       changed = true;
+    } else {
+      nextLogs[date] = log;
     }
   });
 
   if (changed) {
-    setStorageItem(STORAGE_KEYS.logs, logs);
+    cloudState.logs = nextLogs;
     refreshUI();
+    void syncResource('logs');
   }
 }
 
@@ -180,16 +362,17 @@ export function addSportActivity(date: string, sport: SportDefinition) {
     timestamp: Date.now(),
   };
 
-  log.activities = [...activities, activity];
-  saveLog(log);
+  saveLog({ ...log, activities: [...activities, activity] });
 }
 
 export function deleteSportActivity(date: string, timestamp: number) {
   const log = getLogForDate(date);
   if (!log.activities?.length) return;
 
-  log.activities = log.activities.filter((activity) => activity.timestamp !== timestamp);
-  saveLog(log);
+  saveLog({
+    ...log,
+    activities: log.activities.filter((activity) => activity.timestamp !== timestamp),
+  });
 }
 
 export function getWeeklyLog(): {
@@ -230,6 +413,7 @@ export function getWeeklyLog(): {
     daysCount,
   };
 }
+
 export function getBalancedWeeklyTargets(): {
   protein: number;
   fat: number;
@@ -351,6 +535,7 @@ export function getPfcDebt(currentDate: string): PFC {
     calories: roundPFC(cumulativeDebt.calories),
   };
 }
+
 export function recalculateLogTotals(log: DailyLog): DailyLog {
   const totals = log.items.reduce(
     (acc, curr) => ({
@@ -375,21 +560,28 @@ export function recalculateLogTotals(log: DailyLog): DailyLog {
 export function addFoodItem(item: FoodItem) {
   const date = getDateFromTimestamp(item.timestamp);
 
-  const log = getLogForDate(date);
-  log.items.push(item);
+  const existing = getLogForDate(date);
+  const nextLog: DailyLog = {
+    ...existing,
+    items: [...existing.items, item],
+    activities: existing.activities ?? [],
+  };
 
-  recalculateLogTotals(log);
-  saveLog(log);
+  recalculateLogTotals(nextLog);
+  saveLog(nextLog);
 }
 
 export function deleteLogItem(id: string, timestamp: number) {
   const date = getDateFromTimestamp(timestamp);
 
-  const log = getLogForDate(date);
-  log.items = log.items.filter((item) => item.id !== id);
+  const existing = getLogForDate(date);
+  const nextLog: DailyLog = {
+    ...existing,
+    items: existing.items.filter((item) => item.id !== id),
+  };
 
-  recalculateLogTotals(log);
-  saveLog(log);
+  recalculateLogTotals(nextLog);
+  saveLog(nextLog);
 }
 
 export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
@@ -397,13 +589,15 @@ export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
   const newDate = getDateFromTimestamp(newItem.timestamp);
 
   if (oldDate === newDate) {
-    const log = getLogForDate(oldDate);
-    const index = log.items.findIndex((item) => item.id === newItem.id);
-    if (index !== -1) {
-      log.items[index] = newItem;
-      recalculateLogTotals(log);
-      saveLog(log);
-    }
+    const existing = getLogForDate(oldDate);
+    const index = existing.items.findIndex((item) => item.id === newItem.id);
+    if (index === -1) return;
+
+    const nextItems = [...existing.items];
+    nextItems[index] = newItem;
+    const nextLog: DailyLog = { ...existing, items: nextItems };
+    recalculateLogTotals(nextLog);
+    saveLog(nextLog);
   } else {
     deleteLogItem(newItem.id, oldTimestamp);
     addFoodItem(newItem);
@@ -411,14 +605,8 @@ export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
 }
 
 export function getSettings(): UserSettings {
-  const settings = getStorageItem<UserSettings>(STORAGE_KEYS.settings, {
-    targetPFC: DEFAULT_TARGET,
-  });
-
-  const savedSports = normalizeSports(
-    getStorageItem<unknown[]>(STORAGE_KEYS.sports, []),
-  );
-  const fallbackSports = normalizeSports(settings.sports);
+  const savedSports = normalizeSports(cloudState.sports);
+  const fallbackSports = normalizeSports(cloudState.settings.sports);
   const sports =
     savedSports.length > 0
       ? savedSports
@@ -427,21 +615,24 @@ export function getSettings(): UserSettings {
         : getDefaultSports();
 
   return {
-    ...settings,
+    ...cloudState.settings,
     sports,
   };
 }
 
 export function saveSettings(settings: UserSettings) {
-  const nextSyncKey = normalizeSyncKey(settings.cloudSyncKey);
+  const nextSyncKey = normalizeSyncKeyValue(settings.cloudSyncKey);
   const normalizedSports = normalizeSports(settings.sports);
-  setStorageItem(STORAGE_KEYS.settings, {
+
+  cloudState.settings = {
     ...settings,
     cloudSyncKey: nextSyncKey || undefined,
     sports: normalizedSports,
-  });
-  setStorageItem(STORAGE_KEYS.sports, normalizedSports);
+  };
+  cloudState.sports = normalizedSports;
   refreshUI();
+  void syncResource('settings');
+  void syncResource('sports');
 }
 
 import generatedFoodsRaw from '@/data/generated_foods.json';
@@ -449,9 +640,8 @@ const generatedFoods = generatedFoodsRaw as FoodItem[];
 
 export function getFoodDictionary(): FoodItem[] {
   if (!isClient) return [];
-  const userFoods = getStorageItem<FoodItem[]>(STORAGE_KEYS.foods, []);
 
-  const merged = [...userFoods];
+  const merged = [...cloudState.foods];
   let changed = false;
 
   generatedFoods.forEach((defaultItem) => {
@@ -462,7 +652,7 @@ export function getFoodDictionary(): FoodItem[] {
     }
   });
 
-  if (changed || userFoods.length === 0) {
+  if (changed) {
     saveFoodDictionary(merged);
   }
 
@@ -470,29 +660,26 @@ export function getFoodDictionary(): FoodItem[] {
 }
 
 export function saveFoodDictionary(foods: FoodItem[]) {
-  setStorageItem(STORAGE_KEYS.foods, foods);
+  cloudState.foods = foods;
   refreshUI();
+  void syncResource('foods');
 }
 
 export function addFoodToDictionary(item: FoodItem) {
-  const foods = getFoodDictionary();
-  foods.push(item);
-  saveFoodDictionary(foods);
+  saveFoodDictionary([...cloudState.foods, item]);
 }
 
 export function updateFoodInDictionary(updatedItem: FoodItem) {
-  const foods = getFoodDictionary();
-  const index = foods.findIndex((f) => f.id === updatedItem.id);
-  if (index !== -1) {
-    foods[index] = updatedItem;
-    saveFoodDictionary(foods);
-  }
+  const index = cloudState.foods.findIndex((f) => f.id === updatedItem.id);
+  if (index === -1) return;
+
+  const next = [...cloudState.foods];
+  next[index] = updatedItem;
+  saveFoodDictionary(next);
 }
 
 export function deleteFoodFromDictionary(id: string) {
-  const foods = getFoodDictionary();
-  const filtered = foods.filter((f) => f.id !== id);
-  saveFoodDictionary(filtered);
+  saveFoodDictionary(cloudState.foods.filter((f) => f.id !== id));
 }
 
 export function getHistoryItems(): FoodItem[] {
