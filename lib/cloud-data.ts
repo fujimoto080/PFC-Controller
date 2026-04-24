@@ -3,13 +3,6 @@ import 'server-only';
 import { CloudDataPayload } from '@/lib/cloud-payload';
 import { getDb } from '@/lib/db';
 
-type CloudDataWriteInput = {
-  setSettings: Record<string, unknown>;
-  setLogs: Record<string, unknown>;
-  setFoods: unknown[];
-  setSports: unknown[];
-};
-
 export async function getCloudData(syncKey: string): Promise<{
   payload: CloudDataPayload | null;
   updatedAt: number;
@@ -27,30 +20,11 @@ export async function setCloudData(
   await db.set(syncKey, payload, updatedAt);
 }
 
-async function writeCloudDataByKey<K extends keyof CloudDataWriteInput>(
-  key: K,
-  syncKey: string,
-  value: CloudDataWriteInput[K],
-  updatedAt: number,
+async function runCloudDataWrite(
+  writer: (db: ReturnType<typeof getDb>) => Promise<void>,
 ) {
   const db = getDb();
-
-  switch (key) {
-    case 'setSettings':
-      await db.setSettings(syncKey, value, updatedAt);
-      break;
-    case 'setLogs':
-      await db.setLogs(syncKey, value, updatedAt);
-      break;
-    case 'setFoods':
-      await db.setFoods(syncKey, value, updatedAt);
-      break;
-    case 'setSports':
-      await db.setSports(syncKey, value, updatedAt);
-      break;
-    default:
-      key satisfies never;
-  }
+  await writer(db);
 }
 
 export async function setCloudSettings(
@@ -58,7 +32,7 @@ export async function setCloudSettings(
   settings: Record<string, unknown>,
   updatedAt: number,
 ) {
-  await writeCloudDataByKey('setSettings', syncKey, settings, updatedAt);
+  await runCloudDataWrite((db) => db.setSettings(syncKey, settings, updatedAt));
 }
 
 export async function setCloudLogs(
@@ -66,7 +40,7 @@ export async function setCloudLogs(
   logs: Record<string, unknown>,
   updatedAt: number,
 ) {
-  await writeCloudDataByKey('setLogs', syncKey, logs, updatedAt);
+  await runCloudDataWrite((db) => db.setLogs(syncKey, logs, updatedAt));
 }
 
 export async function setCloudFoods(
@@ -74,7 +48,7 @@ export async function setCloudFoods(
   foods: unknown[],
   updatedAt: number,
 ) {
-  await writeCloudDataByKey('setFoods', syncKey, foods, updatedAt);
+  await runCloudDataWrite((db) => db.setFoods(syncKey, foods, updatedAt));
 }
 
 export async function setCloudSports(
@@ -82,5 +56,5 @@ export async function setCloudSports(
   sports: unknown[],
   updatedAt: number,
 ) {
-  await writeCloudDataByKey('setSports', syncKey, sports, updatedAt);
+  await runCloudDataWrite((db) => db.setSports(syncKey, sports, updatedAt));
 }
