@@ -63,7 +63,7 @@ export function EditLogItemDrawer({
         return new Date(year, month - 1, day, hour, minute).getTime();
     };
 
-    const onSubmit = (data: FoodItem) => {
+    const onSubmit = async (data: FoodItem) => {
         if (!item) return;
 
         const updatedItem: FoodItem = {
@@ -77,18 +77,26 @@ export function EditLogItemDrawer({
             timestamp: getSelectedTimestamp(),
         };
 
-        updateLogItem(item.timestamp, updatedItem);
-        toast.success('更新しました');
-        onSuccess();
-        onOpenChange(false);
+        try {
+            await updateLogItem(item.timestamp, updatedItem);
+            toast.success('更新しました');
+            onSuccess();
+            onOpenChange(false);
+        } catch {
+            // updateLogItem 側でエラートーストを表示済み
+        }
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!item) return;
         if (confirm('この記録を削除しますか？')) {
-            deleteLogItem(item.id, item.timestamp);
-            toast.success('削除しました');
-            onOpenChange(false);
+            try {
+                await deleteLogItem(item.id, item.timestamp);
+                toast.success('削除しました');
+                onOpenChange(false);
+            } catch {
+                // deleteLogItem 側でエラートーストを表示済み
+            }
         }
     };
 

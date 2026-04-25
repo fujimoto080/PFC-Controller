@@ -1,9 +1,10 @@
 'use client';
 
-import { DailyLog, FoodItem, PFC } from '../types';
+import { DailyLog, FoodItem, FoodItemInput, PFC } from '../types';
 import { formatDate, roundPFC } from '../utils';
-import { cloudState, refreshUI, syncResource } from './state';
+import { cloudState, readErrorMessage, refreshUI } from './state';
 import { getSettings } from './settings';
+import { toast } from '../toast';
 
 const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
@@ -37,12 +38,6 @@ export function getLogForDate(date: string): DailyLog {
   );
 }
 
-export function saveLog(log: DailyLog) {
-  cloudState.logs = { ...cloudState.logs, [log.date]: log };
-  refreshUI();
-  void syncResource('logs');
-}
-
 export function getAdjustedCalorieTarget(date: string): number {
   const settings = getSettings();
   const log = getLogForDate(date);
@@ -54,8 +49,8 @@ export function getAdjustedCalorieTarget(date: string): number {
   return Math.max(0, settings.targetPFC.calories + activityCalories);
 }
 
-export function recalculateLogTotals(log: DailyLog): DailyLog {
-  const totals = log.items.reduce(
+function recalcTotals(items: FoodItem[]): PFC {
+  const totals = items.reduce(
     (acc, curr) => ({
       protein: acc.protein + curr.protein,
       fat: acc.fat + curr.fat,
@@ -65,60 +60,159 @@ export function recalculateLogTotals(log: DailyLog): DailyLog {
     emptyTotals,
   );
 
-  log.total = {
+  return {
     protein: roundPFC(totals.protein),
     fat: roundPFC(totals.fat),
     carbs: roundPFC(totals.carbs),
     calories: roundPFC(totals.calories),
   };
-
-  return log;
 }
 
-export function addFoodItem(item: FoodItem) {
-  const date = getDateFromTimestamp(item.timestamp);
-
-  const existing = getLogForDate(date);
-  const nextLog: DailyLog = {
-    ...existing,
-    items: [...existing.items, item],
-    activities: existing.activities ?? [],
+function emptyLog(date: string): DailyLog {
+  return {
+    date,
+    items: [],
+    activities: [],
+    total: { protein: 0, fat: 0, carbs: 0, calories: 0 },
   };
-
-  recalculateLogTotals(nextLog);
-  saveLog(nextLog);
 }
 
-export function deleteLogItem(id: string, timestamp: number) {
+function withLogUpdated(
+  date: string,
+  updater: (log: DailyLog) => DailyLog,
+): { snapshot: Record<string, DailyLog>; nextLog: DailyLog } {
+  const snapshot = cloudState.logs;
+  const existing = snapshot[date] ?? emptyLog(date);
+  const nextLog = updater(existing);
+  cloudState.logs = { ...snapshot, [date]: nextLog };
+  refreshUI();
+  return { snapshot, nextLog };
+}
+
+function rollback(snapshot: Record<string, DailyLog>) {
+  cloudState.logs = snapshot;
+  refreshUI();
+}
+
+export async function addFoodItem(input: FoodItemInput): Promise<void> {
+  const date = getDateFromTimestamp(input.timestamp);
+  const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const tempItem: FoodItem = { ...input, id: tempId };
+
+  const { snapshot } = withLogUpdated(date, (log) => {
+    const items = [...log.items, tempItem];
+    return {
+      ...log,
+      items,
+      activities: log.activities ?? [],
+      total: recalcTotals(items),
+    };
+  });
+
+  try {
+    const res = await fetch('/api/log-items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      throw new Error(await readErrorMessage(res, '食事記録の追加に失敗しました'));
+    }
+    const data = (await res.json()) as { item: FoodItem; date: string };
+    const log = cloudState.logs[date];
+    if (log) {
+      const items = log.items.map((it) => (it.id === tempId ? data.item : it));
+      cloudState.logs = {
+        ...cloudState.logs,
+        [date]: { ...log, items, total: recalcTotals(items) },
+      };
+      refreshUI();
+    }
+  } catch (error) {
+    rollback(snapshot);
+    toast.fromError('追加に失敗しました', error);
+    throw error;
+  }
+}
+
+export async function deleteLogItem(id: string, timestamp: number): Promise<void> {
   const date = getDateFromTimestamp(timestamp);
+  const { snapshot } = withLogUpdated(date, (log) => {
+    const items = log.items.filter((item) => item.id !== id);
+    return { ...log, items, total: recalcTotals(items) };
+  });
 
-  const existing = getLogForDate(date);
-  const nextLog: DailyLog = {
-    ...existing,
-    items: existing.items.filter((item) => item.id !== id),
-  };
-
-  recalculateLogTotals(nextLog);
-  saveLog(nextLog);
+  try {
+    const res = await fetch(`/api/log-items/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      throw new Error(await readErrorMessage(res, '食事記録の削除に失敗しました'));
+    }
+  } catch (error) {
+    rollback(snapshot);
+    toast.fromError('削除に失敗しました', error);
+    throw error;
+  }
 }
 
-export function updateLogItem(oldTimestamp: number, newItem: FoodItem) {
+export async function updateLogItem(
+  oldTimestamp: number,
+  newItem: FoodItem,
+): Promise<void> {
   const oldDate = getDateFromTimestamp(oldTimestamp);
   const newDate = getDateFromTimestamp(newItem.timestamp);
+  const snapshot = cloudState.logs;
+
+  const nextLogs: Record<string, DailyLog> = { ...snapshot };
 
   if (oldDate === newDate) {
-    const existing = getLogForDate(oldDate);
-    const index = existing.items.findIndex((item) => item.id === newItem.id);
-    if (index === -1) return;
-
-    const nextItems = [...existing.items];
-    nextItems[index] = newItem;
-    const nextLog: DailyLog = { ...existing, items: nextItems };
-    recalculateLogTotals(nextLog);
-    saveLog(nextLog);
+    const existing = nextLogs[newDate] ?? emptyLog(newDate);
+    const items = existing.items.some((it) => it.id === newItem.id)
+      ? existing.items.map((it) => (it.id === newItem.id ? newItem : it))
+      : [...existing.items, newItem];
+    nextLogs[newDate] = {
+      ...existing,
+      items,
+      activities: existing.activities ?? [],
+      total: recalcTotals(items),
+    };
   } else {
-    deleteLogItem(newItem.id, oldTimestamp);
-    addFoodItem(newItem);
+    if (nextLogs[oldDate]) {
+      const items = nextLogs[oldDate].items.filter((it) => it.id !== newItem.id);
+      nextLogs[oldDate] = {
+        ...nextLogs[oldDate],
+        items,
+        total: recalcTotals(items),
+      };
+    }
+    const existing = nextLogs[newDate] ?? emptyLog(newDate);
+    const items = [...existing.items, newItem];
+    nextLogs[newDate] = {
+      ...existing,
+      items,
+      activities: existing.activities ?? [],
+      total: recalcTotals(items),
+    };
+  }
+
+  cloudState.logs = nextLogs;
+  refreshUI();
+
+  try {
+    const { id, ...input } = newItem;
+    const res = await fetch(`/api/log-items/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      throw new Error(await readErrorMessage(res, '食事記録の更新に失敗しました'));
+    }
+  } catch (error) {
+    rollback(snapshot);
+    toast.fromError('更新に失敗しました', error);
+    throw error;
   }
 }
 

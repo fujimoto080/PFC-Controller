@@ -11,7 +11,7 @@ import { toast } from '../toast';
 import { roundPFC } from '../utils';
 import generatedFoodsRaw from '@/data/generated_foods.json';
 
-export type ResourceKey = 'logs' | 'settings' | 'foods' | 'sports';
+export type ResourceKey = 'settings' | 'foods' | 'sports';
 
 export type StoredSettings = Omit<UserSettings, 'sports'>;
 
@@ -63,8 +63,6 @@ function serializeSettings(settings: StoredSettings): Record<string, unknown> {
 
 function valueFor(resource: ResourceKey): unknown {
   switch (resource) {
-    case 'logs':
-      return cloudState.logs;
     case 'settings':
       return serializeSettings(cloudState.settings);
     case 'foods':
@@ -74,7 +72,7 @@ function valueFor(resource: ResourceKey): unknown {
   }
 }
 
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+export async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
     const data = (await response.json()) as { error?: unknown } | null;
     if (data && typeof data.error === 'string' && data.error) {

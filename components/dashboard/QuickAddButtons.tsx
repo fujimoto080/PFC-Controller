@@ -6,7 +6,6 @@ import { FoodItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { generateId } from '@/lib/utils';
 
 const getCurrentTimestamp = () => Date.now();
 
@@ -26,16 +25,16 @@ export function QuickAddButtons() {
     return () => window.removeEventListener('pfc-update', handleUpdate);
   }, []);
 
-  const handleQuickAdd = useCallback((food: FoodItem) => {
+  const handleQuickAdd = useCallback(async (food: FoodItem) => {
     const timestamp = getCurrentTimestamp();
-    const newItem: FoodItem = {
-      ...food,
-      id: generateId(),
-      timestamp,
-    };
-
-    addFoodItem(newItem);
-    toast.success(`${food.name}を追加しました`);
+    const { id: _id, ...rest } = food;
+    void _id;
+    try {
+      await addFoodItem({ ...rest, timestamp });
+      toast.success(`${food.name}を追加しました`);
+    } catch {
+      // addFoodItem 側でエラートーストを表示済み
+    }
   }, []);
 
   if (favorites.length === 0) {

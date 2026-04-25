@@ -30,9 +30,21 @@ export function SportActivityControls({
     [selectedSportId, sports],
   );
 
-  const handleAddActivity = () => {
+  const handleAddActivity = async () => {
     if (!selectedSport) return;
-    addSportActivity(date, selectedSport);
+    try {
+      await addSportActivity(date, selectedSport);
+    } catch {
+      // addSportActivity 側でエラートーストを表示済み
+    }
+  };
+
+  const handleDeleteActivity = async (activityId: string) => {
+    try {
+      await deleteSportActivity(date, activityId);
+    } catch {
+      // deleteSportActivity 側でエラートーストを表示済み
+    }
   };
 
   return (
@@ -60,7 +72,7 @@ export function SportActivityControls({
         <ul className="space-y-1">
           {activities.map((activity) => (
             <li
-              key={`${activity.timestamp}-${activity.id}`}
+              key={activity.id}
               className="text-muted-foreground flex items-center justify-between text-xs"
             >
               <span>
@@ -70,7 +82,7 @@ export function SportActivityControls({
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-xs"
-                onClick={() => deleteSportActivity(date, activity.timestamp)}
+                onClick={() => handleDeleteActivity(activity.id)}
               >
                 削除
               </Button>

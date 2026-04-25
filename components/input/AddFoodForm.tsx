@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { addFoodItem, addFoodToDictionary } from '@/lib/storage';
-import { FoodItem } from '@/lib/types';
+import { FoodItem, FoodItemInput } from '@/lib/types';
 import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
@@ -137,8 +137,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
   const onSubmitManual = async (data: ManualFoodFormValues) => {
     // Basic validation / conversion
-    const item: FoodItem = {
-      id: generateId(),
+    const item: FoodItemInput = {
       name: data.name,
       protein: Number(data.protein ?? 0),
       fat: Number(data.fat ?? 0),
@@ -148,9 +147,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       timestamp: getSelectedTimestamp(),
     };
 
-    addFoodItem(item);
+    try {
+      await addFoodItem(item);
+    } catch {
+      // addFoodItem 側でエラートーストを表示済み。追加処理は中断する
+      return;
+    }
     if (saveToDictionary) {
-      addFoodToDictionary(item);
+      addFoodToDictionary({ ...item, id: generateId() });
       toast.success('食品リストにも保存しました');
     }
     toast.success(item.name + 'を追加しました');

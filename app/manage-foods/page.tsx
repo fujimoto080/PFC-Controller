@@ -261,13 +261,18 @@ export default function ManageFoodsPage() {
         toggleFavoriteFood(id);
     };
 
-    const handleAddLog = (food: FoodItem) => {
-        addFoodItem({
-            ...food,
-            id: generateId(),
-            timestamp: getSelectedTimestamp(),
-        });
-        toast.success(food.name + 'を食事記録に追加しました');
+    const handleAddLog = async (food: FoodItem) => {
+        const { id: _id, ...rest } = food;
+        void _id;
+        try {
+            await addFoodItem({
+                ...rest,
+                timestamp: getSelectedTimestamp(),
+            });
+            toast.success(food.name + 'を食事記録に追加しました');
+        } catch {
+            // addFoodItem 側でエラートーストを表示済み
+        }
     };
 
     const toggleFoodSelection = (foodId: string) => {

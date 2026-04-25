@@ -17,8 +17,6 @@ export {
   getPfcDebt,
   getTodayString,
   getWeeklyLog,
-  recalculateLogTotals,
-  saveLog,
   updateLogItem,
 } from './storage/logs';
 

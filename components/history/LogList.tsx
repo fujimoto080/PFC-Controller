@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Edit2, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAllLogItems, addFoodItem } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
-import { generateId, cn, getTimeOfDayGradient } from '@/lib/utils';
+import { cn, getTimeOfDayGradient } from '@/lib/utils';
 import { format, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
@@ -67,15 +67,16 @@ export function LogList() {
     setIsAddDrawerOpen(true);
   };
 
-  const handleReRegisterClick = (item: FoodItem) => {
-    const newItem: FoodItem = {
-      ...item,
-      id: generateId(),
-      timestamp: getCurrentTimestamp(),
-    };
-    addFoodItem(newItem);
-    toast.success(`${item.name}を再登録しました`);
-    refreshItems();
+  const handleReRegisterClick = async (item: FoodItem) => {
+    const { id: _id, ...rest } = item;
+    void _id;
+    try {
+      await addFoodItem({ ...rest, timestamp: getCurrentTimestamp() });
+      toast.success(`${item.name}を再登録しました`);
+      refreshItems();
+    } catch {
+      // addFoodItem 側でエラートーストを表示済み
+    }
   };
 
   const handleAddSuccess = () => {
