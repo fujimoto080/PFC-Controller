@@ -14,6 +14,8 @@ export interface FoodItem extends PFC {
   timestamp: number;
 }
 
+export type FoodItemInput = Omit<FoodItem, 'id'>;
+
 export interface DailyLog {
   date: string; // YYYY-MM-DD
   items: FoodItem[];
@@ -27,9 +29,15 @@ export interface SportDefinition {
   caloriesBurned: number;
 }
 
-export interface SportActivityLog extends SportDefinition {
+export interface SportActivityLog {
+  id: string; // 活動ログの一意 id (DB 採番 UUID)
+  sportId: string; // SportDefinition.id（種目）
+  name: string;
+  caloriesBurned: number;
   timestamp: number;
 }
+
+export type SportActivityInput = Omit<SportActivityLog, 'id'>;
 
 export interface UserProfile {
   gender: 'male' | 'female';

@@ -247,7 +247,9 @@ export function BarcodeScanner({
             state === Html5QrcodeScannerState.SCANNING ||
             state === Html5QrcodeScannerState.PAUSED
           ) {
-            scannerRef.current.stop().catch(console.debug);
+            scannerRef.current.stop().catch(() => {
+              // Ignore errors during cleanup
+            });
           }
         } catch {
           // Ignore errors during cleanup
@@ -293,19 +295,6 @@ export function BarcodeScanner({
           const isValid =
             validateBarcode(decodedText, detectedFormat) &&
             checkDigitResult.isValid;
-
-          // TODO: テスト用の可視化。正誤表示のスナックバーは将来削除予定。
-          toast(
-            `値: ${decodedText} / 計算チェックデジット: ${
-              checkDigitResult.expectedCheckDigit ?? 'N/A'
-            } / 読み取りチェックデジット: ${checkDigitResult.actualCheckDigit ?? 'N/A'}`,
-            {
-              description: checkDigitResult.isValid
-                ? 'チェックデジットが一致しました'
-                : 'チェックデジットが不一致です',
-              duration: 2500,
-            },
-          );
 
           if (!isValid) {
             triggerFeedback('error');
@@ -356,9 +345,8 @@ export function BarcodeScanner({
         ) {
           await scannerRef.current.stop();
         }
-      } catch (err) {
+      } catch {
         // Ignore error if scanner is not running
-        console.debug('Scanner stop:', err);
       }
     }
   };
