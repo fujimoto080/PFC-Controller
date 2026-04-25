@@ -10,6 +10,7 @@
     "prebuild": "node scripts/generate-food-data.mjs",
     "vercel-build": "node scripts/migrate.mjs && next build --webpack",
     "migrate": "node scripts/migrate.mjs",
+    "migrate:logs": "node scripts/migrate-logs-to-rows.mjs",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

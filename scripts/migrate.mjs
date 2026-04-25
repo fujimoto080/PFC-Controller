@@ -90,6 +90,37 @@ const APP_SCHEMA_SQL = `
     calories_burned DOUBLE PRECISION NOT NULL,
     PRIMARY KEY (user_id, sport_id)
   );
+
+  CREATE TABLE IF NOT EXISTS pfc_log_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    name TEXT NOT NULL,
+    protein DOUBLE PRECISION NOT NULL,
+    fat DOUBLE PRECISION NOT NULL,
+    carbs DOUBLE PRECISION NOT NULL,
+    calories DOUBLE PRECISION NOT NULL,
+    timestamp_ms BIGINT NOT NULL,
+    store TEXT,
+    store_group TEXT,
+    image TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_pfc_log_items_user_date
+    ON pfc_log_items (user_id, date);
+  CREATE INDEX IF NOT EXISTS idx_pfc_log_items_user_timestamp
+    ON pfc_log_items (user_id, timestamp_ms DESC);
+
+  CREATE TABLE IF NOT EXISTS pfc_log_activities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    sport_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    calories_burned DOUBLE PRECISION NOT NULL,
+    timestamp_ms BIGINT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_pfc_log_activities_user_date
+    ON pfc_log_activities (user_id, date);
 `;
 
 async function main() {
