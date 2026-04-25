@@ -2,6 +2,7 @@ import 'server-only';
 
 import { PoolClient } from 'pg';
 import { getPool } from '@/lib/pg-pool';
+import type { CloudResource } from '@/lib/cloud-data';
 
 interface UserDataPayload {
   logs: Record<string, unknown>;
@@ -9,8 +10,6 @@ interface UserDataPayload {
   foods: unknown[];
   sports: unknown[];
 }
-
-type CloudResource = 'settings' | 'logs' | 'foods' | 'sports';
 
 interface CloudDataStore {
   get(userId: string): Promise<UserDataPayload>;
@@ -26,14 +25,27 @@ interface SettingsRow {
   favorite_food_ids_json: unknown;
 }
 
-interface LogRow {
+interface LogItemRow {
+  id: string;
   date: string;
-  total_protein: number;
-  total_fat: number;
-  total_carbs: number;
-  total_calories: number;
-  items_json: unknown;
-  activities_json: unknown;
+  name: string;
+  protein: number;
+  fat: number;
+  carbs: number;
+  calories: number;
+  timestamp_ms: string | number;
+  store: string | null;
+  store_group: string | null;
+  image: string | null;
+}
+
+interface LogActivityRow {
+  id: string;
+  date: string;
+  sport_id: string;
+  name: string;
+  calories_burned: number;
+  timestamp_ms: string | number;
 }
 
 interface FoodRow {
@@ -72,6 +84,77 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+interface AggregatedLog {
+  date: string;
+  items: unknown[];
+  activities: unknown[];
+  total: { protein: number; fat: number; carbs: number; calories: number };
+}
+
+function aggregateLogs(
+  itemsRows: LogItemRow[],
+  activitiesRows: LogActivityRow[],
+): Record<string, AggregatedLog> {
+  const logs: Record<string, AggregatedLog> = {};
+
+  function ensureLog(date: string): AggregatedLog {
+    if (!logs[date]) {
+      logs[date] = {
+        date,
+        items: [],
+        activities: [],
+        total: { protein: 0, fat: 0, carbs: 0, calories: 0 },
+      };
+    }
+    return logs[date];
+  }
+
+  for (const row of itemsRows) {
+    const log = ensureLog(row.date);
+    const item = {
+      id: row.id,
+      name: row.name,
+      protein: row.protein,
+      fat: row.fat,
+      carbs: row.carbs,
+      calories: row.calories,
+      timestamp: Number(row.timestamp_ms),
+      store: row.store ?? undefined,
+      storeGroup: row.store_group ?? undefined,
+      image: row.image ?? undefined,
+    };
+    log.items.push(item);
+    log.total.protein += row.protein;
+    log.total.fat += row.fat;
+    log.total.carbs += row.carbs;
+    log.total.calories += row.calories;
+  }
+
+  for (const row of activitiesRows) {
+    const log = ensureLog(row.date);
+    log.activities.push({
+      id: row.id,
+      sportId: row.sport_id,
+      name: row.name,
+      caloriesBurned: row.calories_burned,
+      timestamp: Number(row.timestamp_ms),
+    });
+  }
+
+  for (const log of Object.values(logs)) {
+    log.total.protein = round2(log.total.protein);
+    log.total.fat = round2(log.total.fat);
+    log.total.carbs = round2(log.total.carbs);
+    log.total.calories = round2(log.total.calories);
+  }
+
+  return logs;
+}
+
 class PostgresCloudDataStore implements CloudDataStore {
 
   private buildSettings(row?: SettingsRow): Record<string, unknown> {
@@ -86,20 +169,6 @@ class PostgresCloudDataStore implements CloudDataStore {
       },
       profile: row.profile_json ?? undefined,
       favoriteFoodIds: asArray(row.favorite_food_ids_json),
-    };
-  }
-
-  private buildLog(row: LogRow): Record<string, unknown> {
-    return {
-      date: row.date,
-      total: {
-        protein: row.total_protein,
-        fat: row.total_fat,
-        carbs: row.total_carbs,
-        calories: row.total_calories,
-      },
-      items: asArray(row.items_json),
-      activities: asArray(row.activities_json),
     };
   }
 
@@ -163,46 +232,6 @@ class PostgresCloudDataStore implements CloudDataStore {
       `,
       params,
     );
-  }
-
-  private async writeLogs(
-    client: PoolClient,
-    userId: string,
-    logs: Record<string, unknown>,
-  ) {
-    await client.query(`DELETE FROM pfc_daily_logs WHERE user_id = $1`, [userId]);
-
-    for (const [date, logRaw] of Object.entries(logs)) {
-      const log = asRecord(logRaw);
-      const total = asRecord(log.total);
-      const items = asArray(log.items);
-      const activities = asArray(log.activities);
-
-      await client.query(
-        `
-        INSERT INTO pfc_daily_logs (
-          user_id,
-          date,
-          total_protein,
-          total_fat,
-          total_carbs,
-          total_calories,
-          items_json,
-          activities_json
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
-        `,
-        [
-          userId,
-          date,
-          toFiniteNumber(total.protein),
-          toFiniteNumber(total.fat),
-          toFiniteNumber(total.carbs),
-          toFiniteNumber(total.calories),
-          JSON.stringify(items),
-          JSON.stringify(activities),
-        ],
-      );
-    }
   }
 
   private async writeFoods(
@@ -288,77 +317,94 @@ class PostgresCloudDataStore implements CloudDataStore {
   async get(userId: string): Promise<UserDataPayload> {
 
     const pool = getPool();
-    const [settingsResult, logsResult, foodsResult, sportsResult] = await Promise.all([
-      pool.query<SettingsRow>(
-        `
-        SELECT
-          target_protein,
-          target_fat,
-          target_carbs,
-          target_calories,
-          profile_json,
-          favorite_food_ids_json
-        FROM pfc_user_settings
-        WHERE user_id = $1
-        LIMIT 1
-        `,
-        [userId],
-      ),
-      pool.query<LogRow>(
-        `
-        SELECT
-          date,
-          total_protein,
-          total_fat,
-          total_carbs,
-          total_calories,
-          items_json,
-          activities_json
-        FROM pfc_daily_logs
-        WHERE user_id = $1
-        ORDER BY date ASC
-        `,
-        [userId],
-      ),
-      pool.query<FoodRow>(
-        `
-        SELECT
-          food_id,
-          position,
-          name,
-          protein,
-          fat,
-          carbs,
-          calories,
-          timestamp_ms,
-          store,
-          store_group,
-          image
-        FROM pfc_foods
-        WHERE user_id = $1
-        ORDER BY position ASC
-        `,
-        [userId],
-      ),
-      pool.query<SportRow>(
-        `
-        SELECT
-          sport_id,
-          position,
-          name,
-          calories_burned
-        FROM pfc_sports
-        WHERE user_id = $1
-        ORDER BY position ASC
-        `,
-        [userId],
-      ),
-    ]);
+    const [settingsResult, itemsResult, activitiesResult, foodsResult, sportsResult] =
+      await Promise.all([
+        pool.query<SettingsRow>(
+          `
+          SELECT
+            target_protein,
+            target_fat,
+            target_carbs,
+            target_calories,
+            profile_json,
+            favorite_food_ids_json
+          FROM pfc_user_settings
+          WHERE user_id = $1
+          LIMIT 1
+          `,
+          [userId],
+        ),
+        pool.query<LogItemRow>(
+          `
+          SELECT
+            id,
+            to_char(date, 'YYYY-MM-DD') AS date,
+            name,
+            protein,
+            fat,
+            carbs,
+            calories,
+            timestamp_ms,
+            store,
+            store_group,
+            image
+          FROM pfc_log_items
+          WHERE user_id = $1
+          ORDER BY timestamp_ms ASC
+          `,
+          [userId],
+        ),
+        pool.query<LogActivityRow>(
+          `
+          SELECT
+            id,
+            to_char(date, 'YYYY-MM-DD') AS date,
+            sport_id,
+            name,
+            calories_burned,
+            timestamp_ms
+          FROM pfc_log_activities
+          WHERE user_id = $1
+          ORDER BY timestamp_ms ASC
+          `,
+          [userId],
+        ),
+        pool.query<FoodRow>(
+          `
+          SELECT
+            food_id,
+            position,
+            name,
+            protein,
+            fat,
+            carbs,
+            calories,
+            timestamp_ms,
+            store,
+            store_group,
+            image
+          FROM pfc_foods
+          WHERE user_id = $1
+          ORDER BY position ASC
+          `,
+          [userId],
+        ),
+        pool.query<SportRow>(
+          `
+          SELECT
+            sport_id,
+            position,
+            name,
+            calories_burned
+          FROM pfc_sports
+          WHERE user_id = $1
+          ORDER BY position ASC
+          `,
+          [userId],
+        ),
+      ]);
 
-    const logs = logsResult.rows.reduce<Record<string, unknown>>((acc, row) => {
-      acc[row.date] = this.buildLog(row);
-      return acc;
-    }, {});
+    const logs = aggregateLogs(itemsResult.rows, activitiesResult.rows);
 
     return {
       logs,
@@ -389,8 +435,6 @@ class PostgresCloudDataStore implements CloudDataStore {
       switch (resource) {
         case 'settings':
           return this.writeSettings(client, userId, asRecord(value));
-        case 'logs':
-          return this.writeLogs(client, userId, asRecord(value));
         case 'foods':
           return this.writeFoods(client, userId, asArray(value));
         case 'sports':
