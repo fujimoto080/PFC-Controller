@@ -62,6 +62,14 @@ interface ToastApi {
   error: SonnerImpl;
   loading: SonnerImpl;
   dismiss: (toastId?: string | number) => void;
+  // エラーから安全にメッセージを取り出して console.error + toast.error する。
+  // userFallback を省略すると logLabel が UI にも使われる。
+  fromError: (
+    logLabel: string,
+    error: unknown,
+    userFallback?: string,
+    options?: ExternalToast,
+  ) => string | number;
 }
 
 export const toast: ToastApi = Object.assign(
@@ -85,6 +93,19 @@ export const toast: ToastApi = Object.assign(
         unregister(toastId);
       }
       sonnerToast.dismiss(toastId);
+    },
+    fromError: (
+      logLabel: string,
+      error: unknown,
+      userFallback?: string,
+      options?: ExternalToast,
+    ) => {
+      console.error(logLabel, error);
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : (userFallback ?? logLabel);
+      return show(sonnerToast.error, message, options);
     },
   },
 );

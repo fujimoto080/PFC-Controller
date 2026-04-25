@@ -61,16 +61,16 @@ function serializeSettings(settings: StoredSettings): Record<string, unknown> {
   };
 }
 
-function payloadFor(resource: ResourceKey): Record<string, unknown> {
+function valueFor(resource: ResourceKey): unknown {
   switch (resource) {
     case 'logs':
-      return { logs: cloudState.logs };
+      return cloudState.logs;
     case 'settings':
-      return { settings: serializeSettings(cloudState.settings) };
+      return serializeSettings(cloudState.settings);
     case 'foods':
-      return { foods: cloudState.foods };
+      return cloudState.foods;
     case 'sports':
-      return { sports: cloudState.sports };
+      return cloudState.sports;
   }
 }
 
@@ -93,16 +93,13 @@ export async function syncResource(resource: ResourceKey) {
     const response = await fetch(endpointFor(resource), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payloadFor(resource)),
+      body: JSON.stringify({ [resource]: valueFor(resource) }),
     });
     if (!response.ok) {
       throw new Error(await readErrorMessage(response, 'クラウド保存に失敗しました'));
     }
   } catch (error) {
-    console.error(`クラウド同期失敗 (${resource})`, error);
-    toast.error(
-      error instanceof Error ? error.message : 'クラウド保存に失敗しました',
-    );
+    toast.fromError(`クラウド同期失敗 (${resource})`, error, 'クラウド保存に失敗しました');
   }
 }
 
@@ -191,10 +188,7 @@ export async function loadCloudData(): Promise<boolean> {
     refreshUI();
     return true;
   } catch (error) {
-    console.error('ユーザーデータ読み込み失敗', error);
-    toast.error(
-      error instanceof Error ? error.message : 'ユーザーデータ取得に失敗しました',
-    );
+    toast.fromError('ユーザーデータ読み込み失敗', error, 'ユーザーデータ取得に失敗しました');
     return false;
   }
 }

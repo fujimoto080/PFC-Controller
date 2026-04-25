@@ -10,12 +10,11 @@ interface UserDataPayload {
   sports: unknown[];
 }
 
+type CloudResource = 'settings' | 'logs' | 'foods' | 'sports';
+
 interface CloudDataStore {
   get(userId: string): Promise<UserDataPayload>;
-  replaceSettings(userId: string, settings: Record<string, unknown>): Promise<void>;
-  replaceLogs(userId: string, logs: Record<string, unknown>): Promise<void>;
-  replaceFoods(userId: string, foods: unknown[]): Promise<void>;
-  replaceSports(userId: string, sports: unknown[]): Promise<void>;
+  replace(userId: string, resource: CloudResource, value: unknown): Promise<void>;
 }
 
 interface SettingsRow {
@@ -385,20 +384,19 @@ class PostgresCloudDataStore implements CloudDataStore {
     }
   }
 
-  replaceSettings(userId: string, settings: Record<string, unknown>) {
-    return this.transaction((client) => this.writeSettings(client, userId, settings));
-  }
-
-  replaceLogs(userId: string, logs: Record<string, unknown>) {
-    return this.transaction((client) => this.writeLogs(client, userId, logs));
-  }
-
-  replaceFoods(userId: string, foods: unknown[]) {
-    return this.transaction((client) => this.writeFoods(client, userId, foods));
-  }
-
-  replaceSports(userId: string, sports: unknown[]) {
-    return this.transaction((client) => this.writeSports(client, userId, sports));
+  replace(userId: string, resource: CloudResource, value: unknown): Promise<void> {
+    return this.transaction((client) => {
+      switch (resource) {
+        case 'settings':
+          return this.writeSettings(client, userId, asRecord(value));
+        case 'logs':
+          return this.writeLogs(client, userId, asRecord(value));
+        case 'foods':
+          return this.writeFoods(client, userId, asArray(value));
+        case 'sports':
+          return this.writeSports(client, userId, asArray(value));
+      }
+    });
   }
 }
 

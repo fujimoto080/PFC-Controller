@@ -162,6 +162,7 @@ export default function ManageFoodsPage() {
 
                 setBarcodeMappingsByFoodKey(mappings);
             } catch (error) {
+                // 取得失敗時は UI に出さず警告ログのみ（既存挙動を維持）
                 console.error('バーコードマッピングの取得に失敗しました', error);
             }
         };
@@ -237,8 +238,7 @@ export default function ManageFoodsPage() {
                     [foodKey]: Array.from(new Set([...(prev[foodKey] ?? []), ...normalizedBarcodes])),
                 }));
             } catch (error) {
-                console.error('バーコード情報の保存に失敗しました', error);
-                toast.error('バーコード情報の保存に失敗しました');
+                toast.fromError('バーコード情報の保存に失敗しました', error);
             }
         }
 

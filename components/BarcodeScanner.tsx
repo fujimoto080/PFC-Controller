@@ -338,9 +338,9 @@ export function BarcodeScanner({
         // 端末によっては未対応のため無視
       }
     } catch (err) {
-      console.error(err);
-      toast.error(
+      toast.fromError(
         'カメラの起動に失敗しました。カメラへのアクセスを許可してください。',
+        err,
       );
       onClose();
     }

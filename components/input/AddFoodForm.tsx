@@ -167,8 +167,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         });
         toast.success('バーコード情報も保存しました');
       } catch (error) {
-        console.error('Failed to save barcode data to KVS:', error);
-        toast.error('バーコード情報の保存に失敗しました');
+        toast.fromError('バーコード情報の保存に失敗しました', error);
       } finally {
         setScannedBarcode(null);
         setMappedFoodData(null);
@@ -215,10 +214,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       }
     } catch (error) {
       toast.dismiss(loadingToast);
-      toast.error(
-        error instanceof Error ? error.message : 'エラーが発生しました',
-      );
-      console.error(error);
+      toast.fromError('バーコード読み取りエラー', error, 'エラーが発生しました');
     }
   };
 
@@ -245,10 +241,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       }
     } catch (error) {
       toast.dismiss(loadingToast);
-      toast.error(
-        error instanceof Error ? error.message : 'エラーが発生しました',
-      );
-      console.error(error);
+      toast.fromError('バーコード照会エラー', error, 'エラーが発生しました');
     }
   };
 
@@ -287,10 +280,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
       toast.error('AI結果の入力に失敗しました');
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'AI推定に失敗しました',
-      );
-      console.error(error);
+      toast.fromError('AI推定に失敗しました', error);
     } finally {
       setIsEstimatingNutrition(false);
     }
@@ -348,8 +338,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       toast.success('文字を抽出しました。内容を確認してAI推定してください');
     } catch (error) {
       toast.dismiss(loadingToast);
-      toast.error('OCRに失敗しました');
-      console.error(error);
+      toast.fromError('OCRに失敗しました', error);
     } finally {
       setIsExtractingText(false);
     }
