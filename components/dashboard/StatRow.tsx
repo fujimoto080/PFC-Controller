@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { DebtStackedBars } from './DebtStackedBars';
+import { roundPFC } from '@/lib/utils';
 
 interface StatRowProps {
     label: string;
@@ -34,7 +35,7 @@ export const StatRow = memo(function StatRow({
             <div className="flex justify-between text-sm">
                 <span className="font-medium">{label}</span>
                 <span className={`${current > adjustedTarget ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
-                    {Math.round(current * 100) / 100} / {target}g
+                    {roundPFC(current)} / {target}g
                     {debt > 0 && (
                         <span className="text-red-500 text-[10px] ml-1">
                             (負債: {debt}g)
@@ -43,7 +44,7 @@ export const StatRow = memo(function StatRow({
                 </span>
             </div>
             <p className="text-muted-foreground text-xs">
-                今日はあと <span className="font-semibold">{Math.round(remaining * 100) / 100}g</span> 摂取できます
+                今日はあと <span className="font-semibold">{roundPFC(remaining)}g</span> 摂取できます
             </p>
             
             <DebtStackedBars

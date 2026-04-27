@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ApiError, defineRoute } from '@/lib/api/handler';
 import { callGemini } from '@/lib/api/gemini';
+import { roundPFC } from '@/lib/utils';
 
 const MODEL_NAME = 'gemini-2.0-flash';
 
@@ -32,7 +33,7 @@ function normalizeNutrition(data: Partial<EstimatedNutrition>): EstimatedNutriti
   const toNumber = (value: unknown) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric < 0) return 0;
-    return Math.round(numeric * 10) / 10;
+    return roundPFC(numeric, 1);
   };
 
   return {

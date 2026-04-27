@@ -7,6 +7,7 @@ import { UserSettings, DEFAULT_TARGET } from '@/lib/types';
 import { CardHeader } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { Progress } from '@/components/ui/progress';
+import { roundPFC } from '@/lib/utils';
 
 export function WeeklyPFCStats() {
     const [weeklyData, setWeeklyData] = useState<{
@@ -65,7 +66,7 @@ export function WeeklyPFCStats() {
                                 平均カロリー
                             </p>
                             <div className="flex items-baseline space-x-1">
-                                <span className={`text-2xl font-bold ${calories > targetPFC.calories ? 'text-red-500' : ''}`}>{Math.round(calories * 100) / 100}</span>
+                                <span className={`text-2xl font-bold ${calories > targetPFC.calories ? 'text-red-500' : ''}`}>{roundPFC(calories)}</span>
                                 <span className="text-muted-foreground text-xs">kcal</span>
                             </div>
                             <Progress
@@ -117,7 +118,7 @@ function WeeklyStatSmall({
             <div className="flex justify-between text-[10px]">
                 <span className="font-bold">{label}</span>
                 <span className={`${current > target ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
-                    {Math.round(current * 100) / 100}/{target}g
+                    {roundPFC(current)}/{target}g
                 </span>
             </div>
             <Progress value={pct} indicatorClassName={color} className="h-1" />

@@ -17,8 +17,9 @@ export function formatDate(date: Date | number | string): string {
   return JST_FORMATTER.format(d);
 }
 
-export function roundPFC(value: number): number {
-  return Math.round(value * 100) / 100;
+export function roundPFC(value: number, digits = 2): number {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
 }
 
 export function generateId(): string {

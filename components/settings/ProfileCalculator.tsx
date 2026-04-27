@@ -13,6 +13,7 @@ import {
 import { PFC, UserProfile } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Info } from 'lucide-react';
+import { roundPFC } from '@/lib/utils';
 
 interface ProfileCalculatorProps {
     onCalculate: (goals: PFC, profile: UserProfile) => void;
@@ -75,9 +76,9 @@ const calculateRecommendedDuration = (
     const recommended = Math.max(durationByWeightLoss, durationByCalorieLimit);
 
     return {
-        recommended: recommended > 0 ? Math.round(recommended * 10) / 10 : 0,
-        byWeightLoss: durationByWeightLoss > 0 ? Math.round(durationByWeightLoss * 10) / 10 : 0,
-        byCalorieLimit: durationByCalorieLimit > 0 ? Math.round(durationByCalorieLimit * 10) / 10 : 0
+        recommended: recommended > 0 ? roundPFC(recommended, 1) : 0,
+        byWeightLoss: durationByWeightLoss > 0 ? roundPFC(durationByWeightLoss, 1) : 0,
+        byCalorieLimit: durationByCalorieLimit > 0 ? roundPFC(durationByCalorieLimit, 1) : 0
     };
 };
 
@@ -186,7 +187,7 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
 
     const handleDurationBlur = (e: React.FocusEvent<HTMLInputElement>) => {
         const value = parseFloat(e.target.value);
-        const roundedValue = Math.round(value * 10) / 10;
+        const roundedValue = roundPFC(value, 1);
         setTargetDuration(Math.max(0.1, roundedValue));
     };
 
