@@ -35,7 +35,7 @@ export default async function RootLayout({
           </CloudDataProvider>
         </main>
         {isAuthenticated && <BottomNav />}
-        <Toaster position="top-center" />
+        <Toaster position="top-center" visibleToasts={3} />
       </body>
     </html>
   );
