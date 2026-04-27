@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { normalizeBarcodes, type FoodItemForKVS } from '@/lib/barcode-mapping';
+import { normalizeBarcodes, type BarcodeFood } from '@/lib/barcode-mapping';
 import { getBarcodeMapping, saveBarcodeMapping } from '@/lib/barcode-kv';
 import { ApiError, defineRoute } from '@/lib/api/handler';
 
@@ -24,7 +24,7 @@ export const GET = defineRoute(
 const postSchema = z.object({
   barcode: z.string().optional(),
   barcodes: z.array(z.string()).optional(),
-  foodData: z.custom<FoodItemForKVS>((v) => !!v && typeof v === 'object', {
+  foodData: z.custom<BarcodeFood>((v) => !!v && typeof v === 'object', {
     message: 'foodData は必須です',
   }),
 });

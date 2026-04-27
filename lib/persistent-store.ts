@@ -3,6 +3,7 @@ import 'server-only';
 import { PoolClient } from 'pg';
 import { getPool } from '@/lib/pg-pool';
 import type { CloudResource } from '@/lib/cloud-data';
+import { roundPFC } from '@/lib/utils';
 
 interface UserDataPayload {
   logs: Record<string, unknown>;
@@ -84,10 +85,6 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
 interface AggregatedLog {
   date: string;
   items: unknown[];
@@ -146,10 +143,10 @@ function aggregateLogs(
   }
 
   for (const log of Object.values(logs)) {
-    log.total.protein = round2(log.total.protein);
-    log.total.fat = round2(log.total.fat);
-    log.total.carbs = round2(log.total.carbs);
-    log.total.calories = round2(log.total.calories);
+    log.total.protein = roundPFC(log.total.protein);
+    log.total.fat = roundPFC(log.total.fat);
+    log.total.carbs = roundPFC(log.total.carbs);
+    log.total.calories = roundPFC(log.total.calories);
   }
 
   return logs;

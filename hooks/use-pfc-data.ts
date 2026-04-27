@@ -18,5 +18,5 @@ export function usePfcData(selectedDate: string = getTodayString()) {
 
     useSubscribeToPfcUpdate(refresh);
 
-    return { log, settings, debt, isLoading: false, refresh };
+    return { log, settings, debt, refresh };
 }

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Edit2, ChevronDown, ChevronUp } from 'lucide-react';
 import { getAllLogItems, addFoodItem } from '@/lib/storage';
 import { FoodItem } from '@/lib/types';
-import { cn, getTimeOfDayGradient } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { format, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +17,25 @@ import { EditLogItemDrawer } from './EditLogItemDrawer';
 import { AddFoodForm } from '@/components/input/AddFoodForm';
 
 const getCurrentTimestamp = () => Date.now();
+
+const TIME_OF_DAY_GRADIENT_MAP = {
+  morning:
+    'bg-[linear-gradient(80deg,rgba(255,120,80,0.45)_0%,rgba(255,180,150,0.25)_5%,transparent_10%)]',
+  afternoon:
+    'bg-[linear-gradient(80deg,rgba(80,160,255,0.45)_0%,rgba(150,210,255,0.25)_5%,transparent_10%)]',
+  evening:
+    'bg-[linear-gradient(80deg,rgba(255,90,120,0.45)_0%,rgba(200,120,255,0.25)_5%,transparent_10%)]',
+  night:
+    'bg-[linear-gradient(80deg,rgba(80,90,255,0.45)_0%,rgba(120,100,200,0.25)_5%,transparent_10%)]',
+} as const;
+
+function getTimeOfDayGradient(timestamp: number): string {
+  const hour = new Date(timestamp).getHours();
+  if (hour >= 5 && hour < 11) return TIME_OF_DAY_GRADIENT_MAP.morning;
+  if (hour >= 11 && hour < 15) return TIME_OF_DAY_GRADIENT_MAP.afternoon;
+  if (hour >= 15 && hour < 18) return TIME_OF_DAY_GRADIENT_MAP.evening;
+  return TIME_OF_DAY_GRADIENT_MAP.night;
+}
 
 type GroupedFoodItem = {
   name: string;

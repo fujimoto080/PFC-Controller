@@ -1,18 +1,13 @@
-export interface FoodItemForKVS {
-  name: string;
-  protein: number;
-  fat: number;
-  carbs: number;
-  calories: number;
-  store?: string;
-}
+import type { FoodItem } from '@/lib/types';
+
+export type BarcodeFood = Pick<FoodItem, 'name' | 'protein' | 'fat' | 'carbs' | 'calories' | 'store'>;
 
 export interface BarcodeMappingRow {
   barcode: string;
-  food: FoodItemForKVS;
+  food: BarcodeFood;
 }
 
-export type FoodMatchKeyInput = Pick<FoodItemForKVS, 'name' | 'protein' | 'fat' | 'carbs' | 'calories'>;
+export type FoodMatchKeyInput = Pick<BarcodeFood, 'name' | 'protein' | 'fat' | 'carbs' | 'calories'>;
 
 export function normalizeBarcodes(value: string | string[]): string[] {
   const source = Array.isArray(value) ? value : [value];

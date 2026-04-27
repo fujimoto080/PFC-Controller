@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { Redis } from '@upstash/redis';
-import type { BarcodeMappingRow, FoodItemForKVS } from '@/lib/barcode-mapping';
+import type { BarcodeMappingRow, BarcodeFood } from '@/lib/barcode-mapping';
 
 const BARCODE_MAPPING_KEY_PREFIX = 'barcode:mapping:';
 const BARCODE_MAPPING_INDEX_KEY = 'barcode:mappings:index';
@@ -12,9 +12,9 @@ function buildBarcodeMappingKey(barcode: string): string {
   return `${BARCODE_MAPPING_KEY_PREFIX}${barcode}`;
 }
 
-export async function getBarcodeMapping(barcode: string): Promise<FoodItemForKVS | null> {
+export async function getBarcodeMapping(barcode: string): Promise<BarcodeFood | null> {
   const key = buildBarcodeMappingKey(barcode);
-  const value = await redis.get<FoodItemForKVS>(key);
+  const value = await redis.get<BarcodeFood>(key);
 
   if (!value) {
     return null;
@@ -23,7 +23,7 @@ export async function getBarcodeMapping(barcode: string): Promise<FoodItemForKVS
   return value;
 }
 
-export async function saveBarcodeMapping(barcode: string, foodData: FoodItemForKVS): Promise<void> {
+export async function saveBarcodeMapping(barcode: string, foodData: BarcodeFood): Promise<void> {
   const key = buildBarcodeMappingKey(barcode);
 
   await redis.set(key, foodData);

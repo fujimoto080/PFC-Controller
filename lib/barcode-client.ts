@@ -1,8 +1,8 @@
-import type { FoodItemForKVS } from './barcode-mapping';
+import type { BarcodeFood } from './barcode-mapping';
 
 export async function saveBarcodeMappingRequest(
   barcodes: string[],
-  foodData: FoodItemForKVS,
+  foodData: BarcodeFood,
 ): Promise<void> {
   if (barcodes.length === 0) return;
 
