@@ -29,11 +29,11 @@ export const calculateBMR = (weight: number, height: number, age: number, gender
     } else {
         bmr = 10 * weight + 6.25 * height - 5 * age - 161;
     }
-    return Math.round(bmr);
+    return roundPFC(bmr, 0);
 };
 
 export const calculateTDEE = (bmr: number, activityLevel: number): number => {
-    return Math.round(bmr * activityLevel);
+    return roundPFC(bmr * activityLevel, 0);
 };
 
 export const calculateMinimumCalories = (gender: 'male' | 'female'): number => {
@@ -133,12 +133,12 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
         const targetCalories = Math.max(caloriesBeforeAdjustment, minimumCalories);
 
         return {
-            protein: Math.round((targetCalories * 0.25) / 4) || 0,
-            fat: Math.round((targetCalories * 0.25) / 9) || 0,
-            carbs: Math.round((targetCalories * 0.50) / 4) || 0,
-            calories: Math.round(targetCalories) || 0,
-            caloriesBeforeAdjustment: Math.round(caloriesBeforeAdjustment),
-            calorieAdjustment: Math.round(calorieAdjustment),
+            protein: roundPFC((targetCalories * 0.25) / 4, 0) || 0,
+            fat: roundPFC((targetCalories * 0.25) / 9, 0) || 0,
+            carbs: roundPFC((targetCalories * 0.50) / 4, 0) || 0,
+            calories: roundPFC(targetCalories, 0) || 0,
+            caloriesBeforeAdjustment: roundPFC(caloriesBeforeAdjustment, 0),
+            calorieAdjustment: roundPFC(calorieAdjustment, 0),
             minimumCalories,
             bmr,
             tdee,

@@ -6,7 +6,7 @@ import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSettings } from '@/lib/storage';
 import { UserSettings } from '@/lib/types';
-import { cn, formatDate } from '@/lib/utils';
+import { cn, formatDate, roundPFC } from '@/lib/utils';
 import { useAllLogs } from '@/hooks/use-logs';
 import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
 import { IconButton } from '@/components/ui/icon-button';
@@ -140,7 +140,7 @@ export function Calendar() {
                                                         "block text-[8px] font-bold leading-tight sm:text-[10px]",
                                                         isOver ? "text-red-500" : "text-muted-foreground"
                                                     )}>
-                                                        {Math.round(calories)}
+                                                        {roundPFC(calories, 0)}
                                                     </span>
                                                     <div className="mx-auto mt-0.5 h-1 w-full max-w-[20px] bg-muted-foreground/10 overflow-hidden">
                                                         <div
@@ -181,7 +181,7 @@ export function Calendar() {
                                         "mt-1 text-[7px] font-bold",
                                         isWeekOver ? "text-red-500" : "text-muted-foreground"
                                     )}>
-                                        {Math.round(weekCalories)}
+                                        {roundPFC(weekCalories, 0)}
                                     </span>
                                 </div>
                             </div>
@@ -196,13 +196,13 @@ export function Calendar() {
                     <div>
                         <p className="text-xs text-muted-foreground">総摂取カロリー</p>
                         <p className="text-lg font-bold">
-                            {Math.round(totalMonthCalories).toLocaleString()} kcal
+                            {roundPFC(totalMonthCalories, 0).toLocaleString()} kcal
                         </p>
                     </div>
                     <div>
                         <p className="text-xs text-muted-foreground">平均 / 日</p>
                         <p className="text-lg font-bold">
-                            {Math.round(averageCalories).toLocaleString()} kcal
+                            {roundPFC(averageCalories, 0).toLocaleString()} kcal
                         </p>
                     </div>
                 </div>

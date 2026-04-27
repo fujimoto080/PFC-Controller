@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SportDefinition } from '@/lib/types';
+import { roundPFC } from '@/lib/utils';
 
 interface SportSettingsFormProps {
   sports: SportDefinition[];
@@ -28,7 +29,7 @@ export function SportSettingsForm({
     onAddSport({
       id: `sport-${Date.now()}`,
       name: trimmedName,
-      caloriesBurned: Math.round(calories),
+      caloriesBurned: roundPFC(calories, 0),
     });
     setName('');
     setCaloriesBurned('');
