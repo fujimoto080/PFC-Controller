@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getFavoriteFoods, addFoodItem } from '@/lib/storage';
+import { getFavoriteFoods } from '@/lib/storage/favorites';
+import { addFoodItem } from '@/lib/storage/logs';
 import { FoodItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';

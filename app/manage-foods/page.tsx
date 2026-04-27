@@ -16,11 +16,10 @@ import {
     addFoodToDictionary,
     updateFoodInDictionary,
     deleteFoodFromDictionary,
-    toggleFavoriteFood,
-    isFavoriteFood,
-    addFoodItem,
     saveFoodDictionary,
-} from '@/lib/storage';
+} from '@/lib/storage/foods';
+import { toggleFavoriteFood, isFavoriteFood } from '@/lib/storage/favorites';
+import { addFoodItem } from '@/lib/storage/logs';
 import { FoodItem } from '@/lib/types';
 import { buildFoodMatchKey, normalizeBarcodes, type BarcodeMappingRow } from '@/lib/barcode-mapping';
 import { saveBarcodeMappingRequest } from '@/lib/barcode-client';

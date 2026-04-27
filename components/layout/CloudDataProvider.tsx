@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { loadCloudData, isCloudDataLoaded } from '@/lib/storage';
+import { loadCloudData, isCloudDataLoaded } from '@/lib/storage/state';
 
 type Status = 'loading' | 'ready';
 

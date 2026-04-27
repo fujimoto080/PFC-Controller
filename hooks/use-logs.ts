@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { getLogs } from '@/lib/storage';
+import { getLogs } from '@/lib/storage/logs';
 import { useSubscribeToPfcUpdate } from './use-pfc-update';
 
 export function useAllLogs() {

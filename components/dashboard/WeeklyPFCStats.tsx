@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { getWeeklyLog, getSettings } from '@/lib/storage';
+import { getWeeklyLog } from '@/lib/storage/logs';
+import { getSettings } from '@/lib/storage/settings';
 import { UserSettings, DEFAULT_TARGET } from '@/lib/types';
 import { CardHeader } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';

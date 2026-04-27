@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addDays, format, parseISO } from 'date-fns';
 import { usePfcData } from '@/hooks/use-pfc-data';
 import { roundPFC } from '@/lib/utils';
-import { getAdjustedCalorieTarget } from '@/lib/storage';
+import { getAdjustedCalorieTarget } from '@/lib/storage/logs';
 import { IconButton } from '@/components/ui/icon-button';
 import { StatRow } from './StatRow';
 import { DebtStackedBars } from './DebtStackedBars';

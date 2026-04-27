@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { deleteSportActivity, addSportActivity } from '@/lib/storage';
+import { deleteSportActivity, addSportActivity } from '@/lib/storage/sports';
 import { SportActivityLog, SportDefinition } from '@/lib/types';
 
 interface SportActivityControlsProps {

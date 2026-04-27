@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
-import { getLogForDate, getSettings, getPfcDebt, getTodayString } from '@/lib/storage';
+import { getLogForDate, getPfcDebt, getTodayString } from '@/lib/storage/logs';
+import { getSettings } from '@/lib/storage/settings';
 import { useSubscribeToPfcUpdate } from './use-pfc-update';
 
 export function usePfcData(selectedDate: string = getTodayString()) {

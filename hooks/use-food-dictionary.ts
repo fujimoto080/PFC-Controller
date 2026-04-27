@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FoodItem } from '@/lib/types';
-import { getFoodDictionary, getUniqueStores } from '@/lib/storage';
+import { getFoodDictionary, getUniqueStores } from '@/lib/storage/foods';
 import { useSubscribeToPfcUpdate } from './use-pfc-update';
 
 export function useFoodDictionary() {

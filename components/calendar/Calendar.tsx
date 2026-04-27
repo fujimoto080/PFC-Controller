@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getSettings } from '@/lib/storage';
+import { getSettings } from '@/lib/storage/settings';
 import { UserSettings } from '@/lib/types';
 import { cn, formatDate, roundPFC } from '@/lib/utils';
 import { useAllLogs } from '@/hooks/use-logs';

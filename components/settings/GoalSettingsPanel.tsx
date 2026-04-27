@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProfileCalculator } from './ProfileCalculator';
 import { SportSettingsForm } from './SportSettingsForm';
 import { PFC, SportDefinition, UserProfile } from '@/lib/types';
-import { saveSettings } from '@/lib/storage';
+import { saveSettings } from '@/lib/storage/settings';
 import { toast } from '@/lib/toast';
 import { usePfcData } from '@/hooks/use-pfc-data';
 

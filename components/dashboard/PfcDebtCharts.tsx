@@ -13,7 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLogs } from '@/lib/storage';
+import { getLogs } from '@/lib/storage/logs';
 import { usePfcData } from '@/hooks/use-pfc-data';
 
 interface PfcDebtChartsProps {

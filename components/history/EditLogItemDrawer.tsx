@@ -19,7 +19,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FoodItem } from '@/lib/types';
-import { updateLogItem, deleteLogItem } from '@/lib/storage';
+import { updateLogItem, deleteLogItem } from '@/lib/storage/logs';
 
 interface EditLogItemDrawerProps {
     item: FoodItem | null;

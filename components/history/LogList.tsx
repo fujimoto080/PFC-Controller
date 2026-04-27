@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Edit2, ChevronDown, ChevronUp } from 'lucide-react';
-import { getAllLogItems, addFoodItem } from '@/lib/storage';
+import { getAllLogItems, addFoodItem } from '@/lib/storage/logs';
 import { FoodItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format, isToday } from 'date-fns';
