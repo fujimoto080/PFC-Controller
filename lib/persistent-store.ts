@@ -3,14 +3,22 @@ import 'server-only';
 import { PoolClient } from 'pg';
 import { getPool } from '@/lib/pg-pool';
 import type { CloudResource } from '@/lib/cloud-data';
-import { EMPTY_PFC } from '@/lib/types';
+import {
+  EMPTY_PFC,
+  type DailyLog,
+  type FoodItem,
+  type SportActivityLog,
+  type SportDefinition,
+  type UserProfile,
+  type UserSettings,
+} from '@/lib/types';
 import { roundPFC } from '@/lib/utils';
 
 interface UserDataPayload {
-  logs: Record<string, unknown>;
-  settings: Record<string, unknown>;
-  foods: unknown[];
-  sports: unknown[];
+  logs: Record<string, DailyLog>;
+  settings: UserSettings | Record<string, never>;
+  foods: FoodItem[];
+  sports: SportDefinition[];
 }
 
 interface CloudDataStore {
@@ -86,12 +94,7 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-interface AggregatedLog {
-  date: string;
-  items: unknown[];
-  activities: unknown[];
-  total: { protein: number; fat: number; carbs: number; calories: number };
-}
+type AggregatedLog = DailyLog & { activities: SportActivityLog[] };
 
 function aggregateLogs(
   itemsRows: LogItemRow[],
@@ -113,7 +116,7 @@ function aggregateLogs(
 
   for (const row of itemsRows) {
     const log = ensureLog(row.date);
-    const item = {
+    const item: FoodItem = {
       id: row.id,
       name: row.name,
       protein: row.protein,
@@ -134,13 +137,14 @@ function aggregateLogs(
 
   for (const row of activitiesRows) {
     const log = ensureLog(row.date);
-    log.activities.push({
+    const activity: SportActivityLog = {
       id: row.id,
       sportId: row.sport_id,
       name: row.name,
       caloriesBurned: row.calories_burned,
       timestamp: Number(row.timestamp_ms),
-    });
+    };
+    log.activities.push(activity);
   }
 
   for (const log of Object.values(logs)) {
@@ -155,8 +159,14 @@ function aggregateLogs(
 
 class PostgresCloudDataStore implements CloudDataStore {
 
-  private buildSettings(row?: SettingsRow): Record<string, unknown> {
+  private buildSettings(row?: SettingsRow): UserSettings | Record<string, never> {
     if (!row) return {};
+
+    const profile = row.profile_json;
+    const favoriteRaw = row.favorite_food_ids_json;
+    const favoriteFoodIds = Array.isArray(favoriteRaw)
+      ? favoriteRaw.filter((id): id is string => typeof id === 'string')
+      : [];
 
     return {
       targetPFC: {
@@ -165,12 +175,12 @@ class PostgresCloudDataStore implements CloudDataStore {
         carbs: row.target_carbs,
         calories: row.target_calories,
       },
-      profile: row.profile_json ?? undefined,
-      favoriteFoodIds: asArray(row.favorite_food_ids_json),
+      profile: (profile ?? undefined) as UserProfile | undefined,
+      favoriteFoodIds,
     };
   }
 
-  private buildFood(row: FoodRow): Record<string, unknown> {
+  private buildFood(row: FoodRow): FoodItem {
     return {
       id: row.food_id,
       name: row.name,
@@ -185,7 +195,7 @@ class PostgresCloudDataStore implements CloudDataStore {
     };
   }
 
-  private buildSport(row: SportRow): Record<string, unknown> {
+  private buildSport(row: SportRow): SportDefinition {
     return {
       id: row.sport_id,
       name: row.name,
