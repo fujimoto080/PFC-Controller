@@ -44,14 +44,10 @@ const calcSimilarityScore = (input: string, target: string): number => {
   return 1 - distance / maxLength;
 };
 
-export interface FoodSuggestionItem extends FoodItem {
-  similarityScore: number;
-}
-
 export function getSimilarFoodSuggestions(
   foods: FoodItem[],
   inputName: string,
-): FoodSuggestionItem[] {
+): Array<FoodItem & { similarityScore: number }> {
   const normalizedInput = normalizeFoodName(inputName.trim());
   if (normalizedInput.length < 2) return [];
 
