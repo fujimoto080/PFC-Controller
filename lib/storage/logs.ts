@@ -1,12 +1,17 @@
 'use client';
 
-import { DailyLog, FoodItem, FoodItemInput, PFC } from '../types';
+import {
+  DailyLog,
+  EMPTY_PFC,
+  FoodItem,
+  FoodItemInput,
+  PFC,
+  createEmptyDailyLog,
+} from '../types';
 import { formatDate, roundPFC } from '../utils';
 import { cloudState, readErrorMessage, refreshUI } from './state';
 import { getSettings } from './settings';
 import { toast } from '../toast';
-
-const emptyTotals: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
 const getDateFromTimestamp = (timestamp: number) => formatDate(new Date(timestamp));
 
@@ -28,14 +33,7 @@ export function getLogs(): Record<string, DailyLog> {
 
 export function getLogForDate(date: string): DailyLog {
   const logs = getLogs();
-  return (
-    logs[date] || {
-      date,
-      items: [],
-      activities: [],
-      total: { protein: 0, fat: 0, carbs: 0, calories: 0 },
-    }
-  );
+  return logs[date] || createEmptyDailyLog(date);
 }
 
 export function getAdjustedCalorieTarget(date: string): number {
@@ -57,7 +55,7 @@ function recalcTotals(items: FoodItem[]): PFC {
       carbs: acc.carbs + curr.carbs,
       calories: acc.calories + curr.calories,
     }),
-    emptyTotals,
+    { ...EMPTY_PFC },
   );
 
   return {
@@ -68,21 +66,12 @@ function recalcTotals(items: FoodItem[]): PFC {
   };
 }
 
-function emptyLog(date: string): DailyLog {
-  return {
-    date,
-    items: [],
-    activities: [],
-    total: { protein: 0, fat: 0, carbs: 0, calories: 0 },
-  };
-}
-
 function withLogUpdated(
   date: string,
   updater: (log: DailyLog) => DailyLog,
 ): { snapshot: Record<string, DailyLog>; nextLog: DailyLog } {
   const snapshot = cloudState.logs;
-  const existing = snapshot[date] ?? emptyLog(date);
+  const existing = snapshot[date] ?? createEmptyDailyLog(date);
   const nextLog = updater(existing);
   cloudState.logs = { ...snapshot, [date]: nextLog };
   refreshUI();
@@ -167,7 +156,7 @@ export async function updateLogItem(
   const nextLogs: Record<string, DailyLog> = { ...snapshot };
 
   if (oldDate === newDate) {
-    const existing = nextLogs[newDate] ?? emptyLog(newDate);
+    const existing = nextLogs[newDate] ?? createEmptyDailyLog(newDate);
     const items = existing.items.some((it) => it.id === newItem.id)
       ? existing.items.map((it) => (it.id === newItem.id ? newItem : it))
       : [...existing.items, newItem];
@@ -186,7 +175,7 @@ export async function updateLogItem(
         total: recalcTotals(items),
       };
     }
-    const existing = nextLogs[newDate] ?? emptyLog(newDate);
+    const existing = nextLogs[newDate] ?? createEmptyDailyLog(newDate);
     const items = [...existing.items, newItem];
     nextLogs[newDate] = {
       ...existing,
@@ -339,7 +328,7 @@ export function getPfcDebt(currentDate: string): PFC {
   const logs = getLogs();
 
   const sortedDates = getSortedLogDates(logs, 'asc');
-  const cumulativeDebt: PFC = { ...emptyTotals };
+  const cumulativeDebt: PFC = { ...EMPTY_PFC };
 
   if (sortedDates.length === 0) return cumulativeDebt;
 
@@ -364,7 +353,7 @@ export function getPfcDebt(currentDate: string): PFC {
             carbs: log.total.carbs - targetCarbs,
             calories: log.total.calories - targetCalories,
           }
-        : emptyTotals;
+        : { ...EMPTY_PFC };
 
     cumulativeDebt.protein = Math.max(
       0,

@@ -61,3 +61,11 @@ export const DEFAULT_TARGET: PFC = {
   carbs: 250,
   calories: 2000,
 };
+
+// 空 PFC 共通定数。直接参照すると意図せず共有されるため、利用側では必ずスプレッドで複製すること。
+export const EMPTY_PFC: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
+
+// 空の DailyLog を生成するファクトリ。total は EMPTY_PFC を複製して独立したオブジェクトを返す。
+export function createEmptyDailyLog(date: string): DailyLog {
+  return { date, items: [], activities: [], total: { ...EMPTY_PFC } };
+}

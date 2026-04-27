@@ -3,6 +3,7 @@ import 'server-only';
 import { PoolClient } from 'pg';
 import { getPool } from '@/lib/pg-pool';
 import type { CloudResource } from '@/lib/cloud-data';
+import { EMPTY_PFC } from '@/lib/types';
 import { roundPFC } from '@/lib/utils';
 
 interface UserDataPayload {
@@ -104,7 +105,7 @@ function aggregateLogs(
         date,
         items: [],
         activities: [],
-        total: { protein: 0, fat: 0, carbs: 0, calories: 0 },
+        total: { ...EMPTY_PFC },
       };
     }
     return logs[date];
