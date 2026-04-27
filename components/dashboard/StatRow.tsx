@@ -1,6 +1,5 @@
 'use client';
 
-import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { DebtStackedBars } from './DebtStackedBars';
 import { roundPFC } from '@/lib/utils';
@@ -14,7 +13,7 @@ interface StatRowProps {
     delay: number;
 }
 
-export const StatRow = memo(function StatRow({
+export function StatRow({
     label,
     current,
     target,
@@ -56,4 +55,4 @@ export const StatRow = memo(function StatRow({
             />
         </motion.div>
     );
-});
+}
