@@ -22,6 +22,7 @@ import { toast } from '@/lib/toast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { getSimilarFoodSuggestions } from '@/lib/food-suggestions';
 import { saveBarcodeMappingRequest } from '@/lib/barcode-client';
+import type { BarcodeFood } from '@/lib/barcode-mapping';
 
 export interface AddFoodFormProps {
   onSuccess?: () => void;
@@ -37,15 +38,6 @@ interface ManualFoodFormValues {
   store?: string;
 }
 
-interface BarcodeMappedFood {
-  name: string;
-  protein: number;
-  fat: number;
-  carbs: number;
-  calories: number;
-  store?: string;
-}
-
 export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('manual');
@@ -55,7 +47,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [barcodeLookupInput, setBarcodeLookupInput] = useState('');
   const [mappedFoodData, setMappedFoodData] =
-    useState<BarcodeMappedFood | null>(null);
+    useState<BarcodeFood | null>(null);
   const [aiInputText, setAiInputText] = useState('');
   const [isEstimatingNutrition, setIsEstimatingNutrition] = useState(false);
   const [isExtractingText, setIsExtractingText] = useState(false);
@@ -84,7 +76,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     [foods, watchedName],
   );
 
-  const applyFoodDataToForm = (data: BarcodeMappedFood) => {
+  const applyFoodDataToForm = (data: BarcodeFood) => {
     reset({
       name: data.name,
       protein: data.protein,
@@ -108,11 +100,11 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
   const fetchBarcodeMapping = async (
     code: string,
-  ): Promise<BarcodeMappedFood | null> => {
+  ): Promise<BarcodeFood | null> => {
     const response = await fetch(`/api/barcode?code=${code}`);
 
     if (response.ok) {
-      const data: BarcodeMappedFood = await response.json();
+      const data: BarcodeFood = await response.json();
       setMappedFoodData(data);
       applyFoodDataToForm(data);
       return data;
@@ -274,7 +266,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         throw new Error(result.error || 'AI推定に失敗しました');
       }
 
-      const isApplied = applyFoodDataToForm(result as BarcodeMappedFood);
+      const isApplied = applyFoodDataToForm(result as BarcodeFood);
 
       if (isApplied) {
         setActiveTab('manual');
