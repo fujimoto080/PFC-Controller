@@ -1,26 +1,18 @@
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
 import { defineDynamicRoute } from '@/lib/api/handler';
+import { logActivityInputSchema, uuidSchema } from '@/lib/api/schemas';
 import { deleteLogActivity, updateLogActivity } from '@/lib/server/log-activities';
-
-const inputSchema = z.object({
-  sportId: z.string().min(1),
-  name: z.string().min(1),
-  caloriesBurned: z.number().nonnegative(),
-  timestamp: z.number().int().positive(),
-});
-
-const idSchema = z.string().uuid();
 
 type Params = { id: string };
 
-export const PATCH = defineDynamicRoute<z.infer<typeof inputSchema>, true, Params>(
+export const PATCH = defineDynamicRoute<z.infer<typeof logActivityInputSchema>, true, Params>(
   {
     label: '運動記録の更新',
     auth: true,
     validateParams: ({ id }) =>
-      idSchema.safeParse(id).success ? true : { status: 400, message: '不正な ID' },
-    body: () => inputSchema,
+      uuidSchema.safeParse(id).success ? true : { status: 400, message: '不正な ID' },
+    body: () => logActivityInputSchema,
   },
   async (_req, { userId, body, params }) => {
     const activity = await updateLogActivity(userId, params.id, body);
@@ -36,7 +28,7 @@ export const DELETE = defineDynamicRoute<undefined, true, Params>(
     label: '運動記録の削除',
     auth: true,
     validateParams: ({ id }) =>
-      idSchema.safeParse(id).success ? true : { status: 400, message: '不正な ID' },
+      uuidSchema.safeParse(id).success ? true : { status: 400, message: '不正な ID' },
   },
   async (_req, { userId, params }) => {
     const result = await deleteLogActivity(userId, params.id);
