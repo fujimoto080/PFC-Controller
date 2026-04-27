@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { getWeeklyLog, getSettings } from '@/lib/storage';
 import { UserSettings, DEFAULT_TARGET } from '@/lib/types';
@@ -8,6 +8,7 @@ import { CardHeader } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { Progress } from '@/components/ui/progress';
 import { roundPFC } from '@/lib/utils';
+import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
 
 export function WeeklyPFCStats() {
     const [weeklyData, setWeeklyData] = useState<{
@@ -21,20 +22,21 @@ export function WeeklyPFCStats() {
         targetPFC: DEFAULT_TARGET,
     });
 
+    // 初回マウント時に週次ログと設定を読み込む
     useEffect(() => {
         queueMicrotask(() => {
             setWeeklyData(getWeeklyLog());
             setSettings(getSettings());
         });
-
-        const handleUpdate = () => {
-            queueMicrotask(() => {
-                setWeeklyData(getWeeklyLog());
-            });
-        };
-        window.addEventListener('pfc-update', handleUpdate);
-        return () => window.removeEventListener('pfc-update', handleUpdate);
     }, []);
+
+    // pfc-update イベントで週次ログを再読み込み
+    const handlePfcUpdate = useCallback(() => {
+        queueMicrotask(() => {
+            setWeeklyData(getWeeklyLog());
+        });
+    }, []);
+    useSubscribeToPfcUpdate(handlePfcUpdate);
 
     if (!weeklyData) return null;
 

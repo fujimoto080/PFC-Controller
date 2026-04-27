@@ -6,24 +6,27 @@ import { FoodItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
 
 const getCurrentTimestamp = () => Date.now();
 
 export function QuickAddButtons() {
   const [favorites, setFavorites] = useState<FoodItem[]>([]);
 
+  // 初回マウント時にお気に入りを読み込む
   useEffect(() => {
-    const loadFavorites = () => {
+    queueMicrotask(() => {
       setFavorites(getFavoriteFoods());
-    };
-
-    loadFavorites();
-
-    // Listen for updates
-    const handleUpdate = () => loadFavorites();
-    window.addEventListener('pfc-update', handleUpdate);
-    return () => window.removeEventListener('pfc-update', handleUpdate);
+    });
   }, []);
+
+  // pfc-update イベントで再読み込み
+  const handlePfcUpdate = useCallback(() => {
+    queueMicrotask(() => {
+      setFavorites(getFavoriteFoods());
+    });
+  }, []);
+  useSubscribeToPfcUpdate(handlePfcUpdate);
 
   const handleQuickAdd = useCallback(async (food: FoodItem) => {
     const timestamp = getCurrentTimestamp();

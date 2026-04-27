@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -8,6 +8,7 @@ import { getSettings } from '@/lib/storage';
 import { UserSettings } from '@/lib/types';
 import { cn, formatDate } from '@/lib/utils';
 import { useAllLogs } from '@/hooks/use-logs';
+import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
 import { IconButton } from '@/components/ui/icon-button';
 import { Card } from '@/components/ui/card';
 
@@ -16,20 +17,20 @@ export function Calendar() {
     const { logs } = useAllLogs();
     const [settings, setSettings] = useState<UserSettings | null>(null);
 
+    // 初回マウント時に設定を読み込む
     useEffect(() => {
         queueMicrotask(() => {
             setSettings(getSettings());
         });
-
-        const handleUpdate = () => {
-             queueMicrotask(() => {
-                setSettings(getSettings());
-            });
-        };
-
-        window.addEventListener('pfc-update', handleUpdate);
-        return () => window.removeEventListener('pfc-update', handleUpdate);
     }, []);
+
+    // pfc-update イベントで設定を再読み込み
+    const handlePfcUpdate = useCallback(() => {
+        queueMicrotask(() => {
+            setSettings(getSettings());
+        });
+    }, []);
+    useSubscribeToPfcUpdate(handlePfcUpdate);
 
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
