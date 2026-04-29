@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Camera, Plus, ScanBarcode } from 'lucide-react';
+import { Camera, Loader2, Plus, ScanBarcode } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,8 +58,15 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     useEatDateTime();
 
   // Form for manual entry
-  const { register, handleSubmit, reset, getValues, setValue, watch } =
-    useForm<ManualFoodFormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    getValues,
+    setValue,
+    watch,
+    formState: { isSubmitting },
+  } = useForm<ManualFoodFormValues>({
       defaultValues: initialData
         ? {
             name: initialData.name,
@@ -571,8 +578,21 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                         入力を食品リストにも保存する
                       </Label>
                     </div>
-                    <Button type="submit" className="w-full">
-                      <Plus className="mr-2 h-4 w-4" /> 記録を追加
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+                          追加中...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" /> 記録を追加
+                        </>
+                      )}
                     </Button>
                   </form>
                 </CardContent>
