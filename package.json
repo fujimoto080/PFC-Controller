@@ -18,7 +18,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:vrt": "playwright test",
-    "knip": "pnpm dlx knip"
+    "knip": "pnpm dlx knip",
+    "mcp:backup": "node scripts/mcp-backup-server.mjs"
   },
   "dependencies": {
     "@auth/pg-adapter": "^1.11.2",
