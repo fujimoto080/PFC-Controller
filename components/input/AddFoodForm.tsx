@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Camera, Loader2, Plus, ScanBarcode } from 'lucide-react';
 import Link from 'next/link';
@@ -19,6 +19,7 @@ import { FoodItem, FoodItemInput } from '@/lib/types';
 import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
+import { clearFormDraft, useFormDraft } from '@/hooks/use-form-draft';
 import { toast } from '@/lib/toast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { getSimilarFoodSuggestions } from '@/lib/food-suggestions';
@@ -37,6 +38,16 @@ interface ManualFoodFormValues {
   carbs?: number;
   calories?: number;
   store?: string;
+}
+
+// 入力途中のデータを localStorage に保持するためのキー
+const FORM_DRAFT_STORAGE_KEY = 'pfc_add_food_form_draft';
+
+interface AddFoodFormDraft {
+  form: ManualFoodFormValues;
+  aiInputText: string;
+  saveToDictionary: boolean;
+  activeTab: string;
 }
 
 export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
@@ -78,11 +89,44 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
           }
         : undefined,
     });
-  const watchedName = watch('name') ?? '';
+  const watchedValues = watch();
+  const watchedName = watchedValues.name ?? '';
   const similarFoods = useMemo(
     () => getSimilarFoodSuggestions(foods, watchedName),
     [foods, watchedName],
   );
+
+  // 編集モード (initialData 指定) では下書き機能は無効。新規追加時のみ有効化する
+  const isDraftEnabled = !initialData;
+  const draftValue = useMemo<AddFoodFormDraft>(
+    () => ({
+      form: watchedValues,
+      aiInputText,
+      saveToDictionary,
+      activeTab,
+    }),
+    [watchedValues, aiInputText, saveToDictionary, activeTab],
+  );
+  const applyDraft = useCallback(
+    (draft: AddFoodFormDraft) => {
+      if (draft.form) {
+        reset(draft.form);
+      }
+      if (typeof draft.aiInputText === 'string') {
+        setAiInputText(draft.aiInputText);
+      }
+      if (typeof draft.saveToDictionary === 'boolean') {
+        setSaveToDictionary(draft.saveToDictionary);
+      }
+      if (typeof draft.activeTab === 'string') {
+        setActiveTab(draft.activeTab);
+      }
+    },
+    [reset],
+  );
+  useFormDraft(FORM_DRAFT_STORAGE_KEY, draftValue, applyDraft, {
+    enabled: isDraftEnabled,
+  });
 
   const applyFoodDataToForm = (data: BarcodeFood) => {
     reset({
@@ -181,6 +225,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
     reset();
     setSaveToDictionary(false);
+    setAiInputText('');
+    clearFormDraft(FORM_DRAFT_STORAGE_KEY);
     if (onSuccess) {
       onSuccess();
     } else {
