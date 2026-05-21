@@ -1,26 +1,50 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { loadCloudData, isCloudDataLoaded } from '@/lib/storage/state';
+import {
+  loadCloudData,
+  isCloudDataLoaded,
+  hydrateFromCache,
+} from '@/lib/storage/state';
+
+// SSR では useLayoutEffect が使えないので useEffect にフォールバック
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 type Status = 'loading' | 'ready';
 
 interface Props {
   children: React.ReactNode;
   isAuthenticated: boolean;
+  userId: string | null;
 }
 
-export function CloudDataProvider({ children, isAuthenticated }: Props) {
+export function CloudDataProvider({ children, isAuthenticated, userId }: Props) {
   const pathname = usePathname();
+  // SSR と CSR の初期値を揃えるため、初期値は常に 'loading'。
+  // useEffect 内でキャッシュを読み込んだら同期的に 'ready' に切り替える。
   const [status, setStatus] = useState<Status>(() =>
-    isAuthenticated && !isCloudDataLoaded() ? 'loading' : 'ready',
+    !isAuthenticated || isCloudDataLoaded() ? 'ready' : 'loading',
   );
 
+  // localStorage からの hydrate は paint 前に行ってローディング画面のチラつきを防ぐ
+  useIsomorphicLayoutEffect(() => {
+    if (!isAuthenticated || !userId) return;
+    if (isCloudDataLoaded()) {
+      setStatus('ready');
+      return;
+    }
+    if (hydrateFromCache(userId)) {
+      setStatus('ready');
+    }
+  }, [isAuthenticated, userId]);
+
+  // 鮮度を保つため、マウント時 / ユーザー変更時に裏で再取得する
   useEffect(() => {
-    if (status !== 'loading') return;
-    loadCloudData().finally(() => setStatus('ready'));
-  }, [status]);
+    if (!isAuthenticated || !userId) return;
+    void loadCloudData(userId).finally(() => setStatus('ready'));
+  }, [isAuthenticated, userId]);
 
   if (!isAuthenticated) {
     if (pathname === '/login') return <>{children}</>;

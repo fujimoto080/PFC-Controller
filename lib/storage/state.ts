@@ -39,10 +39,60 @@ export const cloudState: CloudState = {
 
 const isClient = typeof window !== 'undefined';
 
+// localStorage に保存するキャッシュのバージョン。スキーマ変更時にインクリメント
+const CACHE_VERSION = 1;
+const CACHE_KEY_PREFIX = `pfc:cache:v${CACHE_VERSION}:`;
+
+let currentUserId: string | null = null;
+
+function cacheKey(userId: string): string {
+  return `${CACHE_KEY_PREFIX}${userId}`;
+}
+
+interface CachedSnapshot {
+  logs: Record<string, DailyLog>;
+  settings: StoredSettings;
+  foods: FoodItem[];
+  sports: SportDefinition[];
+}
+
+function readCache(userId: string): CachedSnapshot | null {
+  if (!isClient) return null;
+  try {
+    const raw = window.localStorage.getItem(cacheKey(userId));
+    if (!raw) return null;
+    return JSON.parse(raw) as CachedSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(userId: string) {
+  if (!isClient) return;
+  try {
+    const snapshot: CachedSnapshot = {
+      logs: cloudState.logs,
+      settings: cloudState.settings,
+      foods: cloudState.foods,
+      sports: cloudState.sports,
+    };
+    window.localStorage.setItem(cacheKey(userId), JSON.stringify(snapshot));
+  } catch {
+    // 容量超過などは無視
+  }
+}
+
+function persistCache() {
+  if (currentUserId && cloudState.loaded) {
+    writeCache(currentUserId);
+  }
+}
+
 export function refreshUI() {
   if (isClient) {
     window.dispatchEvent(new Event('pfc-update'));
   }
+  persistCache();
 }
 
 export function isCloudDataLoaded(): boolean {
@@ -148,7 +198,35 @@ export function toSportDefinition(sport: SportDefinition): SportDefinition {
   };
 }
 
-export async function loadCloudData(): Promise<boolean> {
+/**
+ * localStorage に保存されたキャッシュを cloudState に流し込み、即時に loaded=true にする。
+ * キャッシュが無い場合は何もしない。fetchCloudData() を別途呼び出すこと。
+ */
+export function hydrateFromCache(userId: string): boolean {
+  currentUserId = userId;
+  const cached = readCache(userId);
+  if (!cached) return false;
+
+  cloudState.logs = cached.logs ?? {};
+  cloudState.foods = mergeGeneratedFoods(
+    Array.isArray(cached.foods) ? cached.foods : [],
+  );
+  const sports = normalizeSports(cached.sports);
+  cloudState.sports = sports.length > 0 ? sports : [...DEFAULT_SPORTS];
+  cloudState.settings = {
+    targetPFC: cached.settings?.targetPFC ?? DEFAULT_TARGET,
+    profile: cached.settings?.profile,
+    favoriteFoodIds: Array.isArray(cached.settings?.favoriteFoodIds)
+      ? cached.settings.favoriteFoodIds
+      : [],
+  };
+  cloudState.loaded = true;
+  refreshUI();
+  return true;
+}
+
+export async function loadCloudData(userId?: string): Promise<boolean> {
+  if (userId) currentUserId = userId;
   try {
     const response = await fetch('/api/cloud-data');
     if (!response.ok) {

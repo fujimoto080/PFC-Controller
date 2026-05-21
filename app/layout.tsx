@@ -24,13 +24,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  const isAuthenticated = !!session?.user?.id;
+  const userId = session?.user?.id ?? null;
+  const isAuthenticated = !!userId;
 
   return (
     <html lang="ja">
       <body className="bg-background text-foreground min-h-screen pb-20 antialiased">
         <main className="container mx-auto max-w-md px-4 py-4">
-          <CloudDataProvider isAuthenticated={isAuthenticated}>
+          <CloudDataProvider isAuthenticated={isAuthenticated} userId={userId}>
             {children}
           </CloudDataProvider>
         </main>
