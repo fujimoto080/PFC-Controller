@@ -124,14 +124,17 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     };
 
     const onSubmitManual = async (data: ManualFoodFormValues) => {
-        // Basic validation / conversion
+        // 空欄は valueAsNumber により NaN になるため 0 に丸める
+        const toNumber = (value: number | undefined) =>
+            Number.isFinite(value) ? (value as number) : 0;
+
         const item: FoodItem = {
             id: generateId(),
             name: data.name,
-            protein: Number(data.protein ?? 0),
-            fat: Number(data.fat ?? 0),
-            carbs: Number(data.carbs ?? 0),
-            calories: Number(data.calories ?? 0),
+            protein: toNumber(data.protein),
+            fat: toNumber(data.fat),
+            carbs: toNumber(data.carbs),
+            calories: toNumber(data.calories),
             store: data.store || undefined,
             timestamp: getSelectedTimestamp(),
         };
