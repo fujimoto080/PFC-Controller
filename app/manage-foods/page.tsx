@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Pencil, Trash, Save, X, Star, ChevronDown, ChevronRight, ScanBarcode } from 'lucide-react';
-import { Reorder } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { toast } from '@/lib/toast';
 
@@ -16,7 +15,6 @@ import {
     addFoodToDictionary,
     updateFoodInDictionary,
     deleteFoodFromDictionary,
-    saveFoodDictionary,
 } from '@/lib/storage/foods';
 import { toggleFavoriteFood, isFavoriteFood } from '@/lib/storage/favorites';
 import { addFoodItem } from '@/lib/storage/logs';
@@ -85,21 +83,6 @@ const buildStoreSections = (foods: FoodItem[]): StoreGroupSection[] => {
     return sections;
 };
 
-const reorderWithinSubset = (foods: FoodItem[], targetIds: string[]) => {
-    const targetSet = new Set(targetIds);
-    const orderedFoods = targetIds
-        .map((id) => foods.find((food) => food.id === id))
-        .filter((food): food is FoodItem => !!food);
-    let index = 0;
-
-    return foods.map((food) => {
-        if (!targetSet.has(food.id)) return food;
-        const next = orderedFoods[index];
-        index += 1;
-        return next;
-    });
-};
-
 export default function ManageFoodsPage() {
     const { foods, uniqueStores } = useFoodDictionary();
     const [searchQuery, setSearchQuery] = useState('');
@@ -109,9 +92,6 @@ export default function ManageFoodsPage() {
     const [selectedFoodIds, setSelectedFoodIds] = useState<string[]>([]);
     const [bulkStoreName, setBulkStoreName] = useState('');
     const [bulkGroupName, setBulkGroupName] = useState('');
-    const [isSortLocked, setIsSortLocked] = useState(true);
-    const [draggingFoodId, setDraggingFoodId] = useState<string | null>(null);
-    const [dropTarget, setDropTarget] = useState<{ storeName: string; groupName: string } | null>(null);
     const [barcodeInput, setBarcodeInput] = useState('');
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [barcodeMappingsByFoodKey, setBarcodeMappingsByFoodKey] = useState<Record<string, string[]>>({});
@@ -301,102 +281,19 @@ export default function ManageFoodsPage() {
         const nextStore = bulkStoreName.trim() || undefined;
         const nextGroup = bulkGroupName.trim() || undefined;
 
-        const updatedFoods = foods.map((food) =>
-            selectedSet.has(food.id)
-                ? {
-                      ...food,
-                      store: nextStore,
-                      storeGroup: nextGroup,
-                      timestamp: getCurrentTimestamp(),
-                  }
-                : food,
-        );
+        // 選択された食品を1件ずつ更新する（各 PATCH /api/foods/[id]）。
+        for (const food of foods) {
+            if (!selectedSet.has(food.id)) continue;
+            void updateFoodInDictionary({
+                ...food,
+                store: nextStore,
+                storeGroup: nextGroup,
+                timestamp: getCurrentTimestamp(),
+            });
+        }
 
-        saveFoodDictionary(updatedFoods);
         toast.success('選択した食品の店舗とグループを更新しました');
         cancelSelection();
-    };
-
-    const handleFoodReorder = (storeName: string, groupName: string, reorderedIds: string[]) => {
-        if (searchQuery.trim()) return;
-
-        const targetIds = foods
-            .filter((food) => getStoreName(food) === storeName && getStoreGroupName(food) === groupName)
-            .map((food) => food.id);
-
-        if (targetIds.length <= 1) return;
-        const nextFoods = reorderWithinSubset(foods, reorderedIds);
-        saveFoodDictionary(nextFoods);
-    };
-
-    const handleGroupReorder = (storeName: string, reorderedGroupNames: string[]) => {
-        if (searchQuery.trim()) return;
-
-        const storeFoods = foods.filter((food) => getStoreName(food) === storeName);
-        if (storeFoods.length <= 1) return;
-
-        const groupMap = new Map<string, FoodItem[]>();
-        storeFoods.forEach((food) => {
-            const groupName = getStoreGroupName(food);
-            const groupFoods = groupMap.get(groupName) || [];
-            groupFoods.push(food);
-            groupMap.set(groupName, groupFoods);
-        });
-
-        const reorderedStoreFoods = reorderedGroupNames.flatMap((groupName) => groupMap.get(groupName) || []);
-        const storeFoodIds = new Set(storeFoods.map((food) => food.id));
-        let index = 0;
-
-        const nextFoods = foods.map((food) => {
-            if (!storeFoodIds.has(food.id)) return food;
-            const nextFood = reorderedStoreFoods[index];
-            index += 1;
-            return nextFood;
-        });
-
-        saveFoodDictionary(nextFoods);
-    };
-
-    const moveFoodToStoreGroup = (foodId: string, targetStoreName: string, targetGroupName: string) => {
-        const movingFood = foods.find((food) => food.id === foodId);
-        if (!movingFood) return;
-
-        if (getStoreName(movingFood) === targetStoreName && getStoreGroupName(movingFood) === targetGroupName) return;
-
-        const nextMovedFood: FoodItem = {
-            ...movingFood,
-            store: targetStoreName === 'その他' ? undefined : targetStoreName,
-            storeGroup: targetGroupName === '未分類' ? undefined : targetGroupName,
-            timestamp: getCurrentTimestamp(),
-        };
-
-        const remainingFoods = foods.filter((food) => food.id !== foodId);
-        const targetGroupLastIndex = remainingFoods.reduce(
-            (lastIndex, food, index) =>
-                getStoreName(food) === targetStoreName && getStoreGroupName(food) === targetGroupName ? index : lastIndex,
-            -1,
-        );
-
-        if (targetGroupLastIndex >= 0) {
-            const nextFoods = [...remainingFoods];
-            nextFoods.splice(targetGroupLastIndex + 1, 0, nextMovedFood);
-            saveFoodDictionary(nextFoods);
-            return;
-        }
-
-        const targetStoreLastIndex = remainingFoods.reduce(
-            (lastIndex, food, index) => (getStoreName(food) === targetStoreName ? index : lastIndex),
-            -1,
-        );
-
-        if (targetStoreLastIndex >= 0) {
-            const nextFoods = [...remainingFoods];
-            nextFoods.splice(targetStoreLastIndex + 1, 0, nextMovedFood);
-            saveFoodDictionary(nextFoods);
-            return;
-        }
-
-        saveFoodDictionary([...remainingFoods, nextMovedFood]);
     };
 
     const getStoreGroupKey = (storeName: string, groupName: string) => `${storeName}::${groupName}`;
@@ -420,7 +317,6 @@ export default function ManageFoodsPage() {
     );
 
     const sections = useMemo(() => buildStoreSections(filteredFoods), [filteredFoods]);
-    const disableDnD = isSortLocked || isSelecting || !!searchQuery.trim();
 
     return (
         <div className="space-y-6 pb-28">
@@ -538,14 +434,6 @@ export default function ManageFoodsPage() {
                                         店舗/グループ変更
                                     </Button>
                                 )}
-                                <Button
-                                    variant={isSortLocked ? 'outline' : 'default'}
-                                    onClick={() => setIsSortLocked((prev) => !prev)}
-                                    aria-pressed={!isSortLocked}
-                                    aria-label={isSortLocked ? '並び替え無効' : '並び替え可能'}
-                                >
-                                    並び替え
-                                </Button>
                                 <Button onClick={startAdd} aria-label="新規追加">
                                     +
                                 </Button>
@@ -558,14 +446,6 @@ export default function ManageFoodsPage() {
                                 />
                             </div>
                         </div>
-
-                        {isSortLocked && (
-                            <p className="text-xs text-muted-foreground">並び替えを無効化中です。</p>
-                        )}
-
-                        {searchQuery.trim() && (
-                            <p className="text-xs text-muted-foreground">検索中はドラッグ並び替えを無効化しています。</p>
-                        )}
 
                         <div className="space-y-2">
                             {filteredFoods.length === 0 ? (
@@ -589,167 +469,102 @@ export default function ManageFoodsPage() {
                                         {collapsedStores.includes(section.storeName) && null}
 
                                         {!collapsedStores.includes(section.storeName) && (
-
-                                        <Reorder.Group
-                                            axis="y"
-                                            values={section.groups.map((group) => group.groupName)}
-                                            onReorder={(groupNames) => handleGroupReorder(section.storeName, groupNames)}
-                                            className="space-y-3"
-                                        >
-                                            {section.groups.map((group) => (
-                                                (() => {
+                                            <div className="space-y-3">
+                                                {section.groups.map((group) => {
                                                     const groupKey = getStoreGroupKey(section.storeName, group.groupName);
                                                     const isGroupCollapsed = collapsedGroups.includes(groupKey);
 
                                                     return (
-                                                <Reorder.Item
-                                                    key={`${section.storeName}-${group.groupName}`}
-                                                    value={group.groupName}
-                                                    drag={!disableDnD}
-                                                    dragSnapToOrigin
-                                                >
-                                                    <div className="space-y-2 rounded-md border bg-background p-2">
-                                                        <button
-                                                            type="button"
-                                                            className="flex w-full items-center px-1 text-left text-xs font-medium text-muted-foreground"
-                                                            onClick={() => toggleStoreGroupCollapsed(section.storeName, group.groupName)}
+                                                        <div
+                                                            key={`${section.storeName}-${group.groupName}`}
+                                                            className="space-y-2 rounded-md border bg-background p-2"
                                                         >
-                                                            {isGroupCollapsed ? (
-                                                                <ChevronRight className="mr-1 h-3.5 w-3.5" />
-                                                            ) : (
-                                                                <ChevronDown className="mr-1 h-3.5 w-3.5" />
-                                                            )}
-                                                            {group.groupName}
-                                                        </button>
+                                                            <button
+                                                                type="button"
+                                                                className="flex w-full items-center px-1 text-left text-xs font-medium text-muted-foreground"
+                                                                onClick={() => toggleStoreGroupCollapsed(section.storeName, group.groupName)}
+                                                            >
+                                                                {isGroupCollapsed ? (
+                                                                    <ChevronRight className="mr-1 h-3.5 w-3.5" />
+                                                                ) : (
+                                                                    <ChevronDown className="mr-1 h-3.5 w-3.5" />
+                                                                )}
+                                                                {group.groupName}
+                                                            </button>
 
-                                                        {!isGroupCollapsed && (
-                                                        <Reorder.Group
-                                                            axis="y"
-                                                            values={group.foods.map((food) => food.id)}
-                                                            onReorder={(ids) =>
-                                                                handleFoodReorder(section.storeName, group.groupName, ids)
-                                                            }
-                                                            className="space-y-2"
-                                                            onDragOver={(event) => {
-                                                                if (disableDnD || !draggingFoodId) return;
-                                                                event.preventDefault();
-                                                                setDropTarget({
-                                                                    storeName: section.storeName,
-                                                                    groupName: group.groupName,
-                                                                });
-                                                            }}
-                                                            onDragLeave={() => {
-                                                                if (!dropTarget) return;
-                                                                if (
-                                                                    dropTarget.storeName === section.storeName &&
-                                                                    dropTarget.groupName === group.groupName
-                                                                ) {
-                                                                    setDropTarget(null);
-                                                                }
-                                                            }}
-                                                            onDrop={(event) => {
-                                                                event.preventDefault();
-                                                                if (!draggingFoodId || disableDnD) return;
+                                                            {!isGroupCollapsed && (
+                                                                <div className="space-y-2">
+                                                                    {group.foods.map((food) => {
+                                                                        const isSelected = selectedFoodIds.includes(food.id);
 
-                                                                moveFoodToStoreGroup(
-                                                                    draggingFoodId,
-                                                                    section.storeName,
-                                                                    group.groupName,
-                                                                );
-                                                                setDraggingFoodId(null);
-                                                                setDropTarget(null);
-                                                            }}
-                                                        >
-                                                            {group.foods.map((food) => {
-                                                                const isSelected = selectedFoodIds.includes(food.id);
-                                                                const isDropTarget =
-                                                                    dropTarget?.storeName === section.storeName &&
-                                                                    dropTarget.groupName === group.groupName;
-
-                                                                return (
-                                                                    <Reorder.Item
-                                                                        key={food.id}
-                                                                        value={food.id}
-                                                                        drag={!disableDnD}
-                                                                        dragSnapToOrigin
-                                                                        draggable={!disableDnD}
-                                                                        onDragStart={() => setDraggingFoodId(food.id)}
-                                                                        onDragEnd={() => {
-                                                                            setDraggingFoodId(null);
-                                                                            setDropTarget(null);
-                                                                        }}
-                                                                    >
-                                                                        <div
-                                                                            className={`flex items-center justify-between gap-2 rounded-lg border p-3 ${
-                                                                                isSelected
-                                                                                    ? 'border-primary bg-primary/5'
-                                                                                    : isDropTarget
-                                                                                      ? 'border-primary/60 bg-primary/10'
-                                                                                      : 'bg-card'
-                                                                            }`}
-                                                                            onClick={() => {
-                                                                                if (!isSelecting) return;
-                                                                                toggleFoodSelection(food.id);
-                                                                            }}
-                                                                        >
-                                                                            {isSelecting && (
-                                                                                <Checkbox
-                                                                                    checked={isSelected}
-                                                                                    onCheckedChange={() => toggleFoodSelection(food.id)}
-                                                                                    onClick={(e) => e.stopPropagation()}
-                                                                                    aria-label={`${food.name}を選択`}
-                                                                                />
-                                                                            )}
-                                                                            <div className="flex-1 pr-2">
-                                                                                <div className="font-medium">{food.name}</div>
-                                                                                <div className="text-xs text-muted-foreground">
-                                                                                    P:{food.protein} F:{food.fat} C:{food.carbs} | {food.calories}
-                                                                                    kcal
-                                                                                </div>
-                                                                                {(barcodeMappingsByFoodKey[buildFoodMatchKey(food)] ?? []).length > 0 && (
+                                                                        return (
+                                                                            <div
+                                                                                key={food.id}
+                                                                                className={`flex items-center justify-between gap-2 rounded-lg border p-3 ${
+                                                                                    isSelected
+                                                                                        ? 'border-primary bg-primary/5'
+                                                                                        : 'bg-card'
+                                                                                }`}
+                                                                                onClick={() => {
+                                                                                    if (!isSelecting) return;
+                                                                                    toggleFoodSelection(food.id);
+                                                                                }}
+                                                                            >
+                                                                                {isSelecting && (
+                                                                                    <Checkbox
+                                                                                        checked={isSelected}
+                                                                                        onCheckedChange={() => toggleFoodSelection(food.id)}
+                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                        aria-label={`${food.name}を選択`}
+                                                                                    />
+                                                                                )}
+                                                                                <div className="flex-1 pr-2">
+                                                                                    <div className="font-medium">{food.name}</div>
                                                                                     <div className="text-xs text-muted-foreground">
-                                                                                        バーコード: {(barcodeMappingsByFoodKey[buildFoodMatchKey(food)] ?? []).join(', ')}
+                                                                                        P:{food.protein} F:{food.fat} C:{food.carbs} | {food.calories}
+                                                                                        kcal
+                                                                                    </div>
+                                                                                    {(barcodeMappingsByFoodKey[buildFoodMatchKey(food)] ?? []).length > 0 && (
+                                                                                        <div className="text-xs text-muted-foreground">
+                                                                                            バーコード: {(barcodeMappingsByFoodKey[buildFoodMatchKey(food)] ?? []).join(', ')}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                                {!isSelecting ? (
+                                                                                    <div className="flex gap-1">
+                                                                                        <IconButton onClick={() => handleAddLog(food)}>
+                                                                                            <Plus className="h-4 w-4" />
+                                                                                        </IconButton>
+                                                                                        <IconButton onClick={() => handleToggleFavorite(food.id)}>
+                                                                                            <Star
+                                                                                                className={`h-4 w-4 ${
+                                                                                                    isFavoriteFood(food.id)
+                                                                                                        ? 'fill-yellow-400 text-yellow-400'
+                                                                                                        : 'text-muted-foreground'
+                                                                                                }`}
+                                                                                            />
+                                                                                        </IconButton>
+                                                                                        <IconButton onClick={() => startEdit(food)}>
+                                                                                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                                                                                        </IconButton>
+                                                                                        <IconButton onClick={() => handleDelete(food.id, food.name)}>
+                                                                                            <Trash className="h-4 w-4 text-destructive" />
+                                                                                        </IconButton>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="text-xs text-primary">
+                                                                                        {isSelected ? '選択中' : 'タップで選択'}
                                                                                     </div>
                                                                                 )}
                                                                             </div>
-                                                                            {!isSelecting ? (
-                                                                                <div className="flex gap-1">
-                                                                                    <IconButton onClick={() => handleAddLog(food)}>
-                                                                                        <Plus className="h-4 w-4" />
-                                                                                    </IconButton>
-                                                                                    <IconButton onClick={() => handleToggleFavorite(food.id)}>
-                                                                                        <Star
-                                                                                            className={`h-4 w-4 ${
-                                                                                                isFavoriteFood(food.id)
-                                                                                                    ? 'fill-yellow-400 text-yellow-400'
-                                                                                                    : 'text-muted-foreground'
-                                                                                            }`}
-                                                                                        />
-                                                                                    </IconButton>
-                                                                                    <IconButton onClick={() => startEdit(food)}>
-                                                                                        <Pencil className="h-4 w-4 text-muted-foreground" />
-                                                                                    </IconButton>
-                                                                                    <IconButton onClick={() => handleDelete(food.id, food.name)}>
-                                                                                        <Trash className="h-4 w-4 text-destructive" />
-                                                                                    </IconButton>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div className="text-xs text-primary">
-                                                                                    {isSelected ? '選択中' : 'タップで選択'}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    </Reorder.Item>
-                                                                );
-                                                            })}
-                                                        </Reorder.Group>
-                                                        )}
-                                                    </div>
-                                                </Reorder.Item>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     );
-                                                })()
-                                            ))}
-                                        </Reorder.Group>
+                                                })}
+                                            </div>
                                         )}
                                     </div>
                                 ))
