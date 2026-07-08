@@ -247,46 +247,78 @@ class PostgresCloudDataStore implements CloudDataStore {
     userId: string,
     foods: unknown[],
   ) {
-    await client.query(`DELETE FROM pfc_foods WHERE user_id = $1`, [userId]);
+    // 全消し→逐次INSERT ではなく、1本のマルチrow UPSERT + 不要行の prune で
+    // Postgres への往復を「件数分」から「常に2回」に抑える。position で並び順を保持する。
+    const ids: string[] = [];
+    const values: unknown[] = [];
+    const rows: string[] = [];
 
-    for (const [position, foodRaw] of foods.entries()) {
+    foods.forEach((foodRaw, position) => {
       const food = asRecord(foodRaw);
       const foodId =
         typeof food.id === 'string' && food.id.trim() ? food.id.trim() : `food-${position}`;
+      ids.push(foodId);
 
-      await client.query(
-        `
-        INSERT INTO pfc_foods (
-          user_id,
-          food_id,
-          position,
-          name,
-          protein,
-          fat,
-          carbs,
-          calories,
-          timestamp_ms,
-          store,
-          store_group,
-          image
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        `,
-        [
-          userId,
-          foodId,
-          position,
-          typeof food.name === 'string' ? food.name : '',
-          toFiniteNumber(food.protein),
-          toFiniteNumber(food.fat),
-          toFiniteNumber(food.carbs),
-          toFiniteNumber(food.calories),
-          toFiniteNumber(food.timestamp),
-          typeof food.store === 'string' ? food.store : null,
-          typeof food.storeGroup === 'string' ? food.storeGroup : null,
-          typeof food.image === 'string' ? food.image : null,
-        ],
+      const base = values.length;
+      rows.push(
+        `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12})`,
       );
+      values.push(
+        userId,
+        foodId,
+        position,
+        typeof food.name === 'string' ? food.name : '',
+        toFiniteNumber(food.protein),
+        toFiniteNumber(food.fat),
+        toFiniteNumber(food.carbs),
+        toFiniteNumber(food.calories),
+        toFiniteNumber(food.timestamp),
+        typeof food.store === 'string' ? food.store : null,
+        typeof food.storeGroup === 'string' ? food.storeGroup : null,
+        typeof food.image === 'string' ? food.image : null,
+      );
+    });
+
+    if (rows.length === 0) {
+      await client.query(`DELETE FROM pfc_foods WHERE user_id = $1`, [userId]);
+      return;
     }
+
+    await client.query(
+      `
+      INSERT INTO pfc_foods (
+        user_id,
+        food_id,
+        position,
+        name,
+        protein,
+        fat,
+        carbs,
+        calories,
+        timestamp_ms,
+        store,
+        store_group,
+        image
+      ) VALUES ${rows.join(', ')}
+      ON CONFLICT (user_id, food_id) DO UPDATE SET
+        position = EXCLUDED.position,
+        name = EXCLUDED.name,
+        protein = EXCLUDED.protein,
+        fat = EXCLUDED.fat,
+        carbs = EXCLUDED.carbs,
+        calories = EXCLUDED.calories,
+        timestamp_ms = EXCLUDED.timestamp_ms,
+        store = EXCLUDED.store,
+        store_group = EXCLUDED.store_group,
+        image = EXCLUDED.image
+      `,
+      values,
+    );
+
+    await client.query(
+      `DELETE FROM pfc_foods WHERE user_id = $1 AND food_id <> ALL($2::text[])`,
+      [userId, ids],
+    );
   }
 
   private async writeSports(
@@ -294,32 +326,54 @@ class PostgresCloudDataStore implements CloudDataStore {
     userId: string,
     sports: unknown[],
   ) {
-    await client.query(`DELETE FROM pfc_sports WHERE user_id = $1`, [userId]);
+    // writeFoods と同様に、全消し→逐次INSERT を UPSERT + prune に置き換える。
+    const ids: string[] = [];
+    const values: unknown[] = [];
+    const rows: string[] = [];
 
-    for (const [position, sportRaw] of sports.entries()) {
+    sports.forEach((sportRaw, position) => {
       const sport = asRecord(sportRaw);
       const sportId =
         typeof sport.id === 'string' && sport.id.trim() ? sport.id.trim() : `sport-${position}`;
+      ids.push(sportId);
 
-      await client.query(
-        `
-        INSERT INTO pfc_sports (
-          user_id,
-          sport_id,
-          position,
-          name,
-          calories_burned
-        ) VALUES ($1, $2, $3, $4, $5)
-        `,
-        [
-          userId,
-          sportId,
-          position,
-          typeof sport.name === 'string' ? sport.name : '',
-          toFiniteNumber(sport.caloriesBurned),
-        ],
+      const base = values.length;
+      rows.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`);
+      values.push(
+        userId,
+        sportId,
+        position,
+        typeof sport.name === 'string' ? sport.name : '',
+        toFiniteNumber(sport.caloriesBurned),
       );
+    });
+
+    if (rows.length === 0) {
+      await client.query(`DELETE FROM pfc_sports WHERE user_id = $1`, [userId]);
+      return;
     }
+
+    await client.query(
+      `
+      INSERT INTO pfc_sports (
+        user_id,
+        sport_id,
+        position,
+        name,
+        calories_burned
+      ) VALUES ${rows.join(', ')}
+      ON CONFLICT (user_id, sport_id) DO UPDATE SET
+        position = EXCLUDED.position,
+        name = EXCLUDED.name,
+        calories_burned = EXCLUDED.calories_burned
+      `,
+      values,
+    );
+
+    await client.query(
+      `DELETE FROM pfc_sports WHERE user_id = $1 AND sport_id <> ALL($2::text[])`,
+      [userId, ids],
+    );
   }
 
   async get(userId: string): Promise<UserDataPayload> {
