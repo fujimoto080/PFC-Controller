@@ -11,7 +11,8 @@ import { toast } from '../toast';
 import { roundPFC } from '../utils';
 import generatedFoodsRaw from '@/data/generated_foods.json';
 
-export type ResourceKey = 'settings' | 'foods' | 'sports';
+// foods は行単位 REST (/api/foods) で同期するため、この汎用パスの対象外。
+export type ResourceKey = 'settings' | 'sports';
 
 export type StoredSettings = Omit<UserSettings, 'sports'>;
 
@@ -115,8 +116,6 @@ function valueFor(resource: ResourceKey): unknown {
   switch (resource) {
     case 'settings':
       return serializeSettings(cloudState.settings);
-    case 'foods':
-      return cloudState.foods;
     case 'sports':
       return cloudState.sports;
   }
@@ -244,9 +243,9 @@ export async function loadCloudData(userId?: string): Promise<boolean> {
     const rawFoods = Array.isArray(payload?.foods)
       ? (payload!.foods as FoodItem[])
       : [];
-    const mergedFoods = mergeGeneratedFoods(rawFoods);
-    const foodsChanged = mergedFoods.length !== rawFoods.length;
-    cloudState.foods = mergedFoods;
+    // 既定食品(generated_foods.json)は毎回クライアント側でマージするだけで DB には保存しない。
+    // 編集された既定食品は /api/foods 側の upsert で行が作られる。
+    cloudState.foods = mergeGeneratedFoods(rawFoods);
     cloudState.sports =
       storedSports.length > 0 ? storedSports : [...DEFAULT_SPORTS];
     cloudState.settings = {
@@ -258,9 +257,6 @@ export async function loadCloudData(userId?: string): Promise<boolean> {
     };
     cloudState.loaded = true;
 
-    if (foodsChanged) {
-      void syncResource('foods');
-    }
     refreshUI();
     return true;
   } catch (error) {

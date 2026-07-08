@@ -2,8 +2,8 @@ import 'server-only';
 
 import { getCloudDataStore } from '@/lib/persistent-store';
 
-// クラウド側で扱うリソース種別
-export type CloudResource = 'settings' | 'foods' | 'sports';
+// クラウド側で扱うリソース種別（foods は行単位 REST /api/foods に移行済み）
+export type CloudResource = 'settings' | 'sports';
 
 export async function getUserData(userId: string) {
   return getCloudDataStore().get(userId);

@@ -242,53 +242,6 @@ class PostgresCloudDataStore implements CloudDataStore {
     );
   }
 
-  private async writeFoods(
-    client: PoolClient,
-    userId: string,
-    foods: unknown[],
-  ) {
-    await client.query(`DELETE FROM pfc_foods WHERE user_id = $1`, [userId]);
-
-    for (const [position, foodRaw] of foods.entries()) {
-      const food = asRecord(foodRaw);
-      const foodId =
-        typeof food.id === 'string' && food.id.trim() ? food.id.trim() : `food-${position}`;
-
-      await client.query(
-        `
-        INSERT INTO pfc_foods (
-          user_id,
-          food_id,
-          position,
-          name,
-          protein,
-          fat,
-          carbs,
-          calories,
-          timestamp_ms,
-          store,
-          store_group,
-          image
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        `,
-        [
-          userId,
-          foodId,
-          position,
-          typeof food.name === 'string' ? food.name : '',
-          toFiniteNumber(food.protein),
-          toFiniteNumber(food.fat),
-          toFiniteNumber(food.carbs),
-          toFiniteNumber(food.calories),
-          toFiniteNumber(food.timestamp),
-          typeof food.store === 'string' ? food.store : null,
-          typeof food.storeGroup === 'string' ? food.storeGroup : null,
-          typeof food.image === 'string' ? food.image : null,
-        ],
-      );
-    }
-  }
-
   private async writeSports(
     client: PoolClient,
     userId: string,
@@ -443,8 +396,6 @@ class PostgresCloudDataStore implements CloudDataStore {
       switch (resource) {
         case 'settings':
           return this.writeSettings(client, userId, asRecord(value));
-        case 'foods':
-          return this.writeFoods(client, userId, asArray(value));
         case 'sports':
           return this.writeSports(client, userId, asArray(value));
       }

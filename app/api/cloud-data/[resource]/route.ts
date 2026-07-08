@@ -5,7 +5,6 @@ import { saveUserResource, type CloudResource } from '@/lib/cloud-data';
 
 // 各リソースの body スキーマとエラーラベル
 const resourceConfigs: Record<CloudResource, { schema: ZodType<unknown>; label: string }> = {
-  foods: { schema: z.array(z.unknown()), label: '食品辞書' },
   settings: { schema: z.record(z.string(), z.unknown()), label: '設定' },
   sports: { schema: z.array(z.unknown()), label: 'スポーツ' },
 };
