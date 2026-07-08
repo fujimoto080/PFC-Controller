@@ -23,12 +23,10 @@ export const logActivityInputSchema = logBaseSchema.extend({
   caloriesBurned: z.number().nonnegative(),
 });
 
-// 食品辞書の1件分。フィールド構成は食事記録アイテムと同じ。
-export const foodInputSchema = logItemInputSchema;
-
+// 食品辞書の1件分。フィールド構成は食事記録アイテムと同じなので logItemInputSchema を流用する。
 // 新規作成時は id をクライアント側で採番して送る（生成食品は uuid 以外の id を持つため
 // uuid には限定せず非空文字列とする）。
-export const foodCreateSchema = foodInputSchema.extend({
+export const foodCreateSchema = logItemInputSchema.extend({
   id: z.string().min(1),
 });
 
