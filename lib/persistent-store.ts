@@ -46,7 +46,8 @@ interface LogItemRow {
   timestamp_ms: string | number;
   store: string | null;
   store_group: string | null;
-  image: string | null;
+  // image は起動時ペイロードから除外（どの画面でも描画していないため）。
+  // 必要になったら log-items の個別取得で読む。
 }
 
 interface LogActivityRow {
@@ -126,7 +127,6 @@ function aggregateLogs(
       timestamp: Number(row.timestamp_ms),
       store: row.store ?? undefined,
       storeGroup: row.store_group ?? undefined,
-      image: row.image ?? undefined,
     };
     log.items.push(item);
     log.total.protein += row.protein;
@@ -307,8 +307,7 @@ class PostgresCloudDataStore implements CloudDataStore {
             calories,
             timestamp_ms,
             store,
-            store_group,
-            image
+            store_group
           FROM pfc_log_items
           WHERE user_id = $1
           ORDER BY timestamp_ms ASC
