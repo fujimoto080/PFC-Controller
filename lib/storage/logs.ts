@@ -322,11 +322,38 @@ export function getBalancedWeeklyTargets(): {
   };
 }
 
+// getPfcDebt は全履歴を先頭日から走査する。ダッシュボードの複数コンポーネントが
+// 同一更新内で（異なる基準日で）呼ぶため、logs オブジェクトの同一性でメモ化して
+// 重複走査を避ける。logs は更新のたびに新しいオブジェクトに差し替わる（logs.ts の
+// withLogUpdated 参照）ので、データ変更時は WeakMap のエントリが自動的に無効化される。
+const debtCache = new WeakMap<Record<string, DailyLog>, Map<string, PFC>>();
+
 export function getPfcDebt(currentDate: string): PFC {
   const settings = getSettings();
   const target = settings.targetPFC;
   const logs = getLogs();
 
+  // 目標値の変更は logs の差し替えを伴わないため、キーに目標値も含める。
+  const cacheKey = `${currentDate}|${target.protein}|${target.fat}|${target.carbs}|${target.calories}`;
+  let byKey = debtCache.get(logs);
+  if (byKey) {
+    const cached = byKey.get(cacheKey);
+    if (cached) return cached;
+  } else {
+    byKey = new Map();
+    debtCache.set(logs, byKey);
+  }
+
+  const result = computePfcDebt(currentDate, target, logs);
+  byKey.set(cacheKey, result);
+  return result;
+}
+
+function computePfcDebt(
+  currentDate: string,
+  target: PFC,
+  logs: Record<string, DailyLog>,
+): PFC {
   const sortedDates = getSortedLogDates(logs, 'asc');
   const cumulativeDebt: PFC = { ...EMPTY_PFC };
 
