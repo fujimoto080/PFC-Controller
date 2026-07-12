@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserData } from '@/lib/cloud-data';
+import { getUserData } from '@/lib/persistent-store';
 import { defineRoute } from '@/lib/api/handler';
 
 export const GET = defineRoute(

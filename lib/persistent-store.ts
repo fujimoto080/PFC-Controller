@@ -2,7 +2,6 @@ import 'server-only';
 
 import { PoolClient } from 'pg';
 import { getPool } from '@/lib/pg-pool';
-import type { CloudResource } from '@/lib/cloud-data';
 import {
   EMPTY_PFC,
   type DailyLog,
@@ -19,11 +18,6 @@ interface UserDataPayload {
   settings: UserSettings | Record<string, never>;
   foods: FoodItem[];
   sports: SportDefinition[];
-}
-
-interface CloudDataStore {
-  get(userId: string): Promise<UserDataPayload>;
-  replace(userId: string, resource: CloudResource, value: unknown): Promise<void>;
 }
 
 interface SettingsRow {
@@ -157,126 +151,65 @@ function aggregateLogs(
   return logs;
 }
 
-class PostgresCloudDataStore implements CloudDataStore {
+function buildSettings(row?: SettingsRow): UserSettings | Record<string, never> {
+  if (!row) return {};
 
-  private buildSettings(row?: SettingsRow): UserSettings | Record<string, never> {
-    if (!row) return {};
+  const profile = row.profile_json;
+  const favoriteRaw = row.favorite_food_ids_json;
+  const favoriteFoodIds = Array.isArray(favoriteRaw)
+    ? favoriteRaw.filter((id): id is string => typeof id === 'string')
+    : [];
 
-    const profile = row.profile_json;
-    const favoriteRaw = row.favorite_food_ids_json;
-    const favoriteFoodIds = Array.isArray(favoriteRaw)
-      ? favoriteRaw.filter((id): id is string => typeof id === 'string')
-      : [];
+  return {
+    targetPFC: {
+      protein: row.target_protein,
+      fat: row.target_fat,
+      carbs: row.target_carbs,
+      calories: row.target_calories,
+    },
+    profile: (profile ?? undefined) as UserProfile | undefined,
+    favoriteFoodIds,
+  };
+}
 
-    return {
-      targetPFC: {
-        protein: row.target_protein,
-        fat: row.target_fat,
-        carbs: row.target_carbs,
-        calories: row.target_calories,
-      },
-      profile: (profile ?? undefined) as UserProfile | undefined,
-      favoriteFoodIds,
-    };
+function buildFood(row: FoodRow): FoodItem {
+  return {
+    id: row.food_id,
+    name: row.name,
+    protein: row.protein,
+    fat: row.fat,
+    carbs: row.carbs,
+    calories: row.calories,
+    timestamp: Number(row.timestamp_ms),
+    store: row.store ?? undefined,
+    storeGroup: row.store_group ?? undefined,
+    image: row.image ?? undefined,
+  };
+}
+
+function buildSport(row: SportRow): SportDefinition {
+  return {
+    id: row.sport_id,
+    name: row.name,
+    caloriesBurned: row.calories_burned,
+  };
+}
+
+async function transaction(fn: (client: PoolClient) => Promise<void>): Promise<void> {
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await fn(client);
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
   }
+}
 
-  private buildFood(row: FoodRow): FoodItem {
-    return {
-      id: row.food_id,
-      name: row.name,
-      protein: row.protein,
-      fat: row.fat,
-      carbs: row.carbs,
-      calories: row.calories,
-      timestamp: Number(row.timestamp_ms),
-      store: row.store ?? undefined,
-      storeGroup: row.store_group ?? undefined,
-      image: row.image ?? undefined,
-    };
-  }
-
-  private buildSport(row: SportRow): SportDefinition {
-    return {
-      id: row.sport_id,
-      name: row.name,
-      caloriesBurned: row.calories_burned,
-    };
-  }
-
-  private async writeSettings(
-    client: PoolClient,
-    userId: string,
-    settings: Record<string, unknown>,
-  ) {
-    const target = asRecord(settings.targetPFC);
-    const params = [
-      userId,
-      toFiniteNumber(target.protein),
-      toFiniteNumber(target.fat),
-      toFiniteNumber(target.carbs),
-      toFiniteNumber(target.calories),
-      JSON.stringify(settings.profile ?? null),
-      JSON.stringify(asArray(settings.favoriteFoodIds)),
-    ];
-
-    await client.query(
-      `
-      INSERT INTO pfc_user_settings (
-        user_id,
-        target_protein,
-        target_fat,
-        target_carbs,
-        target_calories,
-        profile_json,
-        favorite_food_ids_json
-      ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
-      ON CONFLICT (user_id) DO UPDATE SET
-        target_protein = EXCLUDED.target_protein,
-        target_fat = EXCLUDED.target_fat,
-        target_carbs = EXCLUDED.target_carbs,
-        target_calories = EXCLUDED.target_calories,
-        profile_json = EXCLUDED.profile_json,
-        favorite_food_ids_json = EXCLUDED.favorite_food_ids_json
-      `,
-      params,
-    );
-  }
-
-  private async writeSports(
-    client: PoolClient,
-    userId: string,
-    sports: unknown[],
-  ) {
-    await client.query(`DELETE FROM pfc_sports WHERE user_id = $1`, [userId]);
-
-    for (const [position, sportRaw] of sports.entries()) {
-      const sport = asRecord(sportRaw);
-      const sportId =
-        typeof sport.id === 'string' && sport.id.trim() ? sport.id.trim() : `sport-${position}`;
-
-      await client.query(
-        `
-        INSERT INTO pfc_sports (
-          user_id,
-          sport_id,
-          position,
-          name,
-          calories_burned
-        ) VALUES ($1, $2, $3, $4, $5)
-        `,
-        [
-          userId,
-          sportId,
-          position,
-          typeof sport.name === 'string' ? sport.name : '',
-          toFiniteNumber(sport.caloriesBurned),
-        ],
-      );
-    }
-  }
-
-  async get(userId: string): Promise<UserDataPayload> {
-
+export async function getUserData(userId: string): Promise<UserDataPayload> {
     const pool = getPool();
     const [settingsResult, itemsResult, activitiesResult, foodsResult, sportsResult] =
       await Promise.all([
@@ -368,45 +301,76 @@ class PostgresCloudDataStore implements CloudDataStore {
 
     return {
       logs,
-      settings: this.buildSettings(settingsResult.rows[0]),
-      foods: foodsResult.rows.map((row) => this.buildFood(row)),
-      sports: sportsResult.rows.map((row) => this.buildSport(row)),
+      settings: buildSettings(settingsResult.rows[0]),
+      foods: foodsResult.rows.map(buildFood),
+      sports: sportsResult.rows.map(buildSport),
     };
-  }
-
-  private async transaction(
-    fn: (client: PoolClient) => Promise<void>,
-  ): Promise<void> {
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      await fn(client);
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
-  }
-
-  replace(userId: string, resource: CloudResource, value: unknown): Promise<void> {
-    return this.transaction((client) => {
-      switch (resource) {
-        case 'settings':
-          return this.writeSettings(client, userId, asRecord(value));
-        case 'sports':
-          return this.writeSports(client, userId, asArray(value));
-      }
-    });
-  }
 }
 
-let store: CloudDataStore | null = null;
+export function replaceSettings(userId: string, value: unknown): Promise<void> {
+  const settings = asRecord(value);
+  return transaction(async (client) => {
+    const target = asRecord(settings.targetPFC);
+    await client.query(
+      `
+      INSERT INTO pfc_user_settings (
+        user_id,
+        target_protein,
+        target_fat,
+        target_carbs,
+        target_calories,
+        profile_json,
+        favorite_food_ids_json
+      ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
+      ON CONFLICT (user_id) DO UPDATE SET
+        target_protein = EXCLUDED.target_protein,
+        target_fat = EXCLUDED.target_fat,
+        target_carbs = EXCLUDED.target_carbs,
+        target_calories = EXCLUDED.target_calories,
+        profile_json = EXCLUDED.profile_json,
+        favorite_food_ids_json = EXCLUDED.favorite_food_ids_json
+      `,
+      [
+        userId,
+        toFiniteNumber(target.protein),
+        toFiniteNumber(target.fat),
+        toFiniteNumber(target.carbs),
+        toFiniteNumber(target.calories),
+        JSON.stringify(settings.profile ?? null),
+        JSON.stringify(asArray(settings.favoriteFoodIds)),
+      ],
+    );
+  });
+}
 
-export function getCloudDataStore(): CloudDataStore {
-  if (!store) {
-    store = new PostgresCloudDataStore();
-  }
-  return store;
+export function replaceSports(userId: string, value: unknown): Promise<void> {
+  const sports = asArray(value);
+  return transaction(async (client) => {
+    await client.query(`DELETE FROM pfc_sports WHERE user_id = $1`, [userId]);
+
+    for (const [position, sportRaw] of sports.entries()) {
+      const sport = asRecord(sportRaw);
+      const sportId =
+        typeof sport.id === 'string' && sport.id.trim() ? sport.id.trim() : `sport-${position}`;
+
+      await client.query(
+        `
+        INSERT INTO pfc_sports (
+          user_id,
+          sport_id,
+          position,
+          name,
+          calories_burned
+        ) VALUES ($1, $2, $3, $4, $5)
+        `,
+        [
+          userId,
+          sportId,
+          position,
+          typeof sport.name === 'string' ? sport.name : '',
+          toFiniteNumber(sport.caloriesBurned),
+        ],
+      );
+    }
+  });
 }

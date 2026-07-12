@@ -5,7 +5,8 @@ import {
   cloudState,
   normalizeSports,
   refreshUI,
-  syncResource,
+  syncSettings,
+  syncSports,
 } from './state';
 
 export function getSettings(): UserSettings {
@@ -33,8 +34,8 @@ export function saveSettings(settings: UserSettings) {
   cloudState.settings = rest;
   cloudState.sports = normalizedSports;
   refreshUI();
-  void syncResource('settings');
+  void syncSettings();
   if (sportsChanged) {
-    void syncResource('sports');
+    void syncSports();
   }
 }
