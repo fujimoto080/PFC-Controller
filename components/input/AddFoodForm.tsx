@@ -15,10 +15,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { addFoodItem } from '@/lib/storage/logs';
 import { addFoodToDictionary } from '@/lib/storage/foods';
-import { FoodItem, FoodItemInput } from '@/lib/types';
+import { FoodItem } from '@/lib/types';
+import { toFoodInput } from '@/lib/pfc';
+import { PfcMacroInputs, DatalistInput } from '@/components/input/PfcFieldsGroup';
+import { EatDateTimeCard } from '@/components/input/EatDateTimeFields';
 import { generateId } from '@/lib/utils';
 import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
+import { useBarcodeLookup } from '@/hooks/use-barcode-lookup';
+import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { clearFormDraft, useFormDraft } from '@/hooks/use-form-draft';
 import { toast } from '@/lib/toast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
@@ -56,13 +61,6 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
   const { foods, uniqueStores } = useFoodDictionary();
   const [saveToDictionary, setSaveToDictionary] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
-  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
-  const [barcodeLookupInput, setBarcodeLookupInput] = useState('');
-  const [mappedFoodData, setMappedFoodData] =
-    useState<BarcodeFood | null>(null);
-  const [aiInputText, setAiInputText] = useState('');
-  const [isEstimatingNutrition, setIsEstimatingNutrition] = useState(false);
-  const [isExtractingText, setIsExtractingText] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } =
@@ -96,6 +94,61 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     [foods, watchedName],
   );
 
+  const applyFoodDataToForm = (data: BarcodeFood) => {
+    reset({
+      name: data.name,
+      protein: data.protein,
+      fat: data.fat,
+      carbs: data.carbs,
+      calories: data.calories,
+      store: data.store,
+    });
+
+    const values = getValues();
+    const isNameValid =
+      typeof values.name === 'string' && values.name.trim().length > 0;
+    const areMacrosValid =
+      Number.isFinite(values.protein) &&
+      Number.isFinite(values.fat) &&
+      Number.isFinite(values.carbs) &&
+      Number.isFinite(values.calories);
+
+    return isNameValid && areMacrosValid;
+  };
+
+  const clearForm = () =>
+    reset({
+      name: '',
+      protein: undefined,
+      fat: undefined,
+      carbs: undefined,
+      calories: undefined,
+      store: '',
+    });
+
+  const {
+    scannedBarcode,
+    setScannedBarcode,
+    barcodeLookupInput,
+    setBarcodeLookupInput,
+    mappedFoodData,
+    setMappedFoodData,
+    runLookup,
+    clear: clearBarcode,
+  } = useBarcodeLookup({ applyFoodData: applyFoodDataToForm, clearForm });
+
+  const {
+    aiInputText,
+    setAiInputText,
+    isEstimatingNutrition,
+    isExtractingText,
+    handleEstimateByAi,
+    handleExtractTextFromImage,
+  } = useAiNutrition({
+    applyFoodData: applyFoodDataToForm,
+    onApplied: () => setActiveTab('manual'),
+  });
+
   // 編集モード (initialData 指定) では下書き機能は無効。新規追加時のみ有効化する
   const isDraftEnabled = !initialData;
   const draftValue = useMemo<AddFoodFormDraft>(
@@ -122,77 +175,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         setActiveTab(draft.activeTab);
       }
     },
-    [reset],
+    [reset, setAiInputText],
   );
   useFormDraft(FORM_DRAFT_STORAGE_KEY, draftValue, applyDraft, {
     enabled: isDraftEnabled,
   });
 
-  const applyFoodDataToForm = (data: BarcodeFood) => {
-    reset({
-      name: data.name,
-      protein: data.protein,
-      fat: data.fat,
-      carbs: data.carbs,
-      calories: data.calories,
-      store: data.store,
-    });
-
-    const values = getValues();
-    const isNameValid =
-      typeof values.name === 'string' && values.name.trim().length > 0;
-    const areMacrosValid =
-      Number.isFinite(values.protein) &&
-      Number.isFinite(values.fat) &&
-      Number.isFinite(values.carbs) &&
-      Number.isFinite(values.calories);
-
-    return isNameValid && areMacrosValid;
-  };
-
-  const fetchBarcodeMapping = async (
-    code: string,
-  ): Promise<BarcodeFood | null> => {
-    const response = await fetch(`/api/barcode?code=${code}`);
-
-    if (response.ok) {
-      const data: BarcodeFood = await response.json();
-      setMappedFoodData(data);
-      applyFoodDataToForm(data);
-      return data;
-    }
-
-    if (response.status === 404) {
-      setMappedFoodData(null);
-      reset({
-        name: '',
-        protein: undefined,
-        fat: undefined,
-        carbs: undefined,
-        calories: undefined,
-        store: '',
-      });
-      return null;
-    }
-
-    const errorBody = await response.json();
-    throw new Error(errorBody.error || '商品情報の取得に失敗しました');
-  };
-
   const onSubmitManual = async (data: ManualFoodFormValues) => {
-    // 空欄は valueAsNumber により NaN になるため 0 に丸める
-    const toNumber = (value: number | undefined) =>
-      Number.isFinite(value) ? (value as number) : 0;
-
-    const item: FoodItemInput = {
-      name: data.name,
-      protein: toNumber(data.protein),
-      fat: toNumber(data.fat),
-      carbs: toNumber(data.carbs),
-      calories: toNumber(data.calories),
-      store: data.store || undefined,
-      timestamp: getSelectedTimestamp(),
-    };
+    const item = toFoodInput(data, getSelectedTimestamp());
 
     try {
       await addFoodItem(item);
@@ -220,9 +210,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       } catch (error) {
         toast.fromError('バーコード情報の保存に失敗しました', error);
       } finally {
-        setScannedBarcode(null);
-        setMappedFoodData(null);
-        setBarcodeLookupInput('');
+        clearBarcode();
       }
     }
 
@@ -253,7 +241,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const loadingToast = toast.loading('商品情報を取得中...');
 
     try {
-      const data = await fetchBarcodeMapping(code);
+      const data = await runLookup(code);
       toast.dismiss(loadingToast);
       setActiveTab('manual');
 
@@ -283,7 +271,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     setScannedBarcode(code);
 
     try {
-      const data = await fetchBarcodeMapping(code);
+      const data = await runLookup(code);
       toast.dismiss(loadingToast);
       setActiveTab('manual');
 
@@ -298,133 +286,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     }
   };
 
-  const handleEstimateByAi = async () => {
-    const text = aiInputText.trim();
-
-    if (!text) {
-      toast.info('食べた内容を入力してください');
-      return;
-    }
-
-    setIsEstimatingNutrition(true);
-
-    try {
-      const response = await fetch('/api/ai-nutrition', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'AI推定に失敗しました');
-      }
-
-      const isApplied = applyFoodDataToForm(result as BarcodeFood);
-
-      if (isApplied) {
-        setActiveTab('manual');
-        toast.success('AIでPFCとカロリーを入力しました');
-        return;
-      }
-
-      toast.error('AI結果の入力に失敗しました');
-    } catch (error) {
-      toast.fromError('AI推定に失敗しました', error);
-    } finally {
-      setIsEstimatingNutrition(false);
-    }
-  };
-
-  const readFileAsDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result;
-        if (typeof result === 'string') {
-          resolve(result);
-          return;
-        }
-        reject(new Error('画像の読み込みに失敗しました'));
-      };
-      reader.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleExtractTextFromImage = async (file: File | null) => {
-    if (!file) {
-      return;
-    }
-
-    setIsExtractingText(true);
-    const loadingToast = toast.loading('画像から文字を抽出中...');
-
-    try {
-      const imageDataUrl = await readFileAsDataUrl(file);
-      const response = await fetch('/api/ocr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ imageDataUrl }),
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'OCRに失敗しました');
-      }
-
-      const extractedText = (result.text as string).trim();
-
-      if (!extractedText) {
-        toast.dismiss(loadingToast);
-        toast.info('文字を抽出できませんでした。別の写真でお試しください');
-        return;
-      }
-
-      setAiInputText(extractedText);
-      toast.dismiss(loadingToast);
-      toast.success('文字を抽出しました。内容を確認してAI推定してください');
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.fromError('OCRに失敗しました', error);
-    } finally {
-      setIsExtractingText(false);
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <Card className="bg-muted/30">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="eatDate">食べた日付</Label>
-              <Input
-                id="eatDate"
-                type="date"
-                value={eatDate}
-                onChange={(e) => setEatDate(e.target.value)}
-                onClick={(e) => e.currentTarget.showPicker?.()}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="eatTime">時刻</Label>
-              <Input
-                id="eatTime"
-                type="time"
-                value={eatTime}
-                onChange={(e) => setEatTime(e.target.value)}
-                onClick={(e) => e.currentTarget.showPicker?.()}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <EatDateTimeCard
+        eatDate={eatDate}
+        setEatDate={setEatDate}
+        eatTime={eatTime}
+        setEatTime={setEatTime}
+      />
 
       <Tabs defaultValue="manual" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
@@ -560,58 +429,15 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                         </div>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>タンパク質 (g)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...register('protein', { valueAsNumber: true })}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>脂質 (g)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...register('fat', { valueAsNumber: true })}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>炭水化物 (g)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...register('carbs', { valueAsNumber: true })}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>カロリー</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...register('calories', { valueAsNumber: true })}
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="store">店名 / ブランド (任意)</Label>
-                      <Input
-                        id="store"
-                        {...register('store')}
-                        placeholder="例: セブンイレブン"
-                        list="store-suggestions"
-                      />
-                      <datalist id="store-suggestions">
-                        {uniqueStores.map((store) => (
-                          <option key={store} value={store} />
-                        ))}
-                      </datalist>
-                    </div>
+                    <PfcMacroInputs register={register} step="0.01" valueAsNumber />
+                    <DatalistInput
+                      register={register}
+                      name="store"
+                      label="店名 / ブランド (任意)"
+                      listId="store-suggestions"
+                      options={uniqueStores}
+                      placeholder="例: セブンイレブン"
+                    />
                     <div className="flex items-center space-x-2 pt-2">
                       <Checkbox
                         id="saveToDict"

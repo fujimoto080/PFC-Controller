@@ -5,10 +5,10 @@ import {
   SportActivityLog,
   SportDefinition,
 } from '../types';
-import { cloudState, readErrorMessage, refreshUI, toSportDefinition } from './state';
+import { cloudState, refreshUI, runOptimistic, toSportDefinition } from './state';
+import { apiDelete, apiPost } from '../api-client';
 import { getLogForDate } from './logs';
 import { getSettings, saveSettings } from './settings';
-import { toast } from '../toast';
 
 export function addSportDefinition(sport: SportDefinition) {
   const settings = getSettings();
@@ -61,37 +61,37 @@ export async function addSportActivity(
   };
   refreshUI();
 
-  try {
-    const input: SportActivityInput = {
-      sportId: sport.id,
-      name: sport.name,
-      caloriesBurned: sport.caloriesBurned,
-      timestamp,
-    };
-    const res = await fetch('/api/log-activities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    if (!res.ok) {
-      throw new Error(await readErrorMessage(res, '運動記録の追加に失敗しました'));
-    }
-    const data = (await res.json()) as { activity: SportActivityLog; date: string };
-    const cur = cloudState.logs[date];
-    if (cur?.activities) {
-      const next = cur.activities.map((a) => (a.id === tempId ? data.activity : a));
-      cloudState.logs = {
-        ...cloudState.logs,
-        [date]: { ...cur, activities: next },
-      };
+  const input: SportActivityInput = {
+    sportId: sport.id,
+    name: sport.name,
+    caloriesBurned: sport.caloriesBurned,
+    timestamp,
+  };
+  await runOptimistic({
+    rollback: () => {
+      cloudState.logs = snapshot;
       refreshUI();
-    }
-  } catch (error) {
-    cloudState.logs = snapshot;
-    refreshUI();
-    toast.fromError('運動の追加に失敗しました', error);
-    throw error;
-  }
+    },
+    request: () =>
+      apiPost<{ activity: SportActivityLog; date: string }>(
+        '/api/log-activities',
+        input,
+        '運動記録の追加に失敗しました',
+      ),
+    errorLabel: '運動の追加に失敗しました',
+    rethrow: true,
+    onSuccess: (data) => {
+      const cur = cloudState.logs[date];
+      if (cur?.activities) {
+        const next = cur.activities.map((a) => (a.id === tempId ? data.activity : a));
+        cloudState.logs = {
+          ...cloudState.logs,
+          [date]: { ...cur, activities: next },
+        };
+        refreshUI();
+      }
+    },
+  });
 }
 
 export async function deleteSportActivity(
@@ -108,18 +108,17 @@ export async function deleteSportActivity(
   };
   refreshUI();
 
-  try {
-    const res = await fetch(
-      `/api/log-activities/${encodeURIComponent(activityId)}`,
-      { method: 'DELETE' },
-    );
-    if (!res.ok) {
-      throw new Error(await readErrorMessage(res, '運動記録の削除に失敗しました'));
-    }
-  } catch (error) {
-    cloudState.logs = snapshot;
-    refreshUI();
-    toast.fromError('運動の削除に失敗しました', error);
-    throw error;
-  }
+  await runOptimistic({
+    rollback: () => {
+      cloudState.logs = snapshot;
+      refreshUI();
+    },
+    request: () =>
+      apiDelete(
+        `/api/log-activities/${encodeURIComponent(activityId)}`,
+        '運動記録の削除に失敗しました',
+      ),
+    errorLabel: '運動の削除に失敗しました',
+    rethrow: true,
+  });
 }

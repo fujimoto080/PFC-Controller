@@ -1,9 +1,9 @@
 'use client';
 
 import { FoodItem } from '../types';
-import { cloudState, readErrorMessage, refreshUI } from './state';
+import { cloudState, refreshUI, runOptimistic } from './state';
+import { apiDelete, apiPatch, apiPost } from '../api-client';
 import { getLogs } from './logs';
-import { toast } from '../toast';
 
 const isClient = typeof window !== 'undefined';
 
@@ -21,19 +21,11 @@ export async function addFoodToDictionary(item: FoodItem): Promise<void> {
   const snapshot = cloudState.foods;
   setFoods([...snapshot, item]);
 
-  try {
-    const res = await fetch('/api/foods', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    });
-    if (!res.ok) {
-      throw new Error(await readErrorMessage(res, '食品の保存に失敗しました'));
-    }
-  } catch (error) {
-    setFoods(snapshot);
-    toast.fromError('食品の保存に失敗しました', error);
-  }
+  await runOptimistic({
+    rollback: () => setFoods(snapshot),
+    request: () => apiPost('/api/foods', item, '食品の保存に失敗しました'),
+    errorLabel: '食品の保存に失敗しました',
+  });
 }
 
 export async function updateFoodInDictionary(updatedItem: FoodItem): Promise<void> {
@@ -45,37 +37,23 @@ export async function updateFoodInDictionary(updatedItem: FoodItem): Promise<voi
   next[index] = updatedItem;
   setFoods(next);
 
-  try {
-    const { id, ...input } = updatedItem;
-    const res = await fetch(`/api/foods/${encodeURIComponent(id)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    if (!res.ok) {
-      throw new Error(await readErrorMessage(res, '食品の更新に失敗しました'));
-    }
-  } catch (error) {
-    setFoods(snapshot);
-    toast.fromError('食品の更新に失敗しました', error);
-  }
+  const { id, ...input } = updatedItem;
+  await runOptimistic({
+    rollback: () => setFoods(snapshot),
+    request: () => apiPatch(`/api/foods/${encodeURIComponent(id)}`, input, '食品の更新に失敗しました'),
+    errorLabel: '食品の更新に失敗しました',
+  });
 }
 
 export async function deleteFoodFromDictionary(id: string): Promise<void> {
   const snapshot = cloudState.foods;
   setFoods(snapshot.filter((f) => f.id !== id));
 
-  try {
-    const res = await fetch(`/api/foods/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    });
-    if (!res.ok) {
-      throw new Error(await readErrorMessage(res, '食品の削除に失敗しました'));
-    }
-  } catch (error) {
-    setFoods(snapshot);
-    toast.fromError('食品の削除に失敗しました', error);
-  }
+  await runOptimistic({
+    rollback: () => setFoods(snapshot),
+    request: () => apiDelete(`/api/foods/${encodeURIComponent(id)}`, '食品の削除に失敗しました'),
+    errorLabel: '食品の削除に失敗しました',
+  });
 }
 
 export function getUniqueStores(): string[] {

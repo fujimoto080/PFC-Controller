@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Trash2, Save, X } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -19,6 +19,10 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FoodItem } from '@/lib/types';
+import { safePfcNumber } from '@/lib/pfc';
+import { PfcMacroInputs } from '@/components/input/PfcFieldsGroup';
+import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
+import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { updateLogItem, deleteLogItem } from '@/lib/storage/logs';
 
 interface EditLogItemDrawerProps {
@@ -34,8 +38,8 @@ export function EditLogItemDrawer({
     onOpenChange,
     onSuccess,
 }: EditLogItemDrawerProps) {
-    const [eatDate, setEatDate] = useState('');
-    const [eatTime, setEatTime] = useState('');
+    const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } =
+        useEatDateTime(item?.timestamp);
 
     const { register, handleSubmit, reset } = useForm<FoodItem>();
 
@@ -49,19 +53,8 @@ export function EditLogItemDrawer({
                 calories: item.calories,
                 store: item.store,
             });
-            const date = new Date(item.timestamp);
-            queueMicrotask(() => {
-                setEatDate(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
-                setEatTime(`${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`);
-            });
         }
     }, [item, reset]);
-
-    const getSelectedTimestamp = () => {
-        const [year, month, day] = eatDate.split('-').map(Number);
-        const [hour, minute] = eatTime.split(':').map(Number);
-        return new Date(year, month - 1, day, hour, minute).getTime();
-    };
 
     const onSubmit = async (data: FoodItem) => {
         if (!item) return;
@@ -69,10 +62,10 @@ export function EditLogItemDrawer({
         const updatedItem: FoodItem = {
             ...item,
             name: data.name,
-            protein: Number(data.protein),
-            fat: Number(data.fat),
-            carbs: Number(data.carbs),
-            calories: Number(data.calories),
+            protein: safePfcNumber(data.protein),
+            fat: safePfcNumber(data.fat),
+            carbs: safePfcNumber(data.carbs),
+            calories: safePfcNumber(data.calories),
             store: data.store || undefined,
             timestamp: getSelectedTimestamp(),
         };
@@ -117,66 +110,14 @@ export function EditLogItemDrawer({
                                 <Input id="name" {...register('name', { required: true })} />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="date">日付</Label>
-                                    <Input
-                                        id="date"
-                                        type="date"
-                                        value={eatDate}
-                                        onChange={(e) => setEatDate(e.target.value)}
-                                        onClick={(e) => e.currentTarget.showPicker?.()}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="time">時刻</Label>
-                                    <Input
-                                        id="time"
-                                        type="time"
-                                        value={eatTime}
-                                        onChange={(e) => setEatTime(e.target.value)}
-                                        onClick={(e) => e.currentTarget.showPicker?.()}
-                                    />
-                                </div>
-                            </div>
+                            <EatDateTimeFields
+                                eatDate={eatDate}
+                                setEatDate={setEatDate}
+                                eatTime={eatTime}
+                                setEatTime={setEatTime}
+                            />
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="protein">タンパク質 (g)</Label>
-                                    <Input
-                                        id="protein"
-                                        type="number"
-                                        step="0.1"
-                                        {...register('protein')}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="fat">脂質 (g)</Label>
-                                    <Input
-                                        id="fat"
-                                        type="number"
-                                        step="0.1"
-                                        {...register('fat')}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="carbs">炭水化物 (g)</Label>
-                                    <Input
-                                        id="carbs"
-                                        type="number"
-                                        step="0.1"
-                                        {...register('carbs')}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="calories">カロリー</Label>
-                                    <Input
-                                        id="calories"
-                                        type="number"
-                                        {...register('calories')}
-                                    />
-                                </div>
-                            </div>
+                            <PfcMacroInputs register={register} step="0.1" withIds />
                         </form>
                     </div>
                     <DrawerFooter className="flex-row gap-2">

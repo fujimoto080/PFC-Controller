@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Plus } from 'lucide-react';
 import { IconButton } from '@/components/ui/icon-button';
 import { FoodItem } from '@/lib/types';
+import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 
 interface FoodListItemProps {
     food: FoodItem;
@@ -32,10 +33,7 @@ export function FoodListItem({ food, onAdd }: FoodListItemProps) {
                 )}
                 <div>
                     <div className="font-medium">{food.name}</div>
-                    <div className="text-muted-foreground text-xs">
-                        P:{food.protein} F:{food.fat} C:{food.carbs} |{' '}
-                        {food.calories}kcal
-                    </div>
+                    <PfcMacroLine food={food} />
                 </div>
             </div>
             <IconButton>

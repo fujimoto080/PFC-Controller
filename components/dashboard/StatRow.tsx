@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { DebtStackedBars } from './DebtStackedBars';
 import { roundPFC } from '@/lib/utils';
+import { overLimitTextClass } from '@/lib/pfc';
 
 interface StatRowProps {
     label: string;
@@ -33,7 +34,7 @@ export function StatRow({
         >
             <div className="flex justify-between text-sm">
                 <span className="font-medium">{label}</span>
-                <span className={`${current > adjustedTarget ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
+                <span className={overLimitTextClass(current, adjustedTarget)}>
                     {roundPFC(current)} / {target}g
                     {debt > 0 && (
                         <span className="text-red-500 text-[10px] ml-1">

@@ -9,9 +9,9 @@ import {
   createEmptyDailyLog,
 } from '../types';
 import { formatDate, roundPFC } from '../utils';
-import { cloudState, readErrorMessage, refreshUI } from './state';
+import { cloudState, refreshUI, runOptimistic } from './state';
+import { apiDelete, apiPatch, apiPost } from '../api-client';
 import { getSettings } from './settings';
-import { toast } from '../toast';
 
 const getDateFromTimestamp = (timestamp: number) => formatDate(new Date(timestamp));
 
@@ -98,30 +98,28 @@ export async function addFoodItem(input: FoodItemInput): Promise<void> {
     };
   });
 
-  try {
-    const res = await fetch('/api/log-items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    if (!res.ok) {
-      throw new Error(await readErrorMessage(res, '食事記録の追加に失敗しました'));
-    }
-    const data = (await res.json()) as { item: FoodItem; date: string };
-    const log = cloudState.logs[date];
-    if (log) {
-      const items = log.items.map((it) => (it.id === tempId ? data.item : it));
-      cloudState.logs = {
-        ...cloudState.logs,
-        [date]: { ...log, items, total: recalcTotals(items) },
-      };
-      refreshUI();
-    }
-  } catch (error) {
-    rollback(snapshot);
-    toast.fromError('追加に失敗しました', error);
-    throw error;
-  }
+  await runOptimistic({
+    rollback: () => rollback(snapshot),
+    request: () =>
+      apiPost<{ item: FoodItem; date: string }>(
+        '/api/log-items',
+        input,
+        '食事記録の追加に失敗しました',
+      ),
+    errorLabel: '追加に失敗しました',
+    rethrow: true,
+    onSuccess: (data) => {
+      const log = cloudState.logs[date];
+      if (log) {
+        const items = log.items.map((it) => (it.id === tempId ? data.item : it));
+        cloudState.logs = {
+          ...cloudState.logs,
+          [date]: { ...log, items, total: recalcTotals(items) },
+        };
+        refreshUI();
+      }
+    },
+  });
 }
 
 export async function deleteLogItem(id: string, timestamp: number): Promise<void> {
@@ -131,18 +129,13 @@ export async function deleteLogItem(id: string, timestamp: number): Promise<void
     return { ...log, items, total: recalcTotals(items) };
   });
 
-  try {
-    const res = await fetch(`/api/log-items/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    });
-    if (!res.ok) {
-      throw new Error(await readErrorMessage(res, '食事記録の削除に失敗しました'));
-    }
-  } catch (error) {
-    rollback(snapshot);
-    toast.fromError('削除に失敗しました', error);
-    throw error;
-  }
+  await runOptimistic({
+    rollback: () => rollback(snapshot),
+    request: () =>
+      apiDelete(`/api/log-items/${encodeURIComponent(id)}`, '食事記録の削除に失敗しました'),
+    errorLabel: '削除に失敗しました',
+    rethrow: true,
+  });
 }
 
 export async function updateLogItem(
@@ -188,21 +181,14 @@ export async function updateLogItem(
   cloudState.logs = nextLogs;
   refreshUI();
 
-  try {
-    const { id, ...input } = newItem;
-    const res = await fetch(`/api/log-items/${encodeURIComponent(id)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    if (!res.ok) {
-      throw new Error(await readErrorMessage(res, '食事記録の更新に失敗しました'));
-    }
-  } catch (error) {
-    rollback(snapshot);
-    toast.fromError('更新に失敗しました', error);
-    throw error;
-  }
+  const { id, ...input } = newItem;
+  await runOptimistic({
+    rollback: () => rollback(snapshot),
+    request: () =>
+      apiPatch(`/api/log-items/${encodeURIComponent(id)}`, input, '食事記録の更新に失敗しました'),
+    errorLabel: '更新に失敗しました',
+    rethrow: true,
+  });
 }
 
 export function getAllLogItems(): FoodItem[] {
