@@ -9,6 +9,7 @@ import { CardHeader } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { Progress } from '@/components/ui/progress';
 import { roundPFC } from '@/lib/utils';
+import { progressPct, overLimitTextClass } from '@/lib/pfc';
 import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
 
 export function WeeklyPFCStats() {
@@ -44,9 +45,6 @@ export function WeeklyPFCStats() {
     const { protein, fat, carbs, calories } = weeklyData;
     const { targetPFC } = settings;
 
-    const getPct = (current: number, target: number) =>
-        Math.min(100, Math.max(0, (current / target) * 100));
-
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -73,7 +71,7 @@ export function WeeklyPFCStats() {
                                 <span className="text-muted-foreground text-xs">kcal</span>
                             </div>
                             <Progress
-                                value={getPct(calories, targetPFC.calories)}
+                                value={progressPct(calories, targetPFC.calories)}
                                 className="mt-2 h-1.5"
                             />
                         </div>
@@ -115,16 +113,15 @@ function WeeklyStatSmall({
     target: number;
     color: string;
 }) {
-    const pct = Math.min(100, (current / target) * 100);
     return (
         <div className="space-y-1">
             <div className="flex justify-between text-[10px]">
                 <span className="font-bold">{label}</span>
-                <span className={`${current > target ? 'text-red-500 font-bold' : 'text-muted-foreground'}`}>
+                <span className={overLimitTextClass(current, target)}>
                     {roundPFC(current)}/{target}g
                 </span>
             </div>
-            <Progress value={pct} indicatorClassName={color} className="h-1" />
+            <Progress value={progressPct(current, target)} indicatorClassName={color} className="h-1" />
         </div>
     );
 }

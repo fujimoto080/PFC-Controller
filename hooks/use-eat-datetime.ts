@@ -3,21 +3,26 @@
 import { useEffect, useState } from 'react';
 import { formatDate } from '@/lib/utils';
 
-export function useEatDateTime() {
+/**
+ * 「食べた日付/時刻」の state を管理する。
+ * @param initialTimestamp 省略時は現在時刻で初期化。指定するとその値に同期し、
+ *   値が変わるたび（編集対象の切り替えなど）再初期化する。
+ */
+export function useEatDateTime(initialTimestamp?: number) {
   const [eatDate, setEatDate] = useState('');
   const [eatTime, setEatTime] = useState('');
 
   useEffect(() => {
-    // マウント時に日付と時刻を初期化（ハイドレーションエラーと同期的なsetStateの警告を回避）
-    const now = new Date();
-    const date = formatDate(now);
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    // 同期的な setState の警告 / ハイドレーションずれを避けるため queueMicrotask で反映
+    const base = initialTimestamp !== undefined ? new Date(initialTimestamp) : new Date();
+    const date = formatDate(base);
+    const time = `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
 
     queueMicrotask(() => {
-      if (!eatDate) setEatDate(date);
-      if (!eatTime) setEatTime(time);
+      setEatDate(date);
+      setEatTime(time);
     });
-  }, [eatDate, eatTime]);
+  }, [initialTimestamp]);
 
   const getSelectedTimestamp = () => {
     const [year, month, day] = eatDate.split('-').map(Number);

@@ -9,6 +9,7 @@ import {
 } from '../types';
 import { toast } from '../toast';
 import { roundPFC } from '../utils';
+import { apiGet, apiPost } from '../api-client';
 import generatedFoodsRaw from '@/data/generated_foods.json';
 
 // foods は行単位 REST (/api/foods) で同期するため、この汎用パスの対象外。
@@ -121,30 +122,37 @@ function valueFor(resource: ResourceKey): unknown {
   }
 }
 
-export async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+/**
+ * 楽観的更新の定型（API 呼び出し → 失敗時ロールバック + toast）をまとめる。
+ * 呼び出し側は runOptimistic を呼ぶ前に cloudState を楽観的に更新しておき、
+ * rollback にはスナップショットへ戻す処理を渡す。
+ */
+export async function runOptimistic<T>(params: {
+  rollback: () => void;
+  request: () => Promise<T>;
+  errorLabel: string;
+  onSuccess?: (result: T) => void;
+  rethrow?: boolean;
+}): Promise<void> {
   try {
-    const data = (await response.json()) as { error?: unknown } | null;
-    if (data && typeof data.error === 'string' && data.error) {
-      return data.error;
-    }
-  } catch {
-    // JSON 以外のレスポンスはそのまま fallback を使う
+    const result = await params.request();
+    params.onSuccess?.(result);
+  } catch (error) {
+    params.rollback();
+    toast.fromError(params.errorLabel, error);
+    if (params.rethrow) throw error;
   }
-  return fallback;
 }
 
 export async function syncResource(resource: ResourceKey) {
   if (!cloudState.loaded) return;
 
   try {
-    const response = await fetch(endpointFor(resource), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [resource]: valueFor(resource) }),
-    });
-    if (!response.ok) {
-      throw new Error(await readErrorMessage(response, 'クラウド保存に失敗しました'));
-    }
+    await apiPost(
+      endpointFor(resource),
+      { [resource]: valueFor(resource) },
+      'クラウド保存に失敗しました',
+    );
   } catch (error) {
     toast.fromError(`クラウド同期失敗 (${resource})`, error, 'クラウド保存に失敗しました');
   }
@@ -227,11 +235,10 @@ export function hydrateFromCache(userId: string): boolean {
 export async function loadCloudData(userId?: string): Promise<boolean> {
   if (userId) currentUserId = userId;
   try {
-    const response = await fetch('/api/cloud-data');
-    if (!response.ok) {
-      throw new Error(await readErrorMessage(response, 'ユーザーデータ取得に失敗しました'));
-    }
-    const data = (await response.json()) as CloudFetchResponse;
+    const data = await apiGet<CloudFetchResponse>(
+      '/api/cloud-data',
+      'ユーザーデータ取得に失敗しました',
+    );
 
     const payload = data.payload;
     const settingsFromCloud = (payload?.settings ?? null) as

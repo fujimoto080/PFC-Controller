@@ -19,6 +19,15 @@ import {
 import { toggleFavoriteFood, isFavoriteFood } from '@/lib/storage/favorites';
 import { addFoodItem } from '@/lib/storage/logs';
 import { FoodItem } from '@/lib/types';
+import { toFoodInput } from '@/lib/pfc';
+import { PfcMacroInputs, DatalistInput } from '@/components/input/PfcFieldsGroup';
+import { EatDateTimeCard } from '@/components/input/EatDateTimeFields';
+import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
+import {
+    STORAGE_KEY_MANAGE_FOODS_COLLAPSE,
+    readCollapseState,
+    buildStoreSections,
+} from '@/lib/store-sections';
 import { buildFoodMatchKey, normalizeBarcodes, type BarcodeMappingRow } from '@/lib/barcode-mapping';
 import { saveBarcodeMappingRequest } from '@/lib/barcode-client';
 import { generateId } from '@/lib/utils';
@@ -28,60 +37,6 @@ import { PageTitle } from '@/components/ui/page-title';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 
 const getCurrentTimestamp = () => Date.now();
-const STORAGE_KEY_MANAGE_FOODS_COLLAPSE = 'pfc_manage_foods_collapse_state';
-
-const readCollapseState = () => {
-    if (typeof window === 'undefined') return { collapsedStores: [], collapsedGroups: [] };
-
-    const storedState = localStorage.getItem(STORAGE_KEY_MANAGE_FOODS_COLLAPSE);
-    if (!storedState) return { collapsedStores: [], collapsedGroups: [] };
-
-    try {
-        const parsed = JSON.parse(storedState) as { collapsedStores?: string[]; collapsedGroups?: string[] };
-        return {
-            collapsedStores: Array.isArray(parsed.collapsedStores) ? parsed.collapsedStores : [],
-            collapsedGroups: Array.isArray(parsed.collapsedGroups) ? parsed.collapsedGroups : [],
-        };
-    } catch {
-        return { collapsedStores: [], collapsedGroups: [] };
-    }
-};
-
-type StoreGroupSection = {
-    storeName: string;
-    groups: {
-        groupName: string;
-        foods: FoodItem[];
-    }[];
-};
-
-const getStoreName = (food: FoodItem) => food.store || 'その他';
-const getStoreGroupName = (food: FoodItem) => food.storeGroup || '未分類';
-
-const buildStoreSections = (foods: FoodItem[]): StoreGroupSection[] => {
-    const sections: StoreGroupSection[] = [];
-
-    foods.forEach((food) => {
-        const storeName = getStoreName(food);
-        const groupName = getStoreGroupName(food);
-
-        let storeSection = sections.find((section) => section.storeName === storeName);
-        if (!storeSection) {
-            storeSection = { storeName, groups: [] };
-            sections.push(storeSection);
-        }
-
-        let groupSection = storeSection.groups.find((group) => group.groupName === groupName);
-        if (!groupSection) {
-            groupSection = { groupName, foods: [] };
-            storeSection.groups.push(groupSection);
-        }
-
-        groupSection.foods.push(food);
-    });
-
-    return sections;
-};
 
 export default function ManageFoodsPage() {
     const { foods, uniqueStores } = useFoodDictionary();
@@ -188,16 +143,7 @@ export default function ManageFoodsPage() {
     const onSubmit = async (data: FoodItem) => {
         const normalizedBarcodes = normalizeBarcodes(barcodeInput);
 
-        const itemData = {
-            name: data.name,
-            protein: Number(data.protein),
-            fat: Number(data.fat),
-            carbs: Number(data.carbs),
-            calories: Number(data.calories),
-            store: data.store || undefined,
-            storeGroup: data.storeGroup || undefined,
-            timestamp: getCurrentTimestamp(),
-        };
+        const itemData = toFoodInput(data, getCurrentTimestamp());
 
         if (editingItem) {
             updateFoodInDictionary({ ...editingItem, ...itemData });
@@ -332,42 +278,23 @@ export default function ManageFoodsPage() {
                                     <Label>食品名</Label>
                                     <Input {...register('name', { required: true })} placeholder="例: ハンバーグ" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>タンパク質 (g)</Label>
-                                        <Input type="number" step="0.1" {...register('protein')} placeholder="0" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>脂質 (g)</Label>
-                                        <Input type="number" step="0.1" {...register('fat')} placeholder="0" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>炭水化物 (g)</Label>
-                                        <Input type="number" step="0.1" {...register('carbs')} placeholder="0" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>カロリー</Label>
-                                        <Input type="number" {...register('calories')} placeholder="0" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>店名 / ブランド (任意)</Label>
-                                    <Input {...register('store')} placeholder="例: セブンイレブン" list="store-suggestions" />
-                                    <datalist id="store-suggestions">
-                                        {uniqueStores.map((store) => (
-                                            <option key={store} value={store} />
-                                        ))}
-                                    </datalist>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>店内グループ (任意)</Label>
-                                    <Input {...register('storeGroup')} placeholder="例: おにぎり" list="store-group-suggestions" />
-                                    <datalist id="store-group-suggestions">
-                                        {uniqueStoreGroups.map((group) => (
-                                            <option key={group} value={group} />
-                                        ))}
-                                    </datalist>
-                                </div>
+                                <PfcMacroInputs register={register} step="0.1" />
+                                <DatalistInput
+                                    register={register}
+                                    name="store"
+                                    label="店名 / ブランド (任意)"
+                                    listId="store-suggestions"
+                                    options={uniqueStores}
+                                    placeholder="例: セブンイレブン"
+                                />
+                                <DatalistInput
+                                    register={register}
+                                    name="storeGroup"
+                                    label="店内グループ (任意)"
+                                    listId="store-group-suggestions"
+                                    options={uniqueStoreGroups}
+                                    placeholder="例: おにぎり"
+                                />
                                 <div className="space-y-2">
                                     <Label htmlFor="barcode">バーコード (任意・複数可)</Label>
                                     <div className="flex gap-2">
@@ -400,32 +327,12 @@ export default function ManageFoodsPage() {
                     </Card>
                 ) : (
                     <div className="space-y-4">
-                        <Card className="bg-muted/30">
-                            <CardContent className="pt-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="eatDate">食べた日付</Label>
-                                        <Input
-                                            id="eatDate"
-                                            type="date"
-                                            value={eatDate}
-                                            onChange={(e) => setEatDate(e.target.value)}
-                                            onClick={(e) => e.currentTarget.showPicker?.()}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="eatTime">時刻</Label>
-                                        <Input
-                                            id="eatTime"
-                                            type="time"
-                                            value={eatTime}
-                                            onChange={(e) => setEatTime(e.target.value)}
-                                            onClick={(e) => e.currentTarget.showPicker?.()}
-                                        />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <EatDateTimeCard
+                            eatDate={eatDate}
+                            setEatDate={setEatDate}
+                            eatTime={eatTime}
+                            setEatTime={setEatTime}
+                        />
 
                         <div className="sticky top-0 z-20 -mx-4 space-y-2 bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                             <div className="flex gap-2">
@@ -520,10 +427,7 @@ export default function ManageFoodsPage() {
                                                                                 )}
                                                                                 <div className="flex-1 pr-2">
                                                                                     <div className="font-medium">{food.name}</div>
-                                                                                    <div className="text-xs text-muted-foreground">
-                                                                                        P:{food.protein} F:{food.fat} C:{food.carbs} | {food.calories}
-                                                                                        kcal
-                                                                                    </div>
+                                                                                    <PfcMacroLine food={food} />
                                                                                     {(barcodeMappingsByFoodKey[buildFoodMatchKey(food)] ?? []).length > 0 && (
                                                                                         <div className="text-xs text-muted-foreground">
                                                                                             バーコード: {(barcodeMappingsByFoodKey[buildFoodMatchKey(food)] ?? []).join(', ')}
