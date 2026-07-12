@@ -12,9 +12,6 @@ import { roundPFC } from '../utils';
 import { apiGet, apiPost } from '../api-client';
 import generatedFoodsRaw from '@/data/generated_foods.json';
 
-// foods は行単位 REST (/api/foods) で同期するため、この汎用パスの対象外。
-export type ResourceKey = 'settings' | 'sports';
-
 export type StoredSettings = Omit<UserSettings, 'sports'>;
 
 interface CloudState {
@@ -101,25 +98,12 @@ export function isCloudDataLoaded(): boolean {
   return cloudState.loaded;
 }
 
-function endpointFor(resource: ResourceKey): string {
-  return `/api/cloud-data/${resource}`;
-}
-
 function serializeSettings(settings: StoredSettings): Record<string, unknown> {
   return {
     targetPFC: settings.targetPFC,
     profile: settings.profile,
     favoriteFoodIds: settings.favoriteFoodIds ?? [],
   };
-}
-
-function valueFor(resource: ResourceKey): unknown {
-  switch (resource) {
-    case 'settings':
-      return serializeSettings(cloudState.settings);
-    case 'sports':
-      return cloudState.sports;
-  }
 }
 
 /**
@@ -144,18 +128,26 @@ export async function runOptimistic<T>(params: {
   }
 }
 
-export async function syncResource(resource: ResourceKey) {
+async function syncPost(endpoint: string, body: unknown, label: string) {
   if (!cloudState.loaded) return;
 
   try {
-    await apiPost(
-      endpointFor(resource),
-      { [resource]: valueFor(resource) },
-      'クラウド保存に失敗しました',
-    );
+    await apiPost(endpoint, body, 'クラウド保存に失敗しました');
   } catch (error) {
-    toast.fromError(`クラウド同期失敗 (${resource})`, error, 'クラウド保存に失敗しました');
+    toast.fromError(`クラウド同期失敗 (${label})`, error, 'クラウド保存に失敗しました');
   }
+}
+
+export function syncSettings() {
+  return syncPost(
+    '/api/settings',
+    { settings: serializeSettings(cloudState.settings) },
+    'settings',
+  );
+}
+
+export function syncSports() {
+  return syncPost('/api/sports', { sports: cloudState.sports }, 'sports');
 }
 
 interface CloudFetchResponse {
