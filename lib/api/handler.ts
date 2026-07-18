@@ -40,7 +40,7 @@ export function defineRoute<TBody = undefined, TRequireAuth extends boolean = fa
 
       if (options.auth) {
         const session = await auth();
-        if (!session?.user?.id) {
+        if (!session?.user.id) {
           throw new ApiError('認証が必要です', 401);
         }
         (ctx as AuthContext).userId = session.user.id;
@@ -103,7 +103,7 @@ export function defineDynamicRoute<
 
       if (options.auth) {
         const session = await auth();
-        if (!session?.user?.id) {
+        if (!session?.user.id) {
           throw new ApiError('認証が必要です', 401);
         }
         (ctx as unknown as AuthContext).userId = session.user.id;

@@ -20,10 +20,10 @@ const bodySchema = z.object({
 });
 
 function extractJsonObject(rawText: string): string {
-  const fencedMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/i);
+  const fencedMatch = /```json\s*([\s\S]*?)\s*```/i.exec(rawText);
   if (fencedMatch?.[1]) return fencedMatch[1].trim();
 
-  const plainMatch = rawText.match(/\{[\s\S]*\}/);
+  const plainMatch = /\{[\s\S]*\}/.exec(rawText);
   if (plainMatch) return plainMatch[0].trim();
 
   throw new ApiError('JSON形式の結果を取得できませんでした', 502);
@@ -36,13 +36,15 @@ function normalizeNutrition(data: Partial<EstimatedNutrition>): EstimatedNutriti
     return roundPFC(numeric, 1);
   };
 
+  const trimmedStore = data.store?.trim();
+
   return {
-    name: (data.name ?? '入力内容').toString().trim() || '入力内容',
+    name: (data.name ?? '入力内容').trim() || '入力内容',
     protein: toNumber(data.protein),
     fat: toNumber(data.fat),
     carbs: toNumber(data.carbs),
     calories: toNumber(data.calories),
-    store: data.store?.trim() || undefined,
+    store: trimmedStore === '' ? undefined : trimmedStore,
   };
 }
 

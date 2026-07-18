@@ -43,7 +43,7 @@ export default async function BarcodeMappingsPage() {
                       <td className="px-3 py-2 text-right">{food.fat}</td>
                       <td className="px-3 py-2 text-right">{food.carbs}</td>
                       <td className="px-3 py-2 text-right">{food.calories}</td>
-                      <td className="px-3 py-2">{food.store || '-'}</td>
+                      <td className="px-3 py-2">{food.store ?? '-'}</td>
                     </tr>
                   ))}
                 </tbody>

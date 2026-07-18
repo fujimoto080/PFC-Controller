@@ -43,7 +43,7 @@ export function CloudDataProvider({ children, isAuthenticated, userId }: Props) 
   // 鮮度を保つため、マウント時 / ユーザー変更時に裏で再取得する
   useEffect(() => {
     if (!isAuthenticated || !userId) return;
-    void loadCloudData(userId).finally(() => setStatus('ready'));
+    void loadCloudData(userId).finally(() => { setStatus('ready'); });
   }, [isAuthenticated, userId]);
 
   if (!isAuthenticated) {

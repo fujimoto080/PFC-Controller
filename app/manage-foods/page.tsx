@@ -101,7 +101,7 @@ export default function ManageFoodsPage() {
             }
         };
 
-        loadBarcodeMappings();
+        void loadBarcodeMappings();
     }, []);
 
     const startAdd = () => {
@@ -146,7 +146,7 @@ export default function ManageFoodsPage() {
         const itemData = toFoodInput(data, getCurrentTimestamp());
 
         if (editingItem) {
-            updateFoodInDictionary({ ...editingItem, ...itemData });
+            void updateFoodInDictionary({ ...editingItem, ...itemData });
             toast.success('食品を更新しました');
         } else {
             try {
@@ -183,7 +183,7 @@ export default function ManageFoodsPage() {
 
     const handleDelete = (id: string, name: string) => {
         if (confirm(`「${name}」を削除してもよろしいですか？`)) {
-            deleteFoodFromDictionary(id);
+            void deleteFoodFromDictionary(id);
         }
     };
 
@@ -278,7 +278,7 @@ export default function ManageFoodsPage() {
                     <Card>
                         <CardContent className="pt-6">
                             <h2 className="mb-4 text-lg font-semibold">{editingItem ? '食品を編集' : '新規食品を追加'}</h2>
-                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                            <form onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label>食品名</Label>
                                     <Input {...register('name', { required: true })} placeholder="例: ハンバーグ" />
@@ -306,10 +306,10 @@ export default function ManageFoodsPage() {
                                         <Input
                                             id="barcode"
                                             value={barcodeInput}
-                                            onChange={(event) => setBarcodeInput(event.target.value)}
+                                            onChange={(event) => { setBarcodeInput(event.target.value); }}
                                             placeholder="例: 4901234567890"
                                         />
-                                        <Button type="button" variant="outline" onClick={() => setIsScannerOpen(true)}>
+                                        <Button type="button" variant="outline" onClick={() => { setIsScannerOpen(true); }}>
                                             <ScanBarcode className="mr-2 h-4 w-4" />
                                             スキャン
                                         </Button>
@@ -354,7 +354,7 @@ export default function ManageFoodsPage() {
                                 <Input
                                     placeholder="食品を検索..."
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => { setSearchQuery(e.target.value); }}
                                 />
                             </div>
                         </div>
@@ -368,7 +368,7 @@ export default function ManageFoodsPage() {
                                         <button
                                             type="button"
                                             className="mb-2 flex w-full items-center rounded bg-muted/30 px-2 py-1 text-left text-sm font-semibold text-muted-foreground"
-                                            onClick={() => toggleStoreCollapsed(section.storeName)}
+                                            onClick={() => { toggleStoreCollapsed(section.storeName); }}
                                         >
                                             {collapsedStores.includes(section.storeName) ? (
                                                 <ChevronRight className="mr-1 h-4 w-4" />
@@ -394,7 +394,7 @@ export default function ManageFoodsPage() {
                                                             <button
                                                                 type="button"
                                                                 className="flex w-full items-center px-1 text-left text-xs font-medium text-muted-foreground"
-                                                                onClick={() => toggleStoreGroupCollapsed(section.storeName, group.groupName)}
+                                                                onClick={() => { toggleStoreGroupCollapsed(section.storeName, group.groupName); }}
                                                             >
                                                                 {isGroupCollapsed ? (
                                                                     <ChevronRight className="mr-1 h-3.5 w-3.5" />
@@ -425,8 +425,8 @@ export default function ManageFoodsPage() {
                                                                                 {isSelecting && (
                                                                                     <Checkbox
                                                                                         checked={isSelected}
-                                                                                        onCheckedChange={() => toggleFoodSelection(food.id)}
-                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                        onCheckedChange={() => { toggleFoodSelection(food.id); }}
+                                                                                        onClick={(e) => { e.stopPropagation(); }}
                                                                                         aria-label={`${food.name}を選択`}
                                                                                     />
                                                                                 )}
@@ -441,10 +441,10 @@ export default function ManageFoodsPage() {
                                                                                 </div>
                                                                                 {!isSelecting ? (
                                                                                     <div className="flex gap-1">
-                                                                                        <IconButton onClick={() => handleAddLog(food)}>
+                                                                                        <IconButton onClick={() => { void handleAddLog(food); }}>
                                                                                             <Plus className="h-4 w-4" />
                                                                                         </IconButton>
-                                                                                        <IconButton onClick={() => handleToggleFavorite(food.id)}>
+                                                                                        <IconButton onClick={() => { handleToggleFavorite(food.id); }}>
                                                                                             <Star
                                                                                                 className={`h-4 w-4 ${
                                                                                                     isFavoriteFood(food.id)
@@ -453,10 +453,10 @@ export default function ManageFoodsPage() {
                                                                                                 }`}
                                                                                             />
                                                                                         </IconButton>
-                                                                                        <IconButton onClick={() => startEdit(food)}>
+                                                                                        <IconButton onClick={() => { startEdit(food); }}>
                                                                                             <Pencil className="h-4 w-4 text-muted-foreground" />
                                                                                         </IconButton>
-                                                                                        <IconButton onClick={() => handleDelete(food.id, food.name)}>
+                                                                                        <IconButton onClick={() => { handleDelete(food.id, food.name); }}>
                                                                                             <Trash className="h-4 w-4 text-destructive" />
                                                                                         </IconButton>
                                                                                     </div>
@@ -484,7 +484,7 @@ export default function ManageFoodsPage() {
             </div>
 
             {isScannerOpen && (
-                <BarcodeScanner onScanSuccess={handleBarcodeScanSuccess} onClose={() => setIsScannerOpen(false)} />
+                <BarcodeScanner onScanSuccess={handleBarcodeScanSuccess} onClose={() => { setIsScannerOpen(false); }} />
             )}
 
             {isSelecting && (
@@ -496,7 +496,7 @@ export default function ManageFoodsPage() {
                                 <Label className="text-xs">店舗（未入力でその他）</Label>
                                 <Input
                                     value={bulkStoreName}
-                                    onChange={(e) => setBulkStoreName(e.target.value)}
+                                    onChange={(e) => { setBulkStoreName(e.target.value); }}
                                     placeholder="店舗名を入力"
                                     list="store-suggestions"
                                 />
@@ -505,7 +505,7 @@ export default function ManageFoodsPage() {
                                 <Label className="text-xs">店内グループ（未入力で未分類）</Label>
                                 <Input
                                     value={bulkGroupName}
-                                    onChange={(e) => setBulkGroupName(e.target.value)}
+                                    onChange={(e) => { setBulkGroupName(e.target.value); }}
                                     placeholder="グループ名を入力"
                                     list="store-group-suggestions"
                                 />

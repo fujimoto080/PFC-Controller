@@ -1,5 +1,6 @@
 'use client';
 
+import type { MouseEvent } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,12 @@ export function EatDateTimeFields({
   eatTime,
   setEatTime,
 }: EatDateTimeFieldsProps) {
+  // showPicker は型上は必須だが未対応ブラウザがあるため任意呼び出しにする。
+  const openNativePicker = (e: MouseEvent<HTMLInputElement>) => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    e.currentTarget.showPicker?.();
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
@@ -26,8 +33,8 @@ export function EatDateTimeFields({
           id="eatDate"
           type="date"
           value={eatDate}
-          onChange={(e) => setEatDate(e.target.value)}
-          onClick={(e) => e.currentTarget.showPicker?.()}
+          onChange={(e) => { setEatDate(e.target.value); }}
+          onClick={openNativePicker}
         />
       </div>
       <div className="space-y-2">
@@ -36,8 +43,8 @@ export function EatDateTimeFields({
           id="eatTime"
           type="time"
           value={eatTime}
-          onChange={(e) => setEatTime(e.target.value)}
-          onClick={(e) => e.currentTarget.showPicker?.()}
+          onChange={(e) => { setEatTime(e.target.value); }}
+          onClick={openNativePicker}
         />
       </div>
     </div>

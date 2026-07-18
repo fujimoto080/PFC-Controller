@@ -16,7 +16,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
       }
       reject(new Error('画像の読み込みに失敗しました'));
     };
-    reader.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
+    reader.onerror = () => { reject(new Error('画像の読み込みに失敗しました')); };
     reader.readAsDataURL(file);
   });
 }

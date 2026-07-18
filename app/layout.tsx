@@ -24,7 +24,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  const userId = session?.user?.id ?? null;
+  const userId = session?.user.id ?? null;
   const isAuthenticated = !!userId;
 
   return (

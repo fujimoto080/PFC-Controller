@@ -23,14 +23,17 @@ const calcLevenshteinDistance = (a: string, b: string): number => {
     curr[0] = i;
     for (let j = 1; j <= b.length; j += 1) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+      const deletion = (prev[j] ?? 0) + 1;
+      const insertion = (curr[j - 1] ?? 0) + 1;
+      const substitution = (prev[j - 1] ?? 0) + cost;
+      curr[j] = Math.min(deletion, insertion, substitution);
     }
     for (let j = 0; j <= b.length; j += 1) {
-      prev[j] = curr[j];
+      prev[j] = curr[j] ?? 0;
     }
   }
 
-  return prev[b.length];
+  return prev[b.length] ?? 0;
 };
 
 const calcSimilarityScore = (input: string, target: string): number => {
@@ -47,7 +50,7 @@ const calcSimilarityScore = (input: string, target: string): number => {
 export function getSimilarFoodSuggestions(
   foods: FoodItem[],
   inputName: string,
-): Array<FoodItem & { similarityScore: number }> {
+): (FoodItem & { similarityScore: number })[] {
   const normalizedInput = normalizeFoodName(inputName.trim());
   if (normalizedInput.length < 2) return [];
 

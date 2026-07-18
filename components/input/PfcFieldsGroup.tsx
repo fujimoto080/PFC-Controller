@@ -72,7 +72,7 @@ export function DatalistInput<T extends FieldValues>({
   options,
   placeholder,
 }: DatalistInputProps<T>) {
-  const inputId = String(name);
+  const inputId = name;
   return (
     <div className="space-y-2">
       <Label htmlFor={inputId}>{label}</Label>

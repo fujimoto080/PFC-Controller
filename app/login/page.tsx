@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 export default async function LoginPage() {
   const session = await auth();
-  if (session?.user?.id) {
+  if (session?.user.id) {
     redirect('/');
   }
 

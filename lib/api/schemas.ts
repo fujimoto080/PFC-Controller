@@ -11,7 +11,7 @@ export const logBaseSchema = z.object({
   timestamp: z.number().int().positive(),
 });
 
-export const logItemInputSchema = logBaseSchema.merge(pfcMacroSchema).extend({
+export const logItemInputSchema = logBaseSchema.extend(pfcMacroSchema.shape).extend({
   calories: z.number().nonnegative(),
   store: z.string().optional(),
   storeGroup: z.string().optional(),
@@ -30,4 +30,4 @@ export const foodCreateSchema = logItemInputSchema.extend({
   id: z.string().min(1),
 });
 
-export const uuidSchema = z.string().uuid();
+export const uuidSchema = z.uuid();

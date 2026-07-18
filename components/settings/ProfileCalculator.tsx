@@ -83,7 +83,7 @@ const calculateRecommendedDuration = (
 };
 
 export function ProfileCalculator({ onCalculate, initialProfile, duration, onDurationChange }: ProfileCalculatorProps) {
-    const [profile, setProfile] = useState<UserProfile>(initialProfile || {
+    const [profile, setProfile] = useState<UserProfile>(initialProfile ?? {
         gender: 'male',
         age: 30,
         height: 170,
@@ -175,7 +175,7 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
         '1.55': '中程度の運動（週3-5回）',
         '1.725': '激しい運動（週6-7回）',
         '1.9': '非常に激しい運動',
-    }[profile.activityLevel.toString()] || '';
+    }[profile.activityLevel.toString()] ?? '';
 
     const targetStatus = calculatedGoals.calorieAdjustment < 0 ? '減量' : calculatedGoals.calorieAdjustment > 0 ? '増量' : '維持';
     const targetFormula = `${calculatedGoals.tdee}kcal ${calculatedGoals.calorieAdjustment >= 0 ? '+' : ''} ${calculatedGoals.calorieAdjustment}kcal`;
@@ -198,7 +198,7 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
                     <Label>性別</Label>
                     <Select
                         value={profile.gender}
-                        onValueChange={(v) => setProfile(prev => ({ ...prev, gender: v as 'male' | 'female' }))}
+                        onValueChange={(v) => { setProfile(prev => ({ ...prev, gender: v as 'male' | 'female' })); }}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="性別" />
@@ -215,7 +215,7 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
                         id="age"
                         type="number"
                         value={profile.age}
-                        onChange={(e) => setProfile(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
+                        onChange={(e) => { setProfile(prev => ({ ...prev, age: parseInt(e.target.value) || 0 })); }}
                     />
                 </div>
             </div>
@@ -227,7 +227,7 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
                         id="height"
                         type="number"
                         value={profile.height}
-                        onChange={(e) => setProfile(prev => ({ ...prev, height: parseInt(e.target.value) || 0 }))}
+                        onChange={(e) => { setProfile(prev => ({ ...prev, height: parseInt(e.target.value) || 0 })); }}
                     />
                 </div>
                 <div className="space-y-2">
@@ -236,7 +236,7 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
                         id="weight"
                         type="number"
                         value={profile.weight}
-                        onChange={(e) => setProfile(prev => ({ ...prev, weight: parseInt(e.target.value) || 0 }))}
+                        onChange={(e) => { setProfile(prev => ({ ...prev, weight: parseInt(e.target.value) || 0 })); }}
                     />
                 </div>
             </div>
@@ -248,7 +248,7 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
                         id="targetWeight"
                         type="number"
                         value={profile.targetWeight}
-                        onChange={(e) => setProfile(prev => ({ ...prev, targetWeight: parseInt(e.target.value) || 0 }))}
+                        onChange={(e) => { setProfile(prev => ({ ...prev, targetWeight: parseInt(e.target.value) || 0 })); }}
                     />
                 </div>
                 <div className="space-y-2">
@@ -300,7 +300,7 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
                     min="0.1"
                     step="0.1"
                     value={targetDuration}
-                    onChange={(e) => setTargetDuration(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => { setTargetDuration(parseFloat(e.target.value) || 0); }}
                     onBlur={handleDurationBlur}
                 />
                 <p className="text-[10px] text-muted-foreground">
@@ -314,7 +314,6 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
                     <span className="text-muted-foreground">現在のBMI</span>
                     <span className="font-semibold">{bmi.toFixed(1)}</span>
                 </div>
-                {calculatedGoals && (
                     <div className="space-y-1">
                         <div className="flex justify-between items-center font-bold">
                             <span>推奨カロリー</span>
@@ -335,7 +334,6 @@ export function ProfileCalculator({ onCalculate, initialProfile, duration, onDur
                             </Card>
                         </div>
                     </div>
-                )}
                 <div className="pt-2">
                     <div className="text-xs text-muted-foreground mt-2 space-y-3 p-3 bg-background/50 rounded-md">
                         <p className="text-[11px] font-bold text-foreground/80">計算の内訳</p>

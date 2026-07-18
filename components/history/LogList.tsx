@@ -37,7 +37,7 @@ function getTimeOfDayGradient(timestamp: number): string {
   return TIME_OF_DAY_GRADIENT_MAP.night;
 }
 
-type GroupedFoodItem = {
+interface GroupedFoodItem {
   name: string;
   count: number;
   totalCalories: number;
@@ -47,7 +47,7 @@ type GroupedFoodItem = {
   items: FoodItem[];
   // グループのキー（食品名+PFC値）
   groupKey: string;
-};
+}
 
 // PFC表示用の小さなコンポーネント
 const PFCLine = ({ p, f, c, className }: { p: number, f: number, c: number, className?: string }) => (
@@ -124,28 +124,21 @@ export function LogList() {
     const dateGroups: Record<string, Record<string, GroupedFoodItem>> = {};
     
     allItems.slice(0, displayCount).forEach((item) => {
-      const dateKey = new Date(item.timestamp).toISOString().split('T')[0];
+      const dateKey = new Date(item.timestamp).toISOString().split('T')[0] ?? '';
       // 食品名とPFC値でグループキーを作成
       const groupKey = `${item.name}_${item.protein}_${item.fat}_${item.carbs}`;
-      
-      if (!dateGroups[dateKey]) {
-        dateGroups[dateKey] = {};
-      }
-      
-      if (!dateGroups[dateKey][groupKey]) {
-        dateGroups[dateKey][groupKey] = {
-          name: item.name,
-          count: 0,
-          totalCalories: 0,
-          totalProtein: 0,
-          totalFat: 0,
-          totalCarbs: 0,
-          items: [],
-          groupKey,
-        };
-      }
-      
-      const group = dateGroups[dateKey][groupKey];
+
+      const dayGroup = (dateGroups[dateKey] ??= {});
+      const group = (dayGroup[groupKey] ??= {
+        name: item.name,
+        count: 0,
+        totalCalories: 0,
+        totalProtein: 0,
+        totalFat: 0,
+        totalCarbs: 0,
+        items: [],
+        groupKey,
+      });
       group.count++;
       group.totalCalories += item.calories;
       group.totalProtein += item.protein;
@@ -172,7 +165,7 @@ export function LogList() {
             <DrawerTitle>データを追加</DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-8 overflow-y-auto">
-            <AddFoodForm onSuccess={handleAddSuccess} initialData={callingItem || undefined} />
+            <AddFoodForm onSuccess={handleAddSuccess} initialData={callingItem ?? undefined} />
           </div>
         </DrawerContent>
       </Drawer>
@@ -185,7 +178,7 @@ export function LogList() {
         <ScrollArea className="h-[calc(100vh-160px)]">
           <div className="space-y-6 px-1 pb-20">
             {sortedDateKeys.map((dateKey) => {
-              const dateItems = groupedItems[dateKey];
+              const dateItems = groupedItems[dateKey] ?? {};
               const date = new Date(dateKey);
               const formattedDate = format(date, 'M/d(eee)', { locale: ja });
               const isItemToday = isToday(date);
@@ -202,13 +195,15 @@ export function LogList() {
                       {Object.values(dateItems).map((group) => {
                         const isExpanded = expandedGroups.has(group.groupKey);
                         const isSingleItem = group.count === 1;
-                        
+                        const firstItem = group.items[0];
+                        if (!firstItem) return null;
+
                         return (
-                          <Card 
-                            key={group.groupKey} 
+                          <Card
+                            key={group.groupKey}
                             className={cn(
                               "overflow-hidden",
-                              getTimeOfDayGradient(group.items[0].timestamp)
+                              getTimeOfDayGradient(firstItem.timestamp)
                             )}
                           >
                             <CardContent className="space-y-3 p-3">
@@ -228,7 +223,7 @@ export function LogList() {
                                 </div>
                                 {!isSingleItem && (
                                   <IconButton
-                                    onClick={() => toggleGroup(group.groupKey)}
+                                    onClick={() => { toggleGroup(group.groupKey); }}
                                     className="h-8 w-8 text-muted-foreground"
                                     title={isExpanded ? "折りたたむ" : "展開"}
                                   >
@@ -248,7 +243,7 @@ export function LogList() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleCallClick(group.items[0])}
+                                  onClick={() => { handleCallClick(firstItem); }}
                                   className="h-8 flex-1 text-xs"
                                 >
                                   呼び出し
@@ -256,14 +251,14 @@ export function LogList() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleReRegisterClick(group.items[0])}
+                                  onClick={() => { void handleReRegisterClick(firstItem); }}
                                   className="h-8 flex-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
                                 >
                                   再登録
                                 </Button>
                                 {isSingleItem && (
                                   <IconButton
-                                    onClick={() => handleEditClick(group.items[0])}
+                                    onClick={() => { handleEditClick(firstItem); }}
                                     className="h-8 w-8 text-muted-foreground"
                                     title="編集"
                                   >
@@ -291,7 +286,7 @@ export function LogList() {
                                           <PFCLine p={item.protein} f={item.fat} c={item.carbs} className="text-[10px] mt-1" />
                                         </div>
                                         <IconButton
-                                          onClick={() => handleEditClick(item)}
+                                          onClick={() => { handleEditClick(item); }}
                                           className="h-7 w-7 text-muted-foreground"
                                           title="編集"
                                         >
@@ -315,7 +310,7 @@ export function LogList() {
               <div className="flex justify-center pt-2 pb-6">
                 <Button
                   variant="outline"
-                  onClick={() => setDisplayCount(prev => prev + 100)}
+                  onClick={() => { setDisplayCount(prev => prev + 100); }}
                   className="w-full"
                 >
                   さらに表示

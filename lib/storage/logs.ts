@@ -33,13 +33,13 @@ export function getLogs(): Record<string, DailyLog> {
 
 export function getLogForDate(date: string): DailyLog {
   const logs = getLogs();
-  return logs[date] || createEmptyDailyLog(date);
+  return logs[date] ?? createEmptyDailyLog(date);
 }
 
 export function getAdjustedCalorieTarget(date: string): number {
   const settings = getSettings();
   const log = getLogForDate(date);
-  const activityCalories = (log.activities || []).reduce(
+  const activityCalories = (log.activities ?? []).reduce(
     (total, activity) => total + activity.caloriesBurned,
     0,
   );
@@ -99,7 +99,7 @@ export async function addFoodItem(input: FoodItemInput): Promise<void> {
   });
 
   await runOptimistic({
-    rollback: () => rollback(snapshot),
+    rollback: () => { rollback(snapshot); },
     request: () =>
       apiPost<{ item: FoodItem; date: string }>(
         '/api/log-items',
@@ -130,7 +130,7 @@ export async function deleteLogItem(id: string, timestamp: number): Promise<void
   });
 
   await runOptimistic({
-    rollback: () => rollback(snapshot),
+    rollback: () => { rollback(snapshot); },
     request: () =>
       apiDelete(`/api/log-items/${encodeURIComponent(id)}`, '食事記録の削除に失敗しました'),
     errorLabel: '削除に失敗しました',
@@ -183,7 +183,7 @@ export async function updateLogItem(
 
   const { id, ...input } = newItem;
   await runOptimistic({
-    rollback: () => rollback(snapshot),
+    rollback: () => { rollback(snapshot); },
     request: () =>
       apiPatch(`/api/log-items/${encodeURIComponent(id)}`, input, '食事記録の更新に失敗しました'),
     errorLabel: '更新に失敗しました',
@@ -199,6 +199,7 @@ export function getAllLogItems(): FoodItem[] {
 
   for (const date of sortedDates) {
     const dayLog = logs[date];
+    if (!dayLog) continue;
     const sortedDayItems = [...dayLog.items].sort(
       (a, b) => b.timestamp - a.timestamp,
     );
@@ -229,7 +230,7 @@ export function getWeeklyLog(): {
     const dateStr = formatDate(d);
 
     const log = logs[dateStr];
-    if (log && log.total) {
+    if (log) {
       totalProtein += log.total.protein;
       totalFat += log.total.fat;
       totalCarbs += log.total.carbs;
@@ -273,7 +274,7 @@ export function getBalancedWeeklyTargets(): {
     d.setDate(sunday.getDate() + i);
     const dateStr = formatDate(d);
     const log = logs[dateStr];
-    if (log && log.total) {
+    if (log) {
       totalProtein += log.total.protein;
       totalFat += log.total.fat;
       totalCarbs += log.total.carbs;
@@ -343,9 +344,9 @@ function computePfcDebt(
   const sortedDates = getSortedLogDates(logs, 'asc');
   const cumulativeDebt: PFC = { ...EMPTY_PFC };
 
-  if (sortedDates.length === 0) return cumulativeDebt;
-
   const firstLogDate = sortedDates[0];
+  if (firstLogDate === undefined) return cumulativeDebt;
+
   const firstDate = new Date(firstLogDate);
 
   const targetProtein = target.protein;
@@ -359,7 +360,7 @@ function computePfcDebt(
     const log = logs[dateStr];
 
     const dailyExcess =
-      log && log.total
+      log
         ? {
             protein: log.total.protein - targetProtein,
             fat: log.total.fat - targetFat,

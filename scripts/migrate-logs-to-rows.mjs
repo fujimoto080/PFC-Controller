@@ -137,7 +137,9 @@ async function main() {
     await client.query('COMMIT');
     console.log('[migrate-logs] 完了');
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => {
+      /* ロールバック失敗は無視する */
+    });
     throw error;
   } finally {
     client.release();

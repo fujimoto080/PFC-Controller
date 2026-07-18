@@ -48,11 +48,12 @@ function cacheKey(userId: string): string {
   return `${CACHE_KEY_PREFIX}${userId}`;
 }
 
+// localStorage 由来の未検証データ。フィールド欠落や旧スキーマの可能性があるため全て optional 扱い。
 interface CachedSnapshot {
-  logs: Record<string, DailyLog>;
-  settings: StoredSettings;
-  foods: FoodItem[];
-  sports: SportDefinition[];
+  logs?: Record<string, DailyLog>;
+  settings?: Partial<StoredSettings>;
+  foods?: FoodItem[];
+  sports?: SportDefinition[];
 }
 
 function readCache(userId: string): CachedSnapshot | null {
@@ -233,14 +234,12 @@ export async function loadCloudData(userId?: string): Promise<boolean> {
     );
 
     const payload = data.payload;
-    const settingsFromCloud = (payload?.settings ?? null) as
-      | (UserSettings & Record<string, unknown>)
-      | null;
+    const settingsFromCloud = (payload?.settings ?? null);
     const storedSports = normalizeSports(payload?.sports);
 
-    cloudState.logs = (payload?.logs ?? {}) as Record<string, DailyLog>;
+    cloudState.logs = (payload?.logs ?? {});
     const rawFoods = Array.isArray(payload?.foods)
-      ? (payload!.foods as FoodItem[])
+      ? (payload.foods)
       : [];
     // 既定食品(generated_foods.json)は毎回クライアント側でマージするだけで DB には保存しない。
     // 編集された既定食品は /api/foods 側の upsert で行が作られる。
@@ -251,7 +250,7 @@ export async function loadCloudData(userId?: string): Promise<boolean> {
       targetPFC: settingsFromCloud?.targetPFC ?? DEFAULT_TARGET,
       profile: settingsFromCloud?.profile,
       favoriteFoodIds: Array.isArray(settingsFromCloud?.favoriteFoodIds)
-        ? (settingsFromCloud.favoriteFoodIds as string[])
+        ? (settingsFromCloud.favoriteFoodIds)
         : [],
     };
     cloudState.loaded = true;

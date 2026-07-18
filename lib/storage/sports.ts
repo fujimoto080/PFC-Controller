@@ -12,7 +12,7 @@ import { getSettings, saveSettings } from './settings';
 
 export function addSportDefinition(sport: SportDefinition) {
   const settings = getSettings();
-  const sports = [...(settings.sports || [])];
+  const sports = [...(settings.sports ?? [])];
   const normalized = toSportDefinition(sport);
 
   if (sports.some((item) => item.id === normalized.id)) return;
@@ -23,7 +23,7 @@ export function addSportDefinition(sport: SportDefinition) {
 
 export function updateSportDefinition(updatedSport: SportDefinition) {
   const settings = getSettings();
-  const sports = [...(settings.sports || [])];
+  const sports = [...(settings.sports ?? [])];
   const index = sports.findIndex((item) => item.id === updatedSport.id);
   if (index === -1) return;
 
@@ -33,7 +33,7 @@ export function updateSportDefinition(updatedSport: SportDefinition) {
 
 export function deleteSportDefinition(id: string) {
   const settings = getSettings();
-  const sports = (settings.sports || []).filter((sport) => sport.id !== id);
+  const sports = (settings.sports ?? []).filter((sport) => sport.id !== id);
   saveSettings({ ...settings, sports });
   // 過去ログ上の activities は履歴として残す方針のため触らない。
 }

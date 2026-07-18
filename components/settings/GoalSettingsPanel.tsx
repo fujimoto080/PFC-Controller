@@ -13,9 +13,9 @@ import { usePfcData } from '@/hooks/use-pfc-data';
 export function GoalSettingsPanel() {
   const { settings } = usePfcData();
   const [duration, setDuration] = useState<number | undefined>(undefined);
-  const [goals, setGoals] = useState<PFC | null>(settings?.targetPFC ?? null);
-  const [profile, setProfile] = useState<UserProfile | undefined>(settings?.profile);
-  const [sports, setSports] = useState<SportDefinition[]>(settings?.sports || []);
+  const [goals, setGoals] = useState<PFC | null>(settings.targetPFC);
+  const [profile, setProfile] = useState<UserProfile | undefined>(settings.profile);
+  const [sports, setSports] = useState<SportDefinition[]>(settings.sports ?? []);
 
   const handleCalculate = useCallback((newGoals: PFC, newProfile: UserProfile) => {
     setGoals(newGoals);
@@ -31,7 +31,7 @@ export function GoalSettingsPanel() {
   };
 
   const handleSaveGoals = () => {
-    if (!settings || !goals) return;
+    if (!goals) return;
     saveSettings({
       ...settings,
       targetPFC: goals,
@@ -42,7 +42,6 @@ export function GoalSettingsPanel() {
   };
 
   const handleSaveSports = () => {
-    if (!settings) return;
     saveSettings({
       ...settings,
       sports,
@@ -50,7 +49,7 @@ export function GoalSettingsPanel() {
     toast.success('スポーツマスタを保存しました');
   };
 
-  if (!settings || !goals) return null;
+  if (!goals) return null;
 
   return (
     <>

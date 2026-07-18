@@ -31,9 +31,9 @@ export async function saveBarcodeMapping(barcode: string, foodData: BarcodeFood)
 }
 
 export async function listBarcodeMappings(): Promise<BarcodeMappingRow[]> {
-  const barcodes = await redis.smembers<string[]>(BARCODE_MAPPING_INDEX_KEY);
+  const barcodes = await redis.smembers(BARCODE_MAPPING_INDEX_KEY);
 
-  if (!barcodes || barcodes.length === 0) {
+  if (barcodes.length === 0) {
     return [];
   }
 

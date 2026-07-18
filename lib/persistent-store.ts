@@ -98,15 +98,12 @@ function aggregateLogs(
   const logs: Record<string, AggregatedLog> = {};
 
   function ensureLog(date: string): AggregatedLog {
-    if (!logs[date]) {
-      logs[date] = {
-        date,
-        items: [],
-        activities: [],
-        total: { ...EMPTY_PFC },
-      };
-    }
-    return logs[date];
+    return (logs[date] ??= {
+      date,
+      items: [],
+      activities: [],
+      total: { ...EMPTY_PFC },
+    });
   }
 
   for (const row of itemsRows) {

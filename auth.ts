@@ -15,13 +15,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   callbacks: {
     jwt({ token, user }) {
       // 初回サインイン時のみ user が渡る。DB のユーザー ID をトークンに焼き込む。
+      // next-auth の型は user を常在扱いだが、実際には毎回渡らないため runtime ガードが必要。
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (user?.id) {
         token.id = user.id;
       }
       return token;
     },
     session({ session, token }) {
-      if (session.user && typeof token.id === 'string') {
+      if (typeof token.id === 'string') {
         session.user.id = token.id;
       }
       return session;

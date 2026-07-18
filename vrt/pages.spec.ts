@@ -31,7 +31,9 @@ test.describe('Pages VRT', () => {
 
       // 特定の要素（ BMI ゲージなど）がレンダリングされるのを待つ
       if (pageInfo.name === 'dashboard') {
-        await page.waitForSelector('.recharts-surface', { timeout: 5000 }).catch(() => {});
+        await page.waitForSelector('.recharts-surface', { timeout: 5000 }).catch(() => {
+          /* 要素が現れなくてもスクリーンショット比較へ進む */
+        });
       }
 
       // スクリーンショットの比較

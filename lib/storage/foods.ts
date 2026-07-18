@@ -22,7 +22,7 @@ export async function addFoodToDictionary(item: FoodItem): Promise<void> {
   setFoods([...snapshot, item]);
 
   await runOptimistic({
-    rollback: () => setFoods(snapshot),
+    rollback: () => { setFoods(snapshot); },
     request: () => apiPost('/api/foods', item, '食品の保存に失敗しました'),
     errorLabel: '食品の保存に失敗しました',
     rethrow: true,
@@ -40,7 +40,7 @@ export async function updateFoodInDictionary(updatedItem: FoodItem): Promise<voi
 
   const { id, ...input } = updatedItem;
   await runOptimistic({
-    rollback: () => setFoods(snapshot),
+    rollback: () => { setFoods(snapshot); },
     request: () => apiPatch(`/api/foods/${encodeURIComponent(id)}`, input, '食品の更新に失敗しました'),
     errorLabel: '食品の更新に失敗しました',
   });
@@ -51,7 +51,7 @@ export async function deleteFoodFromDictionary(id: string): Promise<void> {
   setFoods(snapshot.filter((f) => f.id !== id));
 
   await runOptimistic({
-    rollback: () => setFoods(snapshot),
+    rollback: () => { setFoods(snapshot); },
     request: () => apiDelete(`/api/foods/${encodeURIComponent(id)}`, '食品の削除に失敗しました'),
     errorLabel: '食品の削除に失敗しました',
   });
