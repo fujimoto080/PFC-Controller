@@ -25,9 +25,9 @@ export function normalizeBarcodes(value: string | string[]): string[] {
 export function buildFoodMatchKey(food: FoodMatchKeyInput): string {
   return [
     food.name.trim().toLowerCase(),
-    Number(food.protein),
-    Number(food.fat),
-    Number(food.carbs),
-    Number(food.calories),
+    food.protein,
+    food.fat,
+    food.carbs,
+    food.calories,
   ].join('|');
 }

@@ -24,8 +24,7 @@ export function saveSettings(settings: UserSettings) {
     normalizedSports.some((sport, i) => {
       const prev = cloudState.sports[i];
       return (
-        !prev ||
-        prev.id !== sport.id ||
+        prev?.id !== sport.id ||
         prev.name !== sport.name ||
         prev.caloriesBurned !== sport.caloriesBurned
       );

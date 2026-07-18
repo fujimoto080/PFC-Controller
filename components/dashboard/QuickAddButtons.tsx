@@ -63,7 +63,7 @@ export function QuickAddButtons() {
             key={food.id}
             variant="outline"
             className="flex-shrink-0 flex-col items-start h-auto py-3 px-4 min-w-[140px]"
-            onClick={() => handleQuickAdd(food)}
+            onClick={() => { void handleQuickAdd(food); }}
           >
             <div className="flex items-center gap-2 mb-1">
               <Plus className="h-4 w-4" />

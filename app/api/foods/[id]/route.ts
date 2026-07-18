@@ -4,7 +4,7 @@ import { defineDynamicRoute } from '@/lib/api/handler';
 import { logItemInputSchema } from '@/lib/api/schemas';
 import { deleteFood, upsertFood } from '@/lib/server/foods';
 
-type Params = { id: string };
+interface Params { id: string }
 
 const isValidId = (id: string) => id.trim().length > 0;
 

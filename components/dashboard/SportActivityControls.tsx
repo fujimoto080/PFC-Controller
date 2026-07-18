@@ -63,7 +63,7 @@ export function SportActivityControls({
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={handleAddActivity} disabled={!selectedSport}>
+        <Button onClick={() => { void handleAddActivity(); }} disabled={!selectedSport}>
           追加
         </Button>
       </div>
@@ -82,7 +82,7 @@ export function SportActivityControls({
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-xs"
-                onClick={() => handleDeleteActivity(activity.id)}
+                onClick={() => { void handleDeleteActivity(activity.id); }}
               >
                 削除
               </Button>

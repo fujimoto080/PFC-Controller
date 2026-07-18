@@ -13,14 +13,14 @@ export interface GeminiRequest {
   model: string;
   parts: GeminiPart[];
   temperature?: number;
-  tools?: Array<{ google_search: Record<string, never> }>;
+  tools?: { google_search: Record<string, never> }[];
   allowEmptyResponse?: boolean;
 }
 
 interface GeminiResponse {
-  candidates?: Array<{
-    content?: { parts?: Array<{ text?: string }> };
-  }>;
+  candidates?: {
+    content?: { parts?: { text?: string }[] };
+  }[];
 }
 
 export function requireGeminiApiKey(): string {

@@ -42,8 +42,8 @@ export function toFoodInput(values: PfcFormValues, timestamp: number): FoodItemI
     fat: safePfcNumber(values.fat),
     carbs: safePfcNumber(values.carbs),
     calories: safePfcNumber(values.calories),
-    store: values.store || undefined,
-    storeGroup: values.storeGroup || undefined,
+    store: values.store === '' ? undefined : values.store,
+    storeGroup: values.storeGroup === '' ? undefined : values.storeGroup,
     timestamp,
   };
 }

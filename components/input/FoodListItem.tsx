@@ -16,7 +16,7 @@ export function FoodListItem({ food, onAdd }: FoodListItemProps) {
         <div
             className="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors"
             role="button"
-            onClick={() => onAdd(food)}
+            onClick={() => { onAdd(food); }}
         >
             <div className="flex items-center gap-3">
                 {food.image ? (

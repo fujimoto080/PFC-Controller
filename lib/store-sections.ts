@@ -36,8 +36,8 @@ export interface StoreGroupSection {
   }[];
 }
 
-export const getStoreName = (food: FoodItem) => food.store || 'その他';
-export const getStoreGroupName = (food: FoodItem) => food.storeGroup || '未分類';
+export const getStoreName = (food: FoodItem) => food.store ?? 'その他';
+export const getStoreGroupName = (food: FoodItem) => food.storeGroup ?? '未分類';
 
 /** 食品リストを 店舗 → 店内グループ の 2 階層セクションに畳み込む純関数。 */
 export function buildStoreSections(foods: FoodItem[]): StoreGroupSection[] {

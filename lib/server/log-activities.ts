@@ -26,7 +26,7 @@ function rowToActivity(row: LogActivityRow): SportActivityLog & { date: string }
 
 export async function listLogActivitiesByUser(
   userId: string,
-): Promise<Array<SportActivityLog & { date: string }>> {
+): Promise<(SportActivityLog & { date: string })[]> {
   const pool = getPool();
   const result = await pool.query<LogActivityRow>(
     `SELECT id, to_char(date, 'YYYY-MM-DD') AS date, sport_id, name, calories_burned, timestamp_ms
@@ -58,7 +58,9 @@ export async function createLogActivity(
       input.timestamp,
     ],
   );
-  return rowToActivity(result.rows[0]);
+  const row = result.rows[0];
+  if (!row) throw new Error('活動ログの登録に失敗しました');
+  return rowToActivity(row);
 }
 
 export async function updateLogActivity(

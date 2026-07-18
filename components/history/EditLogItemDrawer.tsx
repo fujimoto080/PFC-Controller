@@ -66,7 +66,7 @@ export function EditLogItemDrawer({
             fat: safePfcNumber(data.fat),
             carbs: safePfcNumber(data.carbs),
             calories: safePfcNumber(data.calories),
-            store: data.store || undefined,
+            store: data.store === '' ? undefined : data.store,
             timestamp: getSelectedTimestamp(),
         };
 
@@ -104,7 +104,7 @@ export function EditLogItemDrawer({
                         </DrawerDescription>
                     </DrawerHeader>
                     <div className="p-4 pb-0">
-                        <form id="edit-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <form id="edit-form" onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="name">食品名</Label>
                                 <Input id="name" {...register('name', { required: true })} />
@@ -124,7 +124,7 @@ export function EditLogItemDrawer({
                         <Button
                             variant="destructive"
                             className="flex-1"
-                            onClick={handleDelete}
+                            onClick={() => { void handleDelete(); }}
                         >
                             <Trash2 className="mr-2 h-4 w-4" /> 削除
                         </Button>

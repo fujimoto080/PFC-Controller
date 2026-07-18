@@ -67,11 +67,9 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
   const { settings, debt } = usePfcData(windowStartDate);
 
   const chartData = useMemo(() => {
-    if (!settings) return [];
-
     const logs = getLogs();
     const start = parseISO(windowStartDate);
-    const data: Array<Record<string, number | string>> = [];
+    const data: Record<string, number | string>[] = [];
 
     let proteinCarry = debt.protein;
     let fatCarry = debt.fat;
@@ -116,13 +114,13 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
     return data;
   }, [days, windowStartDate, settings, debt]);
 
-  if (!settings || chartData.length === 0) return null;
+  if (chartData.length === 0) return null;
 
   const pfcTargetTotal = settings.targetPFC.protein + settings.targetPFC.fat + settings.targetPFC.carbs;
 
   return (
     <div className="space-y-4">
-      <Card className="cursor-pointer" onClick={() => setIsSplitView((prev) => !prev)}>
+      <Card className="cursor-pointer" onClick={() => { setIsSplitView((prev) => !prev); }}>
         <CardHeader>
           <CardTitle>PFC積み上げグラフ（過去20日 / タップで栄養素別表示）</CardTitle>
         </CardHeader>
@@ -184,7 +182,7 @@ function NutrientChart({
   color: string;
   target: number;
   dataKeyPrefix: string;
-  data: Array<Record<string, number | string>>;
+  data: Record<string, number | string>[];
   unit: string;
 }) {
   return (

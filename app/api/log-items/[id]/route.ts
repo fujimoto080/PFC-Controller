@@ -4,7 +4,7 @@ import { defineDynamicRoute } from '@/lib/api/handler';
 import { logItemInputSchema, uuidSchema } from '@/lib/api/schemas';
 import { deleteLogItem, updateLogItem } from '@/lib/server/log-items';
 
-type Params = { id: string };
+interface Params { id: string }
 
 export const PATCH = defineDynamicRoute<z.infer<typeof logItemInputSchema>, true, Params>(
   {

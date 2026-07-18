@@ -10,11 +10,11 @@ const bodySchema = z.object({
 });
 
 function parseDataUrl(imageDataUrl: string): { mimeType: string; base64Data: string } {
-  const match = imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(imageDataUrl);
   if (!match) {
     throw new ApiError('画像データの形式が不正です', 400);
   }
-  return { mimeType: match[1], base64Data: match[2] };
+  return { mimeType: match[1] ?? '', base64Data: match[2] ?? '' };
 }
 
 export const POST = defineRoute(

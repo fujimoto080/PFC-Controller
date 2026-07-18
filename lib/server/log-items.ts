@@ -36,7 +36,7 @@ function rowToFoodItem(row: LogItemRow): FoodItem & { date: string } {
 
 export async function listLogItemsByUser(
   userId: string,
-): Promise<Array<FoodItem & { date: string }>> {
+): Promise<(FoodItem & { date: string })[]> {
   const pool = getPool();
   const result = await pool.query<LogItemRow>(
     `SELECT id, to_char(date, 'YYYY-MM-DD') AS date, name, protein, fat, carbs, calories,
@@ -75,7 +75,9 @@ export async function createLogItem(
       input.image ?? null,
     ],
   );
-  return rowToFoodItem(result.rows[0]);
+  const row = result.rows[0];
+  if (!row) throw new Error('ログの登録に失敗しました');
+  return rowToFoodItem(row);
 }
 
 export async function updateLogItem(

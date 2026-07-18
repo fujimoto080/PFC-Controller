@@ -25,8 +25,8 @@ export function useEatDateTime(initialTimestamp?: number) {
   }, [initialTimestamp]);
 
   const getSelectedTimestamp = () => {
-    const [year, month, day] = eatDate.split('-').map(Number);
-    const [hour, minute] = eatTime.split(':').map(Number);
+    const [year = 0, month = 1, day = 1] = eatDate.split('-').map(Number);
+    const [hour = 0, minute = 0] = eatTime.split(':').map(Number);
     return new Date(year, month - 1, day, hour, minute).getTime();
   };
 

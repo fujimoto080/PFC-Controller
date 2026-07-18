@@ -87,6 +87,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         : undefined,
     });
   const watchedValues = watch();
+  // 型上は string だが、defaultValues 未設定時は watch() が undefined を返し得るためガードする。
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const watchedName = watchedValues.name ?? '';
   const similarFoods = useMemo(
     () => getSimilarFoodSuggestions(foods, watchedName),
@@ -116,14 +118,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
   };
 
   const clearForm = () =>
-    reset({
+    { reset({
       name: '',
       protein: undefined,
       fat: undefined,
       carbs: undefined,
       calories: undefined,
       store: '',
-    });
+    }); };
 
   // 手動入力フォームの入力内容(フォーム値・チェック・下書き)をまとめてクリアする
   const handleClearForm = () => {
@@ -153,7 +155,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     handleExtractTextFromImage,
   } = useAiNutrition({
     applyFoodData: applyFoodDataToForm,
-    onApplied: () => setActiveTab('manual'),
+    onApplied: () => { setActiveTab('manual'); },
   });
 
   // 編集モード (initialData 指定) では下書き機能は無効。新規追加時のみ有効化する
@@ -169,9 +171,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
   );
   const applyDraft = useCallback(
     (draft: AddFoodFormDraft) => {
-      if (draft.form) {
-        reset(draft.form);
-      }
+      reset(draft.form);
       if (typeof draft.aiInputText === 'string') {
         setAiInputText(draft.aiInputText);
       }
@@ -218,7 +218,9 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         store: item.store,
       })
         .then(() => toast.success('バーコード情報も保存しました'))
-        .catch((error) => toast.fromError('バーコード情報の保存に失敗しました', error));
+        .catch((error: unknown) =>
+          toast.fromError('バーコード情報の保存に失敗しました', error),
+        );
       clearBarcode();
     }
 
@@ -321,14 +323,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
               <Card>
                 <CardContent className="pt-6">
                   <form
-                    onSubmit={handleSubmit(onSubmitManual)}
+                    onSubmit={(e) => { void handleSubmit(onSubmitManual)(e); }}
                     className="space-y-4"
                   >
                     <Button
                       type="button"
                       variant="outline"
                       className="w-full gap-2"
-                      onClick={() => setShowScanner(true)}
+                      onClick={() => { setShowScanner(true); }}
                     >
                       <ScanBarcode className="h-4 w-4" />
                       バーコードから読み取る
@@ -359,14 +361,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                           id="barcodeLookup"
                           value={barcodeLookupInput}
                           onChange={(event) =>
-                            setBarcodeLookupInput(event.target.value)
+                            { setBarcodeLookupInput(event.target.value); }
                           }
                           placeholder="例: 4900000000000"
                         />
                         <Button
                           type="button"
                           variant="secondary"
-                          onClick={handleLookupBarcode}
+                          onClick={() => { void handleLookupBarcode(); }}
                         >
                           確認
                         </Button>
@@ -384,7 +386,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                 {mappedFoodData.fat} / {mappedFoodData.carbs} g
                               </li>
                               <li>カロリー: {mappedFoodData.calories} kcal</li>
-                              <li>店名: {mappedFoodData.store || '未設定'}</li>
+                              <li>店名: {mappedFoodData.store ?? '未設定'}</li>
                             </ul>
                           ) : (
                             <p className="text-muted-foreground mt-2">
@@ -411,7 +413,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                 key={food.id}
                                 type="button"
                                 className="hover:bg-muted/80 w-full rounded-md border p-2 text-left transition-colors"
-                                onClick={() => handleApplySuggestion(food)}
+                                onClick={() => { handleApplySuggestion(food); }}
                               >
                                 <p className="text-sm font-medium">
                                   {food.name}
@@ -441,7 +443,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                         id="saveToDict"
                         checked={saveToDictionary}
                         onCheckedChange={(checked) =>
-                          setSaveToDictionary(checked as boolean)
+                          { setSaveToDictionary(checked as boolean); }
                         }
                       />
                       <Label
@@ -506,11 +508,11 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                       onClick={(event) => {
                         event.currentTarget.value = '';
                       }}
-                      onChange={(event) =>
-                        handleExtractTextFromImage(
+                      onChange={(event) => {
+                        void handleExtractTextFromImage(
                           event.target.files?.[0] ?? null,
-                        )
-                      }
+                        );
+                      }}
                     />
                   </div>
                   <div className="space-y-2 text-left">
@@ -520,13 +522,13 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                     <Input
                       id="aiInputText"
                       value={aiInputText}
-                      onChange={(event) => setAiInputText(event.target.value)}
+                      onChange={(event) => { setAiInputText(event.target.value); }}
                       placeholder="例: コンビニのおにぎり2個とサラダチキン"
                     />
                     <Button
                       type="button"
                       className="w-full"
-                      onClick={handleEstimateByAi}
+                      onClick={() => { void handleEstimateByAi(); }}
                       disabled={isEstimatingNutrition || isExtractingText}
                     >
                       {isEstimatingNutrition
@@ -551,8 +553,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
       {showScanner && (
         <BarcodeScanner
-          onScanSuccess={handleScanSuccess}
-          onClose={() => setShowScanner(false)}
+          onScanSuccess={(code) => { void handleScanSuccess(code); }}
+          onClose={() => { setShowScanner(false); }}
         />
       )}
     </div>

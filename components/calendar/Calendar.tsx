@@ -56,8 +56,8 @@ export function Calendar() {
     const weeklyTarget = targetCalories * 7;
 
     const monthLogs = Object.values(logs).filter(log => log.date.startsWith(format(currentMonth, 'yyyy-MM')));
-    const totalMonthCalories = monthLogs.reduce((acc, log) => acc + (log.total?.calories || 0), 0);
-    const daysWithLogs = Math.max(1, monthLogs.filter(log => log.total?.calories > 0).length);
+    const totalMonthCalories = monthLogs.reduce((acc, log) => acc + (log.total.calories || 0), 0);
+    const daysWithLogs = Math.max(1, monthLogs.filter(log => log.total.calories > 0).length);
     const averageCalories = totalMonthCalories / daysWithLogs;
 
     return (
@@ -68,13 +68,13 @@ export function Calendar() {
                 </h2>
                 <div className="flex gap-2">
                     <IconButton
-                        onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                        onClick={() => { setCurrentMonth(subMonths(currentMonth, 1)); }}
                         className="rounded-full"
                     >
                         <ChevronLeft size={24} />
                     </IconButton>
                     <IconButton
-                        onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                        onClick={() => { setCurrentMonth(addMonths(currentMonth, 1)); }}
                         className="rounded-full"
                     >
                         <ChevronRight size={24} />
@@ -105,7 +105,7 @@ export function Calendar() {
                     {weeks.map((week, weekIdx) => {
                         const weekCalories = week.reduce((acc, day) => {
                             const dateStr = formatDate(day);
-                            return acc + (logs[dateStr]?.total?.calories || 0);
+                            return acc + (logs[dateStr]?.total.calories ?? 0);
                         }, 0);
                         const isWeekOver = weekCalories > weeklyTarget;
 
@@ -114,7 +114,7 @@ export function Calendar() {
                                 {week.map((day) => {
                                     const dateStr = formatDate(day);
                                     const log = logs[dateStr];
-                                    const calories = log?.total?.calories || 0;
+                                    const calories = log?.total.calories ?? 0;
                                     const isToday = isSameDay(day, new Date());
                                     const isCurrentMonth = isSameMonth(day, monthStart);
                                     const isOver = calories > targetCalories;

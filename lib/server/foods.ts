@@ -80,7 +80,9 @@ export async function upsertFood(
       input.image ?? null,
     ],
   );
-  return rowToFoodItem(result.rows[0]);
+  const row = result.rows[0];
+  if (!row) throw new Error('食品の登録に失敗しました');
+  return rowToFoodItem(row);
 }
 
 /**

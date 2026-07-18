@@ -44,7 +44,7 @@ export function SportSettingsForm({
         <Input
           id="sport-name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => { setName(e.target.value); }}
           placeholder="例: 水泳"
         />
       </div>
@@ -56,7 +56,7 @@ export function SportSettingsForm({
           type="number"
           min={1}
           value={caloriesBurned}
-          onChange={(e) => setCaloriesBurned(e.target.value)}
+          onChange={(e) => { setCaloriesBurned(e.target.value); }}
           placeholder="例: 300"
         />
       </div>
@@ -80,7 +80,7 @@ export function SportSettingsForm({
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-xs"
-                onClick={() => onDeleteSport(sport.id)}
+                onClick={() => { onDeleteSport(sport.id); }}
               >
                 削除
               </Button>

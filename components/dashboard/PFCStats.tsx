@@ -23,13 +23,6 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   const { log: data, settings, debt } = usePfcData(selectedDate);
   const [direction, setDirection] = useState(0);
 
-  if (!data)
-    return (
-      <div className="text-muted-foreground animate-pulse p-4 text-center">
-        データを読み込み中...
-      </div>
-    );
-
   const { protein, fat, carbs, calories } = data.total;
   const { targetPFC } = settings;
   const boostedCalorieTarget = getAdjustedCalorieTarget(selectedDate);
@@ -70,7 +63,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
             e.stopPropagation();
             navigateDate(-1);
           }}
-          onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+          onPointerDown={(e: React.PointerEvent) => { e.stopPropagation(); }}
           className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
           aria-label="Previous day"
         >
@@ -81,7 +74,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
             e.stopPropagation();
             navigateDate(1);
           }}
-          onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+          onPointerDown={(e: React.PointerEvent) => { e.stopPropagation(); }}
           className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
           aria-label="Next day"
         >
@@ -160,8 +153,8 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
 
           <SportActivityControls
             date={selectedDate}
-            sports={settings.sports || []}
-            activities={data.activities || []}
+            sports={settings.sports ?? []}
+            activities={data.activities ?? []}
           />
 
           <Card>

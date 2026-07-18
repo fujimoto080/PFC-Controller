@@ -29,11 +29,11 @@ const SUPPORTED_FORMATS = [
 ];
 
 type ScanFeedback = 'success' | 'error' | null;
-type CheckDigitResult = {
+interface CheckDigitResult {
   isValid: boolean;
   actualCheckDigit: number | null;
   expectedCheckDigit: number | null;
-};
+}
 
 const CODE_SPECIFIC_RULES: Partial<
   Record<Html5QrcodeSupportedFormats, RegExp>
@@ -123,11 +123,11 @@ function expandUpcE(value: string): string | null {
     return null;
   }
 
-  const numberSystem = value[0];
+  const numberSystem = value[0] ?? '';
   const data = value.slice(1, 7);
-  const checkDigit = value[7];
-  const last = data[5];
-  const [d1, d2, d3, d4, d5] = data;
+  const checkDigit = value[7] ?? '';
+  const last = data[5] ?? '';
+  const [d1 = '', d2 = '', d3 = '', d4 = '', d5 = ''] = data;
 
   let manufacturer = '';
   let product = '';
@@ -287,7 +287,7 @@ export function BarcodeScanner({
           aspectRatio: 1.0,
         },
         (decodedText, result) => {
-          const detectedFormat = result?.result?.format?.format;
+          const detectedFormat = result.result.format?.format;
           const checkDigitResult = getCheckDigitResult(
             decodedText,
             detectedFormat,
@@ -309,7 +309,7 @@ export function BarcodeScanner({
           }
 
           triggerFeedback('success');
-          stopScanning();
+          void stopScanning();
           onScanSuccess(decodedText);
         },
         () => {
@@ -353,7 +353,7 @@ export function BarcodeScanner({
 
   // Auto-start on mount
   useEffect(() => {
-    startScanning();
+    void startScanning();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -365,7 +365,7 @@ export function BarcodeScanner({
           size="icon"
           className="absolute top-2 right-2 z-10 bg-black/50 text-white hover:bg-black/70"
           onClick={() => {
-            stopScanning();
+            void stopScanning();
             onClose();
           }}
         >
