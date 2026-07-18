@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Camera, Loader2, Plus, ScanBarcode } from 'lucide-react';
+import { Camera, Eraser, Loader2, Plus, ScanBarcode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -125,6 +125,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       store: '',
     });
 
+  // 手動入力フォームの入力内容(フォーム値・チェック・下書き)をまとめてクリアする
+  const handleClearForm = () => {
+    clearForm();
+    setSaveToDictionary(false);
+    clearFormDraft(FORM_DRAFT_STORAGE_KEY);
+    toast.success('入力をクリアしました');
+  };
+
   const {
     scannedBarcode,
     setScannedBarcode,
@@ -180,42 +188,38 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     enabled: isDraftEnabled,
   });
 
-  const onSubmitManual = async (data: ManualFoodFormValues) => {
+  const onSubmitManual = (data: ManualFoodFormValues) => {
     const item = toFoodInput(data, getSelectedTimestamp());
+    const barcode = scannedBarcode;
 
-    try {
-      await addFoodItem(item);
-    } catch {
-      // addFoodItem 側でエラートーストを表示済み。追加処理は中断する
-      return;
-    }
+    // addFoodItem 内で即座に楽観的にUIへ反映される。API 応答は待たずに遷移し、
+    // 失敗時は runOptimistic 側がエラートースト表示＋ロールバックまで面倒を見る。
+    void addFoodItem(item).catch(() => {
+      // エラートースト/ロールバックは addFoodItem 内で処理済み。
+    });
+
     if (saveToDictionary) {
-      try {
-        await addFoodToDictionary({ ...item, id: generateId() });
-        toast.success('食品リストにも保存しました');
-      } catch {
-        // addFoodToDictionary 側でエラートーストを表示済み。
-        // 食事記録(addFoodItem)は保存済みなので処理は継続する。
-      }
+      void addFoodToDictionary({ ...item, id: generateId() })
+        .then(() => toast.success('食品リストにも保存しました'))
+        .catch(() => {
+          // addFoodToDictionary 側でエラートーストを表示済み。
+        });
     }
+
     toast.success(item.name + 'を追加しました');
 
-    if (scannedBarcode) {
-      try {
-        await saveBarcodeMappingRequest([scannedBarcode], {
-          name: item.name,
-          protein: item.protein,
-          fat: item.fat,
-          carbs: item.carbs,
-          calories: item.calories,
-          store: item.store,
-        });
-        toast.success('バーコード情報も保存しました');
-      } catch (error) {
-        toast.fromError('バーコード情報の保存に失敗しました', error);
-      } finally {
-        clearBarcode();
-      }
+    if (barcode) {
+      void saveBarcodeMappingRequest([barcode], {
+        name: item.name,
+        protein: item.protein,
+        fat: item.fat,
+        carbs: item.carbs,
+        calories: item.calories,
+        store: item.store,
+      })
+        .then(() => toast.success('バーコード情報も保存しました'))
+        .catch((error) => toast.fromError('バーコード情報の保存に失敗しました', error));
+      clearBarcode();
     }
 
     reset();
@@ -447,22 +451,33 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                         入力を食品リストにも保存する
                       </Label>
                     </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
-                          追加中...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="mr-2 h-4 w-4" /> 記録を追加
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={handleClearForm}
+                        disabled={isSubmitting}
+                      >
+                        <Eraser className="h-4 w-4" /> クリア
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+                            追加中...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="mr-2 h-4 w-4" /> 記録を追加
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </form>
                 </CardContent>
               </Card>
