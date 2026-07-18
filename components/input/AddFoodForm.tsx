@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Camera, Loader2, Plus, ScanBarcode } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -368,16 +367,6 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                           確認
                         </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="h-auto w-fit px-0 text-xs"
-                        asChild
-                      >
-                        <Link href="/barcode-mappings">
-                          マッピング一覧ページを見る
-                        </Link>
-                      </Button>
                       {scannedBarcode && (
                         <div className="bg-muted rounded-md p-3 text-sm">
                           <p className="font-medium">
