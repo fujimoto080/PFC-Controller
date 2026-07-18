@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Camera, Loader2, Plus, ScanBarcode } from 'lucide-react';
+import { Camera, Eraser, Loader2, Plus, ScanBarcode } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -125,6 +125,14 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       calories: undefined,
       store: '',
     });
+
+  // 手動入力フォームの入力内容(フォーム値・チェック・下書き)をまとめてクリアする
+  const handleClearForm = () => {
+    clearForm();
+    setSaveToDictionary(false);
+    clearFormDraft(FORM_DRAFT_STORAGE_KEY);
+    toast.success('入力をクリアしました');
+  };
 
   const {
     scannedBarcode,
@@ -458,22 +466,33 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                         入力を食品リストにも保存する
                       </Label>
                     </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
-                          追加中...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="mr-2 h-4 w-4" /> 記録を追加
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={handleClearForm}
+                        disabled={isSubmitting}
+                      >
+                        <Eraser className="h-4 w-4" /> クリア
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />{' '}
+                            追加中...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="mr-2 h-4 w-4" /> 記録を追加
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </form>
                 </CardContent>
               </Card>
