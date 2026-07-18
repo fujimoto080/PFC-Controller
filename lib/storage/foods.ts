@@ -25,6 +25,7 @@ export async function addFoodToDictionary(item: FoodItem): Promise<void> {
     rollback: () => setFoods(snapshot),
     request: () => apiPost('/api/foods', item, '食品の保存に失敗しました'),
     errorLabel: '食品の保存に失敗しました',
+    rethrow: true,
   });
 }
 
