@@ -191,8 +191,13 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       return;
     }
     if (saveToDictionary) {
-      addFoodToDictionary({ ...item, id: generateId() });
-      toast.success('食品リストにも保存しました');
+      try {
+        await addFoodToDictionary({ ...item, id: generateId() });
+        toast.success('食品リストにも保存しました');
+      } catch {
+        // addFoodToDictionary 側でエラートーストを表示済み。
+        // 食事記録(addFoodItem)は保存済みなので処理は継続する。
+      }
     }
     toast.success(item.name + 'を追加しました');
 

@@ -149,8 +149,13 @@ export default function ManageFoodsPage() {
             updateFoodInDictionary({ ...editingItem, ...itemData });
             toast.success('食品を更新しました');
         } else {
-            addFoodToDictionary({ id: generateId(), ...itemData });
-            toast.success('食品を追加しました');
+            try {
+                await addFoodToDictionary({ id: generateId(), ...itemData });
+                toast.success('食品を追加しました');
+            } catch {
+                // addFoodToDictionary 側でエラートーストを表示済み。
+                return;
+            }
         }
 
         if (normalizedBarcodes.length > 0) {
