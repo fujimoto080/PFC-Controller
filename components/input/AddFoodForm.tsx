@@ -218,7 +218,9 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         store: item.store,
       })
         .then(() => toast.success('バーコード情報も保存しました'))
-        .catch((error) => toast.fromError('バーコード情報の保存に失敗しました', error));
+        .catch((error: unknown) =>
+          toast.fromError('バーコード情報の保存に失敗しました', error),
+        );
       clearBarcode();
     }
 
