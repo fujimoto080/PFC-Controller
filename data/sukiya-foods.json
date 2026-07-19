@@ -1,0 +1,4852 @@
+[
+  {
+    "id": "sukiya_001",
+    "name": "牛皿（ミニ）",
+    "protein": 10.4,
+    "fat": 15.1,
+    "carbs": 7.0,
+    "calories": 204.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_002",
+    "name": "牛皿（並盛）",
+    "protein": 15.0,
+    "fat": 22.0,
+    "carbs": 9.9,
+    "calories": 297.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_003",
+    "name": "牛皿（中盛）",
+    "protein": 21.1,
+    "fat": 32.3,
+    "carbs": 12.2,
+    "calories": 423.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_004",
+    "name": "牛皿（２倍盛）",
+    "protein": 29.1,
+    "fat": 43.8,
+    "carbs": 17.6,
+    "calories": 581.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_005",
+    "name": "牛皿（３倍盛）",
+    "protein": 43.3,
+    "fat": 65.7,
+    "carbs": 25.5,
+    "calories": 865.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_006",
+    "name": "牛皿（４倍盛）",
+    "protein": 61.3,
+    "fat": 93.9,
+    "carbs": 35.3,
+    "calories": 1232.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_007",
+    "name": "牛皿（５倍盛）",
+    "protein": 71.4,
+    "fat": 109.4,
+    "carbs": 41.2,
+    "calories": 1435.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_008",
+    "name": "牛丼（ミニ）",
+    "protein": 14.8,
+    "fat": 16.0,
+    "carbs": 65.7,
+    "calories": 464.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_009",
+    "name": "牛丼（並盛）",
+    "protein": 21.7,
+    "fat": 23.4,
+    "carbs": 99.8,
+    "calories": 695.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_010",
+    "name": "牛丼（中盛）",
+    "protein": 26.6,
+    "fat": 33.4,
+    "carbs": 86.5,
+    "calories": 752.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_011",
+    "name": "牛丼（大盛）",
+    "protein": 28.4,
+    "fat": 30.7,
+    "carbs": 130.1,
+    "calories": 908.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_012",
+    "name": "牛丼（特盛）",
+    "protein": 37.8,
+    "fat": 45.6,
+    "carbs": 134.9,
+    "calories": 1100.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_013",
+    "name": "牛丼（メガ）",
+    "protein": 50.8,
+    "fat": 66.3,
+    "carbs": 141.6,
+    "calories": 1365.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_014",
+    "name": "おろしポン酢牛丼（ミニ）",
+    "protein": 15.8,
+    "fat": 16.1,
+    "carbs": 69.6,
+    "calories": 487.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_015",
+    "name": "おろしポン酢牛丼（並盛）",
+    "protein": 22.6,
+    "fat": 23.5,
+    "carbs": 103.7,
+    "calories": 718.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_016",
+    "name": "おろしポン酢牛丼（中盛）",
+    "protein": 27.5,
+    "fat": 33.5,
+    "carbs": 90.4,
+    "calories": 775.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_017",
+    "name": "おろしポン酢牛丼（大盛）",
+    "protein": 29.3,
+    "fat": 30.8,
+    "carbs": 134.0,
+    "calories": 931.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_018",
+    "name": "おろしポン酢牛丼（特盛）",
+    "protein": 38.7,
+    "fat": 45.7,
+    "carbs": 138.8,
+    "calories": 1123.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_019",
+    "name": "おろしポン酢牛丼（メガ）",
+    "protein": 51.7,
+    "fat": 66.4,
+    "carbs": 145.5,
+    "calories": 1388.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_020",
+    "name": "ねぎ玉牛丼（ミニ）",
+    "protein": 22.0,
+    "fat": 22.4,
+    "carbs": 68.6,
+    "calories": 562.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_021",
+    "name": "ねぎ玉牛丼（並盛）",
+    "protein": 28.9,
+    "fat": 29.8,
+    "carbs": 102.7,
+    "calories": 793.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_022",
+    "name": "ねぎ玉牛丼（中盛）",
+    "protein": 33.8,
+    "fat": 39.8,
+    "carbs": 89.4,
+    "calories": 855.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_023",
+    "name": "ねぎ玉牛丼（大盛）",
+    "protein": 35.6,
+    "fat": 37.1,
+    "carbs": 133.0,
+    "calories": 1006.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_024",
+    "name": "ねぎ玉牛丼（特盛）",
+    "protein": 45.0,
+    "fat": 52.0,
+    "carbs": 137.8,
+    "calories": 1198.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_025",
+    "name": "ねぎ玉牛丼（メガ）",
+    "protein": 58.0,
+    "fat": 72.7,
+    "carbs": 144.5,
+    "calories": 1463.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_026",
+    "name": "とろ～り3種のチーズ牛丼（ミニ）",
+    "protein": 26.0,
+    "fat": 29.3,
+    "carbs": 68.7,
+    "calories": 640.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_027",
+    "name": "とろ～り3種のチーズ牛丼（並盛）",
+    "protein": 32.9,
+    "fat": 36.7,
+    "carbs": 102.8,
+    "calories": 871.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_028",
+    "name": "とろ～り3種のチーズ牛丼（中盛）",
+    "protein": 37.8,
+    "fat": 46.7,
+    "carbs": 89.5,
+    "calories": 928.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_029",
+    "name": "とろ～り3種のチーズ牛丼（大盛）",
+    "protein": 39.6,
+    "fat": 44.0,
+    "carbs": 133.1,
+    "calories": 1084.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_030",
+    "name": "とろ～り3種のチーズ牛丼（特盛）",
+    "protein": 49.0,
+    "fat": 58.9,
+    "carbs": 137.9,
+    "calories": 1276.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_031",
+    "name": "とろ～り3種のチーズ牛丼（メガ）",
+    "protein": 62.0,
+    "fat": 79.6,
+    "carbs": 144.6,
+    "calories": 1541.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_032",
+    "name": "わさび山かけ牛丼（ミニ）",
+    "protein": 16.3,
+    "fat": 16.1,
+    "carbs": 77.0,
+    "calories": 517.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_033",
+    "name": "わさび山かけ牛丼（並盛）",
+    "protein": 23.2,
+    "fat": 23.5,
+    "carbs": 111.1,
+    "calories": 748.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_034",
+    "name": "わさび山かけ牛丼（中盛）",
+    "protein": 28.1,
+    "fat": 33.5,
+    "carbs": 97.9,
+    "calories": 804.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_035",
+    "name": "わさび山かけ牛丼（大盛）",
+    "protein": 29.9,
+    "fat": 30.8,
+    "carbs": 141.4,
+    "calories": 961.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_036",
+    "name": "わさび山かけ牛丼（特盛）",
+    "protein": 39.3,
+    "fat": 45.7,
+    "carbs": 146.2,
+    "calories": 1153.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_037",
+    "name": "わさび山かけ牛丼（メガ）",
+    "protein": 52.3,
+    "fat": 66.4,
+    "carbs": 152.9,
+    "calories": 1418.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_038",
+    "name": "かつぶしオクラ牛丼（ミニ）",
+    "protein": 16.6,
+    "fat": 16.1,
+    "carbs": 69.4,
+    "calories": 485.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_039",
+    "name": "かつぶしオクラ牛丼（並盛）",
+    "protein": 23.5,
+    "fat": 23.5,
+    "carbs": 103.5,
+    "calories": 716.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_040",
+    "name": "かつぶしオクラ牛丼（中盛）",
+    "protein": 28.4,
+    "fat": 33.5,
+    "carbs": 90.2,
+    "calories": 773.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_041",
+    "name": "かつぶしオクラ牛丼（大盛）",
+    "protein": 30.2,
+    "fat": 30.8,
+    "carbs": 133.8,
+    "calories": 929.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_042",
+    "name": "かつぶしオクラ牛丼（特盛）",
+    "protein": 39.6,
+    "fat": 45.7,
+    "carbs": 138.6,
+    "calories": 1121.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_043",
+    "name": "かつぶしオクラ牛丼（メガ）",
+    "protein": 52.6,
+    "fat": 66.4,
+    "carbs": 145.3,
+    "calories": 1386.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_044",
+    "name": "高菜明太マヨ牛丼（ミニ）",
+    "protein": 16.4,
+    "fat": 24.1,
+    "carbs": 70.0,
+    "calories": 564.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_045",
+    "name": "高菜明太マヨ牛丼（並盛）",
+    "protein": 23.3,
+    "fat": 31.5,
+    "carbs": 104.1,
+    "calories": 795.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_046",
+    "name": "高菜明太マヨ牛丼（中盛）",
+    "protein": 28.2,
+    "fat": 41.5,
+    "carbs": 90.8,
+    "calories": 852.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_047",
+    "name": "高菜明太マヨ牛丼（大盛）",
+    "protein": 30.0,
+    "fat": 38.8,
+    "carbs": 134.4,
+    "calories": 1008.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_048",
+    "name": "高菜明太マヨ牛丼（特盛）",
+    "protein": 39.4,
+    "fat": 53.7,
+    "carbs": 139.2,
+    "calories": 1200.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_049",
+    "name": "高菜明太マヨ牛丼（メガ）",
+    "protein": 52.4,
+    "fat": 74.4,
+    "carbs": 145.9,
+    "calories": 1465.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_050",
+    "name": "キムチ牛丼（ミニ）",
+    "protein": 16.4,
+    "fat": 16.4,
+    "carbs": 70.7,
+    "calories": 494.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_051",
+    "name": "キムチ牛丼（並盛）",
+    "protein": 23.3,
+    "fat": 23.8,
+    "carbs": 104.8,
+    "calories": 725.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_052",
+    "name": "キムチ牛丼（中盛）",
+    "protein": 28.2,
+    "fat": 33.8,
+    "carbs": 91.5,
+    "calories": 782.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_053",
+    "name": "キムチ牛丼（大盛）",
+    "protein": 30.0,
+    "fat": 31.1,
+    "carbs": 135.1,
+    "calories": 938.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_054",
+    "name": "キムチ牛丼（特盛）",
+    "protein": 39.4,
+    "fat": 46.0,
+    "carbs": 139.9,
+    "calories": 1130.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_055",
+    "name": "キムチ牛丼（メガ）",
+    "protein": 52.4,
+    "fat": 66.7,
+    "carbs": 146.6,
+    "calories": 1395.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_056",
+    "name": "にんにく明太マヨチーズ牛丼（ミニ）",
+    "protein": 26.6,
+    "fat": 34.8,
+    "carbs": 75.2,
+    "calories": 720.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_057",
+    "name": "にんにく明太マヨチーズ牛丼（並盛）",
+    "protein": 33.7,
+    "fat": 42.7,
+    "carbs": 109.4,
+    "calories": 956.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_058",
+    "name": "にんにく明太マヨチーズ牛丼（中盛）",
+    "protein": 39.2,
+    "fat": 53.4,
+    "carbs": 96.4,
+    "calories": 1022.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_059",
+    "name": "にんにく明太マヨチーズ牛丼（大盛）",
+    "protein": 40.9,
+    "fat": 50.1,
+    "carbs": 143.9,
+    "calories": 1190.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_060",
+    "name": "にんにく明太マヨチーズ牛丼（特盛）",
+    "protein": 51.2,
+    "fat": 66.6,
+    "carbs": 149.0,
+    "calories": 1399.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_061",
+    "name": "にんにく明太マヨチーズ牛丼（メガ）",
+    "protein": 65.1,
+    "fat": 88.7,
+    "carbs": 156.1,
+    "calories": 1681.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_062",
+    "name": "にんにく明太マヨキムチ牛丼（ミニ）",
+    "protein": 19.7,
+    "fat": 25.0,
+    "carbs": 79.7,
+    "calories": 622.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_063",
+    "name": "にんにく明太マヨキムチ牛丼（並盛）",
+    "protein": 26.8,
+    "fat": 32.9,
+    "carbs": 113.9,
+    "calories": 858.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_064",
+    "name": "にんにく明太マヨキムチ牛丼（中盛）",
+    "protein": 32.3,
+    "fat": 43.6,
+    "carbs": 100.9,
+    "calories": 924.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_065",
+    "name": "にんにく明太マヨキムチ牛丼（大盛）",
+    "protein": 34.0,
+    "fat": 40.3,
+    "carbs": 148.4,
+    "calories": 1092.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_066",
+    "name": "にんにく明太マヨキムチ牛丼（特盛）",
+    "protein": 44.3,
+    "fat": 56.8,
+    "carbs": 153.5,
+    "calories": 1301.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_067",
+    "name": "にんにく明太マヨキムチ牛丼（メガ）",
+    "protein": 58.2,
+    "fat": 78.9,
+    "carbs": 160.6,
+    "calories": 1583.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_068",
+    "name": "ニンニクの芽牛丼（ミニ）",
+    "protein": 16.7,
+    "fat": 20.0,
+    "carbs": 74.7,
+    "calories": 538.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_069",
+    "name": "ニンニクの芽牛丼（並盛）",
+    "protein": 23.6,
+    "fat": 27.4,
+    "carbs": 108.8,
+    "calories": 769.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_070",
+    "name": "ニンニクの芽牛丼（中盛）",
+    "protein": 28.5,
+    "fat": 37.4,
+    "carbs": 95.5,
+    "calories": 826.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_071",
+    "name": "ニンニクの芽牛丼（大盛）",
+    "protein": 30.3,
+    "fat": 34.7,
+    "carbs": 139.1,
+    "calories": 982.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_072",
+    "name": "ニンニクの芽牛丼（特盛）",
+    "protein": 39.7,
+    "fat": 49.6,
+    "carbs": 143.9,
+    "calories": 1174.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_073",
+    "name": "ニンニクの芽牛丼（メガ）",
+    "protein": 52.7,
+    "fat": 70.3,
+    "carbs": 150.6,
+    "calories": 1439.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_074",
+    "name": "ダブルニンニク牛丼（ミニ）",
+    "protein": 18.8,
+    "fat": 20.6,
+    "carbs": 81.8,
+    "calories": 581.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_075",
+    "name": "ダブルニンニク牛丼（並盛）",
+    "protein": 25.7,
+    "fat": 28.0,
+    "carbs": 115.9,
+    "calories": 812.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_076",
+    "name": "ダブルニンニク牛丼（中盛）",
+    "protein": 30.6,
+    "fat": 38.0,
+    "carbs": 102.6,
+    "calories": 869.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_077",
+    "name": "ダブルニンニク牛丼（大盛）",
+    "protein": 32.4,
+    "fat": 35.3,
+    "carbs": 146.2,
+    "calories": 1025.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_078",
+    "name": "ダブルニンニク牛丼（特盛）",
+    "protein": 41.8,
+    "fat": 50.2,
+    "carbs": 151.0,
+    "calories": 1217.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_079",
+    "name": "ダブルニンニク牛丼（メガ）",
+    "protein": 54.8,
+    "fat": 70.9,
+    "carbs": 157.7,
+    "calories": 1482.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_080",
+    "name": "トリプルニンニク牛丼（ミニ）",
+    "protein": 20.1,
+    "fat": 22.1,
+    "carbs": 87.6,
+    "calories": 623.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_081",
+    "name": "トリプルニンニク牛丼（並盛）",
+    "protein": 27.0,
+    "fat": 29.5,
+    "carbs": 121.7,
+    "calories": 854.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_082",
+    "name": "トリプルニンニク牛丼（中盛）",
+    "protein": 31.9,
+    "fat": 39.5,
+    "carbs": 108.4,
+    "calories": 911.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_083",
+    "name": "トリプルニンニク牛丼（大盛）",
+    "protein": 33.7,
+    "fat": 36.8,
+    "carbs": 152.0,
+    "calories": 1067.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_084",
+    "name": "トリプルニンニク牛丼（特盛）",
+    "protein": 43.1,
+    "fat": 51.7,
+    "carbs": 156.8,
+    "calories": 1259.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_085",
+    "name": "トリプルニンニク牛丼（メガ）",
+    "protein": 56.1,
+    "fat": 72.4,
+    "carbs": 163.5,
+    "calories": 1524.0,
+    "store": "すき家",
+    "storeGroup": "牛丼"
+  },
+  {
+    "id": "sukiya_086",
+    "name": "牛丼ライト（ミニ）",
+    "protein": 18.5,
+    "fat": 19.9,
+    "carbs": 14.7,
+    "calories": 311.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_087",
+    "name": "牛丼ライト（並盛）",
+    "protein": 22.8,
+    "fat": 26.8,
+    "carbs": 16.7,
+    "calories": 399.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_088",
+    "name": "牛丼ライト（大盛）",
+    "protein": 27.1,
+    "fat": 33.6,
+    "carbs": 18.8,
+    "calories": 487.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_089",
+    "name": "ねぎ玉牛丼ライト（ミニ）",
+    "protein": 25.3,
+    "fat": 26.3,
+    "carbs": 16.9,
+    "calories": 402.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_090",
+    "name": "ねぎ玉牛丼ライト（並盛）",
+    "protein": 29.1,
+    "fat": 33.0,
+    "carbs": 16.3,
+    "calories": 476.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_091",
+    "name": "ねぎ玉牛丼ライト（大盛）",
+    "protein": 33.8,
+    "fat": 40.0,
+    "carbs": 21.0,
+    "calories": 577.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_092",
+    "name": "とろ～り3種のチーズ牛丼ライト（ミニ）",
+    "protein": 29.2,
+    "fat": 33.2,
+    "carbs": 16.9,
+    "calories": 480.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_093",
+    "name": "とろ～り3種のチーズ牛丼ライト（並盛）",
+    "protein": 33.5,
+    "fat": 40.1,
+    "carbs": 19.0,
+    "calories": 568.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_094",
+    "name": "とろ～り3種のチーズ牛丼ライト（大盛）",
+    "protein": 37.8,
+    "fat": 46.9,
+    "carbs": 21.1,
+    "calories": 655.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_095",
+    "name": "わさび山かけ牛丼ライト（ミニ）",
+    "protein": 19.5,
+    "fat": 20.0,
+    "carbs": 25.2,
+    "calories": 356.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_096",
+    "name": "わさび山かけ牛丼ライト（並盛）",
+    "protein": 23.8,
+    "fat": 26.9,
+    "carbs": 27.3,
+    "calories": 444.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_097",
+    "name": "わさび山かけ牛丼ライト（大盛）",
+    "protein": 28.1,
+    "fat": 33.7,
+    "carbs": 29.4,
+    "calories": 531.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_098",
+    "name": "高菜明太マヨ牛丼ライト（ミニ）",
+    "protein": 19.6,
+    "fat": 28.0,
+    "carbs": 18.3,
+    "calories": 404.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_099",
+    "name": "高菜明太マヨ牛丼ライト（並盛）",
+    "protein": 23.9,
+    "fat": 34.9,
+    "carbs": 20.4,
+    "calories": 492.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_100",
+    "name": "高菜明太マヨ牛丼ライト（大盛）",
+    "protein": 28.2,
+    "fat": 41.7,
+    "carbs": 22.5,
+    "calories": 579.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_101",
+    "name": "おろしポン酢牛丼ライト（ミニ）",
+    "protein": 18.7,
+    "fat": 20.0,
+    "carbs": 17.4,
+    "calories": 323.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_102",
+    "name": "おろしポン酢牛丼ライト（並盛）",
+    "protein": 23.0,
+    "fat": 26.9,
+    "carbs": 19.5,
+    "calories": 411.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_103",
+    "name": "おろしポン酢牛丼ライト（大盛）",
+    "protein": 27.3,
+    "fat": 33.7,
+    "carbs": 21.6,
+    "calories": 498.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_104",
+    "name": "かつぶしオクラ牛丼ライト（ミニ）",
+    "protein": 20.5,
+    "fat": 20.0,
+    "carbs": 19.9,
+    "calories": 334.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_105",
+    "name": "かつぶしオクラ牛丼ライト（並盛）",
+    "protein": 24.8,
+    "fat": 26.9,
+    "carbs": 22.0,
+    "calories": 422.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_106",
+    "name": "かつぶしオクラ牛丼ライト（大盛）",
+    "protein": 29.1,
+    "fat": 33.7,
+    "carbs": 24.1,
+    "calories": 509.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_107",
+    "name": "キムチ牛丼ライト（ミニ）",
+    "protein": 19.6,
+    "fat": 20.3,
+    "carbs": 19.0,
+    "calories": 334.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_108",
+    "name": "キムチ牛丼ライト（並盛）",
+    "protein": 23.9,
+    "fat": 27.2,
+    "carbs": 21.1,
+    "calories": 422.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_109",
+    "name": "キムチ牛丼ライト（大盛）",
+    "protein": 29.2,
+    "fat": 35.6,
+    "carbs": 23.6,
+    "calories": 530.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_110",
+    "name": "牛丼ライト（テイクアウト）（ミニ）",
+    "protein": 19.6,
+    "fat": 20.1,
+    "carbs": 17.2,
+    "calories": 324.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_111",
+    "name": "牛丼ライト（テイクアウト）（並盛）",
+    "protein": 24.2,
+    "fat": 27.0,
+    "carbs": 20.1,
+    "calories": 417.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_112",
+    "name": "牛丼ライト（テイクアウト）（大盛）",
+    "protein": 28.9,
+    "fat": 33.9,
+    "carbs": 23.0,
+    "calories": 509.0,
+    "store": "すき家",
+    "storeGroup": "牛丼ライト"
+  },
+  {
+    "id": "sukiya_113",
+    "name": "牛・お食事サラダ（並盛）",
+    "protein": 15.5,
+    "fat": 22.1,
+    "carbs": 26.6,
+    "calories": 359.0,
+    "store": "すき家",
+    "storeGroup": "お食事サラダ"
+  },
+  {
+    "id": "sukiya_114",
+    "name": "チキン・お食事サラダ（並盛）",
+    "protein": 24.5,
+    "fat": 7.8,
+    "carbs": 21.5,
+    "calories": 247.0,
+    "store": "すき家",
+    "storeGroup": "お食事サラダ"
+  },
+  {
+    "id": "sukiya_115",
+    "name": "カレー（ミニ）",
+    "protein": 7.5,
+    "fat": 8.1,
+    "carbs": 72.0,
+    "calories": 390.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_116",
+    "name": "カレー（並盛）",
+    "protein": 12.8,
+    "fat": 15.7,
+    "carbs": 115.2,
+    "calories": 653.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_117",
+    "name": "カレー（大盛）",
+    "protein": 19.0,
+    "fat": 23.5,
+    "carbs": 170.3,
+    "calories": 967.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_118",
+    "name": "カレー（メガ）",
+    "protein": 25.6,
+    "fat": 31.4,
+    "carbs": 231.8,
+    "calories": 1311.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_119",
+    "name": "牛カレー（ミニ）",
+    "protein": 17.2,
+    "fat": 23.1,
+    "carbs": 77.4,
+    "calories": 584.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_120",
+    "name": "牛カレー（並盛）",
+    "protein": 22.5,
+    "fat": 30.7,
+    "carbs": 120.6,
+    "calories": 847.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_121",
+    "name": "牛カレー（大盛）",
+    "protein": 28.7,
+    "fat": 38.5,
+    "carbs": 175.7,
+    "calories": 1161.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_122",
+    "name": "牛カレー（メガ）",
+    "protein": 35.3,
+    "fat": 46.4,
+    "carbs": 237.2,
+    "calories": 1505.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_123",
+    "name": "とろ～りチーズカレー（ミニ）",
+    "protein": 18.7,
+    "fat": 21.4,
+    "carbs": 75.0,
+    "calories": 566.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_124",
+    "name": "とろ～りチーズカレー（並盛）",
+    "protein": 24.0,
+    "fat": 29.0,
+    "carbs": 118.3,
+    "calories": 829.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_125",
+    "name": "とろ～りチーズカレー（大盛）",
+    "protein": 30.2,
+    "fat": 36.8,
+    "carbs": 173.3,
+    "calories": 1143.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_126",
+    "name": "とろ～りチーズカレー（メガ）",
+    "protein": 36.8,
+    "fat": 44.7,
+    "carbs": 234.8,
+    "calories": 1487.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_127",
+    "name": "おんたまカレー（ミニ）",
+    "protein": 14.3,
+    "fat": 13.8,
+    "carbs": 72.1,
+    "calories": 474.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_128",
+    "name": "おんたまカレー（並盛）",
+    "protein": 19.6,
+    "fat": 21.5,
+    "carbs": 115.4,
+    "calories": 737.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_129",
+    "name": "おんたまカレー（大盛）",
+    "protein": 25.8,
+    "fat": 29.2,
+    "carbs": 170.5,
+    "calories": 1051.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_130",
+    "name": "おんたまカレー（メガ）",
+    "protein": 32.4,
+    "fat": 37.2,
+    "carbs": 231.9,
+    "calories": 1395.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_131",
+    "name": "チーズおんたまカレー（ミニ）",
+    "protein": 25.5,
+    "fat": 27.1,
+    "carbs": 75.1,
+    "calories": 650.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_132",
+    "name": "チーズおんたまカレー（並盛）",
+    "protein": 30.8,
+    "fat": 34.8,
+    "carbs": 118.4,
+    "calories": 913.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_133",
+    "name": "チーズおんたまカレー（大盛）",
+    "protein": 37.0,
+    "fat": 42.5,
+    "carbs": 173.5,
+    "calories": 1227.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_134",
+    "name": "チーズおんたまカレー（メガ）",
+    "protein": 43.6,
+    "fat": 50.5,
+    "carbs": 234.9,
+    "calories": 1571.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_135",
+    "name": "おんたま牛カレー（ミニ）",
+    "protein": 24.0,
+    "fat": 28.8,
+    "carbs": 77.5,
+    "calories": 668.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_136",
+    "name": "おんたま牛カレー（並盛）",
+    "protein": 29.3,
+    "fat": 36.5,
+    "carbs": 120.8,
+    "calories": 931.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_137",
+    "name": "おんたま牛カレー（大盛）",
+    "protein": 35.5,
+    "fat": 44.2,
+    "carbs": 175.9,
+    "calories": 1245.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_138",
+    "name": "おんたま牛カレー（メガ）",
+    "protein": 42.1,
+    "fat": 52.2,
+    "carbs": 237.3,
+    "calories": 1589.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_139",
+    "name": "チーズ牛カレー（ミニ）",
+    "protein": 28.4,
+    "fat": 42.8,
+    "carbs": 75.9,
+    "calories": 760.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_140",
+    "name": "チーズ牛カレー（並盛）",
+    "protein": 33.7,
+    "fat": 44.0,
+    "carbs": 123.7,
+    "calories": 1023.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_141",
+    "name": "チーズ牛カレー（大盛）",
+    "protein": 39.9,
+    "fat": 51.8,
+    "carbs": 178.7,
+    "calories": 1337.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_142",
+    "name": "チーズ牛カレー（メガ）",
+    "protein": 46.5,
+    "fat": 59.7,
+    "carbs": 240.2,
+    "calories": 1681.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_143",
+    "name": "ソーセージカレー（ミニ）",
+    "protein": 18.2,
+    "fat": 30.1,
+    "carbs": 75.1,
+    "calories": 641.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_144",
+    "name": "ソーセージカレー（並盛）",
+    "protein": 23.5,
+    "fat": 37.8,
+    "carbs": 118.4,
+    "calories": 903.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_145",
+    "name": "ソーセージカレー（大盛）",
+    "protein": 29.6,
+    "fat": 45.5,
+    "carbs": 173.4,
+    "calories": 1218.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_146",
+    "name": "ソーセージカレー（メガ）",
+    "protein": 36.2,
+    "fat": 53.5,
+    "carbs": 234.9,
+    "calories": 1562.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_147",
+    "name": "ほうれん草カレー（ミニ）",
+    "protein": 9.1,
+    "fat": 8.1,
+    "carbs": 73.5,
+    "calories": 401.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_148",
+    "name": "ほうれん草カレー（並盛）",
+    "protein": 14.4,
+    "fat": 15.7,
+    "carbs": 116.8,
+    "calories": 663.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_149",
+    "name": "ほうれん草カレー（大盛）",
+    "protein": 20.6,
+    "fat": 23.5,
+    "carbs": 171.9,
+    "calories": 978.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_150",
+    "name": "ほうれん草カレー（メガ）",
+    "protein": 27.2,
+    "fat": 31.4,
+    "carbs": 233.3,
+    "calories": 1321.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_151",
+    "name": "チーズソーセージカレー（ミニ）",
+    "protein": 29.4,
+    "fat": 43.4,
+    "carbs": 78.1,
+    "calories": 817.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_152",
+    "name": "チーズソーセージカレー（並盛）",
+    "protein": 34.7,
+    "fat": 51.1,
+    "carbs": 121.4,
+    "calories": 1080.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_153",
+    "name": "チーズソーセージカレー（大盛）",
+    "protein": 40.8,
+    "fat": 58.8,
+    "carbs": 176.5,
+    "calories": 1394.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_154",
+    "name": "チーズソーセージカレー（メガ）",
+    "protein": 47.4,
+    "fat": 66.8,
+    "carbs": 237.9,
+    "calories": 1738.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_155",
+    "name": "チーズほうれん草カレー（ミニ）",
+    "protein": 20.3,
+    "fat": 21.4,
+    "carbs": 76.5,
+    "calories": 577.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_156",
+    "name": "チーズほうれん草カレー（並盛）",
+    "protein": 25.6,
+    "fat": 29.0,
+    "carbs": 119.8,
+    "calories": 839.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_157",
+    "name": "チーズほうれん草カレー（大盛）",
+    "protein": 31.8,
+    "fat": 36.8,
+    "carbs": 174.9,
+    "calories": 1154.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_158",
+    "name": "チーズほうれん草カレー（メガ）",
+    "protein": 38.4,
+    "fat": 44.7,
+    "carbs": 236.3,
+    "calories": 1497.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_159",
+    "name": "肉2倍牛カレー（ミニ）",
+    "protein": 26.8,
+    "fat": 38.0,
+    "carbs": 82.8,
+    "calories": 778.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_160",
+    "name": "肉2倍牛カレー（並盛）",
+    "protein": 32.1,
+    "fat": 45.6,
+    "carbs": 126.0,
+    "calories": 1041.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_161",
+    "name": "肉2倍牛カレー（大盛）",
+    "protein": 38.3,
+    "fat": 53.4,
+    "carbs": 181.1,
+    "calories": 1355.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_162",
+    "name": "肉2倍牛カレー（メガ）",
+    "protein": 44.9,
+    "fat": 61.3,
+    "carbs": 242.6,
+    "calories": 1699.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_163",
+    "name": "目玉焼き牛カレー（ミニ）",
+    "protein": 24.6,
+    "fat": 32.6,
+    "carbs": 77.6,
+    "calories": 700.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_164",
+    "name": "目玉焼き牛カレー（並盛）",
+    "protein": 29.9,
+    "fat": 40.2,
+    "carbs": 120.9,
+    "calories": 963.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_165",
+    "name": "目玉焼き牛カレー（大盛）",
+    "protein": 36.1,
+    "fat": 48.0,
+    "carbs": 176.0,
+    "calories": 1277.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_166",
+    "name": "目玉焼き牛カレー（メガ）",
+    "protein": 42.7,
+    "fat": 56.0,
+    "carbs": 237.4,
+    "calories": 1621.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_167",
+    "name": "目玉焼きほうれん草カレー（ミニ）",
+    "protein": 16.6,
+    "fat": 17.6,
+    "carbs": 73.7,
+    "calories": 517.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_168",
+    "name": "目玉焼きほうれん草カレー（並盛）",
+    "protein": 21.9,
+    "fat": 25.2,
+    "carbs": 117.0,
+    "calories": 779.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_169",
+    "name": "目玉焼きほうれん草カレー（大盛）",
+    "protein": 28.1,
+    "fat": 33.0,
+    "carbs": 172.1,
+    "calories": 1094.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_170",
+    "name": "目玉焼きほうれん草カレー（メガ）",
+    "protein": 34.7,
+    "fat": 41.0,
+    "carbs": 233.6,
+    "calories": 1438.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_171",
+    "name": "目玉焼きソーセージカレー（ミニ）",
+    "protein": 25.6,
+    "fat": 39.6,
+    "carbs": 75.3,
+    "calories": 757.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_172",
+    "name": "目玉焼きソーセージカレー（並盛）",
+    "protein": 30.9,
+    "fat": 47.3,
+    "carbs": 118.6,
+    "calories": 1020.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_173",
+    "name": "目玉焼きソーセージカレー（大盛）",
+    "protein": 37.1,
+    "fat": 55.0,
+    "carbs": 173.7,
+    "calories": 1334.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_174",
+    "name": "目玉焼きソーセージカレー（メガ）",
+    "protein": 43.7,
+    "fat": 63.0,
+    "carbs": 235.1,
+    "calories": 1678.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_175",
+    "name": "目玉焼きチーズインハンバーグカレー（ミニ）",
+    "protein": 32.7,
+    "fat": 32.7,
+    "carbs": 79.6,
+    "calories": 742.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_176",
+    "name": "目玉焼きチーズインハンバーグカレー（並盛）",
+    "protein": 38.0,
+    "fat": 40.4,
+    "carbs": 122.9,
+    "calories": 1004.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_177",
+    "name": "目玉焼きチーズインハンバーグカレー（大盛）",
+    "protein": 44.2,
+    "fat": 48.1,
+    "carbs": 178.0,
+    "calories": 1319.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_178",
+    "name": "目玉焼きチーズインハンバーグカレー（メガ）",
+    "protein": 50.8,
+    "fat": 56.1,
+    "carbs": 239.4,
+    "calories": 1662.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_179",
+    "name": "チーズインハンバーグカレー（ミニ）",
+    "protein": 25.3,
+    "fat": 23.2,
+    "carbs": 79.4,
+    "calories": 625.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_180",
+    "name": "チーズインハンバーグカレー（並盛）",
+    "protein": 30.6,
+    "fat": 30.8,
+    "carbs": 122.7,
+    "calories": 888.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_181",
+    "name": "チーズインハンバーグカレー（大盛）",
+    "protein": 36.7,
+    "fat": 38.6,
+    "carbs": 177.8,
+    "calories": 1202.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_182",
+    "name": "チーズインハンバーグカレー（メガ）",
+    "protein": 43.3,
+    "fat": 46.6,
+    "carbs": 239.2,
+    "calories": 1546.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_183",
+    "name": "すき家の特製辛口ソース",
+    "protein": 0.2,
+    "fat": 0.7,
+    "carbs": 1.6,
+    "calories": 14.0,
+    "store": "すき家",
+    "storeGroup": "カレー"
+  },
+  {
+    "id": "sukiya_184",
+    "name": "旨だしとりそぼろ丼（ミニ）",
+    "protein": 29.4,
+    "fat": 14.1,
+    "carbs": 89.2,
+    "calories": 604.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_185",
+    "name": "旨だしとりそぼろ丼（並盛）",
+    "protein": 30.6,
+    "fat": 14.4,
+    "carbs": 104.8,
+    "calories": 673.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_186",
+    "name": "旨だしとりそぼろ丼（大盛）",
+    "protein": 32.6,
+    "fat": 14.8,
+    "carbs": 132.2,
+    "calories": 794.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_187",
+    "name": "旨だしとりそぼろ丼（特盛）",
+    "protein": 47.9,
+    "fat": 21.3,
+    "carbs": 145.1,
+    "calories": 971.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_188",
+    "name": "明太マヨ旨だしとりそぼろ丼（ミニ）",
+    "protein": 29.9,
+    "fat": 21.1,
+    "carbs": 90.4,
+    "calories": 673.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_189",
+    "name": "明太マヨ旨だしとりそぼろ丼（並盛）",
+    "protein": 31.1,
+    "fat": 21.4,
+    "carbs": 106.0,
+    "calories": 742.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_190",
+    "name": "明太マヨ旨だしとりそぼろ丼（大盛）",
+    "protein": 33.1,
+    "fat": 21.8,
+    "carbs": 133.4,
+    "calories": 863.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_191",
+    "name": "明太マヨ旨だしとりそぼろ丼（特盛）",
+    "protein": 48.4,
+    "fat": 28.2,
+    "carbs": 146.3,
+    "calories": 1040.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_192",
+    "name": "オクラ旨だしとりそぼろ丼（ミニ）",
+    "protein": 30.6,
+    "fat": 14.2,
+    "carbs": 93.5,
+    "calories": 620.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_193",
+    "name": "オクラ旨だしとりそぼろ丼（並盛）",
+    "protein": 31.8,
+    "fat": 14.5,
+    "carbs": 109.1,
+    "calories": 689.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_194",
+    "name": "オクラ旨だしとりそぼろ丼（大盛）",
+    "protein": 33.8,
+    "fat": 14.9,
+    "carbs": 136.5,
+    "calories": 810.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_195",
+    "name": "オクラ旨だしとりそぼろ丼（特盛）",
+    "protein": 49.1,
+    "fat": 21.3,
+    "carbs": 149.4,
+    "calories": 987.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_196",
+    "name": "まぐろたたき皿（並盛）",
+    "protein": 20.8,
+    "fat": 8.2,
+    "carbs": 2.7,
+    "calories": 170.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_197",
+    "name": "まぐろたたき丼（並盛）",
+    "protein": 27.6,
+    "fat": 9.6,
+    "carbs": 95.0,
+    "calories": 580.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_198",
+    "name": "まぐろたたき丼（大盛）",
+    "protein": 29.7,
+    "fat": 10.0,
+    "carbs": 123.3,
+    "calories": 705.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_199",
+    "name": "まぐろたたき丼（特盛）",
+    "protein": 49.5,
+    "fat": 18.0,
+    "carbs": 124.0,
+    "calories": 864.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_200",
+    "name": "まぐろユッケ丼（並盛）",
+    "protein": 35.0,
+    "fat": 16.4,
+    "carbs": 99.2,
+    "calories": 687.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_201",
+    "name": "まぐろユッケ丼（大盛）",
+    "protein": 37.1,
+    "fat": 16.8,
+    "carbs": 127.5,
+    "calories": 812.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_202",
+    "name": "まぐろユッケ丼（特盛）",
+    "protein": 57.5,
+    "fat": 25.9,
+    "carbs": 132.3,
+    "calories": 1000.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_203",
+    "name": "山かけまぐろたたき丼（並盛）",
+    "protein": 29.0,
+    "fat": 9.6,
+    "carbs": 105.5,
+    "calories": 628.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_204",
+    "name": "山かけまぐろたたき丼（大盛）",
+    "protein": 31.1,
+    "fat": 10.0,
+    "carbs": 133.8,
+    "calories": 753.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_205",
+    "name": "山かけまぐろたたき丼（特盛）",
+    "protein": 50.9,
+    "fat": 18.0,
+    "carbs": 134.6,
+    "calories": 912.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_206",
+    "name": "牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 25.5,
+    "fat": 38.3,
+    "carbs": 95.8,
+    "calories": 830.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_207",
+    "name": "牛カルビ焼肉丼（並盛）",
+    "protein": 26.7,
+    "fat": 38.7,
+    "carbs": 111.4,
+    "calories": 899.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_208",
+    "name": "牛カルビ焼肉丼（大盛）",
+    "protein": 29.0,
+    "fat": 39.2,
+    "carbs": 142.7,
+    "calories": 1037.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_209",
+    "name": "牛カルビ焼肉丼（特盛）",
+    "protein": 48.6,
+    "fat": 76.2,
+    "carbs": 161.0,
+    "calories": 1522.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_210",
+    "name": "キムチ牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 27.1,
+    "fat": 38.7,
+    "carbs": 100.9,
+    "calories": 860.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_211",
+    "name": "キムチ牛カルビ焼肉丼（並盛）",
+    "protein": 28.3,
+    "fat": 39.0,
+    "carbs": 116.5,
+    "calories": 929.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_212",
+    "name": "キムチ牛カルビ焼肉丼（大盛）",
+    "protein": 30.6,
+    "fat": 39.5,
+    "carbs": 147.8,
+    "calories": 1067.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_213",
+    "name": "キムチ牛カルビ焼肉丼（特盛）",
+    "protein": 50.2,
+    "fat": 76.5,
+    "carbs": 166.0,
+    "calories": 1552.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_214",
+    "name": "チーズ牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 36.7,
+    "fat": 51.6,
+    "carbs": 98.9,
+    "calories": 1007.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_215",
+    "name": "チーズ牛カルビ焼肉丼（並盛）",
+    "protein": 37.9,
+    "fat": 51.9,
+    "carbs": 114.5,
+    "calories": 1075.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_216",
+    "name": "チーズ牛カルビ焼肉丼（大盛）",
+    "protein": 40.2,
+    "fat": 52.4,
+    "carbs": 145.8,
+    "calories": 1213.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_217",
+    "name": "チーズ牛カルビ焼肉丼（特盛）",
+    "protein": 59.9,
+    "fat": 89.4,
+    "carbs": 164.1,
+    "calories": 1698.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_218",
+    "name": "ねぎ玉牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 33.8,
+    "fat": 45.3,
+    "carbs": 101.2,
+    "calories": 946.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_219",
+    "name": "ねぎ玉牛カルビ焼肉丼（並盛）",
+    "protein": 35.0,
+    "fat": 45.6,
+    "carbs": 116.8,
+    "calories": 1015.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_220",
+    "name": "ねぎ玉牛カルビ焼肉丼（大盛）",
+    "protein": 37.3,
+    "fat": 46.1,
+    "carbs": 148.1,
+    "calories": 1153.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_221",
+    "name": "ねぎ玉牛カルビ焼肉丼（特盛）",
+    "protein": 56.9,
+    "fat": 83.1,
+    "carbs": 166.4,
+    "calories": 1638.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_222",
+    "name": "にんにく牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 27.5,
+    "fat": 38.9,
+    "carbs": 103.0,
+    "calories": 873.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_223",
+    "name": "にんにく牛カルビ焼肉丼（並盛）",
+    "protein": 28.7,
+    "fat": 39.3,
+    "carbs": 118.6,
+    "calories": 942.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_224",
+    "name": "にんにく牛カルビ焼肉丼（大盛）",
+    "protein": 31.0,
+    "fat": 39.8,
+    "carbs": 149.9,
+    "calories": 1080.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_225",
+    "name": "にんにく牛カルビ焼肉丼（特盛）",
+    "protein": 50.6,
+    "fat": 76.8,
+    "carbs": 168.2,
+    "calories": 1565.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_226",
+    "name": "にんにく明太マヨチーズ牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 36.6,
+    "fat": 56.0,
+    "carbs": 105.0,
+    "calories": 1071.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_227",
+    "name": "にんにく明太マヨチーズ牛カルビ焼肉丼（並盛）",
+    "protein": 37.8,
+    "fat": 56.3,
+    "carbs": 120.6,
+    "calories": 1140.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_228",
+    "name": "にんにく明太マヨチーズ牛カルビ焼肉丼（大盛）",
+    "protein": 40.1,
+    "fat": 56.8,
+    "carbs": 151.9,
+    "calories": 1278.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_229",
+    "name": "にんにく明太マヨチーズ牛カルビ焼肉丼（特盛）",
+    "protein": 51.3,
+    "fat": 83.7,
+    "carbs": 169.7,
+    "calories": 1635.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_230",
+    "name": "にんにく明太マヨキムチ牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 29.7,
+    "fat": 46.2,
+    "carbs": 109.5,
+    "calories": 973.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_231",
+    "name": "にんにく明太マヨキムチ牛カルビ焼肉丼（並盛）",
+    "protein": 30.9,
+    "fat": 46.5,
+    "carbs": 125.1,
+    "calories": 1043.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_232",
+    "name": "にんにく明太マヨキムチ牛カルビ焼肉丼（大盛）",
+    "protein": 33.2,
+    "fat": 47.0,
+    "carbs": 156.4,
+    "calories": 1181.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_233",
+    "name": "にんにく明太マヨキムチ牛カルビ焼肉丼（特盛）",
+    "protein": 52.9,
+    "fat": 84.0,
+    "carbs": 174.6,
+    "calories": 1665.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_234",
+    "name": "ニンニクの芽牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 27.4,
+    "fat": 42.3,
+    "carbs": 104.8,
+    "calories": 904.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_235",
+    "name": "ニンニクの芽牛カルビ焼肉丼（並盛）",
+    "protein": 28.6,
+    "fat": 42.6,
+    "carbs": 120.4,
+    "calories": 973.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_236",
+    "name": "ニンニクの芽牛カルビ焼肉丼（大盛）",
+    "protein": 30.9,
+    "fat": 43.1,
+    "carbs": 151.7,
+    "calories": 1111.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_237",
+    "name": "ニンニクの芽牛カルビ焼肉丼（特盛）",
+    "protein": 50.6,
+    "fat": 80.1,
+    "carbs": 170.0,
+    "calories": 1596.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_238",
+    "name": "ダブルニンニク牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 29.4,
+    "fat": 42.9,
+    "carbs": 111.9,
+    "calories": 947.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_239",
+    "name": "ダブルニンニク牛カルビ焼肉丼（並盛）",
+    "protein": 30.6,
+    "fat": 43.2,
+    "carbs": 127.6,
+    "calories": 1016.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_240",
+    "name": "ダブルニンニク牛カルビ焼肉丼（大盛）",
+    "protein": 32.9,
+    "fat": 43.7,
+    "carbs": 158.9,
+    "calories": 1154.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_241",
+    "name": "ダブルニンニク牛カルビ焼肉丼（特盛）",
+    "protein": 52.6,
+    "fat": 80.7,
+    "carbs": 177.1,
+    "calories": 1639.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_242",
+    "name": "トリプルニンニク牛カルビ焼肉丼（ごはん少なめ）",
+    "protein": 30.8,
+    "fat": 44.5,
+    "carbs": 117.7,
+    "calories": 990.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_243",
+    "name": "トリプルニンニク牛カルビ焼肉丼（並盛）",
+    "protein": 32.0,
+    "fat": 44.8,
+    "carbs": 133.4,
+    "calories": 1059.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_244",
+    "name": "トリプルニンニク牛カルビ焼肉丼（大盛）",
+    "protein": 34.3,
+    "fat": 45.3,
+    "carbs": 164.7,
+    "calories": 1197.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_245",
+    "name": "トリプルニンニク牛カルビ焼肉丼（特盛）",
+    "protein": 53.9,
+    "fat": 82.3,
+    "carbs": 182.9,
+    "calories": 1681.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_246",
+    "name": "ビビンバ牛丼（ごはん少なめ）",
+    "protein": 19.3,
+    "fat": 27.7,
+    "carbs": 92.0,
+    "calories": 687.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_247",
+    "name": "ビビンバ牛丼（並盛）",
+    "protein": 20.5,
+    "fat": 27.9,
+    "carbs": 107.6,
+    "calories": 756.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_248",
+    "name": "ビビンバ牛丼（大盛）",
+    "protein": 22.5,
+    "fat": 28.3,
+    "carbs": 135.0,
+    "calories": 877.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_249",
+    "name": "ビビンバ牛丼（特盛）",
+    "protein": 32.4,
+    "fat": 43.4,
+    "carbs": 140.8,
+    "calories": 1074.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_250",
+    "name": "黒ビビンバ牛丼（ごはん少なめ）",
+    "protein": 19.8,
+    "fat": 29.2,
+    "carbs": 92.7,
+    "calories": 705.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_251",
+    "name": "黒ビビンバ牛丼（並盛）",
+    "protein": 21.0,
+    "fat": 29.5,
+    "carbs": 108.3,
+    "calories": 775.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_252",
+    "name": "黒ビビンバ牛丼（大盛）",
+    "protein": 23.0,
+    "fat": 29.9,
+    "carbs": 135.7,
+    "calories": 896.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_253",
+    "name": "黒ビビンバ牛丼（特盛）",
+    "protein": 32.9,
+    "fat": 44.9,
+    "carbs": 141.5,
+    "calories": 1092.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_254",
+    "name": "おんたまビビンバ牛丼（ごはん少なめ）",
+    "protein": 26.1,
+    "fat": 33.3,
+    "carbs": 92.1,
+    "calories": 770.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_255",
+    "name": "おんたまビビンバ牛丼（並盛）",
+    "protein": 27.3,
+    "fat": 33.6,
+    "carbs": 107.8,
+    "calories": 839.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_256",
+    "name": "おんたまビビンバ牛丼（大盛）",
+    "protein": 29.3,
+    "fat": 34.0,
+    "carbs": 135.2,
+    "calories": 960.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_257",
+    "name": "おんたまビビンバ牛丼（特盛）",
+    "protein": 39.2,
+    "fat": 49.0,
+    "carbs": 141.0,
+    "calories": 1157.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_258",
+    "name": "おんたま黒ビビンバ牛丼（ごはん少なめ）",
+    "protein": 26.6,
+    "fat": 34.9,
+    "carbs": 92.8,
+    "calories": 788.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_259",
+    "name": "おんたま黒ビビンバ牛丼（並盛）",
+    "protein": 27.7,
+    "fat": 35.1,
+    "carbs": 108.5,
+    "calories": 858.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_260",
+    "name": "おんたま黒ビビンバ牛丼（大盛）",
+    "protein": 29.7,
+    "fat": 35.5,
+    "carbs": 135.9,
+    "calories": 979.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_261",
+    "name": "おんたま黒ビビンバ牛丼（特盛）",
+    "protein": 39.6,
+    "fat": 50.6,
+    "carbs": 141.7,
+    "calories": 1175.0,
+    "store": "すき家",
+    "storeGroup": "こだわり丼"
+  },
+  {
+    "id": "sukiya_262",
+    "name": "うな皿（並盛）",
+    "protein": 16.0,
+    "fat": 17.3,
+    "carbs": 8.5,
+    "calories": 255.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_263",
+    "name": "うな皿（特盛）",
+    "protein": 31.9,
+    "fat": 34.6,
+    "carbs": 16.8,
+    "calories": 509.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_264",
+    "name": "うな丼（並盛）",
+    "protein": 22.8,
+    "fat": 18.7,
+    "carbs": 100.2,
+    "calories": 662.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_265",
+    "name": "うな丼（大盛）",
+    "protein": 24.9,
+    "fat": 19.1,
+    "carbs": 129.4,
+    "calories": 791.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_266",
+    "name": "うな丼（特盛）",
+    "protein": 40.6,
+    "fat": 36.4,
+    "carbs": 134.1,
+    "calories": 1028.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_267",
+    "name": "おんたまうな丼（ごはん少なめ）",
+    "protein": 28.4,
+    "fat": 24.1,
+    "carbs": 84.7,
+    "calories": 677.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_268",
+    "name": "おんたまうな丼（並盛）",
+    "protein": 29.7,
+    "fat": 24.4,
+    "carbs": 100.3,
+    "calories": 746.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_269",
+    "name": "おんたまうな丼（大盛）",
+    "protein": 31.8,
+    "fat": 24.8,
+    "carbs": 129.5,
+    "calories": 876.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_270",
+    "name": "おんたまうな丼（特盛）",
+    "protein": 47.4,
+    "fat": 42.1,
+    "carbs": 134.1,
+    "calories": 1113.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_271",
+    "name": "山かけうな丼（ごはん少なめ）",
+    "protein": 23.0,
+    "fat": 18.5,
+    "carbs": 95.9,
+    "calories": 645.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_272",
+    "name": "山かけうな丼（並盛）",
+    "protein": 24.3,
+    "fat": 18.8,
+    "carbs": 111.5,
+    "calories": 714.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_273",
+    "name": "山かけうな丼（大盛）",
+    "protein": 26.4,
+    "fat": 19.2,
+    "carbs": 140.7,
+    "calories": 844.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_274",
+    "name": "山かけうな丼（特盛）",
+    "protein": 42.1,
+    "fat": 36.5,
+    "carbs": 145.4,
+    "calories": 1081.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_275",
+    "name": "うな牛皿（並盛）",
+    "protein": 25.3,
+    "fat": 33.0,
+    "carbs": 11.4,
+    "calories": 443.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_276",
+    "name": "うな牛皿（特盛）",
+    "protein": 40.8,
+    "fat": 50.9,
+    "carbs": 16.0,
+    "calories": 685.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_277",
+    "name": "うな牛（ごはん少なめ）",
+    "protein": 31.0,
+    "fat": 34.0,
+    "carbs": 89.9,
+    "calories": 791.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_278",
+    "name": "うな牛（並盛）",
+    "protein": 32.2,
+    "fat": 34.3,
+    "carbs": 105.5,
+    "calories": 860.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_279",
+    "name": "うな牛（大盛）",
+    "protein": 34.4,
+    "fat": 34.7,
+    "carbs": 134.8,
+    "calories": 990.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_280",
+    "name": "うな牛（特盛）",
+    "protein": 49.8,
+    "fat": 52.7,
+    "carbs": 139.3,
+    "calories": 1232.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_281",
+    "name": "おんたまうな牛（ごはん少なめ）",
+    "protein": 37.9,
+    "fat": 39.7,
+    "carbs": 90.1,
+    "calories": 875.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_282",
+    "name": "おんたまうな牛（並盛）",
+    "protein": 39.1,
+    "fat": 40.1,
+    "carbs": 105.7,
+    "calories": 945.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_283",
+    "name": "おんたまうな牛（大盛）",
+    "protein": 41.2,
+    "fat": 40.5,
+    "carbs": 134.9,
+    "calories": 1074.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_284",
+    "name": "おんたまうな牛（特盛）",
+    "protein": 56.7,
+    "fat": 58.4,
+    "carbs": 139.5,
+    "calories": 1316.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_285",
+    "name": "山かけうな牛（ごはん少なめ）",
+    "protein": 32.5,
+    "fat": 34.1,
+    "carbs": 101.2,
+    "calories": 844.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_286",
+    "name": "山かけうな牛（並盛）",
+    "protein": 33.7,
+    "fat": 34.4,
+    "carbs": 116.8,
+    "calories": 913.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_287",
+    "name": "山かけうな牛（大盛）",
+    "protein": 35.8,
+    "fat": 34.8,
+    "carbs": 146.1,
+    "calories": 1043.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_288",
+    "name": "山かけうな牛（特盛）",
+    "protein": 51.3,
+    "fat": 52.8,
+    "carbs": 150.6,
+    "calories": 1284.0,
+    "store": "すき家",
+    "storeGroup": "うなぎ"
+  },
+  {
+    "id": "sukiya_289",
+    "name": "牛皿定食（並盛）",
+    "protein": 31.7,
+    "fat": 30.8,
+    "carbs": 106.3,
+    "calories": 831.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_290",
+    "name": "牛皿定食（中盛）",
+    "protein": 38.3,
+    "fat": 41.2,
+    "carbs": 109.8,
+    "calories": 965.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_291",
+    "name": "牛皿定食（２倍盛）",
+    "protein": 45.8,
+    "fat": 52.6,
+    "carbs": 114.0,
+    "calories": 1115.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_292",
+    "name": "おろしポン酢牛皿定食（並盛）",
+    "protein": 25.8,
+    "fat": 25.1,
+    "carbs": 110.0,
+    "calories": 766.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_293",
+    "name": "おろしポン酢牛皿定食（中盛）",
+    "protein": 31.2,
+    "fat": 35.2,
+    "carbs": 97.9,
+    "calories": 831.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_294",
+    "name": "おろしポン酢牛皿定食（２倍盛）",
+    "protein": 40.2,
+    "fat": 46.9,
+    "carbs": 121.6,
+    "calories": 1067.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_295",
+    "name": "山かけとろろ牛皿定食（並盛）",
+    "protein": 33.1,
+    "fat": 30.9,
+    "carbs": 117.6,
+    "calories": 883.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_296",
+    "name": "山かけとろろ牛皿定食（中盛）",
+    "protein": 39.6,
+    "fat": 41.1,
+    "carbs": 121.2,
+    "calories": 1015.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_297",
+    "name": "山かけとろろ牛皿定食（２倍盛）",
+    "protein": 47.2,
+    "fat": 52.7,
+    "carbs": 125.3,
+    "calories": 1167.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_298",
+    "name": "鮭定食（ミニ）",
+    "protein": 21.1,
+    "fat": 10.1,
+    "carbs": 65.7,
+    "calories": 434.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_299",
+    "name": "鮭定食（並盛）",
+    "protein": 23.4,
+    "fat": 10.6,
+    "carbs": 96.9,
+    "calories": 572.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_300",
+    "name": "鮭定食（大盛）",
+    "protein": 25.6,
+    "fat": 11.0,
+    "carbs": 124.5,
+    "calories": 694.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_301",
+    "name": "納豆定食（ミニ）",
+    "protein": 22.3,
+    "fat": 13.0,
+    "carbs": 71.8,
+    "calories": 482.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_302",
+    "name": "納豆定食（並盛）",
+    "protein": 24.6,
+    "fat": 13.5,
+    "carbs": 103.0,
+    "calories": 620.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_303",
+    "name": "納豆定食（大盛）",
+    "protein": 26.6,
+    "fat": 13.9,
+    "carbs": 130.4,
+    "calories": 741.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_304",
+    "name": "鮭・納豆定食（ミニ）",
+    "protein": 35.3,
+    "fat": 20.5,
+    "carbs": 71.9,
+    "calories": 602.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_305",
+    "name": "鮭・納豆定食（並盛）",
+    "protein": 37.6,
+    "fat": 21.0,
+    "carbs": 103.1,
+    "calories": 740.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_306",
+    "name": "鮭・納豆定食（大盛）",
+    "protein": 39.6,
+    "fat": 21.4,
+    "carbs": 130.5,
+    "calories": 861.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_307",
+    "name": "さば定食（ミニ）",
+    "protein": 22.0,
+    "fat": 22.5,
+    "carbs": 65.7,
+    "calories": 549.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_308",
+    "name": "さば定食（並盛）",
+    "protein": 24.3,
+    "fat": 23.0,
+    "carbs": 96.9,
+    "calories": 687.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_309",
+    "name": "さば定食（大盛）",
+    "protein": 26.3,
+    "fat": 23.4,
+    "carbs": 124.3,
+    "calories": 808.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_310",
+    "name": "さば納豆定食（ミニ）",
+    "protein": 36.2,
+    "fat": 32.8,
+    "carbs": 71.8,
+    "calories": 720.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_311",
+    "name": "さば納豆定食（並盛）",
+    "protein": 38.5,
+    "fat": 33.3,
+    "carbs": 103.0,
+    "calories": 858.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_312",
+    "name": "さば納豆定食（大盛）",
+    "protein": 40.5,
+    "fat": 33.7,
+    "carbs": 130.4,
+    "calories": 979.0,
+    "store": "すき家",
+    "storeGroup": "定食"
+  },
+  {
+    "id": "sukiya_313",
+    "name": "まぜのっけ朝食（ミニ）",
+    "protein": 14.8,
+    "fat": 8.1,
+    "carbs": 65.2,
+    "calories": 392.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_314",
+    "name": "まぜのっけ朝食（並盛）",
+    "protein": 17.1,
+    "fat": 8.6,
+    "carbs": 96.4,
+    "calories": 531.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_315",
+    "name": "まぜのっけ朝食（大盛）",
+    "protein": 19.1,
+    "fat": 9.0,
+    "carbs": 123.8,
+    "calories": 652.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_316",
+    "name": "納豆まぜのっけ朝食（ミニ）",
+    "protein": 22.2,
+    "fat": 12.8,
+    "carbs": 71.2,
+    "calories": 481.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_317",
+    "name": "納豆まぜのっけ朝食（並盛）",
+    "protein": 24.5,
+    "fat": 13.3,
+    "carbs": 102.4,
+    "calories": 619.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_318",
+    "name": "納豆まぜのっけ朝食（大盛）",
+    "protein": 26.5,
+    "fat": 13.7,
+    "carbs": 129.8,
+    "calories": 740.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_319",
+    "name": "牛まぜのっけ朝食（ミニ）",
+    "protein": 20.3,
+    "fat": 16.2,
+    "carbs": 69.0,
+    "calories": 503.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_320",
+    "name": "牛まぜのっけ朝食（並盛）",
+    "protein": 22.6,
+    "fat": 16.7,
+    "carbs": 100.2,
+    "calories": 641.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_321",
+    "name": "牛まぜのっけ朝食（大盛）",
+    "protein": 24.6,
+    "fat": 17.1,
+    "carbs": 127.6,
+    "calories": 762.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_322",
+    "name": "焼鮭まぜのっけ朝食（ミニ）",
+    "protein": 28.7,
+    "fat": 18.6,
+    "carbs": 65.9,
+    "calories": 546.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_323",
+    "name": "焼鮭まぜのっけ朝食（並盛）",
+    "protein": 31.0,
+    "fat": 19.1,
+    "carbs": 97.1,
+    "calories": 684.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_324",
+    "name": "焼鮭まぜのっけ朝食（大盛）",
+    "protein": 33.0,
+    "fat": 19.5,
+    "carbs": 124.5,
+    "calories": 805.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_325",
+    "name": "塩さばまぜのっけ朝食（ミニ）",
+    "protein": 28.7,
+    "fat": 27.9,
+    "carbs": 65.3,
+    "calories": 628.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_326",
+    "name": "塩さばまぜのっけ朝食（並盛）",
+    "protein": 31.0,
+    "fat": 28.4,
+    "carbs": 96.5,
+    "calories": 766.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_327",
+    "name": "塩さばまぜのっけ朝食（大盛）",
+    "protein": 33.0,
+    "fat": 28.8,
+    "carbs": 123.9,
+    "calories": 887.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_328",
+    "name": "たまかけ朝食（ミニ）",
+    "protein": 16.0,
+    "fat": 9.3,
+    "carbs": 67.7,
+    "calories": 415.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_329",
+    "name": "たまかけ朝食（並盛）",
+    "protein": 18.3,
+    "fat": 9.8,
+    "carbs": 98.9,
+    "calories": 553.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_330",
+    "name": "たまかけ朝食（大盛）",
+    "protein": 20.3,
+    "fat": 10.2,
+    "carbs": 126.3,
+    "calories": 674.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_331",
+    "name": "納豆たまかけ朝食（ミニ）",
+    "protein": 23.5,
+    "fat": 14.1,
+    "carbs": 73.6,
+    "calories": 504.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_332",
+    "name": "納豆たまかけ朝食（並盛）",
+    "protein": 25.8,
+    "fat": 14.6,
+    "carbs": 104.8,
+    "calories": 642.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_333",
+    "name": "納豆たまかけ朝食（大盛）",
+    "protein": 27.8,
+    "fat": 15.0,
+    "carbs": 132.2,
+    "calories": 763.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_334",
+    "name": "牛たまかけ朝食（ミニ）",
+    "protein": 21.5,
+    "fat": 17.4,
+    "carbs": 71.4,
+    "calories": 525.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_335",
+    "name": "牛たまかけ朝食（並盛）",
+    "protein": 23.8,
+    "fat": 17.9,
+    "carbs": 102.6,
+    "calories": 663.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_336",
+    "name": "牛たまかけ朝食（大盛）",
+    "protein": 25.8,
+    "fat": 18.3,
+    "carbs": 130.0,
+    "calories": 784.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_337",
+    "name": "焼鮭たまかけ朝食（ミニ）",
+    "protein": 29.9,
+    "fat": 19.8,
+    "carbs": 68.4,
+    "calories": 568.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_338",
+    "name": "焼鮭たまかけ朝食（並盛）",
+    "protein": 32.2,
+    "fat": 20.3,
+    "carbs": 99.6,
+    "calories": 706.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_339",
+    "name": "焼鮭たまかけ朝食（大盛）",
+    "protein": 34.2,
+    "fat": 20.7,
+    "carbs": 127.0,
+    "calories": 823.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_340",
+    "name": "塩さばたまかけ朝食（ミニ）",
+    "protein": 30.0,
+    "fat": 29.2,
+    "carbs": 67.8,
+    "calories": 650.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_341",
+    "name": "塩さばたまかけ朝食（並盛）",
+    "protein": 32.3,
+    "fat": 29.7,
+    "carbs": 99.0,
+    "calories": 788.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_342",
+    "name": "塩さばたまかけ朝食（大盛）",
+    "protein": 34.3,
+    "fat": 30.1,
+    "carbs": 126.4,
+    "calories": 909.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_343",
+    "name": "ソーセージエッグ朝食（ミニ）",
+    "protein": 21.5,
+    "fat": 23.7,
+    "carbs": 70.0,
+    "calories": 573.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_344",
+    "name": "ソーセージエッグ朝食（並盛）",
+    "protein": 23.8,
+    "fat": 24.2,
+    "carbs": 101.2,
+    "calories": 711.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_345",
+    "name": "ソーセージエッグ朝食（大盛）",
+    "protein": 25.8,
+    "fat": 24.6,
+    "carbs": 128.6,
+    "calories": 832.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_346",
+    "name": "納豆ソーセージエッグ朝食（ミニ）",
+    "protein": 28.9,
+    "fat": 28.4,
+    "carbs": 75.9,
+    "calories": 662.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_347",
+    "name": "納豆ソーセージエッグ朝食（並盛）",
+    "protein": 31.2,
+    "fat": 28.9,
+    "carbs": 107.1,
+    "calories": 800.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_348",
+    "name": "納豆ソーセージエッグ朝食（大盛）",
+    "protein": 33.2,
+    "fat": 29.3,
+    "carbs": 134.5,
+    "calories": 921.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_349",
+    "name": "牛小鉢ソーセージエッグ朝食（ミニ）",
+    "protein": 26.9,
+    "fat": 31.7,
+    "carbs": 73.0,
+    "calories": 680.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_350",
+    "name": "牛小鉢ソーセージエッグ朝食（並盛）",
+    "protein": 29.2,
+    "fat": 32.2,
+    "carbs": 104.2,
+    "calories": 818.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_351",
+    "name": "牛小鉢ソーセージエッグ朝食（大盛）",
+    "protein": 31.2,
+    "fat": 32.6,
+    "carbs": 131.6,
+    "calories": 939.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_352",
+    "name": "自社製ベーコンエッグ朝食（ミニ）",
+    "protein": 21.3,
+    "fat": 21.4,
+    "carbs": 68.4,
+    "calories": 548.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_353",
+    "name": "自社製ベーコンエッグ朝食（並盛）",
+    "protein": 23.6,
+    "fat": 21.9,
+    "carbs": 99.6,
+    "calories": 686.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_354",
+    "name": "自社製ベーコンエッグ朝食（大盛）",
+    "protein": 25.6,
+    "fat": 22.3,
+    "carbs": 127.0,
+    "calories": 807.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_355",
+    "name": "納豆ベーコンエッグ朝食（ミニ）",
+    "protein": 28.7,
+    "fat": 26.2,
+    "carbs": 74.3,
+    "calories": 636.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_356",
+    "name": "納豆ベーコンエッグ朝食（並盛）",
+    "protein": 31.0,
+    "fat": 26.7,
+    "carbs": 105.5,
+    "calories": 774.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_357",
+    "name": "納豆ベーコンエッグ朝食（大盛）",
+    "protein": 33.0,
+    "fat": 27.1,
+    "carbs": 132.9,
+    "calories": 895.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_358",
+    "name": "牛小鉢ベーコンエッグ朝食（ミニ）",
+    "protein": 26.8,
+    "fat": 29.5,
+    "carbs": 72.1,
+    "calories": 658.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_359",
+    "name": "牛小鉢ベーコンエッグ朝食（並盛）",
+    "protein": 29.1,
+    "fat": 30.0,
+    "carbs": 103.3,
+    "calories": 796.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_360",
+    "name": "牛小鉢ベーコンエッグ朝食（大盛）",
+    "protein": 31.1,
+    "fat": 30.4,
+    "carbs": 130.7,
+    "calories": 917.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_361",
+    "name": "焼鮭朝食（ミニ）",
+    "protein": 23.1,
+    "fat": 14.1,
+    "carbs": 68.2,
+    "calories": 484.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_362",
+    "name": "焼鮭朝食（並盛）",
+    "protein": 25.4,
+    "fat": 14.6,
+    "carbs": 99.4,
+    "calories": 622.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_363",
+    "name": "焼鮭朝食（大盛）",
+    "protein": 27.4,
+    "fat": 15.0,
+    "carbs": 126.8,
+    "calories": 739.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_364",
+    "name": "納豆焼鮭朝食（ミニ）",
+    "protein": 30.5,
+    "fat": 18.8,
+    "carbs": 74.1,
+    "calories": 573.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_365",
+    "name": "納豆焼鮭朝食（並盛）",
+    "protein": 32.8,
+    "fat": 19.3,
+    "carbs": 105.3,
+    "calories": 711.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_366",
+    "name": "納豆焼鮭朝食（大盛）",
+    "protein": 34.8,
+    "fat": 19.7,
+    "carbs": 132.7,
+    "calories": 828.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_367",
+    "name": "牛焼鮭朝食（ミニ）",
+    "protein": 29.9,
+    "fat": 21.2,
+    "carbs": 71.4,
+    "calories": 583.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_368",
+    "name": "牛焼鮭朝食（並盛）",
+    "protein": 32.2,
+    "fat": 21.7,
+    "carbs": 102.6,
+    "calories": 721.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_369",
+    "name": "牛焼鮭朝食（大盛）",
+    "protein": 34.2,
+    "fat": 22.1,
+    "carbs": 130.0,
+    "calories": 842.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_370",
+    "name": "塩さば朝食（ミニ）",
+    "protein": 23.2,
+    "fat": 23.5,
+    "carbs": 67.6,
+    "calories": 566.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_371",
+    "name": "塩さば朝食（並盛）",
+    "protein": 25.5,
+    "fat": 24.0,
+    "carbs": 98.8,
+    "calories": 704.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_372",
+    "name": "塩さば朝食（大盛）",
+    "protein": 27.5,
+    "fat": 24.4,
+    "carbs": 126.2,
+    "calories": 825.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_373",
+    "name": "納豆塩さば朝食（ミニ）",
+    "protein": 30.5,
+    "fat": 28.2,
+    "carbs": 73.5,
+    "calories": 655.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_374",
+    "name": "納豆塩さば朝食（並盛）",
+    "protein": 32.8,
+    "fat": 28.7,
+    "carbs": 104.7,
+    "calories": 793.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_375",
+    "name": "納豆塩さば朝食（大盛）",
+    "protein": 34.8,
+    "fat": 29.1,
+    "carbs": 132.1,
+    "calories": 914.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_376",
+    "name": "牛塩さば朝食（ミニ）",
+    "protein": 29.8,
+    "fat": 31.9,
+    "carbs": 71.6,
+    "calories": 697.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_377",
+    "name": "牛塩さば朝食（並盛）",
+    "protein": 32.1,
+    "fat": 32.4,
+    "carbs": 102.8,
+    "calories": 835.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_378",
+    "name": "牛塩さば朝食（大盛）",
+    "protein": 34.1,
+    "fat": 32.8,
+    "carbs": 130.2,
+    "calories": 956.0,
+    "store": "すき家",
+    "storeGroup": "朝食"
+  },
+  {
+    "id": "sukiya_379",
+    "name": "お子様牛丼",
+    "protein": 12.2,
+    "fat": 15.5,
+    "carbs": 43.7,
+    "calories": 362.0,
+    "store": "すき家",
+    "storeGroup": "お子様メニュー"
+  },
+  {
+    "id": "sukiya_380",
+    "name": "お子様チーズ牛丼",
+    "protein": 14.9,
+    "fat": 18.6,
+    "carbs": 46.2,
+    "calories": 410.0,
+    "store": "すき家",
+    "storeGroup": "お子様メニュー"
+  },
+  {
+    "id": "sukiya_381",
+    "name": "お子様カレー",
+    "protein": 5.9,
+    "fat": 3.4,
+    "carbs": 51.1,
+    "calories": 258.0,
+    "store": "すき家",
+    "storeGroup": "お子様メニュー"
+  },
+  {
+    "id": "sukiya_382",
+    "name": "お子様チーズカレー",
+    "protein": 8.6,
+    "fat": 6.5,
+    "carbs": 53.6,
+    "calories": 307.0,
+    "store": "すき家",
+    "storeGroup": "お子様メニュー"
+  },
+  {
+    "id": "sukiya_383",
+    "name": "お子様とりそぼろ丼",
+    "protein": 20.8,
+    "fat": 5.5,
+    "carbs": 47.0,
+    "calories": 319.0,
+    "store": "すき家",
+    "storeGroup": "お子様メニュー"
+  },
+  {
+    "id": "sukiya_384",
+    "name": "すきすきセット（爽健美茶）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 5.1,
+    "calories": 19.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_385",
+    "name": "すきすきセット（緑茶）",
+    "protein": 0.5,
+    "fat": 0.0,
+    "carbs": 5.1,
+    "calories": 19.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_386",
+    "name": "すきすきセット（黒烏龍茶）",
+    "protein": 0.5,
+    "fat": 0.0,
+    "carbs": 5.6,
+    "calories": 24.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_387",
+    "name": "すきすきセット（コーラ）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 30.0,
+    "calories": 118.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_388",
+    "name": "すきすきセット（カルピス）",
+    "protein": 0.5,
+    "fat": 0.3,
+    "carbs": 35.0,
+    "calories": 143.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_389",
+    "name": "すきすきセット（ファンタメロン）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 32.7,
+    "calories": 129.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_390",
+    "name": "すきすきセット（オレンジジュース）",
+    "protein": 0.5,
+    "fat": 0.3,
+    "carbs": 29.7,
+    "calories": 122.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_391",
+    "name": "すきすきセット（ぶどうジュース）",
+    "protein": 0.6,
+    "fat": 0.6,
+    "carbs": 29.1,
+    "calories": 111.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_392",
+    "name": "すきすきセット（りんごジュース）",
+    "protein": 0.2,
+    "fat": 0.4,
+    "carbs": 27.9,
+    "calories": 113.0,
+    "store": "すき家",
+    "storeGroup": "すきすきセット"
+  },
+  {
+    "id": "sukiya_393",
+    "name": "ごはん（ミニ）",
+    "protein": 4.4,
+    "fat": 0.9,
+    "carbs": 58.7,
+    "calories": 260.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_394",
+    "name": "ごはん（並盛）",
+    "protein": 6.7,
+    "fat": 1.4,
+    "carbs": 89.9,
+    "calories": 398.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_395",
+    "name": "ごはん（大盛）",
+    "protein": 8.7,
+    "fat": 1.8,
+    "carbs": 117.3,
+    "calories": 519.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_396",
+    "name": "みそ汁",
+    "protein": 2.4,
+    "fat": 1.4,
+    "carbs": 4.3,
+    "calories": 38.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_397",
+    "name": "とん汁",
+    "protein": 7.9,
+    "fat": 5.6,
+    "carbs": 8.0,
+    "calories": 114.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_398",
+    "name": "しじみ汁",
+    "protein": 9.3,
+    "fat": 2.3,
+    "carbs": 8.1,
+    "calories": 83.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_399",
+    "name": "カレールー",
+    "protein": 6.0,
+    "fat": 14.3,
+    "carbs": 24.2,
+    "calories": 249.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_400",
+    "name": "おしんこセット",
+    "protein": 3.1,
+    "fat": 1.7,
+    "carbs": 6.3,
+    "calories": 51.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_401",
+    "name": "3点セット",
+    "protein": 9.9,
+    "fat": 7.3,
+    "carbs": 6.5,
+    "calories": 131.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_402",
+    "name": "たまごセット",
+    "protein": 9.2,
+    "fat": 7.3,
+    "carbs": 4.2,
+    "calories": 123.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_403",
+    "name": "冷やっこセット",
+    "protein": 9.8,
+    "fat": 6.2,
+    "carbs": 7.8,
+    "calories": 126.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_404",
+    "name": "サラダセット（ドレッシング除く）",
+    "protein": 3.8,
+    "fat": 1.9,
+    "carbs": 9.3,
+    "calories": 64.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_405",
+    "name": "オクラサラダセット（ドレッシング除く）",
+    "protein": 4.5,
+    "fat": 1.9,
+    "carbs": 11.6,
+    "calories": 74.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_406",
+    "name": "サラダ（ドレッシング除く）",
+    "protein": 1.5,
+    "fat": 0.3,
+    "carbs": 5.9,
+    "calories": 28.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_407",
+    "name": "オクラサラダ（ドレッシング除く）",
+    "protein": 2.1,
+    "fat": 0.3,
+    "carbs": 8.2,
+    "calories": 37.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_408",
+    "name": "シーザーサラダ",
+    "protein": 2.4,
+    "fat": 6.2,
+    "carbs": 3.9,
+    "calories": 80.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_409",
+    "name": "チョレギサラダ",
+    "protein": 1.8,
+    "fat": 6.7,
+    "carbs": 5.1,
+    "calories": 86.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_410",
+    "name": "おしんこ",
+    "protein": 0.7,
+    "fat": 0.1,
+    "carbs": 2.3,
+    "calories": 13.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_411",
+    "name": "牛小鉢",
+    "protein": 5.5,
+    "fat": 8.1,
+    "carbs": 3.7,
+    "calories": 110.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_412",
+    "name": "たまご",
+    "protein": 6.9,
+    "fat": 5.7,
+    "carbs": 0.2,
+    "calories": 84.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_413",
+    "name": "おんたま",
+    "protein": 6.9,
+    "fat": 5.7,
+    "carbs": 0.2,
+    "calories": 84.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_414",
+    "name": "からあげ（２個）",
+    "protein": 10.1,
+    "fat": 6.8,
+    "carbs": 5.2,
+    "calories": 123.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_415",
+    "name": "からあげ（６個）",
+    "protein": 30.4,
+    "fat": 20.5,
+    "carbs": 15.5,
+    "calories": 368.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_416",
+    "name": "ベーコン",
+    "protein": 5.1,
+    "fat": 8.8,
+    "carbs": 0.0,
+    "calories": 100.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_417",
+    "name": "ソーセージ",
+    "protein": 5.3,
+    "fat": 11.0,
+    "carbs": 1.6,
+    "calories": 125.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_418",
+    "name": "ささみチキン",
+    "protein": 16.1,
+    "fat": 1.4,
+    "carbs": 2.1,
+    "calories": 85.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_419",
+    "name": "鮭",
+    "protein": 13.0,
+    "fat": 7.5,
+    "carbs": 0.1,
+    "calories": 120.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_420",
+    "name": "塩サバ",
+    "protein": 13.9,
+    "fat": 19.9,
+    "carbs": 0.1,
+    "calories": 235.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_421",
+    "name": "山かけ",
+    "protein": 1.4,
+    "fat": 0.0,
+    "carbs": 10.6,
+    "calories": 48.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_422",
+    "name": "かつぶしオクラ",
+    "protein": 2.4,
+    "fat": 0.1,
+    "carbs": 5.9,
+    "calories": 30.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_423",
+    "name": "キムチ",
+    "protein": 1.6,
+    "fat": 0.4,
+    "carbs": 5.0,
+    "calories": 30.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_424",
+    "name": "季節の小鉢",
+    "protein": 1.9,
+    "fat": 1.3,
+    "carbs": 4.1,
+    "calories": 32.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_425",
+    "name": "フライドにんにく",
+    "protein": 2.0,
+    "fat": 0.6,
+    "carbs": 7.2,
+    "calories": 43.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_426",
+    "name": "青ねぎ",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 0.0,
+    "calories": 0.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_427",
+    "name": "冷やっこ",
+    "protein": 7.4,
+    "fat": 4.7,
+    "carbs": 3.8,
+    "calories": 88.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_428",
+    "name": "納豆",
+    "protein": 7.0,
+    "fat": 4.7,
+    "carbs": 5.9,
+    "calories": 90.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_429",
+    "name": "味付のり",
+    "protein": 0.4,
+    "fat": 0.0,
+    "carbs": 0.4,
+    "calories": 3.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_430",
+    "name": "コチュジャンだれ",
+    "protein": 0.4,
+    "fat": 0.7,
+    "carbs": 2.7,
+    "calories": 19.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_431",
+    "name": "とろ～り3種チーズ",
+    "protein": 11.2,
+    "fat": 13.6,
+    "carbs": 3.4,
+    "calories": 179.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_432",
+    "name": "すき家特製マヨネーズ",
+    "protein": 0.3,
+    "fat": 12.1,
+    "carbs": 0.1,
+    "calories": 110.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_433",
+    "name": "おろしポン酢",
+    "protein": 1.0,
+    "fat": 0.1,
+    "carbs": 5.8,
+    "calories": 23.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_434",
+    "name": "高菜明太マヨ",
+    "protein": 1.8,
+    "fat": 8.9,
+    "carbs": 4.4,
+    "calories": 100.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_435",
+    "name": "高菜",
+    "protein": 1.2,
+    "fat": 2.0,
+    "carbs": 2.9,
+    "calories": 29.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_436",
+    "name": "明太マヨ",
+    "protein": 0.6,
+    "fat": 6.9,
+    "carbs": 1.5,
+    "calories": 71.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_437",
+    "name": "牛カルビ焼肉皿",
+    "protein": 19.7,
+    "fat": 37.2,
+    "carbs": 18.4,
+    "calories": 487.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_438",
+    "name": "牛カルビ焼肉皿（２倍盛）",
+    "protein": 39.4,
+    "fat": 74.2,
+    "carbs": 36.6,
+    "calories": 972.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_439",
+    "name": "チーズインハンバーグ",
+    "protein": 17.8,
+    "fat": 15.1,
+    "carbs": 7.4,
+    "calories": 235.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_440",
+    "name": "にんにくファイヤー",
+    "protein": 1.4,
+    "fat": 1.6,
+    "carbs": 5.8,
+    "calories": 43.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_441",
+    "name": "ニンニクの芽",
+    "protein": 1.9,
+    "fat": 4.0,
+    "carbs": 9.0,
+    "calories": 74.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_442",
+    "name": "ダブルニンニク",
+    "protein": 4.0,
+    "fat": 4.6,
+    "carbs": 16.1,
+    "calories": 117.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_443",
+    "name": "トリプルニンニク",
+    "protein": 5.3,
+    "fat": 6.1,
+    "carbs": 21.9,
+    "calories": 159.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_444",
+    "name": "やみつきのりフレーク",
+    "protein": 0.5,
+    "fat": 1.5,
+    "carbs": 0.7,
+    "calories": 19.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_445",
+    "name": "とん汁みそらーめん",
+    "protein": 12.8,
+    "fat": 8.0,
+    "carbs": 37.7,
+    "calories": 274.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_446",
+    "name": "辛ねぎとん汁みそらーめん",
+    "protein": 13.2,
+    "fat": 8.7,
+    "carbs": 40.4,
+    "calories": 293.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_447",
+    "name": "牛とん汁みそらーめん",
+    "protein": 18.3,
+    "fat": 16.1,
+    "carbs": 41.4,
+    "calories": 384.0,
+    "store": "すき家",
+    "storeGroup": "一品"
+  },
+  {
+    "id": "sukiya_448",
+    "name": "りんごジュース",
+    "protein": 0.2,
+    "fat": 0.4,
+    "carbs": 22.8,
+    "calories": 94.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_449",
+    "name": "ぶどうジュース",
+    "protein": 0.6,
+    "fat": 0.6,
+    "carbs": 24.0,
+    "calories": 92.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_450",
+    "name": "アサヒスーパードライ（中瓶）",
+    "protein": 2.0,
+    "fat": 0.0,
+    "carbs": 15.0,
+    "calories": 210.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_451",
+    "name": "ノンアルコールビール",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 0.0,
+    "calories": 0.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_452",
+    "name": "コカ・コーラ（M）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 24.8,
+    "calories": 99.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_453",
+    "name": "コカ・コーラ（L）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 33.5,
+    "calories": 133.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_454",
+    "name": "ミニッツメイドオレンジ（M）",
+    "protein": 0.5,
+    "fat": 0.2,
+    "carbs": 24.6,
+    "calories": 108.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_455",
+    "name": "ミニッツメイドオレンジ（L）",
+    "protein": 0.6,
+    "fat": 0.3,
+    "carbs": 33.2,
+    "calories": 146.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_456",
+    "name": "ファンタメロン（M）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 27.6,
+    "calories": 110.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_457",
+    "name": "ファンタメロン（L）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 37.2,
+    "calories": 149.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_458",
+    "name": "カルピス（M）",
+    "protein": 0.5,
+    "fat": 0.2,
+    "carbs": 29.9,
+    "calories": 122.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_459",
+    "name": "カルピス（L）",
+    "protein": 0.6,
+    "fat": 0.3,
+    "carbs": 40.3,
+    "calories": 164.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_460",
+    "name": "爽健美茶",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 0.0,
+    "calories": 0.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_461",
+    "name": "緑茶",
+    "protein": 0.5,
+    "fat": 0.0,
+    "carbs": 0.0,
+    "calories": 0.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_462",
+    "name": "黒鳥龍茶",
+    "protein": 0.5,
+    "fat": 0.0,
+    "carbs": 0.5,
+    "calories": 5.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_463",
+    "name": "レモネードスカッシュ",
+    "protein": 0.4,
+    "fat": 0.2,
+    "carbs": 33.1,
+    "calories": 138.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_464",
+    "name": "レモネードスカッシュ（メガ）",
+    "protein": 0.9,
+    "fat": 0.4,
+    "carbs": 66.1,
+    "calories": 276.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_465",
+    "name": "ホットコーヒー（砂糖・ミルクを除く）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 0.1,
+    "calories": 0.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_466",
+    "name": "アイスコーヒー（砂糖・ミルクを除く）（M）",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 0.1,
+    "calories": 1.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_467",
+    "name": "アイスコーヒー（砂糖・ミルクを除く）（L）",
+    "protein": 0.1,
+    "fat": 0.0,
+    "carbs": 0.2,
+    "calories": 1.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_468",
+    "name": "Sukiシェイク　バニラ（S）",
+    "protein": 3.5,
+    "fat": 6.4,
+    "carbs": 26.2,
+    "calories": 176.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_469",
+    "name": "Sukiシェイク　バニラ（M）",
+    "protein": 5.0,
+    "fat": 9.2,
+    "carbs": 37.4,
+    "calories": 252.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_470",
+    "name": "Sukiシェイク　バニラ（L）",
+    "protein": 6.8,
+    "fat": 12.4,
+    "carbs": 50.5,
+    "calories": 340.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_471",
+    "name": "Sukiシェイク　抹茶（S）",
+    "protein": 3.8,
+    "fat": 6.6,
+    "carbs": 30.1,
+    "calories": 194.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_472",
+    "name": "Sukiシェイク　抹茶（M）",
+    "protein": 5.4,
+    "fat": 9.4,
+    "carbs": 42.7,
+    "calories": 275.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_473",
+    "name": "Sukiシェイク　抹茶（L）",
+    "protein": 7.4,
+    "fat": 12.8,
+    "carbs": 58.4,
+    "calories": 375.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_474",
+    "name": "Sukiシェイク　アップルマンゴー（S）",
+    "protein": 3.6,
+    "fat": 6.5,
+    "carbs": 30.9,
+    "calories": 197.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_475",
+    "name": "Sukiシェイク　アップルマンゴー（M）",
+    "protein": 5.1,
+    "fat": 9.3,
+    "carbs": 43.7,
+    "calories": 279.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_476",
+    "name": "Sukiシェイク　アップルマンゴー（L）",
+    "protein": 6.9,
+    "fat": 12.6,
+    "carbs": 60.0,
+    "calories": 381.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_477",
+    "name": "Sukiシェイク　ラムネ（S）",
+    "protein": 3.5,
+    "fat": 6.5,
+    "carbs": 37.4,
+    "calories": 221.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_478",
+    "name": "Sukiシェイク　ラムネ（M）",
+    "protein": 5.0,
+    "fat": 9.2,
+    "carbs": 50.8,
+    "calories": 305.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_479",
+    "name": "Sukiシェイク　ラムネ（L）",
+    "protein": 6.8,
+    "fat": 12.5,
+    "carbs": 68.0,
+    "calories": 410.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_480",
+    "name": "スティックシュガー",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 3.0,
+    "calories": 12.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_481",
+    "name": "ガムシロップ",
+    "protein": 0.0,
+    "fat": 0.0,
+    "carbs": 9.2,
+    "calories": 37.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_482",
+    "name": "コーヒーフレッシュ",
+    "protein": 0.2,
+    "fat": 1.0,
+    "carbs": 0.2,
+    "calories": 11.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_483",
+    "name": "カットりんご",
+    "protein": 0.1,
+    "fat": 0.0,
+    "carbs": 5.1,
+    "calories": 19.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_484",
+    "name": "なめらかカラメルぷりん",
+    "protein": 3.3,
+    "fat": 13.1,
+    "carbs": 14.0,
+    "calories": 190.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  },
+  {
+    "id": "sukiya_485",
+    "name": "とろけるダブルショコラ",
+    "protein": 3.1,
+    "fat": 11.8,
+    "carbs": 20.1,
+    "calories": 198.0,
+    "store": "すき家",
+    "storeGroup": "ドリンク・デザート"
+  }
+]
