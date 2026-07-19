@@ -52,3 +52,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# seed data (git 管理しない。seed 実行時にローカルに用意する)
+/data/sukiya-foods.json

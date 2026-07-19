@@ -30,4 +30,15 @@ export const foodCreateSchema = logItemInputSchema.extend({
   id: z.string().min(1),
 });
 
+// 一括インポート（seed）用。1件の構成は foodCreateSchema と同じだが、
+// timestamp は任意（未指定ならサーバ側で現在時刻を採番する）。
+const foodImportItemSchema = foodCreateSchema.extend({
+  timestamp: z.number().int().positive().optional(),
+});
+
+export const foodImportSchema = z.object({
+  email: z.email(),
+  foods: z.array(foodImportItemSchema).min(1).max(2000),
+});
+
 export const uuidSchema = z.uuid();
