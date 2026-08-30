@@ -38,11 +38,53 @@ const nutrientLabels: Record<NutrientKey, string> = {
 };
 
 const nutrientColors: Record<NutrientKey, string> = {
-  protein: '#3b82f6',
-  fat: '#f59e0b',
-  carbs: '#22c55e',
-  calories: '#8b5cf6',
+  protein: '#60a5fa',
+  fat: '#fbbf24',
+  carbs: '#4ade80',
+  calories: '#a78bfa',
 };
+
+const overLimitColor = '#f87171';
+
+const axisProps = {
+  tickLine: false,
+  axisLine: false,
+  tick: { fill: 'var(--muted-foreground)', fontSize: 11 },
+  tickMargin: 8,
+} as const;
+
+const gridProps = {
+  vertical: false,
+  stroke: 'var(--border)',
+  strokeDasharray: '2 6',
+} as const;
+
+const tooltipProps = {
+  cursor: { fill: 'var(--muted-foreground)', fillOpacity: 0.06 },
+  contentStyle: {
+    background: 'var(--popover)',
+    border: 'none',
+    borderRadius: 10,
+    boxShadow: '0 4px 16px oklch(0 0 0 / 0.12)',
+    fontSize: 12,
+    padding: '8px 10px',
+  },
+  labelStyle: { color: 'var(--muted-foreground)', fontSize: 11, marginBottom: 4 },
+  itemStyle: { padding: 0 },
+} as const;
+
+const limitLineProps = {
+  stroke: overLimitColor,
+  strokeWidth: 1,
+  strokeDasharray: '3 3',
+} as const;
+
+const limitLabel = {
+  value: '上限',
+  position: 'right',
+  fill: overLimitColor,
+  fontSize: 10,
+} as const;
 
 function calculateDebtVisual(intake: number, target: number, carry: number): DebtVisual {
   const safeTarget = Math.max(1, target);
@@ -126,17 +168,24 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
         </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <ReferenceLine y={pfcTargetTotal} stroke="#ef4444" strokeWidth={2} label="上限" />
+            <BarChart data={chartData} margin={{ top: 8, right: 24, bottom: 0, left: -16 }} barCategoryGap="25%">
+              <CartesianGrid {...gridProps} />
+              <XAxis dataKey="date" {...axisProps} interval="preserveStartEnd" minTickGap={16} />
+              <YAxis {...axisProps} width={44} />
+              <Tooltip {...tooltipProps} />
+              <ReferenceLine y={pfcTargetTotal} {...limitLineProps} label={limitLabel} />
               <Bar dataKey="proteinIntake" stackId="pfc" fill={nutrientColors.protein} name="タンパク質" />
               <Bar dataKey="fatIntake" stackId="pfc" fill={nutrientColors.fat} name="脂質" />
               <Bar dataKey="carbsIntake" stackId="pfc" fill={nutrientColors.carbs} name="炭水化物" />
-              <Bar dataKey="pfcDebt" stackId="pfc" fill="#94a3b8" fillOpacity={0.3} name="負債(上限内)" />
-              <Bar dataKey="pfcOverflow" stackId="pfc" fill="transparent" stroke="#ef4444" strokeWidth={2} name="超過(翌日繰越)" />
+              <Bar dataKey="pfcDebt" stackId="pfc" fill="var(--muted-foreground)" fillOpacity={0.18} name="負債(上限内)" />
+              <Bar
+                dataKey="pfcOverflow"
+                stackId="pfc"
+                fill={overLimitColor}
+                fillOpacity={0.55}
+                name="超過(翌日繰越)"
+                radius={[3, 3, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -192,21 +241,21 @@ function NutrientChart({
       </CardHeader>
       <CardContent className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip formatter={(value: number) => [`${value.toFixed(1)} ${unit}`]} />
-            <ReferenceLine y={target} stroke="#ef4444" strokeWidth={2} label="上限" />
+          <BarChart data={data} margin={{ top: 8, right: 24, bottom: 0, left: -16 }} barCategoryGap="25%">
+            <CartesianGrid {...gridProps} />
+            <XAxis dataKey="date" {...axisProps} interval="preserveStartEnd" minTickGap={16} />
+            <YAxis {...axisProps} width={44} />
+            <Tooltip {...tooltipProps} formatter={(value: number) => [`${value.toFixed(1)} ${unit}`]} />
+            <ReferenceLine y={target} {...limitLineProps} label={limitLabel} />
             <Bar dataKey={`${dataKeyPrefix}Intake`} stackId={dataKeyPrefix} fill={color} name="当日摂取" />
-            <Bar dataKey={`${dataKeyPrefix}Debt`} stackId={dataKeyPrefix} fill={color} fillOpacity={0.3} name="負債(上限内)" />
+            <Bar dataKey={`${dataKeyPrefix}Debt`} stackId={dataKeyPrefix} fill={color} fillOpacity={0.25} name="負債(上限内)" />
             <Bar
               dataKey={`${dataKeyPrefix}Overflow`}
               stackId={dataKeyPrefix}
-              fill="transparent"
-              stroke="#ef4444"
-              strokeWidth={2}
+              fill={overLimitColor}
+              fillOpacity={0.55}
               name="超過(翌日繰越)"
+              radius={[3, 3, 0, 0]}
             />
           </BarChart>
         </ResponsiveContainer>
