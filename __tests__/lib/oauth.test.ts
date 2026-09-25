@@ -4,6 +4,7 @@
 import {
   authorizationResponseUrl,
   checkAuthorizeParams,
+  isRegisteredRedirectUri,
   isValidResource,
   publicOrigin,
   verifyPkce,
@@ -38,6 +39,47 @@ describe('isValidResource', () => {
     expect(isValidResource('https://evil.example.com/api/mcp', origin)).toBe(
       false,
     );
+  });
+});
+
+describe('isRegisteredRedirectUri', () => {
+  const registered = [
+    'https://chatgpt.com/connector_platform_oauth_redirect',
+    'http://127.0.0.1/callback',
+    'http://localhost/callback',
+  ];
+
+  it('完全一致なら登録済み', () => {
+    expect(
+      isRegisteredRedirectUri(
+        'https://chatgpt.com/connector_platform_oauth_redirect',
+        registered,
+      ),
+    ).toBe(true);
+  });
+
+  it('ループバックはポートが違っても登録済み', () => {
+    expect(
+      isRegisteredRedirectUri('http://127.0.0.1:54321/callback', registered),
+    ).toBe(true);
+    expect(
+      isRegisteredRedirectUri('http://localhost:8080/callback', registered),
+    ).toBe(true);
+  });
+
+  it('ループバックでもパスが違えば未登録', () => {
+    expect(
+      isRegisteredRedirectUri('http://127.0.0.1:54321/other', registered),
+    ).toBe(false);
+  });
+
+  it('ループバック以外はポート違いを許さない', () => {
+    expect(
+      isRegisteredRedirectUri(
+        'https://chatgpt.com:8443/connector_platform_oauth_redirect',
+        registered,
+      ),
+    ).toBe(false);
   });
 });
 

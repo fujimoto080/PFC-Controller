@@ -6,6 +6,7 @@ import { getPool } from '@/lib/server/db';
 import {
   authorizationResponseUrl,
   checkAuthorizeParams,
+  isRegisteredRedirectUri,
   verifyPkce,
 } from '@/lib/oauth';
 
@@ -86,7 +87,7 @@ export async function resolveAuthorizeRequest(
       message: 'クライアント情報を取得できませんでした',
     };
   }
-  if (!client.redirectUris.includes(redirectUri)) {
+  if (!isRegisteredRedirectUri(redirectUri, client.redirectUris)) {
     return { type: 'invalid', message: 'redirect_uri が登録されていません' };
   }
 

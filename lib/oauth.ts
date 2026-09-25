@@ -53,6 +53,25 @@ export function isValidResource(
   return resource === undefined || resource === mcpResourceUrl(origin);
 }
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', '[::1]', 'localhost']);
+
+/**
+ * redirect_uri が登録済みのものと一致するか。
+ * ネイティブアプリのループバック URI は実行時にポートが決まるため、RFC 8252 §7.3 に従いポートを無視して比較する。
+ */
+export function isRegisteredRedirectUri(
+  redirectUri: string,
+  registered: readonly string[],
+): boolean {
+  if (registered.includes(redirectUri)) return true;
+  if (!URL.canParse(redirectUri)) return false;
+  const requested = new URL(redirectUri);
+  if (requested.protocol !== 'http:' || !LOOPBACK_HOSTS.has(requested.hostname))
+    return false;
+  requested.port = '';
+  return registered.includes(requested.toString());
+}
+
 const CODE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 /**
