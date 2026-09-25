@@ -1,41 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { formatDate } from '@/lib/utils';
+import { useState } from 'react';
+import { formatDate, formatTime, toJstTimestamp } from '@/lib/utils';
+
+export interface EatDateTime {
+  date: string; // YYYY-MM-DD (JST)
+  time: string; // HH:mm (JST)
+}
 
 /**
- * 「食べた日付/時刻」の state を管理する。
- * @param initialTimestamp 省略時は現在時刻で初期化。指定するとその値に同期し、
- *   値が変わるたび（編集対象の切り替えなど）再初期化する。
+ * 「食べた日付/時刻」の入力状態。省略時は現在時刻で初期化する。
+ * 初期値はマウント時のみ反映されるため、対象を切り替える場合は key で再マウントする。
  */
 export function useEatDateTime(initialTimestamp?: number) {
-  const [eatDate, setEatDate] = useState('');
-  const [eatTime, setEatTime] = useState('');
-
-  useEffect(() => {
-    // 同期的な setState の警告 / ハイドレーションずれを避けるため queueMicrotask で反映
-    const base =
-      initialTimestamp !== undefined ? new Date(initialTimestamp) : new Date();
-    const date = formatDate(base);
-    const time = `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
-
-    queueMicrotask(() => {
-      setEatDate(date);
-      setEatTime(time);
-    });
-  }, [initialTimestamp]);
-
-  const getSelectedTimestamp = () => {
-    const [year = 0, month = 1, day = 1] = eatDate.split('-').map(Number);
-    const [hour = 0, minute = 0] = eatTime.split(':').map(Number);
-    return new Date(year, month - 1, day, hour, minute).getTime();
-  };
+  const [value, setValue] = useState<EatDateTime>(() => {
+    const timestamp = initialTimestamp ?? Date.now();
+    return { date: formatDate(timestamp), time: formatTime(timestamp) };
+  });
 
   return {
-    eatDate,
-    setEatDate,
-    eatTime,
-    setEatTime,
-    getSelectedTimestamp,
+    value,
+    onChange: setValue,
+    timestamp: toJstTimestamp(value.date, value.time),
   };
 }

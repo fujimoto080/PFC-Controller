@@ -226,7 +226,7 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 ### 10.3 その他のローカル保存
 
 - `pfc_add_food_form_draft`（追加フォームの入力途中データ）
-- `pfc_manage_foods_collapse_state`（食品管理画面の折りたたみ状態）
+- `pfc_manage_foods_collapsed`（食品管理画面の折りたたみ状態）
 
 ---
 

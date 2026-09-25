@@ -1,31 +1,28 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProfileCalculator } from './ProfileCalculator';
 import { SportSettingsForm } from './SportSettingsForm';
-import type { PFC, SportDefinition, UserProfile } from '@/lib/types';
+import type { SportDefinition, UserProfile } from '@/lib/types';
 import { saveSettings, saveSports } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
+import {
+  DEFAULT_PROFILE,
+  calculateGoals,
+  initialDuration,
+} from '@/lib/nutrition-goals';
 import { toast } from '@/lib/toast';
 
 export function GoalSettingsPanel() {
   const { settings, sports: savedSports } = useAppState();
-  const [duration, setDuration] = useState<number | undefined>(undefined);
-  const [goals, setGoals] = useState<PFC>(settings.targetPFC);
-  const [profile, setProfile] = useState<UserProfile | undefined>(
-    settings.profile,
+  const [profile, setProfile] = useState<UserProfile>(
+    settings.profile ?? DEFAULT_PROFILE,
   );
+  const [duration, setDuration] = useState(() => initialDuration(profile));
   const [sports, setSports] = useState<SportDefinition[]>(savedSports);
-
-  const handleCalculate = useCallback(
-    (newGoals: PFC, newProfile: UserProfile) => {
-      setGoals(newGoals);
-      setProfile(newProfile);
-    },
-    [],
-  );
+  const goals = calculateGoals(profile, duration);
 
   const handleAddSport = (sport: SportDefinition) => {
     setSports((prev) => [...prev, sport]);
@@ -36,7 +33,9 @@ export function GoalSettingsPanel() {
   };
 
   const handleSaveGoals = async () => {
-    if (await saveSettings({ ...settings, targetPFC: goals, profile })) {
+    const { protein, fat, carbs, calories } = goals;
+    const targetPFC = { protein, fat, carbs, calories };
+    if (await saveSettings({ ...settings, targetPFC, profile })) {
       toast.success('目標設定を保存しました');
     }
   };
@@ -55,10 +54,11 @@ export function GoalSettingsPanel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <ProfileCalculator
-            initialProfile={profile}
-            onCalculate={handleCalculate}
+            profile={profile}
+            onProfileChange={setProfile}
             duration={duration}
             onDurationChange={setDuration}
+            goals={goals}
           />
           <div className="flex justify-end">
             <Button

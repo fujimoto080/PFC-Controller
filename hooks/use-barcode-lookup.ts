@@ -3,52 +3,63 @@
 import { useState } from 'react';
 import { fetchBarcodeFood } from '@/lib/client/api';
 import type { BarcodeFood } from '@/lib/barcode';
+import { toast } from '@/lib/toast';
 
 interface UseBarcodeLookupOptions {
   /** マッピングが見つかったときにフォームへ流し込む。 */
-  applyFoodData: (data: BarcodeFood) => void;
-  /** マッピングが未登録(404)のときにフォームを初期化する。 */
-  clearForm: () => void;
+  onFound: (food: BarcodeFood) => void;
+  /** マッピングが未登録のときにフォームを初期化する。 */
+  onNotFound: () => void;
 }
 
-/** バーコード↔食品マッピングの照会と、それに紐づく入力状態を管理するフック。 */
-export function useBarcodeLookup({
-  applyFoodData,
-  clearForm,
-}: UseBarcodeLookupOptions) {
-  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
-  const [barcodeLookupInput, setBarcodeLookupInput] = useState('');
-  const [mappedFoodData, setMappedFoodData] = useState<BarcodeFood | null>(
-    null,
-  );
+/** 照会の経路ごとの通知文言。 */
+const MESSAGES = {
+  scan: {
+    loading: '商品情報を取得中...',
+    found: (food: BarcodeFood, code: string) =>
+      `「${food.name}」が見つかりました (${code})`,
+    notFound: 'バーコードが見つかりませんでした。手動で入力してください。',
+  },
+  manual: {
+    loading: 'バーコードのマッピングを確認中...',
+    found: (food: BarcodeFood) =>
+      `「${food.name}」のマッピングを表示しています`,
+    notFound: 'このバーコードは未登録です。手動入力で登録できます。',
+  },
+} as const;
 
-  /** バーコードを照会し、結果をフォームへ反映する。見つかった食品（なければ null）を返す。 */
-  const runLookup = async (code: string): Promise<BarcodeFood | null> => {
-    const data = await fetchBarcodeFood(code);
-    if (data) {
-      setMappedFoodData(data);
-      applyFoodData(data);
-    } else {
-      setMappedFoodData(null);
-      clearForm();
+/** 選択中のバーコードと、それに対応する食品マッピングの照会を管理する。 */
+export function useBarcodeLookup({
+  onFound,
+  onNotFound,
+}: UseBarcodeLookupOptions) {
+  const [barcode, setBarcode] = useState<string | null>(null);
+  const [mappedFood, setMappedFood] = useState<BarcodeFood | null>(null);
+
+  const lookup = async (code: string, source: keyof typeof MESSAGES) => {
+    const messages = MESSAGES[source];
+    setBarcode(code);
+    try {
+      const food = await toast.withLoading(messages.loading, () =>
+        fetchBarcodeFood(code),
+      );
+      setMappedFood(food);
+      if (food) {
+        onFound(food);
+        toast.success(messages.found(food, code));
+      } else {
+        onNotFound();
+        toast.info(messages.notFound);
+      }
+    } catch (error) {
+      toast.fromError('バーコード照会エラー', error, 'エラーが発生しました');
     }
-    return data;
   };
 
   const clear = () => {
-    setScannedBarcode(null);
-    setMappedFoodData(null);
-    setBarcodeLookupInput('');
+    setBarcode(null);
+    setMappedFood(null);
   };
 
-  return {
-    scannedBarcode,
-    setScannedBarcode,
-    barcodeLookupInput,
-    setBarcodeLookupInput,
-    mappedFoodData,
-    setMappedFoodData,
-    runLookup,
-    clear,
-  };
+  return { barcode, mappedFood, lookup, clear };
 }

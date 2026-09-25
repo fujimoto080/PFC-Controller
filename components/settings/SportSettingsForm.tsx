@@ -27,7 +27,7 @@ export function SportSettingsForm({
     if (!trimmedName || !Number.isFinite(calories) || calories <= 0) return;
 
     onAddSport({
-      id: `sport-${Date.now()}`,
+      id: crypto.randomUUID(),
       name: trimmedName,
       caloriesBurned: roundPFC(calories, 0),
     });

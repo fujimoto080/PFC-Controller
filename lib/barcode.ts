@@ -10,10 +10,17 @@ export interface BarcodeMappingRow {
   food: BarcodeFood;
 }
 
-export type FoodMatchKeyInput = Pick<
-  BarcodeFood,
-  'name' | 'protein' | 'fat' | 'carbs' | 'calories'
->;
+/** 食品から バーコードマッピングに保存する項目だけを取り出す。 */
+export function toBarcodeFood({
+  name,
+  protein,
+  fat,
+  carbs,
+  calories,
+  store,
+}: BarcodeFood): BarcodeFood {
+  return { name, protein, fat, carbs, calories, store };
+}
 
 export function normalizeBarcodes(value: string | string[]): string[] {
   const source = Array.isArray(value) ? value : [value];
@@ -28,7 +35,8 @@ export function normalizeBarcodes(value: string | string[]): string[] {
   );
 }
 
-export function buildFoodMatchKey(food: FoodMatchKeyInput): string {
+/** 食品名と栄養値から、バーコードマッピングと食品辞書を突き合わせるためのキーを作る。 */
+export function buildFoodMatchKey(food: BarcodeFood): string {
   return [
     food.name.trim().toLowerCase(),
     food.protein,

@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import {
   type FieldValues,
   type Path,
@@ -7,48 +8,31 @@ import {
 } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MACROS } from '@/lib/macros';
 
-const MACROS = [
-  { key: 'protein', label: 'タンパク質 (g)' },
-  { key: 'fat', label: '脂質 (g)' },
-  { key: 'carbs', label: '炭水化物 (g)' },
-  { key: 'calories', label: 'カロリー' },
+const FIELDS = [
+  ...MACROS.map(({ key, label }) => ({ key, label: `${label} (g)` })),
+  { key: 'calories', label: 'カロリー (kcal)' },
 ] as const;
 
-interface PfcMacroInputsProps<T extends FieldValues> {
-  register: UseFormRegister<T>;
-  /** number input の step。既定は 0.1 */
-  step?: string;
-  /** RHF に数値として登録するか（valueAsNumber） */
-  valueAsNumber?: boolean;
-  /** id / htmlFor を付与するか（同一ページに複数置く場合は false） */
-  withIds?: boolean;
-}
-
-/**
- * P/F/C/カロリーの数値入力 2 列グリッド。
- * AddFoodForm / manage-foods / EditLogItemDrawer で共通利用する。
- */
+/** P/F/C/カロリーの数値入力 2 列グリッド。値は number として登録する。 */
 export function PfcMacroInputs<T extends FieldValues>({
   register,
-  step = '0.1',
-  valueAsNumber = false,
-  withIds = false,
-}: PfcMacroInputsProps<T>) {
+}: {
+  register: UseFormRegister<T>;
+}) {
+  const idPrefix = useId();
   return (
     <div className="grid grid-cols-2 gap-4">
-      {MACROS.map(({ key, label }) => (
+      {FIELDS.map(({ key, label }) => (
         <div key={key} className="space-y-2">
-          <Label htmlFor={withIds ? key : undefined}>{label}</Label>
+          <Label htmlFor={`${idPrefix}-${key}`}>{label}</Label>
           <Input
-            id={withIds ? key : undefined}
+            id={`${idPrefix}-${key}`}
             type="number"
-            step={step}
+            step="any"
             placeholder="0"
-            {...register(
-              key as unknown as Path<T>,
-              valueAsNumber ? { valueAsNumber: true } : undefined,
-            )}
+            {...register(key as Path<T>, { valueAsNumber: true })}
           />
         </div>
       ))}
@@ -65,9 +49,7 @@ interface DatalistInputProps<T extends FieldValues> {
   placeholder?: string;
 }
 
-/**
- * datalist によるサジェスト付きテキスト入力。店名・店内グループなど自由入力 + 候補提示に使う。
- */
+/** datalist によるサジェスト付きテキスト入力。店名・店内グループなど自由入力 + 候補提示に使う。 */
 export function DatalistInput<T extends FieldValues>({
   register,
   name,
@@ -76,7 +58,7 @@ export function DatalistInput<T extends FieldValues>({
   options,
   placeholder,
 }: DatalistInputProps<T>) {
-  const inputId = name;
+  const inputId = useId();
   return (
     <div className="space-y-2">
       <Label htmlFor={inputId}>{label}</Label>

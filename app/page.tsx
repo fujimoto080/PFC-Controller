@@ -13,26 +13,19 @@ import { PageTitle } from '@/components/ui/page-title';
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(() =>
-    formatDate(new Date()),
+    formatDate(Date.now()),
   );
-
-  const handleDateChange = (newDate: string) => {
-    setSelectedDate(newDate);
-  };
-
   const displayDate = parseISO(selectedDate);
 
   return (
     <div className="space-y-6 pb-20">
-      <div className="flex items-center justify-between">
-        <PageTitle>
-          {isToday(displayDate)
-            ? '今日のバランス'
-            : `${format(displayDate, 'M月d日', { locale: ja })}のバランス`}
-        </PageTitle>
-      </div>
+      <PageTitle>
+        {isToday(displayDate)
+          ? '今日のバランス'
+          : `${format(displayDate, 'M月d日', { locale: ja })}のバランス`}
+      </PageTitle>
 
-      <PFCStats selectedDate={selectedDate} onDateChange={handleDateChange} />
+      <PFCStats selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
       <QuickAddButtons />
 

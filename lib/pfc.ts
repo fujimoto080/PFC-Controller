@@ -1,9 +1,8 @@
+import { PFC_KEYS, type PfcKey } from './macros';
 import { EMPTY_PFC, type DailyLog, type Logs, type PFC } from './types';
-import { formatDate, roundPFC } from './utils';
+import { roundPFC, shiftDate } from './utils';
 
-const PFC_KEYS = ['protein', 'fat', 'carbs', 'calories'] as const;
-
-function mapPFC(fn: (key: (typeof PFC_KEYS)[number]) => number): PFC {
+function mapPFC(fn: (key: PfcKey) => number): PFC {
   return {
     protein: fn('protein'),
     fat: fn('fat'),
@@ -44,15 +43,6 @@ export function activityAdjustedCalorieTarget(
   return Math.max(0, targetCalories + burned);
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** JST の日付文字列(YYYY-MM-DD)に日数を加算する。JST は夏時間が無いため固定長で加算できる。 */
-function addDays(date: string, days: number): string {
-  return formatDate(
-    new Date(`${date}T00:00:00+09:00`).getTime() + days * DAY_MS,
-  );
-}
-
 /**
  * currentDate の前日までの累積超過（負債）を計算する。
  * 最初の記録日から1日ずつ「その日の摂取 - 目標」を積み上げ、0 未満にはならない。
@@ -66,7 +56,7 @@ export function computePfcDebt(
   const debt: PFC = { ...EMPTY_PFC };
   if (firstDate === undefined) return debt;
 
-  for (let date = firstDate; date < currentDate; date = addDays(date, 1)) {
+  for (let date = firstDate; date < currentDate; date = shiftDate(date, 1)) {
     const total = logs[date]?.total ?? EMPTY_PFC;
     for (const key of PFC_KEYS) {
       debt[key] = Math.max(0, debt[key] + total[key] - target[key]);
@@ -79,7 +69,7 @@ export function computePfcDebt(
 export function weeklyAverage(logs: Logs, today: string): PFC {
   const totals = Array.from(
     { length: 7 },
-    (_, i) => logs[addDays(today, -i)]?.total ?? EMPTY_PFC,
+    (_, i) => logs[shiftDate(today, -i)]?.total ?? EMPTY_PFC,
   );
   return mapPFC((key) =>
     roundPFC(totals.reduce((acc, t) => acc + t[key], 0) / 7),

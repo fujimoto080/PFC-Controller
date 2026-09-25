@@ -4,225 +4,54 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Html5Qrcode,
   Html5QrcodeScannerState,
-  Html5QrcodeSupportedFormats,
+  Html5QrcodeSupportedFormats as Format,
 } from 'html5-qrcode';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { isValidBarcode } from '@/lib/barcode-validation';
 import { toast } from '@/lib/toast';
+import { cn } from '@/lib/utils';
 
 interface BarcodeScannerProps {
   onScanSuccess: (decodedText: string) => void;
   onClose: () => void;
 }
 
+const REGION_ID = 'html5qr-code-full-region';
+
 const SUPPORTED_FORMATS = [
-  Html5QrcodeSupportedFormats.EAN_13, // JAN
-  Html5QrcodeSupportedFormats.EAN_8,
-  Html5QrcodeSupportedFormats.UPC_A,
-  Html5QrcodeSupportedFormats.UPC_E,
-  Html5QrcodeSupportedFormats.CODE_128,
-  Html5QrcodeSupportedFormats.CODE_39,
-  Html5QrcodeSupportedFormats.CODE_93,
-  Html5QrcodeSupportedFormats.ITF,
-  Html5QrcodeSupportedFormats.CODABAR,
-  Html5QrcodeSupportedFormats.QR_CODE,
+  Format.EAN_13, // JAN
+  Format.EAN_8,
+  Format.UPC_A,
+  Format.UPC_E,
+  Format.CODE_128,
+  Format.CODE_39,
+  Format.CODE_93,
+  Format.ITF,
+  Format.CODABAR,
+  Format.QR_CODE,
 ];
 
+// 誤読を避けるため、同じ値を指定回数読み取れたら確定する
+const REQUIRED_SCANS = 3;
+const FEEDBACK_MS = 300;
+
 type ScanFeedback = 'success' | 'error' | null;
-interface CheckDigitResult {
-  isValid: boolean;
-  actualCheckDigit: number | null;
-  expectedCheckDigit: number | null;
-}
 
-const CODE_SPECIFIC_RULES: Partial<
-  Record<Html5QrcodeSupportedFormats, RegExp>
-> = {
-  [Html5QrcodeSupportedFormats.CODE_128]: /^[\x20-\x7E]{6,32}$/,
-  [Html5QrcodeSupportedFormats.CODE_39]: /^[0-9A-Z .\-$/+%]{6,32}$/,
-  [Html5QrcodeSupportedFormats.CODE_93]: /^[\x20-\x7E]{6,32}$/,
-  [Html5QrcodeSupportedFormats.CODABAR]: /^[A-D][0-9\-$:/.+]{4,30}[A-D]$/,
-};
+const FEEDBACK_CLASS = {
+  success:
+    'shadow-[0_0_18px_rgba(74,222,128,0.9)] ring-4 ring-green-400 ring-offset-2 ring-offset-black',
+  error:
+    'shadow-[0_0_18px_rgba(239,68,68,0.9)] ring-4 ring-red-500 ring-offset-2 ring-offset-black',
+} as const;
 
-function isNumeric(value: string): boolean {
-  return /^[0-9]+$/.test(value);
-}
-
-function calculateMod10CheckDigit(
-  digits: string,
-  oddWeight: number,
-  evenWeight: number,
-): number | null {
-  if (!isNumeric(digits)) {
-    return null;
-  }
-
-  const total = digits
-    .split('')
-    .map((digit) => Number(digit))
-    .reduce((sum, digit, index) => {
-      const isOddPosition = index % 2 === 0;
-      const weight = isOddPosition ? oddWeight : evenWeight;
-      return sum + digit * weight;
-    }, 0);
-
-  return (10 - (total % 10)) % 10;
-}
-
-function calculateCheckDigitResult(
-  value: string,
-  oddWeight: number,
-  evenWeight: number,
-): CheckDigitResult {
-  if (!isNumeric(value) || value.length < 2) {
-    return {
-      isValid: false,
-      actualCheckDigit: null,
-      expectedCheckDigit: null,
-    };
-  }
-
-  const actualCheckDigit = Number(value[value.length - 1]);
-  const expectedCheckDigit = calculateMod10CheckDigit(
-    value.slice(0, -1),
-    oddWeight,
-    evenWeight,
-  );
-
-  return {
-    isValid:
-      expectedCheckDigit !== null && actualCheckDigit === expectedCheckDigit,
-    actualCheckDigit,
-    expectedCheckDigit,
-  };
-}
-
-function validateEan13(value: string): boolean {
-  if (value.length !== 13 || !isNumeric(value)) {
-    return false;
-  }
-  return calculateCheckDigitResult(value, 1, 3).isValid;
-}
-
-function validateEan8(value: string): boolean {
-  if (value.length !== 8 || !isNumeric(value)) {
-    return false;
-  }
-  return calculateCheckDigitResult(value, 3, 1).isValid;
-}
-
-function validateUpcA(value: string): boolean {
-  if (value.length !== 12 || !isNumeric(value)) {
-    return false;
-  }
-  return calculateCheckDigitResult(value, 3, 1).isValid;
-}
-
-function expandUpcE(value: string): string | null {
-  if (value.length !== 8 || !isNumeric(value)) {
-    return null;
-  }
-
-  const numberSystem = value[0] ?? '';
-  const data = value.slice(1, 7);
-  const checkDigit = value[7] ?? '';
-  const last = data[5] ?? '';
-  const [d1 = '', d2 = '', d3 = '', d4 = '', d5 = ''] = data;
-
-  let manufacturer = '';
-  let product = '';
-
-  if (['0', '1', '2'].includes(last)) {
-    manufacturer = `${d1}${d2}${last}00`;
-    product = `00${d3}${d4}${d5}`;
-  } else if (last === '3') {
-    manufacturer = `${d1}${d2}${d3}00`;
-    product = `000${d4}${d5}`;
-  } else if (last === '4') {
-    manufacturer = `${d1}${d2}${d3}${d4}0`;
-    product = `0000${d5}`;
-  } else {
-    manufacturer = `${d1}${d2}${d3}${d4}${d5}`;
-    product = `0000${last}`;
-  }
-
-  return `${numberSystem}${manufacturer}${product}${checkDigit}`;
-}
-
-function validateUpcE(value: string): boolean {
-  const expanded = expandUpcE(value);
-  if (!expanded) {
-    return false;
-  }
-  return validateUpcA(expanded);
-}
-
-function validateItf(value: string): boolean {
-  if (value.length < 2 || value.length % 2 !== 0 || !isNumeric(value)) {
-    return false;
-  }
-  return calculateCheckDigitResult(value, 3, 1).isValid;
-}
-
-function getCheckDigitResult(
-  value: string,
-  format?: Html5QrcodeSupportedFormats,
-): CheckDigitResult {
-  switch (format) {
-    case Html5QrcodeSupportedFormats.EAN_13:
-      return calculateCheckDigitResult(value, 1, 3);
-    case Html5QrcodeSupportedFormats.EAN_8:
-    case Html5QrcodeSupportedFormats.UPC_A:
-    case Html5QrcodeSupportedFormats.ITF:
-      return calculateCheckDigitResult(value, 3, 1);
-    case Html5QrcodeSupportedFormats.UPC_E: {
-      const expanded = expandUpcE(value);
-      if (!expanded) {
-        return {
-          isValid: false,
-          actualCheckDigit: null,
-          expectedCheckDigit: null,
-        };
-      }
-      return calculateCheckDigitResult(expanded, 3, 1);
-    }
-    default:
-      return {
-        isValid: value.length > 0,
-        actualCheckDigit: null,
-        expectedCheckDigit: null,
-      };
-  }
-}
-
-function validateBarcode(
-  value: string,
-  format?: Html5QrcodeSupportedFormats,
-): boolean {
-  switch (format) {
-    case Html5QrcodeSupportedFormats.EAN_13:
-      return validateEan13(value);
-    case Html5QrcodeSupportedFormats.EAN_8:
-      return validateEan8(value);
-    case Html5QrcodeSupportedFormats.UPC_A:
-      return validateUpcA(value);
-    case Html5QrcodeSupportedFormats.UPC_E:
-      return validateUpcE(value);
-    case Html5QrcodeSupportedFormats.ITF:
-      return validateItf(value);
-    case Html5QrcodeSupportedFormats.CODE_128:
-    case Html5QrcodeSupportedFormats.CODE_39:
-    case Html5QrcodeSupportedFormats.CODE_93:
-    case Html5QrcodeSupportedFormats.CODABAR: {
-      const rule = CODE_SPECIFIC_RULES[format];
-      if (!rule) {
-        return value.length > 0;
-      }
-      return rule.test(value);
-    }
-    case Html5QrcodeSupportedFormats.QR_CODE:
-    default:
-      return value.length > 0;
+async function stopScanner(scanner: Html5Qrcode) {
+  const state = scanner.getState();
+  if (
+    state === Html5QrcodeScannerState.SCANNING ||
+    state === Html5QrcodeScannerState.PAUSED
+  ) {
+    await scanner.stop();
   }
 }
 
@@ -230,131 +59,80 @@ export function BarcodeScanner({
   onScanSuccess,
   onClose,
 }: BarcodeScannerProps) {
-  const REQUIRED_TOTAL_SCANS = 3;
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const regionId = 'html5qr-code-full-region';
-  const [scanFeedback, setScanFeedback] = useState<ScanFeedback>(null);
-  const feedbackTimeoutRef = useRef<number | null>(null);
-  const scanCountByCodeRef = useRef<Record<string, number>>({});
+  const [feedback, setFeedback] = useState<ScanFeedback>(null);
+  // マウント時に一度だけ起動するため、最新のコールバックは ref 経由で参照する
+  const callbacksRef = useRef({ onScanSuccess, onClose });
+  useEffect(() => {
+    callbacksRef.current = { onScanSuccess, onClose };
+  });
 
   useEffect(() => {
-    // Cleanup on unmount
-    return () => {
-      if (scannerRef.current) {
-        try {
-          const state = scannerRef.current.getState();
-          if (
-            state === Html5QrcodeScannerState.SCANNING ||
-            state === Html5QrcodeScannerState.PAUSED
-          ) {
-            scannerRef.current.stop().catch(() => {
-              // Ignore errors during cleanup
-            });
-          }
-        } catch {
-          // Ignore errors during cleanup
-        }
-      }
-      if (feedbackTimeoutRef.current !== null) {
-        window.clearTimeout(feedbackTimeoutRef.current);
-      }
+    const scanner = new Html5Qrcode(REGION_ID, {
+      formatsToSupport: SUPPORTED_FORMATS,
+      verbose: false,
+    });
+    const scanCounts = new Map<string, number>();
+    let feedbackTimer: number | undefined;
+    let finished = false;
+
+    const showFeedback = (status: Exclude<ScanFeedback, null>) => {
+      setFeedback(status);
+      window.clearTimeout(feedbackTimer);
+      feedbackTimer = window.setTimeout(() => {
+        setFeedback(null);
+      }, FEEDBACK_MS);
     };
-  }, []);
 
-  const triggerFeedback = (status: ScanFeedback) => {
-    setScanFeedback(status);
-    if (feedbackTimeoutRef.current !== null) {
-      window.clearTimeout(feedbackTimeoutRef.current);
-    }
-    feedbackTimeoutRef.current = window.setTimeout(() => {
-      setScanFeedback(null);
-    }, 300);
-  };
+    const onDecoded = (decodedText: string, format?: Format) => {
+      if (finished) return;
+      if (!isValidBarcode(decodedText, format)) {
+        showFeedback('error');
+        return;
+      }
+      const count = (scanCounts.get(decodedText) ?? 0) + 1;
+      scanCounts.set(decodedText, count);
+      if (count < REQUIRED_SCANS) return;
 
-  const startScanning = async () => {
-    try {
-      const html5QrCode = new Html5Qrcode(regionId, {
-        formatsToSupport: SUPPORTED_FORMATS,
-        verbose: false,
-      });
-      scannerRef.current = html5QrCode;
+      finished = true;
+      showFeedback('success');
+      void stopScanner(scanner).catch(() => undefined);
+      callbacksRef.current.onScanSuccess(decodedText);
+    };
 
-      await html5QrCode.start(
-        { facingMode: 'environment' }, // Prefer back camera
-        {
-          fps: 15,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-        },
+    const started = scanner
+      .start(
+        { facingMode: 'environment' },
+        { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
         (decodedText, result) => {
-          const detectedFormat = result.result.format?.format;
-          const checkDigitResult = getCheckDigitResult(
-            decodedText,
-            detectedFormat,
-          );
-          const isValid =
-            validateBarcode(decodedText, detectedFormat) &&
-            checkDigitResult.isValid;
-
-          if (!isValid) {
-            triggerFeedback('error');
-            return;
-          }
-
-          scanCountByCodeRef.current[decodedText] =
-            (scanCountByCodeRef.current[decodedText] ?? 0) + 1;
-
-          if (scanCountByCodeRef.current[decodedText] < REQUIRED_TOTAL_SCANS) {
-            return;
-          }
-
-          triggerFeedback('success');
-          void stopScanning();
-          onScanSuccess(decodedText);
+          onDecoded(decodedText, result.result.format?.format);
         },
-        () => {
-          // parse error, ignore it.
-        },
+        () => undefined,
+      )
+      // 読み取り精度を上げるため高解像度を要求する。未対応端末では無視する
+      .then(() =>
+        scanner
+          .applyVideoConstraints({
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          })
+          .catch(() => undefined),
       );
 
-      // 読み取り精度を上げるため、可能な限り高いカメラ制約を適用する
-      try {
-        await html5QrCode.applyVideoConstraints({
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        });
-      } catch {
-        // 端末によっては未対応のため無視
-      }
-    } catch (err) {
+    started.catch((error: unknown) => {
+      if (finished) return;
       toast.fromError(
         'カメラの起動に失敗しました。カメラへのアクセスを許可してください。',
-        err,
+        error,
       );
-      onClose();
-    }
-  };
+      callbacksRef.current.onClose();
+    });
 
-  const stopScanning = async () => {
-    if (scannerRef.current) {
-      try {
-        const state = scannerRef.current.getState();
-        if (
-          state === Html5QrcodeScannerState.SCANNING ||
-          state === Html5QrcodeScannerState.PAUSED
-        ) {
-          await scannerRef.current.stop();
-        }
-      } catch {
-        // Ignore error if scanner is not running
-      }
-    }
-  };
-
-  // Auto-start on mount
-  useEffect(() => {
-    void startScanning();
-    // oxlint-disable-next-line react/exhaustive-deps
+    // 起動完了前にアンマウントされてもカメラを確実に止める
+    return () => {
+      finished = true;
+      window.clearTimeout(feedbackTimer);
+      void started.then(() => stopScanner(scanner)).catch(() => undefined);
+    };
   }, []);
 
   return (
@@ -364,10 +142,8 @@ export function BarcodeScanner({
           variant="ghost"
           size="icon"
           className="absolute top-2 right-2 z-10 bg-black/50 text-white hover:bg-black/70"
-          onClick={() => {
-            void stopScanning();
-            onClose();
-          }}
+          onClick={onClose}
+          aria-label="閉じる"
         >
           <X className="h-6 w-6" />
         </Button>
@@ -378,14 +154,11 @@ export function BarcodeScanner({
             JAN/EAN/UPC/Code128/ITFなどに対応しています
           </p>
           <div
-            id={regionId}
-            className={`min-h-[300px] w-full overflow-hidden rounded-md bg-black transition-shadow ${
-              scanFeedback === 'success'
-                ? 'shadow-[0_0_18px_rgba(74,222,128,0.9)] ring-4 ring-green-400 ring-offset-2 ring-offset-black'
-                : scanFeedback === 'error'
-                  ? 'shadow-[0_0_18px_rgba(239,68,68,0.9)] ring-4 ring-red-500 ring-offset-2 ring-offset-black'
-                  : ''
-            }`}
+            id={REGION_ID}
+            className={cn(
+              'min-h-[300px] w-full overflow-hidden rounded-md bg-black transition-shadow',
+              feedback && FEEDBACK_CLASS[feedback],
+            )}
           />
         </div>
       </div>

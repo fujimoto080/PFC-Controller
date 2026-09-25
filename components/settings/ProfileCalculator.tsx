@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Info } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -10,224 +11,59 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PFC, UserProfile } from '@/lib/types';
-import { Card } from '@/components/ui/card';
-import { Info } from 'lucide-react';
+import { MACROS } from '@/lib/macros';
+import {
+  ACTIVITY_LEVELS,
+  bmrGenderOffset,
+  calculateBMI,
+  calculateRecommendedDuration,
+  minimumCalories,
+  type GoalBreakdown,
+} from '@/lib/nutrition-goals';
+import type { UserProfile } from '@/lib/types';
 import { roundPFC } from '@/lib/utils';
 
 interface ProfileCalculatorProps {
-  onCalculate: (goals: PFC, profile: UserProfile) => void;
-  initialProfile?: UserProfile;
-  duration?: number;
-  onDurationChange?: (duration: number) => void;
+  profile: UserProfile;
+  onProfileChange: (profile: UserProfile) => void;
+  duration: number;
+  onDurationChange: (duration: number) => void;
+  goals: GoalBreakdown;
 }
 
-const calculateBMR = (
-  weight: number,
-  height: number,
-  age: number,
-  gender: 'male' | 'female',
-): number => {
-  let bmr = 0;
-  if (gender === 'male') {
-    bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-  } else {
-    bmr = 10 * weight + 6.25 * height - 5 * age - 161;
-  }
-  return roundPFC(bmr, 0);
-};
+const GENDER_LABELS = { male: '男性', female: '女性' } as const;
 
-const calculateTDEE = (bmr: number, activityLevel: number): number => {
-  return roundPFC(bmr * activityLevel, 0);
-};
+const NUMBER_FIELDS = [
+  { key: 'age', label: '年齢' },
+  { key: 'height', label: '身長 (cm)' },
+  { key: 'weight', label: '現在の体重 (kg)' },
+  { key: 'targetWeight', label: '目標体重 (kg)' },
+] as const satisfies readonly { key: keyof UserProfile; label: string }[];
 
-const calculateMinimumCalories = (gender: 'male' | 'female'): number => {
-  return gender === 'male' ? 1500 : 1200;
-};
-
-const calculateRecommendedDuration = (
-  currentWeight: number,
-  targetWeight: number,
-  profile: UserProfile,
-): { recommended: number; byWeightLoss: number; byCalorieLimit: number } => {
-  const weightToLose = currentWeight - targetWeight;
-
-  // 1. 5% weight loss rule (monthly)
-  const safeMonthlyWeightLoss = currentWeight * 0.05;
-  let durationByWeightLoss = 0;
-  if (weightToLose > 0 && safeMonthlyWeightLoss > 0) {
-    durationByWeightLoss = weightToLose / safeMonthlyWeightLoss;
-  }
-
-  // 2. Safe Calorie limit rule (avoid dropping below 1200/1500 kcal)
-  let durationByCalorieLimit = 0;
-  if (weightToLose > 0) {
-    // Only checking for weight loss
-    const bmr = calculateBMR(
-      currentWeight,
-      profile.height,
-      profile.age,
-      profile.gender,
-    );
-    const tdee = calculateTDEE(bmr, profile.activityLevel);
-    const minCalories = calculateMinimumCalories(profile.gender);
-    const maxDailyDeficit = tdee - minCalories;
-
-    if (maxDailyDeficit > 0) {
-      const totalCaloriesToLose = weightToLose * 7200;
-      // totalCalories / (30 * dailyDeficit)
-      durationByCalorieLimit = totalCaloriesToLose / (30 * maxDailyDeficit);
-    } else {
-      // TDEE is already low, very slow loss recommended or impossible to do safely with diet alone
-      durationByCalorieLimit = 12; // Fallback to a long duration if safe deficit is 0 or negative
-    }
-  }
-
-  // Return the longer (safer) duration
-  const recommended = Math.max(durationByWeightLoss, durationByCalorieLimit);
-
-  return {
-    recommended: recommended > 0 ? roundPFC(recommended, 1) : 0,
-    byWeightLoss:
-      durationByWeightLoss > 0 ? roundPFC(durationByWeightLoss, 1) : 0,
-    byCalorieLimit:
-      durationByCalorieLimit > 0 ? roundPFC(durationByCalorieLimit, 1) : 0,
-  };
-};
-
+/** プロフィール入力と、そこから求めた目標カロリー・PFC の計算内訳を表示する。 */
 export function ProfileCalculator({
-  onCalculate,
-  initialProfile,
+  profile,
+  onProfileChange,
   duration,
   onDurationChange,
+  goals,
 }: ProfileCalculatorProps) {
-  const [profile, setProfile] = useState<UserProfile>(
-    initialProfile ?? {
-      gender: 'male',
-      age: 30,
-      height: 170,
-      weight: 70,
-      targetWeight: 65,
-      activityLevel: 1.375,
-    },
-  );
-
-  // Use controlled duration if provided, otherwise local state (though mostly intended to be controlled now)
-  const [localDuration, setLocalDuration] = useState(() => {
-    const result = calculateRecommendedDuration(
-      profile.weight,
-      profile.targetWeight,
-      profile,
-    );
-    return result.recommended > 0 ? result.recommended : 3;
-  });
-
-  const targetDuration = duration ?? localDuration;
-
-  const setTargetDuration = (val: number) => {
-    setLocalDuration(val);
-    onDurationChange?.(val);
+  const update = (patch: Partial<UserProfile>) => {
+    onProfileChange({ ...profile, ...patch });
   };
 
-  const calculateGoals = (p: UserProfile, duration: number) => {
-    const { gender, age, height, weight, targetWeight, activityLevel } = p;
-    const h = height || 170;
-    const w = weight || 70;
-    const tw = targetWeight || w;
-    const a = age || 30;
-
-    const bmr = calculateBMR(w, h, a, gender);
-    const tdee = calculateTDEE(bmr, activityLevel);
-
-    const weightDifference = w - tw;
-    let calorieAdjustment = 0;
-    if (weightDifference > 0 && duration > 0) {
-      // 減量
-      const totalCaloriesToLose = weightDifference * 7200;
-      const totalDays = duration * 30;
-      calorieAdjustment = -(totalCaloriesToLose / totalDays);
-    } else if (weightDifference < 0 && duration > 0) {
-      // 増量
-      const totalCaloriesToGain = Math.abs(weightDifference) * 7200;
-      const totalDays = duration * 30;
-      calorieAdjustment = totalCaloriesToGain / totalDays;
-    }
-
-    const caloriesBeforeAdjustment = tdee + calorieAdjustment;
-    const minimumCalories = calculateMinimumCalories(gender);
-    const targetCalories = Math.max(caloriesBeforeAdjustment, minimumCalories);
-
-    return {
-      protein: roundPFC((targetCalories * 0.25) / 4, 0) || 0,
-      fat: roundPFC((targetCalories * 0.25) / 9, 0) || 0,
-      carbs: roundPFC((targetCalories * 0.5) / 4, 0) || 0,
-      calories: roundPFC(targetCalories, 0) || 0,
-      caloriesBeforeAdjustment: roundPFC(caloriesBeforeAdjustment, 0),
-      calorieAdjustment: roundPFC(calorieAdjustment, 0),
-      minimumCalories,
-      bmr,
-      tdee,
-    };
-  };
-
-  const heightInMeters = (profile.height || 170) / 100;
-  const bmi = (profile.weight || 70) / (heightInMeters * heightInMeters);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      const goals = calculateGoals(profile, targetDuration);
-      onCalculate(
-        {
-          protein: goals.protein,
-          fat: goals.fat,
-          carbs: goals.carbs,
-          calories: goals.calories,
-        },
-        profile,
-      );
-    });
-  }, [profile, onCalculate, targetDuration]);
-
-  const calculatedGoals = calculateGoals(profile, targetDuration);
-  const durationInfo = calculateRecommendedDuration(
-    profile.weight,
-    profile.targetWeight,
-    profile,
-  );
-  const recommendedDuration = durationInfo.recommended;
-  const genderText = profile.gender === 'male' ? '男性' : '女性';
-  const minSafeCalories = calculateMinimumCalories(profile.gender);
-  const bmrFormula =
-    profile.gender === 'male'
-      ? `10 * ${profile.weight}kg + 6.25 * ${profile.height}cm - 5 * ${profile.age}歳 + 5`
-      : `10 * ${profile.weight}kg + 6.25 * ${profile.height}cm - 5 * ${profile.age}歳 - 161`;
-
-  const activityLevelText =
-    {
-      '1.2': 'ほぼ運動しない',
-      '1.375': '軽い運動（週1-3回）',
-      '1.55': '中程度の運動（週3-5回）',
-      '1.725': '激しい運動（週6-7回）',
-      '1.9': '非常に激しい運動',
-    }[profile.activityLevel.toString()] ?? '';
-
+  const durationInfo = calculateRecommendedDuration(profile);
+  const safeMonthlyLoss = (profile.weight * 0.05).toFixed(1);
+  const activityLabel =
+    ACTIVITY_LEVELS.find((level) => level.value === profile.activityLevel)
+      ?.label ?? '';
+  const offset = bmrGenderOffset(profile.gender);
   const targetStatus =
-    calculatedGoals.calorieAdjustment < 0
+    goals.calorieAdjustment < 0
       ? '減量'
-      : calculatedGoals.calorieAdjustment > 0
+      : goals.calorieAdjustment > 0
         ? '増量'
         : '維持';
-  const targetFormula = `${calculatedGoals.tdee}kcal ${calculatedGoals.calorieAdjustment >= 0 ? '+' : ''} ${calculatedGoals.calorieAdjustment}kcal`;
-
-  const handleLevelChange = (value: string) => {
-    setProfile((prev) => ({ ...prev, activityLevel: parseFloat(value) }));
-  };
-
-  const handleDurationBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    const roundedValue = roundPFC(value, 1);
-    setTargetDuration(Math.max(0.1, roundedValue));
-  };
 
   return (
     <div className="space-y-4 py-4">
@@ -236,99 +72,54 @@ export function ProfileCalculator({
           <Label>性別</Label>
           <Select
             value={profile.gender}
-            onValueChange={(v) => {
-              setProfile((prev) => ({
-                ...prev,
-                gender: v as 'male' | 'female',
-              }));
+            onValueChange={(gender) => {
+              update({ gender: gender as UserProfile['gender'] });
             }}
           >
             <SelectTrigger>
               <SelectValue placeholder="性別" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="male">男性</SelectItem>
-              <SelectItem value="female">女性</SelectItem>
+              {Object.entries(GENDER_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="age">年齢</Label>
-          <Input
-            id="age"
-            type="number"
-            value={profile.age}
-            onChange={(e) => {
-              setProfile((prev) => ({
-                ...prev,
-                age: parseInt(e.target.value) || 0,
-              }));
-            }}
-          />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="height">身長 (cm)</Label>
-          <Input
-            id="height"
-            type="number"
-            value={profile.height}
-            onChange={(e) => {
-              setProfile((prev) => ({
-                ...prev,
-                height: parseInt(e.target.value) || 0,
-              }));
-            }}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="weight">現在の体重 (kg)</Label>
-          <Input
-            id="weight"
-            type="number"
-            value={profile.weight}
-            onChange={(e) => {
-              setProfile((prev) => ({
-                ...prev,
-                weight: parseInt(e.target.value) || 0,
-              }));
-            }}
-          />
-        </div>
-      </div>
+        {NUMBER_FIELDS.map(({ key, label }) => (
+          <div key={key} className="space-y-2">
+            <Label htmlFor={key}>{label}</Label>
+            <Input
+              id={key}
+              type="number"
+              value={profile[key]}
+              onChange={(e) => {
+                update({ [key]: parseInt(e.target.value) || 0 });
+              }}
+            />
+          </div>
+        ))}
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="targetWeight">目標体重 (kg)</Label>
-          <Input
-            id="targetWeight"
-            type="number"
-            value={profile.targetWeight}
-            onChange={(e) => {
-              setProfile((prev) => ({
-                ...prev,
-                targetWeight: parseInt(e.target.value) || 0,
-              }));
-            }}
-          />
-        </div>
         <div className="space-y-2">
           <Label>活動レベル</Label>
           <Select
-            value={profile.activityLevel.toString()}
-            onValueChange={handleLevelChange}
+            value={String(profile.activityLevel)}
+            onValueChange={(value) => {
+              update({ activityLevel: Number(value) });
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="活動レベル" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1.2">ほぼ運動しない</SelectItem>
-              <SelectItem value="1.375">軽い運動（週1-3回）</SelectItem>
-              <SelectItem value="1.55">中程度の運動（週3-5回）</SelectItem>
-              <SelectItem value="1.725">激しい運動（週6-7回）</SelectItem>
-              <SelectItem value="1.9">非常に激しい運動</SelectItem>
+              {ACTIVITY_LEVELS.map(({ value, label }) => (
+                <SelectItem key={value} value={String(value)}>
+                  {label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -345,21 +136,22 @@ export function ProfileCalculator({
           <p>専門家は、1ヶ月あたり現在の体重の5%以内の減量を推奨しています。</p>
           <p>
             ・安全な月間減量ペース: {profile.weight}kg × 5% ={' '}
-            <strong>{(profile.weight * 0.05).toFixed(1)}kg</strong>
+            <strong>{safeMonthlyLoss}kg</strong>
           </p>
-          {recommendedDuration > 0 && (
+          {durationInfo.recommended > 0 && (
             <>
               <p>
                 ・5%ルールでの最短期間: ({profile.weight}kg -{' '}
-                {profile.targetWeight}kg) ÷ {(profile.weight * 0.05).toFixed(1)}
+                {profile.targetWeight}kg) ÷ {safeMonthlyLoss}
                 kg/月 ≒ <strong>{durationInfo.byWeightLoss}ヶ月</strong>
               </p>
               <p>
-                ・安全カロリー({minSafeCalories}kcal)での最短期間:{' '}
+                ・安全カロリー({minimumCalories(profile.gender)}
+                kcal)での最短期間:{' '}
                 <strong>{durationInfo.byCalorieLimit}ヶ月</strong>
               </p>
               <p className="pt-1 font-bold text-blue-900 dark:text-blue-200">
-                → 推奨期間: {recommendedDuration}ヶ月以上
+                → 推奨期間: {durationInfo.recommended}ヶ月以上
                 {durationInfo.byCalorieLimit > durationInfo.byWeightLoss && (
                   <span> (カロリー制限を考慮)</span>
                 )}
@@ -376,11 +168,15 @@ export function ProfileCalculator({
           type="number"
           min="0.1"
           step="0.1"
-          value={targetDuration}
+          value={duration}
           onChange={(e) => {
-            setTargetDuration(parseFloat(e.target.value) || 0);
+            onDurationChange(parseFloat(e.target.value) || 0);
           }}
-          onBlur={handleDurationBlur}
+          onBlur={(e) => {
+            onDurationChange(
+              Math.max(0.1, roundPFC(parseFloat(e.target.value) || 0, 1)),
+            );
+          }}
         />
         <p className="text-muted-foreground text-[10px]">
           目標体重を達成するまでの期間を設定してください。小数点第一位まで入力できます。
@@ -390,85 +186,84 @@ export function ProfileCalculator({
       <div className="bg-muted/50 space-y-2 rounded-lg p-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">現在のBMI</span>
-          <span className="font-semibold">{bmi.toFixed(1)}</span>
+          <span className="font-semibold">
+            {calculateBMI(profile).toFixed(1)}
+          </span>
         </div>
         <div className="space-y-1">
           <div className="flex items-center justify-between font-bold">
             <span>推奨カロリー</span>
-            <span>{calculatedGoals.calories} kcal</span>
+            <span>{goals.calories} kcal</span>
           </div>
           <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
-            <Card className="p-2">
-              <div className="text-muted-foreground">タンパク質</div>
-              <div className="font-semibold">{calculatedGoals.protein}g</div>
-            </Card>
-            <Card className="p-2">
-              <div className="text-muted-foreground">脂質</div>
-              <div className="font-semibold">{calculatedGoals.fat}g</div>
-            </Card>
-            <Card className="p-2">
-              <div className="text-muted-foreground">炭水化物</div>
-              <div className="font-semibold">{calculatedGoals.carbs}g</div>
-            </Card>
+            {MACROS.map(({ key, label }) => (
+              <Card key={key} className="p-2">
+                <div className="text-muted-foreground">{label}</div>
+                <div className="font-semibold">{goals[key]}g</div>
+              </Card>
+            ))}
           </div>
         </div>
-        <div className="pt-2">
-          <div className="text-muted-foreground bg-background/50 mt-2 space-y-3 rounded-md p-3 text-xs">
-            <p className="text-foreground/80 text-[11px] font-bold">
-              計算の内訳
-            </p>
-            <div className="space-y-1">
-              <p className="font-semibold">1. 基礎代謝量 (BMR)</p>
-              <p className="text-[10px]">
-                {genderText}の場合: <br />{' '}
-                <code className="text-[11px]">{bmrFormula}</code>
-              </p>
-              <p className="text-right text-sm font-bold">
-                = {calculatedGoals.bmr} kcal
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold">2. 維持カロリー (TDEE)</p>
-              <p className="text-[10px]">
-                BMR × 活動レベル({activityLevelText}): <br />{' '}
-                <code className="text-[11px]">
-                  {calculatedGoals.bmr} * {profile.activityLevel}
-                </code>
-              </p>
-              <p className="text-right text-sm font-bold">
-                = {calculatedGoals.tdee} kcal
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold">3. 目標カロリー ({targetStatus})</p>
-              <p className="text-[10px]">
-                1日の調整カロリーを計算: <br />{' '}
-                <code className="text-[11px]">{targetFormula}</code>
-              </p>
-              <p className="text-right text-sm font-bold">
-                = {calculatedGoals.caloriesBeforeAdjustment} kcal
-              </p>
-            </div>
-            {calculatedGoals.calories !==
-              calculatedGoals.caloriesBeforeAdjustment && (
-              <div className="space-y-1">
-                <p className="font-semibold">4. 安全のための制限</p>
-                <p className="text-[10px]">
-                  健康維持のため、最低カロリー（
-                  {calculatedGoals.minimumCalories}
-                  kcal）を下回らないよう調整しました。
-                </p>
-                <p className="text-right text-sm font-bold">
-                  = {calculatedGoals.calories} kcal
-                </p>
-              </div>
-            )}
-          </div>
+        <div className="text-muted-foreground bg-background/50 mt-4 space-y-3 rounded-md p-3 text-xs">
+          <p className="text-foreground/80 text-[11px] font-bold">計算の内訳</p>
+          <BreakdownStep
+            title="1. 基礎代謝量 (BMR)"
+            description={`${GENDER_LABELS[profile.gender]}の場合:`}
+            formula={`10 * ${profile.weight}kg + 6.25 * ${profile.height}cm - 5 * ${profile.age}歳 ${offset >= 0 ? '+' : '-'} ${Math.abs(offset)}`}
+            result={goals.bmr}
+          />
+          <BreakdownStep
+            title="2. 維持カロリー (TDEE)"
+            description={`BMR × 活動レベル(${activityLabel}):`}
+            formula={`${goals.bmr} * ${profile.activityLevel}`}
+            result={goals.tdee}
+          />
+          <BreakdownStep
+            title={`3. 目標カロリー (${targetStatus})`}
+            description="1日の調整カロリーを計算:"
+            formula={`${goals.tdee}kcal ${goals.calorieAdjustment >= 0 ? '+' : ''} ${goals.calorieAdjustment}kcal`}
+            result={goals.caloriesBeforeLimit}
+          />
+          {goals.calories !== goals.caloriesBeforeLimit && (
+            <BreakdownStep
+              title="4. 安全のための制限"
+              description={`健康維持のため、最低カロリー（${goals.minimumCalories}kcal）を下回らないよう調整しました。`}
+              result={goals.calories}
+            />
+          )}
         </div>
       </div>
       <p className="text-muted-foreground text-center text-[10px]">
         ※プロフィールを変更すると自動で目標値が更新されます。
       </p>
+    </div>
+  );
+}
+
+function BreakdownStep({
+  title,
+  description,
+  formula,
+  result,
+}: {
+  title: string;
+  description: string;
+  formula?: string;
+  result: number;
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="font-semibold">{title}</p>
+      <p className="text-[10px]">
+        {description}
+        {formula && (
+          <>
+            <br />
+            <code className="text-[11px]">{formula}</code>
+          </>
+        )}
+      </p>
+      <p className="text-right text-sm font-bold">= {result} kcal</p>
     </div>
   );
 }

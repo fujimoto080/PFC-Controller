@@ -12,13 +12,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { normalizeBarcodes, type BarcodeFood } from '@/lib/barcode';
+import {
+  normalizeBarcodes,
+  toBarcodeFood,
+  type BarcodeFood,
+} from '@/lib/barcode';
 import { addFood, updateFood } from '@/lib/client/actions';
 import { saveBarcodeMapping } from '@/lib/client/api';
-import { toFoodInput, type PfcFormValues } from '@/lib/food-form';
+import {
+  EMPTY_FORM_VALUES,
+  toFoodInput,
+  toFormValues,
+  type PfcFormValues,
+} from '@/lib/food-form';
 import { toast } from '@/lib/toast';
 import type { FoodItem } from '@/lib/types';
-import { generateId } from '@/lib/utils';
 
 interface FoodEditorProps {
   /** 編集対象。null なら新規追加。 */
@@ -41,29 +49,26 @@ export function FoodEditor({
   const [barcodeInput, setBarcodeInput] = useState(initialBarcodes.join(', '));
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const { register, handleSubmit } = useForm<PfcFormValues>({
-    defaultValues: food ?? {
-      name: '',
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-      calories: 0,
-    },
+    defaultValues: food
+      ? { ...toFormValues(food), storeGroup: food.storeGroup ?? '' }
+      : { ...EMPTY_FORM_VALUES, storeGroup: '' },
   });
 
   const onSubmit = async (values: PfcFormValues) => {
     const input = toFoodInput(values, Date.now());
     const saved = food
       ? await updateFood({ ...food, ...input })
-      : await addFood({ id: generateId(), ...input });
+      : await addFood({ id: crypto.randomUUID(), ...input });
     if (!saved) return;
     toast.success(food ? '食品を更新しました' : '食品を追加しました');
 
     const barcodes = normalizeBarcodes(barcodeInput);
     if (barcodes.length > 0) {
       try {
-        await saveBarcodeMapping(barcodes, input);
+        const barcodeFood = toBarcodeFood(input);
+        await saveBarcodeMapping(barcodes, barcodeFood);
         toast.success(`バーコード情報を${barcodes.length}件保存しました`);
-        onBarcodesSaved(input, barcodes);
+        onBarcodesSaved(barcodeFood, barcodes);
       } catch (error) {
         toast.fromError('バーコード情報の保存に失敗しました', error);
       }
@@ -90,7 +95,7 @@ export function FoodEditor({
               placeholder="例: ハンバーグ"
             />
           </div>
-          <PfcMacroInputs register={register} step="0.1" />
+          <PfcMacroInputs register={register} />
           <DatalistInput
             register={register}
             name="store"

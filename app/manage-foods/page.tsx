@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -19,7 +19,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
-import { buildFoodMatchKey, type FoodMatchKeyInput } from '@/lib/barcode';
+import { buildFoodMatchKey, type BarcodeFood } from '@/lib/barcode';
 import {
   deleteFood,
   logFood,
@@ -29,53 +29,37 @@ import {
 import { fetchBarcodeMappings } from '@/lib/client/api';
 import { useAppState } from '@/lib/client/store';
 import {
-  STORAGE_KEY_MANAGE_FOODS_COLLAPSE,
   buildStoreSections,
+  collectStoreGroups,
   collectStores,
-  readCollapseState,
 } from '@/lib/store-sections';
 import { toast } from '@/lib/toast';
 import type { FoodItem } from '@/lib/types';
+import { cn, toggleItem } from '@/lib/utils';
 
 /** 編集フォームの状態。null は一覧表示、food: null は新規追加。 */
 type EditorState = { food: FoodItem | null } | null;
 
-const toggle = (list: string[], value: string) =>
-  list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+// 折りたたみ中の店舗・グループのキー一覧を保存する
+const COLLAPSED_STORAGE_KEY = 'pfc_manage_foods_collapsed';
 
-export default function ManageFoodsPage() {
-  const { foods, logs, settings } = useAppState();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [editor, setEditor] = useState<EditorState>(null);
-  const [selectedFoodIds, setSelectedFoodIds] = useState<string[] | null>(null);
-  const [barcodesByFoodKey, setBarcodesByFoodKey] = useState<
-    Record<string, string[]>
-  >({});
-  const [collapse, setCollapse] = useState(readCollapseState);
-  const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } =
-    useEatDateTime();
+const storeKey = (store: string) => `store:${store}`;
+const groupKey = (store: string, group: string) => `group:${store}::${group}`;
 
-  const storeOptions = useMemo(() => collectStores(foods, logs), [foods, logs]);
-  const groupOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(foods.flatMap((food) => food.storeGroup ?? [])),
-      ).sort(),
-    [foods],
-  );
-  const sections = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    return buildStoreSections(
-      foods.filter((food) => food.name.toLowerCase().includes(query)),
+function readCollapsed(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(
+      localStorage.getItem(COLLAPSED_STORAGE_KEY) ?? '[]',
     );
-  }, [foods, searchQuery]);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
 
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY_MANAGE_FOODS_COLLAPSE,
-      JSON.stringify(collapse),
-    );
-  }, [collapse]);
+/** バーコードマッピングを「食品の突き合わせキー → バーコード一覧」に畳み込んで取得する。 */
+function useBarcodesByFood() {
+  const [byKey, setByKey] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     fetchBarcodeMappings()
@@ -84,7 +68,7 @@ export default function ManageFoodsPage() {
         for (const { barcode, food } of rows) {
           (mappings[buildFoodMatchKey(food)] ??= []).push(barcode);
         }
-        setBarcodesByFoodKey(mappings);
+        setByKey(mappings);
       })
       .catch((error: unknown) => {
         // 一覧表示の補助情報なので UI には出さずログのみ
@@ -92,15 +76,44 @@ export default function ManageFoodsPage() {
       });
   }, []);
 
-  const barcodesOf = (food: FoodMatchKeyInput) =>
-    barcodesByFoodKey[buildFoodMatchKey(food)] ?? [];
+  const barcodesOf = (food: BarcodeFood) =>
+    byKey[buildFoodMatchKey(food)] ?? [];
 
-  const handleBarcodesSaved = (food: FoodMatchKeyInput, barcodes: string[]) => {
+  const addBarcodes = (food: BarcodeFood, barcodes: string[]) => {
     const key = buildFoodMatchKey(food);
-    setBarcodesByFoodKey((prev) => ({
+    setByKey((prev) => ({
       ...prev,
       [key]: Array.from(new Set([...(prev[key] ?? []), ...barcodes])),
     }));
+  };
+
+  return { barcodesOf, addBarcodes };
+}
+
+export default function ManageFoodsPage() {
+  const { foods, logs, settings } = useAppState();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editor, setEditor] = useState<EditorState>(null);
+  const [selectedFoodIds, setSelectedFoodIds] = useState<string[] | null>(null);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const eatAt = useEatDateTime();
+  const { barcodesOf, addBarcodes } = useBarcodesByFood();
+
+  const storeOptions = useMemo(() => collectStores(foods, logs), [foods, logs]);
+  const groupOptions = useMemo(() => collectStoreGroups(foods), [foods]);
+  const sections = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return buildStoreSections(
+      foods.filter((food) => food.name.toLowerCase().includes(query)),
+    );
+  }, [foods, searchQuery]);
+
+  useEffect(() => {
+    localStorage.setItem(COLLAPSED_STORAGE_KEY, JSON.stringify(collapsed));
+  }, [collapsed]);
+
+  const toggleCollapsed = (key: string) => {
+    setCollapsed((prev) => toggleItem(prev, key));
   };
 
   const handleDelete = (food: FoodItem) => {
@@ -110,7 +123,7 @@ export default function ManageFoodsPage() {
   };
 
   const handleAddLog = async (food: FoodItem) => {
-    if (await logFood(food, getSelectedTimestamp())) {
+    if (await logFood(food, eatAt.timestamp)) {
       toast.success(`${food.name}を食事記録に追加しました`);
     }
   };
@@ -129,163 +142,123 @@ export default function ManageFoodsPage() {
     setSelectedFoodIds(null);
   };
 
-  const isSelecting = selectedFoodIds !== null;
-
-  return (
-    <div className="space-y-6 pb-28">
-      <PageTitle>食品データ管理</PageTitle>
-
-      <div className="px-4">
-        {editor ? (
+  if (editor) {
+    return (
+      <div className="space-y-6 pb-28">
+        <PageTitle>食品データ管理</PageTitle>
+        <div className="px-4">
           <FoodEditor
             key={editor.food?.id ?? 'new'}
             food={editor.food}
             initialBarcodes={editor.food ? barcodesOf(editor.food) : []}
             storeOptions={storeOptions}
             groupOptions={groupOptions}
-            onBarcodesSaved={handleBarcodesSaved}
+            onBarcodesSaved={addBarcodes}
             onClose={() => {
               setEditor(null);
             }}
           />
-        ) : (
-          <div className="space-y-4">
-            <EatDateTimeCard
-              eatDate={eatDate}
-              setEatDate={setEatDate}
-              eatTime={eatTime}
-              setEatTime={setEatTime}
-            />
+        </div>
+      </div>
+    );
+  }
 
-            <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-20 -mx-4 space-y-2 px-4 py-2 backdrop-blur">
-              <div className="flex gap-2">
-                {!isSelecting && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedFoodIds([]);
-                    }}
-                  >
-                    店舗/グループ変更
-                  </Button>
-                )}
-                <Button
-                  onClick={() => {
-                    setEditor({ food: null });
-                  }}
-                  aria-label="新規追加"
-                >
-                  +
-                </Button>
-              </div>
-              <Input
-                placeholder="食品を検索..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
+  return (
+    <div className="space-y-6 pb-28">
+      <PageTitle>食品データ管理</PageTitle>
+
+      <div className="space-y-4 px-4">
+        <EatDateTimeCard value={eatAt.value} onChange={eatAt.onChange} />
+
+        <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-20 -mx-4 space-y-2 px-4 py-2 backdrop-blur">
+          <div className="flex gap-2">
+            {selectedFoodIds === null && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedFoodIds([]);
                 }}
-              />
-            </div>
+              >
+                店舗/グループ変更
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                setEditor({ food: null });
+              }}
+              aria-label="新規追加"
+            >
+              +
+            </Button>
+          </div>
+          <Input
+            placeholder="食品を検索..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+            }}
+          />
+        </div>
 
-            <div className="space-y-2">
-              {sections.length === 0 ? (
-                <p>食品が見つかりません</p>
-              ) : (
-                sections.map((section) => {
-                  const isStoreCollapsed = collapse.collapsedStores.includes(
-                    section.storeName,
-                  );
+        {sections.length === 0 ? (
+          <p>食品が見つかりません</p>
+        ) : (
+          <div className="space-y-6">
+            {sections.map(({ storeName, groups }) => (
+              <CollapsibleSection
+                key={storeName}
+                title={storeName}
+                collapsed={collapsed.includes(storeKey(storeName))}
+                onToggle={() => {
+                  toggleCollapsed(storeKey(storeName));
+                }}
+                variant="store"
+              >
+                {groups.map(({ groupName, foods: groupFoods }) => {
+                  const key = groupKey(storeName, groupName);
                   return (
-                    <div key={section.storeName} className="pb-4">
-                      <CollapseToggle
-                        collapsed={isStoreCollapsed}
-                        className="bg-muted/30 mb-2 rounded px-2 py-1 text-sm font-semibold"
-                        onClick={() => {
-                          setCollapse((prev) => ({
-                            ...prev,
-                            collapsedStores: toggle(
-                              prev.collapsedStores,
-                              section.storeName,
-                            ),
-                          }));
-                        }}
-                      >
-                        {section.storeName}
-                      </CollapseToggle>
-
-                      {!isStoreCollapsed && (
-                        <div className="space-y-3">
-                          {section.groups.map((group) => {
-                            const groupKey = `${section.storeName}::${group.groupName}`;
-                            const isGroupCollapsed =
-                              collapse.collapsedGroups.includes(groupKey);
-                            return (
-                              <div
-                                key={groupKey}
-                                className="bg-background space-y-2 rounded-md border p-2"
-                              >
-                                <CollapseToggle
-                                  collapsed={isGroupCollapsed}
-                                  className="px-1 text-xs font-medium"
-                                  onClick={() => {
-                                    setCollapse((prev) => ({
-                                      ...prev,
-                                      collapsedGroups: toggle(
-                                        prev.collapsedGroups,
-                                        groupKey,
-                                      ),
-                                    }));
-                                  }}
-                                >
-                                  {group.groupName}
-                                </CollapseToggle>
-
-                                {!isGroupCollapsed && (
-                                  <div className="space-y-2">
-                                    {group.foods.map((food) => (
-                                      <FoodRow
-                                        key={food.id}
-                                        food={food}
-                                        barcodes={barcodesOf(food)}
-                                        isFavorite={settings.favoriteFoodIds.includes(
-                                          food.id,
-                                        )}
-                                        selected={
-                                          selectedFoodIds?.includes(food.id) ??
-                                          null
-                                        }
-                                        onToggleSelect={() => {
-                                          setSelectedFoodIds(
-                                            (prev) =>
-                                              prev && toggle(prev, food.id),
-                                          );
-                                        }}
-                                        onAddLog={() => {
-                                          void handleAddLog(food);
-                                        }}
-                                        onToggleFavorite={() => {
-                                          void toggleFavoriteFood(food.id);
-                                        }}
-                                        onEdit={() => {
-                                          setEditor({ food });
-                                        }}
-                                        onDelete={() => {
-                                          handleDelete(food);
-                                        }}
-                                      />
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+                    <CollapsibleSection
+                      key={key}
+                      title={groupName}
+                      collapsed={collapsed.includes(key)}
+                      onToggle={() => {
+                        toggleCollapsed(key);
+                      }}
+                      variant="group"
+                    >
+                      {groupFoods.map((food) => (
+                        <FoodRow
+                          key={food.id}
+                          food={food}
+                          barcodes={barcodesOf(food)}
+                          isFavorite={settings.favoriteFoodIds.includes(
+                            food.id,
+                          )}
+                          selected={selectedFoodIds?.includes(food.id) ?? null}
+                          onToggleSelect={() => {
+                            setSelectedFoodIds(
+                              (prev) => prev && toggleItem(prev, food.id),
                             );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                          }}
+                          onAddLog={() => {
+                            void handleAddLog(food);
+                          }}
+                          onToggleFavorite={() => {
+                            void toggleFavoriteFood(food.id);
+                          }}
+                          onEdit={() => {
+                            setEditor({ food });
+                          }}
+                          onDelete={() => {
+                            handleDelete(food);
+                          }}
+                        />
+                      ))}
+                    </CollapsibleSection>
                   );
-                })
-              )}
-            </div>
+                })}
+              </CollapsibleSection>
+            ))}
           </div>
         )}
       </div>
@@ -303,27 +276,50 @@ export default function ManageFoodsPage() {
   );
 }
 
-function CollapseToggle({
+const SECTION_STYLES = {
+  store: {
+    container: '',
+    header: 'bg-muted/30 mb-2 rounded px-2 py-1 text-sm font-semibold',
+    body: 'space-y-3',
+  },
+  group: {
+    container: 'bg-background space-y-2 rounded-md border p-2',
+    header: 'px-1 text-xs font-medium',
+    body: 'space-y-2',
+  },
+} as const;
+
+function CollapsibleSection({
+  title,
   collapsed,
-  className,
-  onClick,
+  onToggle,
+  variant,
   children,
 }: {
+  title: string;
   collapsed: boolean;
-  className: string;
-  onClick: () => void;
-  children: React.ReactNode;
+  onToggle: () => void;
+  variant: keyof typeof SECTION_STYLES;
+  children: ReactNode;
 }) {
+  const styles = SECTION_STYLES[variant];
   const Icon = collapsed ? ChevronRight : ChevronDown;
   return (
-    <button
-      type="button"
-      className={`text-muted-foreground flex w-full items-center text-left ${className}`}
-      onClick={onClick}
-    >
-      <Icon className="mr-1 h-4 w-4" />
-      {children}
-    </button>
+    <div className={styles.container}>
+      <button
+        type="button"
+        className={cn(
+          'text-muted-foreground flex w-full items-center text-left',
+          styles.header,
+        )}
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+      >
+        <Icon className="mr-1 h-4 w-4" />
+        {title}
+      </button>
+      {!collapsed && <div className={styles.body}>{children}</div>}
+    </div>
   );
 }
 
@@ -356,9 +352,10 @@ function FoodRow({
     // 行クリックは選択の補助操作。キーボード操作は Checkbox で提供する。
     // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
-      className={`flex items-center justify-between gap-2 rounded-lg border p-3 ${
-        selected ? 'border-primary bg-primary/5' : 'bg-card'
-      }`}
+      className={cn(
+        'flex items-center justify-between gap-2 rounded-lg border p-3',
+        selected ? 'border-primary bg-primary/5' : 'bg-card',
+      )}
       onClick={isSelecting ? onToggleSelect : undefined}
     >
       {isSelecting && (
@@ -386,18 +383,23 @@ function FoodRow({
         </div>
       ) : (
         <div className="flex gap-1">
-          <IconButton onClick={onAddLog}>
+          <IconButton onClick={onAddLog} aria-label="食事記録に追加">
             <Plus className="h-4 w-4" />
           </IconButton>
-          <IconButton onClick={onToggleFavorite}>
+          <IconButton onClick={onToggleFavorite} aria-label="お気に入り">
             <Star
-              className={`h-4 w-4 ${isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
+              className={cn(
+                'h-4 w-4',
+                isFavorite
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : 'text-muted-foreground',
+              )}
             />
           </IconButton>
-          <IconButton onClick={onEdit}>
+          <IconButton onClick={onEdit} aria-label="編集">
             <Pencil className="text-muted-foreground h-4 w-4" />
           </IconButton>
-          <IconButton onClick={onDelete}>
+          <IconButton onClick={onDelete} aria-label="削除">
             <Trash className="text-destructive h-4 w-4" />
           </IconButton>
         </div>

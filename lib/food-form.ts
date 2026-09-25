@@ -1,15 +1,10 @@
+import type { BarcodeFood } from './barcode';
 import type { FoodItemInput } from './types';
 
 /**
- * フォームの生値を安全に数値化する。空欄由来の NaN / undefined / 不正文字列は 0 に丸める。
- * react-hook-form の valueAsNumber 有無（number でも string でも）両方を受けられる。
+ * PFC フォームが共通で持つ入力値。
+ * number input は valueAsNumber の有無で number / string のどちらにもなり得る。
  */
-function safeNumber(value: unknown): number {
-  const n = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
-/** PFC フォームが共通で持つ入力値。react-hook-form の値型に対する最小の制約。 */
 export interface PfcFormValues {
   name: string;
   protein?: number | string;
@@ -20,7 +15,36 @@ export interface PfcFormValues {
   storeGroup?: string;
 }
 
-/** react-hook-form の値を FoodItemInput に整形する。空文字の store/storeGroup は undefined にする。 */
+export const EMPTY_FORM_VALUES: PfcFormValues = {
+  name: '',
+  protein: '',
+  fat: '',
+  carbs: '',
+  calories: '',
+  store: '',
+};
+
+/** 空欄由来の NaN / 空文字 / 不正文字列は 0 に丸める。 */
+function safeNumber(value: unknown): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+const emptyToUndefined = (value?: string) => (value === '' ? undefined : value);
+
+/** 既存の食品をフォームの初期値に変換する。 */
+export function toFormValues(food: BarcodeFood): PfcFormValues {
+  return {
+    name: food.name,
+    protein: food.protein,
+    fat: food.fat,
+    carbs: food.carbs,
+    calories: food.calories,
+    store: food.store ?? '',
+  };
+}
+
+/** フォームの値を FoodItemInput に整形する。空文字の store/storeGroup は undefined にする。 */
 export function toFoodInput(
   values: PfcFormValues,
   timestamp: number,
@@ -31,8 +55,8 @@ export function toFoodInput(
     fat: safeNumber(values.fat),
     carbs: safeNumber(values.carbs),
     calories: safeNumber(values.calories),
-    store: values.store === '' ? undefined : values.store,
-    storeGroup: values.storeGroup === '' ? undefined : values.storeGroup,
+    store: emptyToUndefined(values.store),
+    storeGroup: emptyToUndefined(values.storeGroup),
     timestamp,
   };
 }

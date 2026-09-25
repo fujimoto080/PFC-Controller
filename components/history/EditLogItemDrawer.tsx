@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Trash2, Save, X } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -19,7 +18,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { FoodItem } from '@/lib/types';
-import { toFoodInput, type PfcFormValues } from '@/lib/food-form';
+import { toFoodInput, toFormValues, type PfcFormValues } from '@/lib/food-form';
 import { PfcMacroInputs } from '@/components/input/PfcFieldsGroup';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
@@ -30,32 +29,44 @@ interface EditLogItemDrawerProps {
   onClose: () => void;
 }
 
+const FORM_ID = 'edit-log-item-form';
+
 export function EditLogItemDrawer({ item, onClose }: EditLogItemDrawerProps) {
-  const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } =
-    useEatDateTime(item?.timestamp);
+  return (
+    <Drawer
+      open={item !== null}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DrawerContent>
+        {/* 編集対象ごとにフォームを作り直して初期値を反映する */}
+        {item && (
+          <EditLogItemForm key={item.id} item={item} onClose={onClose} />
+        )}
+      </DrawerContent>
+    </Drawer>
+  );
+}
 
-  const { register, handleSubmit, reset } = useForm<PfcFormValues>();
+function EditLogItemForm({
+  item,
+  onClose,
+}: {
+  item: FoodItem;
+  onClose: () => void;
+}) {
+  const eatAt = useEatDateTime(item.timestamp);
+  const { register, handleSubmit } = useForm<PfcFormValues>({
+    defaultValues: toFormValues(item),
+  });
 
-  useEffect(() => {
-    if (item) {
-      reset({
-        name: item.name,
-        protein: item.protein,
-        fat: item.fat,
-        carbs: item.carbs,
-        calories: item.calories,
-        store: item.store,
-      });
-    }
-  }, [item, reset]);
-
-  const onSubmit = async (data: PfcFormValues) => {
-    if (!item) return;
+  const onSubmit = async (values: PfcFormValues) => {
     const updated: FoodItem = {
       ...item,
       ...toFoodInput(
-        { ...data, storeGroup: item.storeGroup },
-        getSelectedTimestamp(),
+        { ...values, storeGroup: item.storeGroup },
+        eatAt.timestamp,
       ),
     };
     if (await updateLogItem(updated)) {
@@ -65,7 +76,7 @@ export function EditLogItemDrawer({ item, onClose }: EditLogItemDrawerProps) {
   };
 
   const handleDelete = async () => {
-    if (!item || !confirm('この記録を削除しますか？')) return;
+    if (!confirm('この記録を削除しますか？')) return;
     if (await deleteLogItem(item.id)) {
       toast.success('削除しました');
       onClose();
@@ -73,64 +84,51 @@ export function EditLogItemDrawer({ item, onClose }: EditLogItemDrawerProps) {
   };
 
   return (
-    <Drawer
-      open={item !== null}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-lg">
-          <DrawerHeader>
-            <DrawerTitle>記録を編集</DrawerTitle>
-            <DrawerDescription>
-              食品の内容や記録した日時を修正できます。
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="p-4 pb-0">
-            <form
-              id="edit-form"
-              onSubmit={(e) => {
-                void handleSubmit(onSubmit)(e);
-              }}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="name">食品名</Label>
-                <Input id="name" {...register('name', { required: true })} />
-              </div>
-
-              <EatDateTimeFields
-                eatDate={eatDate}
-                setEatDate={setEatDate}
-                eatTime={eatTime}
-                setEatTime={setEatTime}
-              />
-
-              <PfcMacroInputs register={register} step="0.1" withIds />
-            </form>
+    <div className="mx-auto w-full max-w-lg">
+      <DrawerHeader>
+        <DrawerTitle>記録を編集</DrawerTitle>
+        <DrawerDescription>
+          食品の内容や記録した日時を修正できます。
+        </DrawerDescription>
+      </DrawerHeader>
+      <div className="p-4 pb-0">
+        <form
+          id={FORM_ID}
+          onSubmit={(e) => {
+            void handleSubmit(onSubmit)(e);
+          }}
+          className="space-y-4"
+        >
+          <div className="space-y-2">
+            <Label htmlFor="edit-log-item-name">食品名</Label>
+            <Input
+              id="edit-log-item-name"
+              {...register('name', { required: true })}
+            />
           </div>
-          <DrawerFooter className="flex-row gap-2">
-            <Button
-              variant="destructive"
-              className="flex-1"
-              onClick={() => {
-                void handleDelete();
-              }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> 削除
-            </Button>
-            <Button type="submit" form="edit-form" className="flex-1">
-              <Save className="mr-2 h-4 w-4" /> 保存
-            </Button>
-            <DrawerClose asChild>
-              <IconButton>
-                <X className="h-4 w-4" />
-              </IconButton>
-            </DrawerClose>
-          </DrawerFooter>
-        </div>
-      </DrawerContent>
-    </Drawer>
+          <EatDateTimeFields value={eatAt.value} onChange={eatAt.onChange} />
+          <PfcMacroInputs register={register} />
+        </form>
+      </div>
+      <DrawerFooter className="flex-row gap-2">
+        <Button
+          variant="destructive"
+          className="flex-1"
+          onClick={() => {
+            void handleDelete();
+          }}
+        >
+          <Trash2 className="mr-2 h-4 w-4" /> 削除
+        </Button>
+        <Button type="submit" form={FORM_ID} className="flex-1">
+          <Save className="mr-2 h-4 w-4" /> 保存
+        </Button>
+        <DrawerClose asChild>
+          <IconButton>
+            <X className="h-4 w-4" />
+          </IconButton>
+        </DrawerClose>
+      </DrawerFooter>
+    </div>
   );
 }

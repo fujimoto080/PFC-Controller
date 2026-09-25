@@ -14,7 +14,7 @@ import {
   type SportDefinition,
   type UserSettings,
 } from '@/lib/types';
-import { formatDate } from '@/lib/utils';
+import { formatDate, toggleItem, toJstTimestamp } from '@/lib/utils';
 
 // 各操作は楽観的に即時反映し、失敗時はロールバックとエラートーストまで行う。戻り値は成否。
 
@@ -171,10 +171,10 @@ export function saveSettings(settings: UserSettings): Promise<boolean> {
 
 export function toggleFavoriteFood(id: string): Promise<boolean> {
   const { settings } = getState();
-  const favoriteFoodIds = settings.favoriteFoodIds.includes(id)
-    ? settings.favoriteFoodIds.filter((favoriteId) => favoriteId !== id)
-    : [...settings.favoriteFoodIds, id];
-  return saveSettings({ ...settings, favoriteFoodIds });
+  return saveSettings({
+    ...settings,
+    favoriteFoodIds: toggleItem(settings.favoriteFoodIds, id),
+  });
 }
 
 export function saveSports(sports: SportDefinition[]): Promise<boolean> {
@@ -189,9 +189,7 @@ export function saveSports(sports: SportDefinition[]): Promise<boolean> {
 /** 今日なら現在時刻、それ以外はその日の正午(JST)を記録時刻にする。 */
 function timestampForDate(date: string): number {
   const now = Date.now();
-  return formatDate(now) === date
-    ? now
-    : new Date(`${date}T12:00:00+09:00`).getTime();
+  return formatDate(now) === date ? now : toJstTimestamp(date, '12:00');
 }
 
 export function addSportActivity(

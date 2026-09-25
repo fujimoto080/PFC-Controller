@@ -5,15 +5,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { addDays, format, parseISO } from 'date-fns';
 import { useAppState } from '@/lib/client/store';
 import { activityAdjustedCalorieTarget, computePfcDebt } from '@/lib/pfc';
 import { createEmptyDailyLog } from '@/lib/types';
-import { roundPFC } from '@/lib/utils';
+import { MACROS } from '@/lib/macros';
+import { cn, roundPFC, shiftDate } from '@/lib/utils';
 import { IconButton } from '@/components/ui/icon-button';
 import { StatRow } from './StatRow';
 import { DebtStackedBars } from './DebtStackedBars';
 import { SportActivityControls } from './SportActivityControls';
+
+const DATE_NAV = [
+  { days: -1, Icon: ChevronLeft, label: '前日' },
+  { days: 1, Icon: ChevronRight, label: '翌日' },
+] as const;
+
+const SLIDE_VARIANTS = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 300 : -300,
+    opacity: 0,
+  }),
+  center: { zIndex: 1, x: 0, opacity: 1 },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 300 : -300,
+    opacity: 0,
+  }),
+};
 
 interface PFCStatsProps {
   selectedDate: string;
@@ -30,7 +48,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
     [selectedDate, targetPFC, logs],
   );
 
-  const { protein, fat, carbs, calories } = data.total;
+  const { calories } = data.total;
   const boostedCalorieTarget = activityAdjustedCalorieTarget(
     targetPFC.calories,
     data,
@@ -46,66 +64,36 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   );
 
   const navigateDate = (days: number) => {
-    const currentDate = parseISO(selectedDate);
-    const newDate = addDays(currentDate, days);
-    const dateStr = format(newDate, 'yyyy-MM-dd');
     setDirection(days);
-    onDateChange(dateStr);
-  };
-
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-    }),
+    onDateChange(shiftDate(selectedDate, days));
   };
 
   return (
     <div className="group relative overflow-hidden">
       <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex h-16 items-center justify-between px-2">
-        <IconButton
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            navigateDate(-1);
-          }}
-          onPointerDown={(e: React.PointerEvent) => {
-            e.stopPropagation();
-          }}
-          className="bg-background/50 hover:bg-secondary/80 pointer-events-auto rounded-full shadow-sm backdrop-blur-sm active:scale-95"
-          aria-label="Previous day"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </IconButton>
-        <IconButton
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            navigateDate(1);
-          }}
-          onPointerDown={(e: React.PointerEvent) => {
-            e.stopPropagation();
-          }}
-          className="bg-background/50 hover:bg-secondary/80 pointer-events-auto rounded-full shadow-sm backdrop-blur-sm active:scale-95"
-          aria-label="Next day"
-        >
-          <ChevronRight className="h-6 w-6" />
-        </IconButton>
+        {DATE_NAV.map(({ days, Icon, label }) => (
+          <IconButton
+            key={days}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigateDate(days);
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            className="bg-background/50 hover:bg-secondary/80 pointer-events-auto rounded-full shadow-sm backdrop-blur-sm active:scale-95"
+            aria-label={label}
+          >
+            <Icon className="h-6 w-6" />
+          </IconButton>
+        ))}
       </div>
 
       <AnimatePresence initial={false} custom={direction} mode="wait">
         <motion.div
           key={selectedDate}
           custom={direction}
-          variants={variants}
+          variants={SLIDE_VARIANTS}
           initial="enter"
           animate="center"
           exit="exit"
@@ -131,7 +119,7 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
 
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between px-2">
-                {/* Spacers for the arrows that are positioned absolutely */}
+                {/* 絶対配置した日付切り替え矢印の分の余白 */}
                 <div className="w-12" />
                 <CardTitle className="text-muted-foreground text-center text-lg font-medium">
                   摂取カロリー
@@ -140,7 +128,10 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
               </div>
               <div className="flex items-baseline space-x-2">
                 <span
-                  className={`text-4xl font-bold tracking-tighter ${calories > adjustedCalorieTarget ? 'text-red-500' : ''}`}
+                  className={cn(
+                    'text-4xl font-bold tracking-tighter',
+                    calories > adjustedCalorieTarget && 'text-red-500',
+                  )}
                 >
                   {roundPFC(calories)}
                 </span>
@@ -184,30 +175,17 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
 
           <Card>
             <CardContent className="space-y-6 pt-6">
-              <StatRow
-                label="タンパク質"
-                current={protein}
-                target={targetPFC.protein}
-                debt={debt.protein}
-                color="bg-blue-500"
-                delay={0.1}
-              />
-              <StatRow
-                label="脂質"
-                current={fat}
-                target={targetPFC.fat}
-                debt={debt.fat}
-                color="bg-yellow-500"
-                delay={0.2}
-              />
-              <StatRow
-                label="炭水化物"
-                current={carbs}
-                target={targetPFC.carbs}
-                debt={debt.carbs}
-                color="bg-green-500"
-                delay={0.3}
-              />
+              {MACROS.map(({ key, label, barClass }, i) => (
+                <StatRow
+                  key={key}
+                  label={label}
+                  current={data.total[key]}
+                  target={targetPFC[key]}
+                  debt={debt[key]}
+                  color={barClass}
+                  delay={0.1 * (i + 1)}
+                />
+              ))}
             </CardContent>
           </Card>
         </motion.div>

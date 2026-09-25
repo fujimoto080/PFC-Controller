@@ -7,15 +7,17 @@ import { GradientCard } from '@/components/ui/gradient-card';
 import { Progress } from '@/components/ui/progress';
 import { useAppState } from '@/lib/client/store';
 import { overLimitTextClass, progressPct, weeklyAverage } from '@/lib/pfc';
-import { formatDate, roundPFC } from '@/lib/utils';
+import { MACROS } from '@/lib/macros';
+import { cn, formatDate, roundPFC } from '@/lib/utils';
 
 export function WeeklyPFCStats() {
   const { logs, settings } = useAppState();
-  const { protein, fat, carbs, calories } = useMemo(
+  const average = useMemo(
     () => weeklyAverage(logs, formatDate(new Date())),
     [logs],
   );
   const { targetPFC } = settings;
+  const { calories } = average;
 
   return (
     <motion.div
@@ -40,7 +42,10 @@ export function WeeklyPFCStats() {
               </p>
               <div className="flex items-baseline space-x-1">
                 <span
-                  className={`text-2xl font-bold ${calories > targetPFC.calories ? 'text-red-500' : ''}`}
+                  className={cn(
+                    'text-2xl font-bold',
+                    calories > targetPFC.calories && 'text-red-500',
+                  )}
                 >
                   {roundPFC(calories)}
                 </span>
@@ -52,24 +57,15 @@ export function WeeklyPFCStats() {
               />
             </div>
             <div className="grid grid-cols-1 gap-2">
-              <WeeklyStatSmall
-                label="P"
-                current={protein}
-                target={targetPFC.protein}
-                color="bg-blue-500"
-              />
-              <WeeklyStatSmall
-                label="F"
-                current={fat}
-                target={targetPFC.fat}
-                color="bg-yellow-500"
-              />
-              <WeeklyStatSmall
-                label="C"
-                current={carbs}
-                target={targetPFC.carbs}
-                color="bg-green-500"
-              />
+              {MACROS.map(({ key, short, barClass }) => (
+                <WeeklyStatSmall
+                  key={key}
+                  label={short}
+                  current={average[key]}
+                  target={targetPFC[key]}
+                  color={barClass}
+                />
+              ))}
             </div>
           </div>
         </CardHeader>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { addDays, format, parseISO } from 'date-fns';
 import {
   Bar,
   BarChart,
@@ -14,35 +13,19 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppState } from '@/lib/client/store';
+import {
+  CALORIES_CHART_COLOR,
+  MACROS,
+  PFC_KEYS,
+  type PfcKey,
+} from '@/lib/macros';
 import { computePfcDebt } from '@/lib/pfc';
+import { EMPTY_PFC, type Logs, type PFC } from '@/lib/types';
+import { shiftDate } from '@/lib/utils';
 
-interface PfcDebtChartsProps {
-  referenceDate: string;
-  days?: number;
-}
+const DAYS = 20;
 
-type NutrientKey = 'protein' | 'fat' | 'carbs' | 'calories';
-
-interface DebtVisual {
-  intake: number;
-  debtWithinLimit: number;
-  overflow: number;
-  nextCarry: number;
-}
-
-const nutrientLabels: Record<NutrientKey, string> = {
-  protein: 'タンパク質',
-  fat: '脂質',
-  carbs: '炭水化物',
-  calories: 'カロリー',
-};
-
-const nutrientColors: Record<NutrientKey, string> = {
-  protein: '#60a5fa',
-  fat: '#fbbf24',
-  carbs: '#4ade80',
-  calories: '#a78bfa',
-};
+type ChartRow = Record<string, number | string>;
 
 const overLimitColor = 'var(--destructive)';
 
@@ -110,112 +93,56 @@ const overflowBarProps = {
   radius: [3, 3, 0, 0] as [number, number, number, number],
 };
 
-function calculateDebtVisual(
-  intake: number,
-  target: number,
-  carry: number,
-): DebtVisual {
-  const safeTarget = Math.max(1, target);
-  const intakeWithinLimit = Math.min(intake, safeTarget);
-  const debtWithinLimit = Math.min(
-    carry,
-    Math.max(0, safeTarget - intakeWithinLimit),
-  );
-  const overflow = Math.max(0, intake + carry - safeTarget);
-
-  return {
-    intake: intakeWithinLimit,
-    debtWithinLimit,
-    overflow,
-    nextCarry: overflow,
-  };
+/** YYYY-MM-DD を M/d 表記にする。 */
+function toAxisLabel(date: string): string {
+  const [, month, day] = date.split('-').map(Number);
+  return `${month}/${day}`;
 }
 
-export function PfcDebtCharts({
-  referenceDate,
-  days = 20,
-}: PfcDebtChartsProps) {
-  const [isSplitView, setIsSplitView] = useState(false);
-  const windowStartDate = useMemo(() => {
-    const reference = parseISO(referenceDate);
-    return format(addDays(reference, -(days - 1)), 'yyyy-MM-dd');
-  }, [referenceDate, days]);
-  const { logs, settings } = useAppState();
+/**
+ * endDate までの DAYS 日分について、栄養素ごとに
+ * 「上限内の当日摂取 / 上限内に収まる前日までの負債 / 上限超過（翌日へ繰越）」を積み上げ用に分解する。
+ */
+function buildChartData(logs: Logs, target: PFC, endDate: string): ChartRow[] {
+  const startDate = shiftDate(endDate, -(DAYS - 1));
+  const carry = computePfcDebt(startDate, target, logs);
 
-  const chartData = useMemo(() => {
-    const debt = computePfcDebt(windowStartDate, settings.targetPFC, logs);
-    const start = parseISO(windowStartDate);
-    const data: Record<string, number | string>[] = [];
+  return Array.from({ length: DAYS }, (_, i) => {
+    const date = shiftDate(startDate, i);
+    const total = logs[date]?.total ?? EMPTY_PFC;
+    const row: ChartRow = { date: toAxisLabel(date) };
 
-    let proteinCarry = debt.protein;
-    let fatCarry = debt.fat;
-    let carbsCarry = debt.carbs;
-    let caloriesCarry = debt.calories;
-
-    for (let i = 0; i < days; i++) {
-      const date = addDays(start, i);
-      const dateStr = format(date, 'yyyy-MM-dd');
-      const label = format(date, 'M/d');
-      const total = logs[dateStr]?.total;
-
-      const proteinVisual = calculateDebtVisual(
-        total?.protein ?? 0,
-        settings.targetPFC.protein,
-        proteinCarry,
-      );
-      const fatVisual = calculateDebtVisual(
-        total?.fat ?? 0,
-        settings.targetPFC.fat,
-        fatCarry,
-      );
-      const carbsVisual = calculateDebtVisual(
-        total?.carbs ?? 0,
-        settings.targetPFC.carbs,
-        carbsCarry,
-      );
-      const caloriesVisual = calculateDebtVisual(
-        total?.calories ?? 0,
-        settings.targetPFC.calories,
-        caloriesCarry,
-      );
-
-      proteinCarry = proteinVisual.nextCarry;
-      fatCarry = fatVisual.nextCarry;
-      carbsCarry = carbsVisual.nextCarry;
-      caloriesCarry = caloriesVisual.nextCarry;
-
-      data.push({
-        date: label,
-        proteinIntake: proteinVisual.intake,
-        proteinDebt: proteinVisual.debtWithinLimit,
-        proteinOverflow: proteinVisual.overflow,
-        fatIntake: fatVisual.intake,
-        fatDebt: fatVisual.debtWithinLimit,
-        fatOverflow: fatVisual.overflow,
-        carbsIntake: carbsVisual.intake,
-        carbsDebt: carbsVisual.debtWithinLimit,
-        carbsOverflow: carbsVisual.overflow,
-        caloriesIntake: caloriesVisual.intake,
-        caloriesDebt: caloriesVisual.debtWithinLimit,
-        caloriesOverflow: caloriesVisual.overflow,
-        pfcDebt:
-          proteinVisual.debtWithinLimit +
-          fatVisual.debtWithinLimit +
-          carbsVisual.debtWithinLimit,
-        pfcOverflow:
-          proteinVisual.overflow + fatVisual.overflow + carbsVisual.overflow,
-      });
+    for (const key of PFC_KEYS) {
+      const limit = Math.max(1, target[key]);
+      const intake = Math.min(total[key], limit);
+      const overflow = Math.max(0, total[key] + carry[key] - limit);
+      row[`${key}Intake`] = intake;
+      row[`${key}Debt`] = Math.min(carry[key], limit - intake);
+      row[`${key}Overflow`] = overflow;
+      carry[key] = overflow;
     }
 
-    return data;
-  }, [days, windowStartDate, settings, logs]);
+    const sumOverMacros = (suffix: string) =>
+      MACROS.reduce((acc, { key }) => acc + Number(row[`${key}${suffix}`]), 0);
+    row.pfcDebt = sumOverMacros('Debt');
+    row.pfcOverflow = sumOverMacros('Overflow');
+    return row;
+  });
+}
 
-  if (chartData.length === 0) return null;
+export function PfcDebtCharts({ referenceDate }: { referenceDate: string }) {
+  const [isSplitView, setIsSplitView] = useState(false);
+  const { logs, settings } = useAppState();
+  const { targetPFC } = settings;
+  const chartData = useMemo(
+    () => buildChartData(logs, targetPFC, referenceDate),
+    [logs, targetPFC, referenceDate],
+  );
 
-  const pfcTargetTotal =
-    settings.targetPFC.protein +
-    settings.targetPFC.fat +
-    settings.targetPFC.carbs;
+  const pfcTargetTotal = MACROS.reduce(
+    (acc, { key }) => acc + targetPFC[key],
+    0,
+  );
 
   return (
     <div className="space-y-4">
@@ -227,7 +154,7 @@ export function PfcDebtCharts({
       >
         <CardHeader>
           <CardTitle>
-            PFC積み上げグラフ（過去20日 / タップで栄養素別表示）
+            PFC積み上げグラフ（過去{DAYS}日 / タップで栄養素別表示）
           </CardTitle>
         </CardHeader>
         <CardContent className="h-72">
@@ -238,24 +165,15 @@ export function PfcDebtCharts({
               <YAxis {...yAxisProps} />
               <Tooltip {...tooltipProps} />
               <ReferenceLine y={pfcTargetTotal} {...limitLineProps} />
-              <Bar
-                dataKey="proteinIntake"
-                stackId="pfc"
-                fill={nutrientColors.protein}
-                name="タンパク質"
-              />
-              <Bar
-                dataKey="fatIntake"
-                stackId="pfc"
-                fill={nutrientColors.fat}
-                name="脂質"
-              />
-              <Bar
-                dataKey="carbsIntake"
-                stackId="pfc"
-                fill={nutrientColors.carbs}
-                name="炭水化物"
-              />
+              {MACROS.map(({ key, label, chartColor }) => (
+                <Bar
+                  key={key}
+                  dataKey={`${key}Intake`}
+                  stackId="pfc"
+                  fill={chartColor}
+                  name={label}
+                />
+              ))}
               <Bar
                 dataKey="pfcDebt"
                 stackId="pfc"
@@ -271,13 +189,13 @@ export function PfcDebtCharts({
 
       {isSplitView && (
         <div className="grid gap-4 md:grid-cols-3">
-          {(['protein', 'fat', 'carbs'] as const).map((nutrient) => (
+          {MACROS.map(({ key, label, chartColor }) => (
             <NutrientChart
-              key={nutrient}
-              title={nutrientLabels[nutrient]}
-              color={nutrientColors[nutrient]}
-              target={settings.targetPFC[nutrient]}
-              dataKeyPrefix={nutrient}
+              key={key}
+              title={label}
+              color={chartColor}
+              target={targetPFC[key]}
+              nutrient={key}
               data={chartData}
               unit="g"
             />
@@ -287,9 +205,9 @@ export function PfcDebtCharts({
 
       <NutrientChart
         title="カロリー"
-        color={nutrientColors.calories}
-        target={settings.targetPFC.calories}
-        dataKeyPrefix="calories"
+        color={CALORIES_CHART_COLOR}
+        target={targetPFC.calories}
+        nutrient="calories"
         data={chartData}
         unit="kcal"
       />
@@ -301,15 +219,15 @@ function NutrientChart({
   title,
   color,
   target,
-  dataKeyPrefix,
+  nutrient,
   data,
   unit,
 }: {
   title: string;
   color: string;
   target: number;
-  dataKeyPrefix: string;
-  data: Record<string, number | string>[];
+  nutrient: PfcKey;
+  data: ChartRow[];
   unit: string;
 }) {
   return (
@@ -329,21 +247,21 @@ function NutrientChart({
             />
             <ReferenceLine y={target} {...limitLineProps} />
             <Bar
-              dataKey={`${dataKeyPrefix}Intake`}
-              stackId={dataKeyPrefix}
+              dataKey={`${nutrient}Intake`}
+              stackId={nutrient}
               fill={color}
               name="当日摂取"
             />
             <Bar
-              dataKey={`${dataKeyPrefix}Debt`}
-              stackId={dataKeyPrefix}
+              dataKey={`${nutrient}Debt`}
+              stackId={nutrient}
               fill={color}
               fillOpacity={0.25}
               name="負債(上限内)"
             />
             <Bar
-              dataKey={`${dataKeyPrefix}Overflow`}
-              stackId={dataKeyPrefix}
+              dataKey={`${nutrient}Overflow`}
+              stackId={nutrient}
               {...overflowBarProps}
             />
           </BarChart>
