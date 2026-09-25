@@ -2,10 +2,12 @@ import 'server-only';
 
 import type { McpServer, ServerContext } from '@modelcontextprotocol/server';
 import { z } from 'zod';
+import { foodInputSchema } from '@/lib/api/schemas';
 import { rankFrequentFoods } from '@/lib/food-suggestions';
 import { burnedCalories, computeDailyLimit, subtractPFC } from '@/lib/pfc';
 import { listFoods } from '@/lib/server/foods';
-import { listLogItemsBetween } from '@/lib/server/log-items';
+import { createLogActivity } from '@/lib/server/log-activities';
+import { createLogItem, listLogItemsBetween } from '@/lib/server/log-items';
 import { getSettings } from '@/lib/server/settings';
 import { listSports } from '@/lib/server/sports';
 import { getLogsBetween, getUserData } from '@/lib/server/user-data';
@@ -16,12 +18,35 @@ import {
   type PFC,
   type SportActivityLog,
 } from '@/lib/types';
-import { formatDate, formatTime, shiftDate } from '@/lib/utils';
+import {
+  defaultTimestampFor,
+  formatDate,
+  formatTime,
+  shiftDate,
+  toJstTimestamp,
+} from '@/lib/utils';
 
 const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .describe('日付 (YYYY-MM-DD, JST)');
+
+const timeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+  .describe('時刻 (HH:mm, JST)。省略時は今日なら現在時刻、それ以外は 12:00');
+
+const loggedAtSchema = {
+  date: dateSchema
+    .optional()
+    .describe('記録する日 (YYYY-MM-DD, JST)。省略時は今日'),
+  time: timeSchema.optional(),
+};
+
+function timestampOf(date: string | undefined, time: string | undefined) {
+  const day = date ?? formatDate(Date.now());
+  return time ? toJstTimestamp(day, time) : defaultTimestampFor(day);
+}
 
 function userIdOf(ctx: ServerContext): string {
   const userId = ctx.http?.authInfo?.extra?.userId;
@@ -134,7 +159,67 @@ async function getFrequentFoods(userId: string, days: number, limit: number) {
   };
 }
 
-/** 献立の提案に使う読み取り専用ツール群。栄養値の単位は g / kcal。 */
+const logMealSchema = foodInputSchema
+  .pick({
+    name: true,
+    protein: true,
+    fat: true,
+    carbs: true,
+    calories: true,
+    store: true,
+  })
+  .extend(loggedAtSchema);
+
+const logActivitySchema = z.object({
+  sport: z
+    .string()
+    .min(1)
+    .describe('登録スポーツの名前（list_sports の name）'),
+  ...loggedAtSchema,
+});
+
+async function logMeal(userId: string, input: z.infer<typeof logMealSchema>) {
+  const { date, time, ...food } = input;
+  const item = await createLogItem(userId, {
+    ...food,
+    timestamp: timestampOf(date, time),
+  });
+  return {
+    logged: toMeal(item),
+    status: await getNutritionStatus(userId, formatDate(item.timestamp)),
+  };
+}
+
+async function logActivity(
+  userId: string,
+  { sport, date, time }: z.infer<typeof logActivitySchema>,
+) {
+  const sports = await listSports(userId);
+  const definition = sports.find((s) => s.name === sport);
+  if (!definition) {
+    throw new Error(
+      `スポーツ「${sport}」は登録されていません。登録済み: ${sports.map((s) => s.name).join(', ')}`,
+    );
+  }
+  const activity = await createLogActivity(userId, {
+    sportId: definition.id,
+    name: definition.name,
+    caloriesBurned: definition.caloriesBurned,
+    timestamp: timestampOf(date, time),
+  });
+  return {
+    logged: toActivity(activity),
+    status: await getNutritionStatus(userId, formatDate(activity.timestamp)),
+  };
+}
+
+const WRITE_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+};
+
+/** 献立の提案と食事・運動の記録に使うツール群。栄養値の単位は g / kcal。 */
 export function registerMealPlanningTools(server: McpServer) {
   server.registerTool(
     'get_nutrition_status',
@@ -211,5 +296,29 @@ export function registerMealPlanningTools(server: McpServer) {
         sports.map(({ name, caloriesBurned }) => ({ name, caloriesBurned })),
       );
     },
+  );
+
+  server.registerTool(
+    'log_meal',
+    {
+      title: '食事の記録',
+      description:
+        '食べた物を1品ずつ食事記録に追加する。protein / fat / carbs は g、calories は kcal。登録食品を食べた場合は list_foods の名前・店舗・栄養値をそのまま使う。記録した内容と、記録後のその日の摂取状況（get_nutrition_status と同じ形）を返す。ユーザーが食べたと明言した物だけを記録し、提案しただけの献立は記録しない。',
+      inputSchema: logMealSchema,
+      annotations: WRITE_ANNOTATIONS,
+    },
+    async (input, ctx) => jsonResult(await logMeal(userIdOf(ctx), input)),
+  );
+
+  server.registerTool(
+    'log_activity',
+    {
+      title: '運動の記録',
+      description:
+        '登録スポーツを1回分、運動記録に追加する。消費カロリーは登録値が使われ、その日のカロリー上限が増える。記録した内容と、記録後のその日の摂取状況（get_nutrition_status と同じ形）を返す。',
+      inputSchema: logActivitySchema,
+      annotations: WRITE_ANNOTATIONS,
+    },
+    async (input, ctx) => jsonResult(await logActivity(userIdOf(ctx), input)),
   );
 }

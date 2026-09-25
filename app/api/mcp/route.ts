@@ -7,7 +7,7 @@ import { verifyAccessToken } from '@/lib/server/oauth';
 const mcpHandler = createMcpHandler(registerMealPlanningTools, {
   serverInfo: { name: 'pfc-balance', version: '1.0.0' },
   instructions:
-    'PFC Balance（食事記録アプリ）のデータを読み取り、目標 PFC とカロリーに収まる献立を提案するためのツール群です。',
+    'PFC Balance（食事記録アプリ）のデータを読み取って目標 PFC とカロリーに収まる献立を提案し、食べた物や運動を記録するためのツール群です。',
 });
 
 async function verifyToken(_request: Request, bearerToken?: string) {
