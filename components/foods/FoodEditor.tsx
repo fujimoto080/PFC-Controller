@@ -5,10 +5,12 @@ import { useForm } from 'react-hook-form';
 import { Save, ScanBarcode, X } from 'lucide-react';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
+import { NutritionPhotoButton } from '@/components/input/NutritionPhotoButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import {
   normalizeBarcodes,
   toBarcodeFood,
@@ -45,8 +47,17 @@ export function FoodEditor({
 }: FoodEditorProps) {
   const [barcodeInput, setBarcodeInput] = useState(initialBarcodes.join(', '));
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const { register, handleSubmit } = useForm<PfcFormValues>({
+  const { register, handleSubmit, reset, getValues } = useForm<PfcFormValues>({
     defaultValues: food ? toFormValues(food) : EMPTY_FORM_VALUES,
+  });
+  // 読み取れなかった店名と、写真からは分からない店内グループは入力済みの値を残す
+  const ai = useAiNutrition((estimated) => {
+    const current = getValues();
+    reset({
+      ...toFormValues(estimated),
+      store: estimated.store ?? current.store,
+      storeGroup: current.storeGroup,
+    });
   });
 
   const onSubmit = async (values: PfcFormValues) => {
@@ -83,6 +94,13 @@ export function FoodEditor({
           }}
           className="space-y-4"
         >
+          <NutritionPhotoButton
+            onCapture={(file) => {
+              void ai.estimateFromImage(file);
+            }}
+            disabled={ai.pending !== null}
+            reading={ai.pending === 'image'}
+          />
           <LabeledInput
             label="食品名"
             {...register('name', { required: true })}

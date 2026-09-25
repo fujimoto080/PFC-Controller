@@ -55,9 +55,9 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
 
 ## Gemini 連携設定（AIでPFC推定）
 
-追加画面の「写真」タブでは、食べた内容をテキスト入力して Gemini で **P/F/C とカロリーを推定**できます。
+記録フォームと食品リストの編集画面では、栄養成分表示の写真から Gemini で **P/F/C とカロリーを読み取り**できます（成分表示が無い料理写真は推定）。記録フォームでは食べた内容をテキストで入力して推定することもできます。
 
-- サーバー側API: `POST /api/ai-nutrition`（テキスト推定）, `POST /api/ocr`（画像から文字抽出）
+- サーバー側API: `POST /api/ai-nutrition`（テキスト推定）, `POST /api/ai-nutrition/image`（写真から読み取り）
 - 使用モデル: `lib/server/gemini.ts` の `MODEL`
 - 必要な環境変数: `GEMINI_API_KEY`
 

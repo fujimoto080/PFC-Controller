@@ -9,11 +9,10 @@ interface GeminiPart {
   inline_data?: { mime_type: string; data: string };
 }
 
-interface GeminiRequest {
+export interface GeminiRequest {
   parts: GeminiPart[];
   temperature?: number;
   tools?: { google_search: Record<string, never> }[];
-  allowEmptyResponse?: boolean;
 }
 
 interface GeminiResponse {
@@ -34,7 +33,6 @@ export async function callGemini({
   parts,
   temperature = 0,
   tools,
-  allowEmptyResponse = false,
 }: GeminiRequest): Promise<string> {
   const apiKey = requireGeminiApiKey();
   const body = {
@@ -60,9 +58,6 @@ export async function callGemini({
   const text = result.candidates?.[0]?.content?.parts
     ?.map((part) => part.text ?? '')
     .join('');
-  if (!text) {
-    if (allowEmptyResponse) return '';
-    throw new ApiError('AI の出力を取得できませんでした', 502);
-  }
+  if (!text) throw new ApiError('AI の出力を取得できませんでした', 502);
   return text;
 }

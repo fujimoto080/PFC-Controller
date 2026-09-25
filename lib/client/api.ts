@@ -89,10 +89,9 @@ export function estimateNutrition(text: string): Promise<BarcodeFood> {
   return api.post('/api/ai-nutrition', { text });
 }
 
-/** 画像(dataURL)から OCR でテキストを抽出する。抽出できない場合は空文字。 */
-export async function ocrImage(imageDataUrl: string): Promise<string> {
-  const result = await api.post<{ text: string }>('/api/ocr', {
-    imageDataUrl,
-  });
-  return result.text.trim();
+/** 画像(dataURL)の栄養成分表示を AI で読み取る。表示が無ければ写っている料理から推定する。 */
+export function estimateNutritionFromImage(
+  imageDataUrl: string,
+): Promise<BarcodeFood> {
+  return api.post('/api/ai-nutrition/image', { imageDataUrl });
 }

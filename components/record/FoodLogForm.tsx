@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { Camera, Eraser, Plus, ScanBarcode, Sparkles } from 'lucide-react';
+import { Eraser, Plus, ScanBarcode, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
+import { NutritionPhotoButton } from '@/components/input/NutritionPhotoButton';
 import { SimilarFoodSuggestions } from '@/components/input/SimilarFoodSuggestions';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
@@ -43,7 +44,7 @@ interface FoodLogFormProps {
 }
 
 /**
- * 栄養値を入力して食事を記録するフォーム。写真(OCR)・テキストからの AI 推定で入力を補助する。
+ * 栄養値を入力して食事を記録するフォーム。写真（栄養成分表示・料理）の読み取りやテキストからの AI 推定で入力を補助する。
  * 空欄からの入力時だけ、写真撮影で画面が破棄されても消えないよう下書きを保持する。
  */
 export function FoodLogForm({
@@ -178,33 +179,16 @@ export function FoodLogForm({
 
 /** 栄養成分表示や料理の写真、または文章から AI で栄養値を入力する。 */
 function AiAssist({ ai }: { ai: ReturnType<typeof useAiNutrition> }) {
-  const photoInputRef = useRef<HTMLInputElement | null>(null);
-  const busy = ai.isExtracting || ai.isEstimating;
+  const busy = ai.pending !== null;
 
   return (
     <div className="bg-muted/50 space-y-2 rounded-lg p-3">
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() => photoInputRef.current?.click()}
+      <NutritionPhotoButton
+        onCapture={(file) => {
+          void ai.estimateFromImage(file);
+        }}
         disabled={busy}
-      >
-        <Camera /> 成分表示・料理を撮影して自動入力
-      </Button>
-      <input
-        ref={photoInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onClick={(event) => {
-          event.currentTarget.value = '';
-        }}
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void ai.extractFromImage(file);
-        }}
+        reading={ai.pending === 'image'}
       />
       <div className="flex gap-2">
         <Input
@@ -227,10 +211,8 @@ function AiAssist({ ai }: { ai: ReturnType<typeof useAiNutrition> }) {
           <Sparkles />
         </Button>
       </div>
-      {busy && (
-        <p className="text-muted-foreground text-xs">
-          {ai.isExtracting ? '画像から文字を抽出中...' : 'AIで推定中...'}
-        </p>
+      {ai.pending === 'text' && (
+        <p className="text-muted-foreground text-xs">AIで推定中...</p>
       )}
     </div>
   );

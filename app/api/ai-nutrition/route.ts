@@ -1,74 +1,24 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { ApiError, defineRoute } from '@/lib/api/handler';
-import { callGemini } from '@/lib/server/gemini';
-import { roundPFC } from '@/lib/utils';
-
-interface EstimatedNutrition {
-  name: string;
-  protein: number;
-  fat: number;
-  carbs: number;
-  calories: number;
-  store?: string;
-}
+import { defineRoute } from '@/lib/api/handler';
+import { askNutrition } from '@/lib/server/nutrition';
 
 const bodySchema = z.object({
   text: z.string().trim().min(1, '食べた内容のテキストを入力してください'),
 });
 
-function extractJsonObject(rawText: string): string {
-  const fencedMatch = /```json\s*([\s\S]*?)\s*```/i.exec(rawText);
-  if (fencedMatch?.[1]) return fencedMatch[1].trim();
-
-  const plainMatch = /\{[\s\S]*\}/.exec(rawText);
-  if (plainMatch) return plainMatch[0].trim();
-
-  throw new ApiError('JSON形式の結果を取得できませんでした', 502);
-}
-
-function normalizeNutrition(
-  data: Partial<EstimatedNutrition>,
-): EstimatedNutrition {
-  const toNumber = (value: unknown) => {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric) || numeric < 0) return 0;
-    return roundPFC(numeric, 1);
-  };
-
-  const trimmedStore = data.store?.trim();
-
-  return {
-    name: (data.name ?? '入力内容').trim() || '入力内容',
-    protein: toNumber(data.protein),
-    fat: toNumber(data.fat),
-    carbs: toNumber(data.carbs),
-    calories: toNumber(data.calories),
-    store: trimmedStore === '' ? undefined : trimmedStore,
-  };
-}
-
 export const POST = defineRoute(
   { label: 'AI栄養推定', auth: true, body: bodySchema },
   async (_req, { body }) => {
-    const prompt = [
-      'あなたは栄養計算アシスタントです。',
-      'ユーザーが食べた内容を推定し、次のJSONのみを返してください。',
-      '{"name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}',
-      '数値は必ず半角数字で、単位はg/kcalです。',
-      '不明な値は0を設定してください。説明文やMarkdownは不要です。',
-      `入力: ${body.text}`,
-    ].join('\n');
-
-    const generatedText = await callGemini({
-      parts: [{ text: prompt }],
+    const food = await askNutrition({
+      instructions: [
+        'あなたは栄養計算アシスタントです。',
+        'ユーザーが食べた内容の栄養値を推定してください。',
+        `入力: ${body.text}`,
+      ],
       temperature: 0.2,
       tools: [{ google_search: {} }],
     });
-
-    const parsed = JSON.parse(
-      extractJsonObject(generatedText),
-    ) as Partial<EstimatedNutrition>;
-    return NextResponse.json(normalizeNutrition(parsed));
+    return NextResponse.json(food);
   },
 );
