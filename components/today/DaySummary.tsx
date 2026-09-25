@@ -5,24 +5,22 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { useAppState } from '@/lib/client/store';
 import { MACROS } from '@/lib/macros';
-import { computePfcDebt } from '@/lib/pfc';
+import { computeDailyLimit } from '@/lib/pfc';
 import { EMPTY_PFC } from '@/lib/types';
 import { cn, roundPFC } from '@/lib/utils';
 
 /**
- * 選択日の摂取量と上限の比較。前日までの超過（負債）はその日の上限から差し引く。
+ * 選択日の摂取量と上限の比較。運動した日は消費分だけ上限が増え、前日までの超過（負債）は上限から差し引く。
  */
 export function DaySummary({ date }: { date: string }) {
   const { logs, settings } = useAppState();
-  const { targetPFC } = settings;
   const total = logs[date]?.total ?? EMPTY_PFC;
-  const debt = useMemo(
-    () => computePfcDebt(date, targetPFC, logs),
-    [date, targetPFC, logs],
+  const { limit, target, debt, burnedCalories } = useMemo(
+    () => computeDailyLimit(date, settings.targetPFC, logs),
+    [date, settings.targetPFC, logs],
   );
 
-  const calorieLimit = Math.max(0, targetPFC.calories - debt.calories);
-  const calorieLeft = calorieLimit - total.calories;
+  const calorieLeft = limit.calories - total.calories;
 
   return (
     <Card className="gap-5 px-5 py-5">
@@ -47,7 +45,10 @@ export function DaySummary({ date }: { date: string }) {
           href="/settings"
           className="text-muted-foreground text-right text-xs underline-offset-2 hover:underline"
         >
-          上限 {roundPFC(calorieLimit, 0).toLocaleString()} kcal
+          上限 {roundPFC(limit.calories, 0).toLocaleString()} kcal
+          {burnedCalories > 0 && (
+            <span className="block">運動 +{roundPFC(burnedCalories, 0)}</span>
+          )}
           {debt.calories > 0 && (
             <span className="text-destructive block">
               前日までの超過 −{roundPFC(debt.calories, 0)}
@@ -58,15 +59,14 @@ export function DaySummary({ date }: { date: string }) {
 
       <LimitBar
         current={total.calories}
-        target={targetPFC.calories}
+        target={target.calories}
         debt={debt.calories}
         barClass="bg-primary"
       />
 
       <div className="grid grid-cols-3 gap-4">
         {MACROS.map(({ key, label, barClass }) => {
-          const limit = Math.max(0, targetPFC[key] - debt[key]);
-          const left = limit - total[key];
+          const left = limit[key] - total[key];
           return (
             <div key={key} className="space-y-1.5">
               <p className="text-muted-foreground text-xs">{label}</p>
@@ -86,13 +86,13 @@ export function DaySummary({ date }: { date: string }) {
               </p>
               <LimitBar
                 current={total[key]}
-                target={targetPFC[key]}
+                target={target[key]}
                 debt={debt[key]}
                 barClass={barClass}
                 thin
               />
               <p className="text-muted-foreground text-[10px] tabular-nums">
-                {roundPFC(total[key], 1)} / {roundPFC(limit, 0)}g
+                {roundPFC(total[key], 1)} / {roundPFC(limit[key], 0)}g
               </p>
             </div>
           );

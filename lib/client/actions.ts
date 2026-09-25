@@ -9,9 +9,12 @@ import {
   type FoodItem,
   type FoodItemInput,
   type Logs,
+  type SportActivityInput,
+  type SportActivityLog,
+  type SportDefinition,
   type UserSettings,
 } from '@/lib/types';
-import { formatDate, toggleItem } from '@/lib/utils';
+import { defaultTimestampFor, formatDate, toggleItem } from '@/lib/utils';
 
 // 各操作は楽観的に即時反映し、失敗時はロールバックとエラートーストまで行う。戻り値は成否。
 
@@ -139,5 +142,58 @@ export function toggleFavoriteFood(id: string): Promise<boolean> {
   return saveSettings({
     ...settings,
     favoriteFoodIds: toggleItem(settings.favoriteFoodIds, id),
+  });
+}
+
+export function saveSports(sports: SportDefinition[]): Promise<boolean> {
+  return optimistic({
+    apply: (current) => ({ ...current, sports }),
+    request: () => api.put('/api/sports', sports),
+    errorMessage: 'スポーツの保存に失敗しました',
+  });
+}
+
+export function addSportActivity(
+  date: string,
+  sport: SportDefinition,
+): Promise<boolean> {
+  const id = tempId();
+  const input: SportActivityInput = {
+    sportId: sport.id,
+    name: sport.name,
+    caloriesBurned: sport.caloriesBurned,
+    timestamp: defaultTimestampFor(date),
+  };
+  return optimistic({
+    apply: withLogs((logs) =>
+      updateDay(logs, date, (log) => ({
+        activities: [...log.activities, { ...input, id }],
+      })),
+    ),
+    request: () => api.post<SportActivityLog>('/api/log-activities', input),
+    errorMessage: '運動記録の追加に失敗しました',
+    onSuccess: (current, saved) =>
+      withLogs((logs) =>
+        updateDay(logs, date, (log) => ({
+          activities: log.activities.map((activity) =>
+            activity.id === id ? saved : activity,
+          ),
+        })),
+      )(current),
+  });
+}
+
+export function deleteSportActivity(
+  date: string,
+  id: string,
+): Promise<boolean> {
+  return optimistic({
+    apply: withLogs((logs) =>
+      updateDay(logs, date, (log) => ({
+        activities: log.activities.filter((activity) => activity.id !== id),
+      })),
+    ),
+    request: () => api.delete(`/api/log-activities/${encodeURIComponent(id)}`),
+    errorMessage: '運動記録の削除に失敗しました',
   });
 }

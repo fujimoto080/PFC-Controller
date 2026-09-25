@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import type { FoodItem, FoodItemInput, PFC, UserSettings } from '@/lib/types';
+import type {
+  FoodItem,
+  FoodItemInput,
+  PFC,
+  SportActivityInput,
+  SportDefinition,
+  UserSettings,
+} from '@/lib/types';
 import type { BarcodeFood } from '@/lib/barcode';
 
 const nonNegative = z.number().nonnegative();
@@ -50,6 +57,21 @@ export const settingsSchema = z.object({
     .optional(),
   favoriteFoodIds: z.array(z.string()),
 }) satisfies z.ZodType<UserSettings>;
+
+export const sportsSchema = z.array(
+  z.object({
+    id: z.string().min(1),
+    name: z.string().trim().min(1),
+    caloriesBurned: nonNegative,
+  }),
+) satisfies z.ZodType<SportDefinition[]>;
+
+export const activityInputSchema = z.object({
+  sportId: z.string().min(1),
+  name: z.string().min(1),
+  caloriesBurned: nonNegative,
+  timestamp: timestampSchema,
+}) satisfies z.ZodType<SportActivityInput>;
 
 export const uuidParamsSchema = z.object({ id: z.uuid() });
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { AddFoodDrawer } from '@/components/record/AddFoodDrawer';
+import { DayActivityList } from '@/components/today/DayActivityList';
 import { DateHeader } from '@/components/today/DateHeader';
 import { DayLogList } from '@/components/today/DayLogList';
 import { DaySummary } from '@/components/today/DaySummary';
@@ -33,6 +34,7 @@ export default function TodayPage() {
       <DaySummary date={date} />
       <FavoriteChips date={date} />
       <DayLogList date={date} onAdd={openAdd} />
+      <DayActivityList date={date} />
       <AddFoodDrawer
         open={isAdding}
         date={date}

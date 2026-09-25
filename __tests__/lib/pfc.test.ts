@@ -1,5 +1,17 @@
-import { computePfcDebt, scalePFC, subtractPFC, sumPFC } from '@/lib/pfc';
-import { createEmptyDailyLog, type Logs, type PFC } from '@/lib/types';
+import {
+  burnedCalories,
+  computeDailyLimit,
+  computePfcDebt,
+  scalePFC,
+  subtractPFC,
+  sumPFC,
+} from '@/lib/pfc';
+import {
+  createEmptyDailyLog,
+  type DailyLog,
+  type Logs,
+  type PFC,
+} from '@/lib/types';
 
 const target: PFC = { protein: 100, fat: 50, carbs: 200, calories: 2000 };
 
@@ -94,5 +106,70 @@ describe('scalePFC', () => {
       carbs: 60,
       calories: 277.5,
     });
+  });
+});
+
+function activityLog(date: string, total: PFC, burned: number[]): DailyLog {
+  return {
+    ...createEmptyDailyLog(date),
+    total,
+    activities: burned.map((caloriesBurned, i) => ({
+      id: `${date}-${i}`,
+      sportId: 'swim',
+      name: '水泳',
+      caloriesBurned,
+      timestamp: i,
+    })),
+  };
+}
+
+describe('burnedCalories', () => {
+  it('運動の消費カロリーを合計する', () => {
+    expect(burnedCalories(activityLog('2026-09-25', target, [300, 150]))).toBe(
+      450,
+    );
+  });
+
+  it('ログが無ければ 0', () => {
+    expect(burnedCalories(undefined)).toBe(0);
+  });
+});
+
+describe('運動を考慮した上限', () => {
+  it('運動した日は消費分だけ目標カロリーが増え、負債が減る', () => {
+    const logs: Logs = {
+      '2026-09-24': activityLog(
+        '2026-09-24',
+        { protein: 100, fat: 50, carbs: 200, calories: 2300 },
+        [300],
+      ),
+    };
+    expect(computePfcDebt('2026-09-25', target, logs).calories).toBe(0);
+  });
+
+  it('当日の上限 = 目標 + 当日の運動 − 前日までの超過', () => {
+    const logs: Logs = {
+      '2026-09-24': activityLog(
+        '2026-09-24',
+        { protein: 120, fat: 50, carbs: 200, calories: 2500 },
+        [],
+      ),
+      '2026-09-25': activityLog('2026-09-25', { ...target }, [400]),
+    };
+    expect(computeDailyLimit('2026-09-25', target, logs)).toEqual({
+      limit: { protein: 80, fat: 50, carbs: 200, calories: 1900 },
+      target: { ...target, calories: 2400 },
+      debt: { protein: 20, fat: 0, carbs: 0, calories: 500 },
+      burnedCalories: 400,
+    });
+  });
+
+  it('上限は 0 未満にならない', () => {
+    const logs = logsOf({
+      '2026-09-24': { protein: 0, fat: 0, carbs: 0, calories: 9000 },
+    });
+    expect(computeDailyLimit('2026-09-25', target, logs).limit.calories).toBe(
+      0,
+    );
   });
 });

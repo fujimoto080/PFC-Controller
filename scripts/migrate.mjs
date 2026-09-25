@@ -90,6 +90,27 @@ const APP_SCHEMA_SQL = `
   CREATE INDEX IF NOT EXISTS idx_pfc_log_items_user_timestamp
     ON pfc_log_items (user_id, timestamp_ms DESC);
 
+  CREATE TABLE IF NOT EXISTS pfc_sports (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sport_id TEXT NOT NULL,
+    position INT NOT NULL,
+    name TEXT NOT NULL,
+    calories_burned DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (user_id, sport_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS pfc_log_activities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    sport_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    calories_burned DOUBLE PRECISION NOT NULL,
+    timestamp_ms BIGINT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_pfc_log_activities_user_date
+    ON pfc_log_activities (user_id, date);
+
   -- MCP 連携（ChatGPT など）向け OAuth。コード・トークンは SHA-256 ハッシュのみ保存する。
   CREATE TABLE IF NOT EXISTS mcp_oauth_codes (
     code_hash TEXT PRIMARY KEY,

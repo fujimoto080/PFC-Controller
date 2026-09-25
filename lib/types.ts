@@ -16,10 +16,28 @@ export interface FoodItem extends PFC {
 
 export type FoodItemInput = Omit<FoodItem, 'id'>;
 
+/** 登録済みのスポーツ（1回あたりの消費カロリー）。 */
+export interface SportDefinition {
+  id: string;
+  name: string;
+  caloriesBurned: number;
+}
+
+export interface SportActivityLog {
+  id: string;
+  sportId: string;
+  name: string;
+  caloriesBurned: number;
+  timestamp: number;
+}
+
+export type SportActivityInput = Omit<SportActivityLog, 'id'>;
+
 export interface DailyLog {
   date: string; // YYYY-MM-DD
   items: FoodItem[];
   total: PFC;
+  activities: SportActivityLog[];
 }
 
 export type Logs = Record<string, DailyLog>;
@@ -44,11 +62,12 @@ export interface UserData {
   logs: Logs;
   settings: UserSettings;
   foods: FoodItem[];
+  sports: SportDefinition[];
 }
 
 // 空 PFC 共通定数。直接参照すると意図せず共有されるため、利用側では必ずスプレッドで複製すること。
 export const EMPTY_PFC: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
 export function createEmptyDailyLog(date: string): DailyLog {
-  return { date, items: [], total: { ...EMPTY_PFC } };
+  return { date, items: [], total: { ...EMPTY_PFC }, activities: [] };
 }

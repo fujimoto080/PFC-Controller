@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PageTitle } from '@/components/ui/page-title';
 import { GoalSettingsPanel } from '@/components/settings/GoalSettingsPanel';
 import { AccountPanel } from '@/components/settings/AccountPanel';
+import { SportSettingsPanel } from '@/components/settings/SportSettingsPanel';
 
 export default function SettingsPage() {
   return (
@@ -9,6 +10,8 @@ export default function SettingsPage() {
       <PageTitle>設定</PageTitle>
 
       <GoalSettingsPanel />
+
+      <SportSettingsPanel />
 
       <AccountPanel />
 
