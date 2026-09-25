@@ -1,7 +1,6 @@
 import 'server-only';
 import { ApiError } from '@/lib/api/handler';
 import type { BarcodeFood } from '@/lib/barcode';
-import { callGemini, type GeminiRequest } from '@/lib/server/gemini';
 import { roundPFC } from '@/lib/utils';
 
 /** 返答させる JSON の形式。プロンプトの末尾に付ける。 */
@@ -42,33 +41,15 @@ function normalizeNutrition(data: Partial<BarcodeFood>): BarcodeFood {
 }
 
 /**
- * 指示文（と画像）を渡して Gemini に栄養値を答えさせ、食品として整形する。
- * 指示文の後ろに JSON 形式の指定を付け足す。
+ * 指示文に JSON 形式の指定を付け足して AI に栄養値を答えさせ、食品として整形する。
  */
-export async function askNutrition({
-  instructions,
-  image,
-  ...options
-}: Omit<GeminiRequest, 'parts'> & {
-  instructions: string[];
-  image?: { mimeType: string; base64Data: string };
-}): Promise<BarcodeFood> {
-  const generatedText = await callGemini({
-    ...options,
-    parts: [
-      { text: [...instructions, ...RESPONSE_FORMAT_INSTRUCTIONS].join('\n') },
-      ...(image
-        ? [
-            {
-              inline_data: {
-                mime_type: image.mimeType,
-                data: image.base64Data,
-              },
-            },
-          ]
-        : []),
-    ],
-  });
+export async function askNutrition(
+  instructions: string[],
+  generate: (prompt: string) => Promise<string>,
+): Promise<BarcodeFood> {
+  const generatedText = await generate(
+    [...instructions, ...RESPONSE_FORMAT_INSTRUCTIONS].join('\n'),
+  );
 
   return normalizeNutrition(
     JSON.parse(extractJsonObject(generatedText)) as Partial<BarcodeFood>,

@@ -53,22 +53,23 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
 - NextAuth 用: `users`, `accounts`, `sessions`, `verification_token`
 - アプリ用: `pfc_user_settings`, `pfc_log_items`, `pfc_log_activities`, `pfc_foods`, `pfc_sports`
 
-## Gemini 連携設定（AIでPFC推定）
+## AI 連携設定（AIでPFC推定）
 
-記録フォームと食品リストの編集画面では、栄養成分表示の写真から Gemini で **P/F/C とカロリーを読み取り**できます（成分表示が無い料理写真は推定）。記録フォームでは食べた内容をテキストで入力して推定することもできます。
+記録フォームと食品リストの編集画面では、栄養成分表示の写真から OpenAI で **P/F/C とカロリーを読み取り**できます（成分表示が無い料理写真は推定）。記録フォームでは食べた内容をテキストで入力して Gemini で推定することもできます。
 
-- サーバー側API: `POST /api/ai-nutrition`（テキスト推定）, `POST /api/ai-nutrition/image`（写真から読み取り）
-- 使用モデル: `lib/server/gemini.ts` の `MODEL`
-- 必要な環境変数: `GEMINI_API_KEY`
+- サーバー側API: `POST /api/ai-nutrition`（テキスト推定・Gemini）, `POST /api/ai-nutrition/image`（写真から読み取り・OpenAI）
+- 使用モデル: `lib/server/gemini.ts` / `lib/server/openai.ts` の `MODEL`
+- 必要な環境変数: `GEMINI_API_KEY`, `OPENAI_API_KEY`
 
 ローカルで確認する場合は `.env.local` に以下を設定してください。
 
 ```bash
 GEMINI_API_KEY=your_gemini_api_key
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 GitHub Actions で運用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
-`GEMINI_API_KEY` を登録して管理してください。
+`GEMINI_API_KEY` と `OPENAI_API_KEY` を登録して管理してください。
 
 ## テスト・Lint
 

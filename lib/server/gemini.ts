@@ -1,17 +1,13 @@
 import 'server-only';
 import { ApiError } from '@/lib/api/handler';
+import { assertAiResponseOk, requireAiText } from '@/lib/server/ai-response';
 
 const MODEL = 'gemini-3.8-flash';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
-interface GeminiPart {
-  text?: string;
-  inline_data?: { mime_type: string; data: string };
-}
-
-export interface GeminiRequest {
-  parts: GeminiPart[];
-  temperature?: number;
+interface GeminiRequest {
+  prompt: string;
+  temperature: number;
   tools?: { google_search: Record<string, never> }[];
 }
 
@@ -30,13 +26,13 @@ function requireGeminiApiKey(): string {
 }
 
 export async function callGemini({
-  parts,
-  temperature = 0,
+  prompt,
+  temperature,
   tools,
 }: GeminiRequest): Promise<string> {
   const apiKey = requireGeminiApiKey();
   const body = {
-    contents: [{ role: 'user' as const, parts }],
+    contents: [{ role: 'user' as const, parts: [{ text: prompt }] }],
     generationConfig: { temperature },
     ...(tools ? { tools } : {}),
   };
@@ -46,25 +42,13 @@ export async function callGemini({
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify(body),
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Gemini API error:', errorText);
-    // 402: 前払いクレジット切れ、429: レート制限・利用枠超過
-    if (response.status === 402 || response.status === 429) {
-      throw new ApiError(
-        'AI の利用上限に達しています。Gemini API のクレジット・利用枠を確認してください',
-        503,
-      );
-    }
-    throw new ApiError('AI 呼び出しに失敗しました', 502);
-  }
+  await assertAiResponseOk(response, 'Gemini');
 
   const result = (await response.json()) as GeminiResponse;
   // Google 検索グラウンディング時などはテキストが複数 part に分割されることがある
-  const text = result.candidates?.[0]?.content?.parts
-    ?.map((part) => part.text ?? '')
-    .join('');
-  if (!text) throw new ApiError('AI の出力を取得できませんでした', 502);
-  return text;
+  return requireAiText(
+    result.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? '')
+      .join(''),
+  );
 }
