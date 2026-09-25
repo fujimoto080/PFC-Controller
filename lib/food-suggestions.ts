@@ -1,5 +1,5 @@
 import { buildFoodMatchKey } from '@/lib/barcode';
-import type { FoodItem, Logs } from '@/lib/types';
+import type { FoodItem, Logs, PFC } from '@/lib/types';
 
 const MAX_SUGGESTIONS = 5;
 
@@ -92,4 +92,42 @@ export function searchFoodCandidates(
     if (candidates.size >= MAX_CANDIDATES) break;
   }
   return [...candidates.values()];
+}
+
+export interface FrequentFood extends PFC {
+  name: string;
+  store?: string;
+  count: number;
+  /** YYYY-MM-DD */
+  lastEatenDate: string;
+}
+
+/**
+ * 記録を食品名（表記ゆれを正規化）ごとに集計し、食べた回数の多い順（同数なら最近食べた順）に返す。
+ * 名前・店舗・栄養値は最後に食べた記録のものを使う。
+ */
+export function rankFrequentFoods(
+  items: readonly (FoodItem & { date: string })[],
+): FrequentFood[] {
+  const byName = new Map<string, FrequentFood & { lastTimestamp: number }>();
+  for (const item of items) {
+    const key = normalizeFoodName(item.name);
+    const current = byName.get(key);
+    const isLatest = !current || item.timestamp >= current.lastTimestamp;
+    const latest = isLatest ? item : current;
+    byName.set(key, {
+      name: latest.name,
+      store: latest.store,
+      protein: latest.protein,
+      fat: latest.fat,
+      carbs: latest.carbs,
+      calories: latest.calories,
+      count: (current?.count ?? 0) + 1,
+      lastEatenDate: isLatest ? item.date : current.lastEatenDate,
+      lastTimestamp: isLatest ? item.timestamp : current.lastTimestamp,
+    });
+  }
+  return [...byName.values()]
+    .sort((a, b) => b.count - a.count || b.lastTimestamp - a.lastTimestamp)
+    .map(({ lastTimestamp: _, ...food }) => food);
 }

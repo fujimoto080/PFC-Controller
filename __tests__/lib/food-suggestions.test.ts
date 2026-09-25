@@ -1,5 +1,6 @@
 import {
   getSimilarFoodSuggestions,
+  rankFrequentFoods,
   searchFoodCandidates,
 } from '@/lib/food-suggestions';
 import { createEmptyDailyLog, type FoodItem, type Logs } from '@/lib/types';
@@ -78,5 +79,62 @@ describe('searchFoodCandidates', () => {
     expect(
       searchFoodCandidates(foods, logs, 'チキン バジル').map((food) => food.id),
     ).toEqual([basil.id]);
+  });
+});
+
+describe('rankFrequentFoods', () => {
+  const item = (
+    name: string,
+    date: string,
+    timestamp: number,
+    calories = 100,
+  ): FoodItem & { date: string } => ({
+    id: `${name}-${timestamp}`,
+    name,
+    protein: 10,
+    fat: 5,
+    carbs: 20,
+    calories,
+    timestamp,
+    date,
+  });
+
+  it('表記ゆれをまとめて回数順に並べ、最新の記録の内容を使う', () => {
+    expect(
+      rankFrequentFoods([
+        item('サラダチキン', '2026-09-20', 1, 110),
+        item('納豆', '2026-09-21', 2),
+        item('サラダ チキン', '2026-09-22', 3, 120),
+      ]),
+    ).toEqual([
+      {
+        name: 'サラダ チキン',
+        store: undefined,
+        protein: 10,
+        fat: 5,
+        carbs: 20,
+        calories: 120,
+        count: 2,
+        lastEatenDate: '2026-09-22',
+      },
+      expect.objectContaining({ name: '納豆', count: 1 }),
+    ]);
+  });
+
+  it('記録が新しい順に並んでいなくても最後に食べた日を正しく求める', () => {
+    const [food] = rankFrequentFoods([
+      item('納豆', '2026-09-22', 3),
+      item('納豆', '2026-09-20', 1),
+    ]);
+    expect(food?.lastEatenDate).toBe('2026-09-22');
+  });
+
+  it('同じ回数なら最近食べた物を先にする', () => {
+    expect(
+      rankFrequentFoods([
+        item('納豆', '2026-09-20', 1),
+        item('卵', '2026-09-21', 2),
+      ]).map((food) => food.name),
+    ).toEqual(['卵', '納豆']);
   });
 });

@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { McpServer, ServerContext } from '@modelcontextprotocol/server';
 import { z } from 'zod';
+import { rankFrequentFoods } from '@/lib/food-suggestions';
 import { sumPFC, subtractPFC } from '@/lib/pfc';
 import { listFoods } from '@/lib/server/foods';
 import { listLogItemsBetween } from '@/lib/server/log-items';
@@ -71,7 +72,10 @@ async function getMealHistory(userId: string, days: number) {
 }
 
 async function searchFoods(userId: string, keyword: string | undefined) {
-  const foods = await listFoods(userId);
+  const [foods, settings] = await Promise.all([
+    listFoods(userId),
+    getSettings(userId),
+  ]);
   return foods
     .filter(
       (food) =>
@@ -79,7 +83,28 @@ async function searchFoods(userId: string, keyword: string | undefined) {
         food.name.includes(keyword) ||
         food.store?.includes(keyword),
     )
-    .map((food) => ({ name: food.name, store: food.store, ...pfcOf(food) }));
+    .map((food) => ({
+      name: food.name,
+      store: food.store,
+      favorite: settings.favoriteFoodIds.includes(food.id),
+      ...pfcOf(food),
+    }));
+}
+
+async function getFrequentFoods(userId: string, days: number, limit: number) {
+  const today = formatDate(Date.now());
+  const [items, foods, settings] = await Promise.all([
+    listLogItemsBetween(userId, shiftDate(today, 1 - days), today),
+    listFoods(userId),
+    getSettings(userId),
+  ]);
+  return {
+    today,
+    frequentFoods: rankFrequentFoods(items).slice(0, limit),
+    favoriteFoods: foods
+      .filter((food) => settings.favoriteFoodIds.includes(food.id))
+      .map((food) => ({ name: food.name, store: food.store, ...pfcOf(food) })),
+  };
 }
 
 /** 献立の提案に使う読み取り専用ツール群。栄養値の単位は g / kcal。 */
@@ -106,7 +131,7 @@ export function registerMealPlanningTools(server: McpServer) {
       description:
         '今日を含む直近 days 日分の食事記録を日ごとの合計付きで返す（記録の無い日は含まない）。献立が最近の食事と重ならないようにするために使う。',
       inputSchema: z.object({
-        days: z.number().int().min(1).max(14).default(7),
+        days: z.number().int().min(1).max(31).default(7),
       }),
       annotations: { readOnlyHint: true },
     },
@@ -119,7 +144,7 @@ export function registerMealPlanningTools(server: McpServer) {
     {
       title: '登録食品の一覧',
       description:
-        'ユーザーが登録している食品（店舗メニュー・よく食べる物）と栄養値を返す。keyword を指定すると食品名か店舗名に含むものだけに絞る。実在するメニューから献立を組むときに使う。',
+        'ユーザーが登録している食品（店舗メニュー・よく食べる物）と栄養値を返す。favorite はユーザーがお気に入りにした食品。keyword を指定すると食品名か店舗名に含むものだけに絞る。実在するメニューから献立を組むときに使う。',
       inputSchema: z.object({
         keyword: z.string().min(1).optional(),
       }),
@@ -127,5 +152,21 @@ export function registerMealPlanningTools(server: McpServer) {
     },
     async ({ keyword }, ctx) =>
       jsonResult(await searchFoods(userIdOf(ctx), keyword)),
+  );
+
+  server.registerTool(
+    'get_frequent_foods',
+    {
+      title: 'よく食べる食品',
+      description:
+        '直近 days 日の記録を食品名ごとに集計し、食べた回数の多い順に回数・最後に食べた日・栄養値を返す（frequentFoods）。あわせてユーザーがお気に入りにした食品（favoriteFoods）も返す。好みに合う食品を提案しつつ、最近続いている物は避けるために使う。',
+      inputSchema: z.object({
+        days: z.number().int().min(1).max(365).default(60),
+        limit: z.number().int().min(1).max(100).default(30),
+      }),
+      annotations: { readOnlyHint: true },
+    },
+    async ({ days, limit }, ctx) =>
+      jsonResult(await getFrequentFoods(userIdOf(ctx), days, limit)),
   );
 }
