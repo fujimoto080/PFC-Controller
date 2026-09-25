@@ -22,7 +22,10 @@ export function FavoriteChips({ date }: { date: string }) {
   if (favorites.length === 0) return null;
 
   return (
-    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+    <div
+      className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+      data-swipe-ignore
+    >
       {favorites.map((food) => (
         <button
           key={food.id}

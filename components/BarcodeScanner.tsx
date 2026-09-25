@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Html5Qrcode,
   Html5QrcodeScannerState,
@@ -137,7 +138,8 @@ export function BarcodeScanner({
     };
   }, []);
 
-  return (
+  // 親に backdrop-filter などがあると fixed の基準がずれるため body 直下に描画する
+  return createPortal(
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-4">
       <div className="bg-background relative w-full max-w-md overflow-hidden rounded-lg">
         <Button
@@ -185,6 +187,7 @@ export function BarcodeScanner({
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
