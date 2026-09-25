@@ -21,7 +21,7 @@ export function EatDateTimeFields({
 }: EatDateTimeFieldsProps) {
   // showPicker は型上は必須だが未対応ブラウザがあるため任意呼び出しにする。
   const openNativePicker = (e: MouseEvent<HTMLInputElement>) => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    // oxlint-disable-next-line typescript/no-unnecessary-condition
     e.currentTarget.showPicker?.();
   };
 

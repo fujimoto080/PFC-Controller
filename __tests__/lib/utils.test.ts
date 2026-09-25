@@ -6,9 +6,7 @@ describe('cn', () => {
   });
 
   it('should handle conditional classes', () => {
-    // 条件付きクラスの挙動を検証するための意図的なリテラル条件。
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    expect(cn('c-1', true && 'c-2', false && 'c-3')).toBe('c-1 c-2');
+    expect(cn('c-1', { 'c-2': true, 'c-3': false })).toBe('c-1 c-2');
   });
 
   it('should merge tailwind classes using tailwind-merge', () => {

@@ -353,6 +353,8 @@ function FoodRow({
 }: FoodRowProps) {
   const isSelecting = selected !== null;
   return (
+    // 行クリックは選択の補助操作。キーボード操作は Checkbox で提供する。
+    // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       className={`flex items-center justify-between gap-2 rounded-lg border p-3 ${
         selected ? 'border-primary bg-primary/5' : 'bg-card'

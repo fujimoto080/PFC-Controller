@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,12 +68,12 @@ function UnauthenticatedGate() {
       <p className="text-muted-foreground text-sm">
         食事記録を保存するには Google アカウントでログインしてください。
       </p>
-      <a
+      <Link
         href="/login"
         className="bg-primary text-primary-foreground inline-block rounded-md px-4 py-2 text-sm"
       >
         ログイン画面へ
-      </a>
+      </Link>
     </div>
   );
 }

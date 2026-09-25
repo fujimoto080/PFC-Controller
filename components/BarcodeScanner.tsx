@@ -41,7 +41,7 @@ const CODE_SPECIFIC_RULES: Partial<
   [Html5QrcodeSupportedFormats.CODE_128]: /^[\x20-\x7E]{6,32}$/,
   [Html5QrcodeSupportedFormats.CODE_39]: /^[0-9A-Z .\-$/+%]{6,32}$/,
   [Html5QrcodeSupportedFormats.CODE_93]: /^[\x20-\x7E]{6,32}$/,
-  [Html5QrcodeSupportedFormats.CODABAR]: /^[A-D][0-9\-\$:/.+]{4,30}[A-D]$/,
+  [Html5QrcodeSupportedFormats.CODABAR]: /^[A-D][0-9\-$:/.+]{4,30}[A-D]$/,
 };
 
 function isNumeric(value: string): boolean {
@@ -354,7 +354,7 @@ export function BarcodeScanner({
   // Auto-start on mount
   useEffect(() => {
     void startScanning();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react/exhaustive-deps
   }, []);
 
   return (

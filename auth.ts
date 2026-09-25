@@ -16,7 +16,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
     jwt({ token, user }) {
       // 初回サインイン時のみ user が渡る。DB のユーザー ID をトークンに焼き込む。
       // next-auth の型は user を常在扱いだが、実際には毎回渡らないため runtime ガードが必要。
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      // oxlint-disable-next-line typescript/no-unnecessary-condition
       if (user?.id) {
         token.id = user.id;
       }
