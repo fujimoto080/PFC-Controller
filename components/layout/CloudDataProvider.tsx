@@ -10,6 +10,9 @@ import {
   useStoreSnapshot,
 } from '@/lib/client/store';
 
+/** ユーザーデータを使わず、読み込み完了を待たずに表示する画面。 */
+const STANDALONE_PATHS = ['/login', '/oauth/authorize'];
+
 interface Props {
   children: React.ReactNode;
   userId: string | null;
@@ -33,9 +36,9 @@ export function CloudDataProvider({ children, userId }: Props) {
     });
   }, [userId]);
 
-  if (!userId) {
-    return pathname === '/login' ? children : <UnauthenticatedGate />;
-  }
+  if (STANDALONE_PATHS.includes(pathname)) return children;
+
+  if (!userId) return <UnauthenticatedGate />;
 
   if (!snapshot) {
     return loadFailed ? (

@@ -18,6 +18,11 @@ export function sumPFC(items: readonly PFC[]): PFC {
   );
 }
 
+/** a - b を小数第2位で丸めて返す（負にもなる）。 */
+export function subtractPFC(a: PFC, b: PFC): PFC {
+  return mapPFC((key) => roundPFC(a[key] - b[key]));
+}
+
 /** 栄養値を factor 倍する（数量 ×0.5 / ×2 などの記録用）。 */
 export function scalePFC<T extends PFC>(food: T, factor: number): T {
   return { ...food, ...mapPFC((key) => roundPFC(food[key] * factor)) };

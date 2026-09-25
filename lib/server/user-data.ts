@@ -4,17 +4,7 @@ import { listFoods } from '@/lib/server/foods';
 import { listLogItems } from '@/lib/server/log-items';
 import { getSettings } from '@/lib/server/settings';
 import { sumPFC } from '@/lib/pfc';
-import {
-  createEmptyDailyLog,
-  type Logs,
-  type UserData,
-  type UserSettings,
-} from '@/lib/types';
-
-const DEFAULT_SETTINGS: UserSettings = {
-  targetPFC: { protein: 100, fat: 60, carbs: 250, calories: 2000 },
-  favoriteFoodIds: [],
-};
+import { createEmptyDailyLog, type Logs, type UserData } from '@/lib/types';
 
 export async function getUserData(userId: string): Promise<UserData> {
   const [settings, items, foods] = await Promise.all([
@@ -33,7 +23,7 @@ export async function getUserData(userId: string): Promise<UserData> {
 
   return {
     logs,
-    settings: settings ?? DEFAULT_SETTINGS,
+    settings,
     foods,
   };
 }

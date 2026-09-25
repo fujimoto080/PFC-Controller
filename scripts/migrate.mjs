@@ -90,6 +90,23 @@ const APP_SCHEMA_SQL = `
   CREATE INDEX IF NOT EXISTS idx_pfc_log_items_user_timestamp
     ON pfc_log_items (user_id, timestamp_ms DESC);
 
+  -- MCP 連携（ChatGPT など）向け OAuth。コード・トークンは SHA-256 ハッシュのみ保存する。
+  CREATE TABLE IF NOT EXISTS mcp_oauth_codes (
+    code_hash TEXT PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    client_id TEXT NOT NULL,
+    redirect_uri TEXT NOT NULL,
+    code_challenge TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS mcp_oauth_tokens (
+    token_hash TEXT PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('access', 'refresh')),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    client_id TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL
+  );
 `;
 
 async function main() {

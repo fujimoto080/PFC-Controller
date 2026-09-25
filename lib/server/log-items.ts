@@ -12,19 +12,40 @@ import { formatDate } from '@/lib/utils';
 
 const RETURNING = `id, ${FOOD_COLUMNS}`;
 
-/** 起動時ペイロード用。image はどの画面でも描画していないため取得しない。 */
-export async function listLogItems(
-  userId: string,
-): Promise<(FoodItem & { date: string })[]> {
+type DatedFoodItem = FoodItem & { date: string };
+
+/** 一覧取得用。image はどの画面でも描画していないため取得しない。 */
+async function queryLogItems(
+  where: string,
+  params: unknown[],
+): Promise<DatedFoodItem[]> {
   const result = await getPool().query<FoodRow & { date: string }>(
     `SELECT id, to_char(date, 'YYYY-MM-DD') AS date, name, protein, fat, carbs, calories,
             timestamp_ms, store, store_group
      FROM pfc_log_items
-     WHERE user_id = $1
+     WHERE ${where}
      ORDER BY timestamp_ms ASC`,
-    [userId],
+    params,
   );
   return result.rows.map((row) => ({ ...toFoodItem(row), date: row.date }));
+}
+
+/** 起動時ペイロード用の全件取得。 */
+export function listLogItems(userId: string): Promise<DatedFoodItem[]> {
+  return queryLogItems('user_id = $1', [userId]);
+}
+
+/** from〜to（両端含む, YYYY-MM-DD）の記録を取得する。 */
+export function listLogItemsBetween(
+  userId: string,
+  from: string,
+  to: string,
+): Promise<DatedFoodItem[]> {
+  return queryLogItems('user_id = $1 AND date BETWEEN $2::date AND $3::date', [
+    userId,
+    from,
+    to,
+  ]);
 }
 
 export async function createLogItem(

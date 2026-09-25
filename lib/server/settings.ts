@@ -12,9 +12,13 @@ interface SettingsRow {
   favorite_food_ids_json: string[] | null;
 }
 
-export async function getSettings(
-  userId: string,
-): Promise<UserSettings | null> {
+const DEFAULT_SETTINGS: UserSettings = {
+  targetPFC: { protein: 100, fat: 60, carbs: 250, calories: 2000 },
+  favoriteFoodIds: [],
+};
+
+/** ユーザー設定を返す。未保存なら既定値。 */
+export async function getSettings(userId: string): Promise<UserSettings> {
   const result = await getPool().query<SettingsRow>(
     `SELECT target_protein, target_fat, target_carbs, target_calories,
             profile_json, favorite_food_ids_json
@@ -23,7 +27,7 @@ export async function getSettings(
     [userId],
   );
   const row = result.rows[0];
-  if (!row) return null;
+  if (!row) return DEFAULT_SETTINGS;
   return {
     targetPFC: {
       protein: row.target_protein,

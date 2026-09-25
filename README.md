@@ -52,6 +52,7 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
 
 - NextAuth 用: `users`, `accounts`, `sessions`, `verification_token`
 - アプリ用: `pfc_user_settings`, `pfc_log_items`, `pfc_log_activities`, `pfc_foods`, `pfc_sports`
+- MCP 連携の OAuth 用: `mcp_oauth_codes`, `mcp_oauth_tokens`
 
 ## AI 連携設定（AIでPFC推定）
 
@@ -70,6 +71,43 @@ OPENAI_API_KEY=your_openai_api_key
 
 GitHub Actions で運用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
 `GEMINI_API_KEY` と `OPENAI_API_KEY` を登録して管理してください。
+
+## ChatGPT 連携（MCP サーバー）
+
+`/api/mcp` がリモート MCP サーバーになっており、ChatGPT から今日の摂取状況・食事履歴・登録食品を読み取って献立を提案させられます（読み取り専用）。
+認証は OAuth で、認可サーバーもこのアプリ自身です（Google ログイン + 同意画面）。追加の環境変数は不要です。
+
+### ChatGPT への登録
+
+1. ChatGPT の **設定 > アプリ > 詳細設定** で開発者モードを有効にする
+2. **アプリを作成** で以下を入力する
+   - MCP サーバー URL: `https://<your-domain>/api/mcp`
+   - 認証: OAuth
+3. 表示される PFC Balance の同意画面で「許可」を押す
+
+### 毎日の献立ルーティン
+
+ChatGPT のタスク（スケジュール実行）などで、例えば次のように依頼します。
+
+```text
+PFC Balance で今日の摂取状況と直近の食事履歴を確認して、目標 PFC・カロリーの残りに収まる昼食と夕食の献立を提案して。
+最近食べた物とはかぶらないようにして、登録食品にある店のメニューも候補に入れて。
+```
+
+### 提供ツール
+
+| ツール                 | 内容                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| `get_nutrition_status` | 指定日（既定は今日）の目標・摂取済み・残りの PFC とカロリー、食べた物、プロフィール |
+| `get_meal_history`     | 直近 1〜14 日の食事記録（日ごとの合計付き）                                         |
+| `list_foods`           | 登録食品（店舗メニュー等）と栄養値。キーワードで絞り込み可                          |
+
+### OAuth の構成
+
+- メタデータ: `/.well-known/oauth-authorization-server`, `/.well-known/oauth-protected-resource/api/mcp`
+- 認可（同意画面）: `/oauth/authorize` / トークン: `POST /api/oauth/token`
+- クライアント登録は Client ID Metadata Document（CIMD）のみ対応。公開クライアント + PKCE (S256)
+- アクセストークン 1 時間、リフレッシュトークン 90 日（使用ごとにローテーション）。DB にはハッシュのみ保存
 
 ## テスト・Lint
 

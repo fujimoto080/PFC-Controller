@@ -2,10 +2,20 @@ import { redirect } from 'next/navigation';
 import { auth, signIn } from '@/auth';
 import { Button } from '@/components/ui/button';
 
-export default async function LoginPage() {
+/** オープンリダイレクトを防ぐため、同一オリジンのパスだけを戻り先として受け付ける。 */
+function safeCallbackUrl(value: string | string[] | undefined): string {
+  return typeof value === 'string' && /^\/(?![/\\])/.test(value) ? value : '/';
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const callbackUrl = safeCallbackUrl((await searchParams).callbackUrl);
   const session = await auth();
   if (session?.user.id) {
-    redirect('/');
+    redirect(callbackUrl);
   }
 
   return (
@@ -19,7 +29,7 @@ export default async function LoginPage() {
       <form
         action={async () => {
           'use server';
-          await signIn('google', { redirectTo: '/' });
+          await signIn('google', { redirectTo: callbackUrl });
         }}
       >
         <Button type="submit" size="lg">

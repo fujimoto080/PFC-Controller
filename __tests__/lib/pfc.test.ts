@@ -1,4 +1,4 @@
-import { computePfcDebt, scalePFC, sumPFC } from '@/lib/pfc';
+import { computePfcDebt, scalePFC, subtractPFC, sumPFC } from '@/lib/pfc';
 import { createEmptyDailyLog, type Logs, type PFC } from '@/lib/types';
 
 const target: PFC = { protein: 100, fat: 50, carbs: 200, calories: 2000 };
@@ -24,6 +24,19 @@ describe('sumPFC', () => {
 
   it('空配列は 0', () => {
     expect(sumPFC([])).toEqual({ protein: 0, fat: 0, carbs: 0, calories: 0 });
+  });
+});
+
+describe('subtractPFC', () => {
+  it('差を小数第2位で丸め、負の値も返す', () => {
+    expect(
+      subtractPFC(target, {
+        protein: 30.333,
+        fat: 60,
+        carbs: 0,
+        calories: 500,
+      }),
+    ).toEqual({ protein: 69.67, fat: -10, carbs: 200, calories: 1500 });
   });
 });
 
