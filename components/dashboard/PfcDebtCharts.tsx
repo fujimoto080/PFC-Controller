@@ -44,7 +44,7 @@ const nutrientColors: Record<NutrientKey, string> = {
   calories: '#a78bfa',
 };
 
-const overLimitColor = '#f87171';
+const overLimitColor = 'var(--destructive)';
 
 const axisProps = {
   tickLine: false,
@@ -52,6 +52,20 @@ const axisProps = {
   tick: { fill: 'var(--muted-foreground)', fontSize: 11 },
   tickMargin: 8,
 } as const;
+
+const barChartProps = {
+  margin: { top: 8, right: 24, bottom: 0, left: -16 },
+  barCategoryGap: '25%',
+} as const;
+
+const xAxisProps = {
+  ...axisProps,
+  dataKey: 'date',
+  interval: 'preserveStartEnd',
+  minTickGap: 16,
+} as const;
+
+const yAxisProps = { ...axisProps, width: 44 } as const;
 
 const gridProps = {
   vertical: false,
@@ -77,14 +91,15 @@ const limitLineProps = {
   stroke: overLimitColor,
   strokeWidth: 1,
   strokeDasharray: '3 3',
+  label: { value: '上限', position: 'right', fill: overLimitColor, fontSize: 10 },
 } as const;
 
-const limitLabel = {
-  value: '上限',
-  position: 'right',
+const overflowBarProps = {
   fill: overLimitColor,
-  fontSize: 10,
-} as const;
+  fillOpacity: 0.55,
+  name: '超過(翌日繰越)',
+  radius: [3, 3, 0, 0] as [number, number, number, number],
+};
 
 function calculateDebtVisual(intake: number, target: number, carry: number): DebtVisual {
   const safeTarget = Math.max(1, target);
@@ -168,24 +183,17 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
         </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 8, right: 24, bottom: 0, left: -16 }} barCategoryGap="25%">
+            <BarChart data={chartData} {...barChartProps}>
               <CartesianGrid {...gridProps} />
-              <XAxis dataKey="date" {...axisProps} interval="preserveStartEnd" minTickGap={16} />
-              <YAxis {...axisProps} width={44} />
+              <XAxis {...xAxisProps} />
+              <YAxis {...yAxisProps} />
               <Tooltip {...tooltipProps} />
-              <ReferenceLine y={pfcTargetTotal} {...limitLineProps} label={limitLabel} />
+              <ReferenceLine y={pfcTargetTotal} {...limitLineProps} />
               <Bar dataKey="proteinIntake" stackId="pfc" fill={nutrientColors.protein} name="タンパク質" />
               <Bar dataKey="fatIntake" stackId="pfc" fill={nutrientColors.fat} name="脂質" />
               <Bar dataKey="carbsIntake" stackId="pfc" fill={nutrientColors.carbs} name="炭水化物" />
               <Bar dataKey="pfcDebt" stackId="pfc" fill="var(--muted-foreground)" fillOpacity={0.18} name="負債(上限内)" />
-              <Bar
-                dataKey="pfcOverflow"
-                stackId="pfc"
-                fill={overLimitColor}
-                fillOpacity={0.55}
-                name="超過(翌日繰越)"
-                radius={[3, 3, 0, 0]}
-              />
+              <Bar dataKey="pfcOverflow" stackId="pfc" {...overflowBarProps} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -241,22 +249,15 @@ function NutrientChart({
       </CardHeader>
       <CardContent className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 24, bottom: 0, left: -16 }} barCategoryGap="25%">
+          <BarChart data={data} {...barChartProps}>
             <CartesianGrid {...gridProps} />
-            <XAxis dataKey="date" {...axisProps} interval="preserveStartEnd" minTickGap={16} />
-            <YAxis {...axisProps} width={44} />
+            <XAxis {...xAxisProps} />
+            <YAxis {...yAxisProps} />
             <Tooltip {...tooltipProps} formatter={(value: number) => [`${value.toFixed(1)} ${unit}`]} />
-            <ReferenceLine y={target} {...limitLineProps} label={limitLabel} />
+            <ReferenceLine y={target} {...limitLineProps} />
             <Bar dataKey={`${dataKeyPrefix}Intake`} stackId={dataKeyPrefix} fill={color} name="当日摂取" />
             <Bar dataKey={`${dataKeyPrefix}Debt`} stackId={dataKeyPrefix} fill={color} fillOpacity={0.25} name="負債(上限内)" />
-            <Bar
-              dataKey={`${dataKeyPrefix}Overflow`}
-              stackId={dataKeyPrefix}
-              fill={overLimitColor}
-              fillOpacity={0.55}
-              name="超過(翌日繰越)"
-              radius={[3, 3, 0, 0]}
-            />
+            <Bar dataKey={`${dataKeyPrefix}Overflow`} stackId={dataKeyPrefix} {...overflowBarProps} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
