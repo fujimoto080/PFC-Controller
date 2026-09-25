@@ -6,13 +6,13 @@ import { PFCStats } from '@/components/dashboard/PFCStats';
 import { WeeklyPFCStats } from '@/components/dashboard/WeeklyPFCStats';
 import { QuickAddButtons } from '@/components/dashboard/QuickAddButtons';
 import { PfcDebtCharts } from '@/components/dashboard/PfcDebtCharts';
-import { getTodayString } from '@/lib/storage/logs';
+import { formatDate } from '@/lib/utils';
 import { format, parseISO, isToday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { PageTitle } from '@/components/ui/page-title';
 
 export default function Home() {
-  const [selectedDate, setSelectedDate] = useState(getTodayString());
+  const [selectedDate, setSelectedDate] = useState(() => formatDate(new Date()));
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);

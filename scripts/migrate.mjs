@@ -54,18 +54,6 @@ const APP_SCHEMA_SQL = `
     favorite_food_ids_json JSONB
   );
 
-  CREATE TABLE IF NOT EXISTS pfc_daily_logs (
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    date TEXT NOT NULL,
-    total_protein DOUBLE PRECISION NOT NULL,
-    total_fat DOUBLE PRECISION NOT NULL,
-    total_carbs DOUBLE PRECISION NOT NULL,
-    total_calories DOUBLE PRECISION NOT NULL,
-    items_json JSONB NOT NULL,
-    activities_json JSONB,
-    PRIMARY KEY (user_id, date)
-  );
-
   CREATE TABLE IF NOT EXISTS pfc_foods (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     food_id TEXT NOT NULL,

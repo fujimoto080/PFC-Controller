@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { fetchBarcodeFood } from '@/lib/nutrition-client';
-import type { BarcodeFood } from '@/lib/barcode-mapping';
+import { fetchBarcodeFood } from '@/lib/client/api';
+import type { BarcodeFood } from '@/lib/barcode';
 
 interface UseBarcodeLookupOptions {
   /** マッピングが見つかったときにフォームへ流し込む。 */

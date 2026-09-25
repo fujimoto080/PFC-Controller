@@ -1,48 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { getWeeklyLog } from '@/lib/storage/logs';
-import { getSettings } from '@/lib/storage/settings';
-import { UserSettings, DEFAULT_TARGET } from '@/lib/types';
 import { CardHeader } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { Progress } from '@/components/ui/progress';
-import { roundPFC } from '@/lib/utils';
-import { progressPct, overLimitTextClass } from '@/lib/pfc';
-import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
+import { useAppState } from '@/lib/client/store';
+import { overLimitTextClass, progressPct, weeklyAverage } from '@/lib/pfc';
+import { formatDate, roundPFC } from '@/lib/utils';
 
 export function WeeklyPFCStats() {
-    const [weeklyData, setWeeklyData] = useState<{
-        protein: number;
-        fat: number;
-        carbs: number;
-        calories: number;
-        daysCount: number;
-    } | null>(null);
-    const [settings, setSettings] = useState<UserSettings>({
-        targetPFC: DEFAULT_TARGET,
-    });
-
-    // 初回マウント時に週次ログと設定を読み込む
-    useEffect(() => {
-        queueMicrotask(() => {
-            setWeeklyData(getWeeklyLog());
-            setSettings(getSettings());
-        });
-    }, []);
-
-    // pfc-update イベントで週次ログを再読み込み
-    const handlePfcUpdate = useCallback(() => {
-        queueMicrotask(() => {
-            setWeeklyData(getWeeklyLog());
-        });
-    }, []);
-    useSubscribeToPfcUpdate(handlePfcUpdate);
-
-    if (!weeklyData) return null;
-
-    const { protein, fat, carbs, calories } = weeklyData;
+    const { logs, settings } = useAppState();
+    const { protein, fat, carbs, calories } = useMemo(
+        () => weeklyAverage(logs, formatDate(new Date())),
+        [logs],
+    );
     const { targetPFC } = settings;
 
     return (

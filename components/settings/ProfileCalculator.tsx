@@ -22,7 +22,7 @@ interface ProfileCalculatorProps {
     onDurationChange?: (duration: number) => void;
 }
 
-export const calculateBMR = (weight: number, height: number, age: number, gender: 'male' | 'female'): number => {
+const calculateBMR = (weight: number, height: number, age: number, gender: 'male' | 'female'): number => {
     let bmr = 0;
     if (gender === 'male') {
         bmr = 10 * weight + 6.25 * height - 5 * age + 5;
@@ -32,11 +32,11 @@ export const calculateBMR = (weight: number, height: number, age: number, gender
     return roundPFC(bmr, 0);
 };
 
-export const calculateTDEE = (bmr: number, activityLevel: number): number => {
+const calculateTDEE = (bmr: number, activityLevel: number): number => {
     return roundPFC(bmr * activityLevel, 0);
 };
 
-export const calculateMinimumCalories = (gender: 'male' | 'female'): number => {
+const calculateMinimumCalories = (gender: 'male' | 'female'): number => {
     return gender === 'male' ? 1500 : 1200;
 };
 

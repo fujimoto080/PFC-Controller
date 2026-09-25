@@ -169,43 +169,41 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 
 ## 9. バーコード連携機能
 
-### 9.1 API
-- `GET /api/barcode?code=...` : バーコードから食品情報を取得
-- `POST /api/barcode` : バーコードへ食品情報を保存
-- `POST /api/mcp/intake` : URL接続MCPサーバー（`initialize`/`tools/list`/`tools/call`）
-  - `register_intakes` : 外部AIなどから摂取履歴を登録
-  - `list_intakes` : 登録済みの摂取履歴を取得（limit/startAt/endAt対応）
+### 9.1 API（要ログイン）
+- `GET /api/barcode?code=...` : バーコードから食品情報を取得（未登録は 404）
+- `POST /api/barcode` : `{ barcodes: string[], food }` でバーコードへ食品情報を保存
+- `GET /api/barcode/mappings` : 登録済みマッピング一覧
 
 ### 9.2 永続化
 - Upstash Redis を使用してバーコードマッピングを保存
 - 追加済みバーコードはインデックス管理し一覧取得可能
 
 ### 9.3 管理画面
-- ` /barcode-mappings ` で登録済みのバーコードとPFC情報を一覧表示
+- `/barcode-mappings` で登録済みのバーコードとPFC情報を一覧表示
 
 ---
 
 ## 10. データ保存・同期仕様
 
-### 10.1 端末ローカル保存
-主なローカルストレージキー:
-- `pfc_logs`（日次ログ）
-- `pfc_settings`（目標・プロフィール・お気に入り）
-- `pfc_food_dictionary`（食品辞書）
+### 10.1 サーバー保存
+- 食事記録・運動記録・食品辞書・設定・スポーツマスタは Postgres にユーザー単位で保存
+- 起動時に `GET /api/user-data` で全データを取得する
+
+### 10.2 クライアントストア（`lib/client/store.ts`）
+- 取得データは不変オブジェクトとして保持し、`useSyncExternalStore` で各画面が購読する
+- 更新操作（`lib/client/actions.ts`）は楽観的に即時反映し、API 失敗時はロールバックしてエラートーストを表示
+- 起動を速くするため `localStorage`（`pfc:cache:v2:<userId>`）にキャッシュし、次回起動時に即時表示した後サーバーの最新で置き換える
+
+### 10.3 その他のローカル保存
+- `pfc_add_food_form_draft`（追加フォームの入力途中データ）
 - `pfc_manage_foods_collapse_state`（食品管理画面の折りたたみ状態）
-
-### 10.2 画面更新
-- 保存後に `pfc-update` イベントを発火
-- 各画面フックがイベント購読して再描画
-
-### 10.3 初期食品データ
-- `data/generated_foods.json` の既定食品をユーザー辞書へマージ
 
 ---
 
 ## 11. PWA / アプリ配布関連
 
 - Web App Manifest により standalone 表示対応
+- Service Worker は Serwist（`app/sw.ts`、`/serwist/sw.js` で配信）。`/api/*` はキャッシュしない
 - アイコン（192 / 512）設定
 - Android TWA プロジェクトを同梱（`twa/`）
 
@@ -213,7 +211,7 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 
 ## 12. プライバシー・データ取り扱い
 
-- 食事ログや設定は主に端末内に保存
+- 食事ログや設定はログインユーザー単位でサーバーに保存
 - 取得情報は機能提供（計算・表示・入力補助）に利用
 - 法令等を除き第三者提供しない方針
 
@@ -221,6 +219,5 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 
 ## 13. 現在の制限・注意点
 
-- 写真解析機能はUIのみで、AI解析バックエンドは未接続
+- AI推定・OCRは `GEMINI_API_KEY` が設定された環境で動作
 - バーコード連携はAPI/Redis設定が有効な環境で動作
-- 端末ローカル保存のため、ブラウザデータ削除時に記録が消える

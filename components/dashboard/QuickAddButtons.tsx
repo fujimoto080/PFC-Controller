@@ -1,45 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { getFavoriteFoods } from '@/lib/storage/favorites';
-import { addFoodItem } from '@/lib/storage/logs';
-import { FoodItem } from '@/lib/types';
-import { Button } from '@/components/ui/button';
+import { useMemo } from 'react';
 import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { logFood } from '@/lib/client/actions';
+import { useAppState } from '@/lib/client/store';
 import { toast } from '@/lib/toast';
-import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
+import type { FoodItem } from '@/lib/types';
 
-const getCurrentTimestamp = () => Date.now();
+async function quickAdd(food: FoodItem) {
+  if (await logFood(food, Date.now())) {
+    toast.success(`${food.name}を追加しました`);
+  }
+}
 
 export function QuickAddButtons() {
-  const [favorites, setFavorites] = useState<FoodItem[]>([]);
-
-  // 初回マウント時にお気に入りを読み込む
-  useEffect(() => {
-    queueMicrotask(() => {
-      setFavorites(getFavoriteFoods());
-    });
-  }, []);
-
-  // pfc-update イベントで再読み込み
-  const handlePfcUpdate = useCallback(() => {
-    queueMicrotask(() => {
-      setFavorites(getFavoriteFoods());
-    });
-  }, []);
-  useSubscribeToPfcUpdate(handlePfcUpdate);
-
-  const handleQuickAdd = useCallback(async (food: FoodItem) => {
-    const timestamp = getCurrentTimestamp();
-    const { id: _id, ...rest } = food;
-    void _id;
-    try {
-      await addFoodItem({ ...rest, timestamp });
-      toast.success(`${food.name}を追加しました`);
-    } catch {
-      // addFoodItem 側でエラートーストを表示済み
-    }
-  }, []);
+  const { foods, settings } = useAppState();
+  const favorites = useMemo(
+    () =>
+      settings.favoriteFoodIds.flatMap((id) => foods.find((food) => food.id === id) ?? []),
+    [foods, settings.favoriteFoodIds],
+  );
 
   if (favorites.length === 0) {
     return (
@@ -63,7 +44,7 @@ export function QuickAddButtons() {
             key={food.id}
             variant="outline"
             className="flex-shrink-0 flex-col items-start h-auto py-3 px-4 min-w-[140px]"
-            onClick={() => { void handleQuickAdd(food); }}
+            onClick={() => { void quickAdd(food); }}
           >
             <div className="flex items-center gap-2 mb-1">
               <Plus className="h-4 w-4" />

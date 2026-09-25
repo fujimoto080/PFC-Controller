@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ApiError, defineRoute } from '@/lib/api/handler';
-import { callGemini } from '@/lib/api/gemini';
+import { callGemini } from '@/lib/server/gemini';
 import { roundPFC } from '@/lib/utils';
-
-const MODEL_NAME = 'gemini-2.0-flash';
 
 interface EstimatedNutrition {
   name: string;
@@ -49,7 +47,7 @@ function normalizeNutrition(data: Partial<EstimatedNutrition>): EstimatedNutriti
 }
 
 export const POST = defineRoute(
-  { label: 'AI栄養推定', body: bodySchema },
+  { label: 'AI栄養推定', auth: true, body: bodySchema },
   async (_req, { body }) => {
     const prompt = [
       'あなたは栄養計算アシスタントです。',
@@ -61,7 +59,6 @@ export const POST = defineRoute(
     ].join('\n');
 
     const generatedText = await callGemini({
-      model: MODEL_NAME,
       parts: [{ text: prompt }],
       temperature: 0.2,
       tools: [{ google_search: {} }],

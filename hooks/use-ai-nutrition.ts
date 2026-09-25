@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { toast } from '@/lib/toast';
-import { estimateNutrition, ocrImage } from '@/lib/nutrition-client';
-import type { BarcodeFood } from '@/lib/barcode-mapping';
+import { estimateNutrition, ocrImage } from '@/lib/client/api';
+import type { BarcodeFood } from '@/lib/barcode';
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

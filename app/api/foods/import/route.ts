@@ -2,8 +2,8 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { ApiError, defineRoute } from '@/lib/api/handler';
 import { foodImportSchema } from '@/lib/api/schemas';
+import { getUserIdByEmail } from '@/lib/server/db';
 import { upsertFoodsBulk } from '@/lib/server/foods';
-import { getUserIdByEmail } from '@/lib/server/users';
 
 // 大量件数をまとめて処理するため Node ランタイム固定・タイムアウト延長。
 export const runtime = 'nodejs';
@@ -25,7 +25,7 @@ function tokensMatch(a: string, b: string): boolean {
  *   body: { email, foods: [{ id, name, protein, fat, carbs, calories, store?, storeGroup?, image?, timestamp? }] }
  */
 export const POST = defineRoute(
-  { label: '食品の一括インポート', body: foodImportSchema },
+  { label: '食品の一括インポート', auth: false, body: foodImportSchema },
   async (request, { body }) => {
     const expected = process.env.SEED_API_TOKEN?.trim();
     if (!expected) {

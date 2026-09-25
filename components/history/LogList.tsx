@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Edit2, ChevronDown, ChevronUp } from 'lucide-react';
-import { getAllLogItems, addFoodItem } from '@/lib/storage/logs';
-import { FoodItem } from '@/lib/types';
-import { cn } from '@/lib/utils';
-import { format, isToday } from 'date-fns';
+import { logFood } from '@/lib/client/actions';
+import { useAppState } from '@/lib/client/store';
+import { sumPFC } from '@/lib/pfc';
+import type { FoodItem, PFC } from '@/lib/types';
+import { cn, formatDate } from '@/lib/utils';
+import { format, isToday, parseISO } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,8 +17,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { toast } from '@/lib/toast';
 import { EditLogItemDrawer } from './EditLogItemDrawer';
 import { AddFoodForm } from '@/components/input/AddFoodForm';
-
-const getCurrentTimestamp = () => Date.now();
+import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 
 const TIME_OF_DAY_GRADIENT_MAP = {
   morning:
@@ -38,126 +39,65 @@ function getTimeOfDayGradient(timestamp: number): string {
 }
 
 interface GroupedFoodItem {
-  name: string;
-  count: number;
-  totalCalories: number;
-  totalProtein: number;
-  totalFat: number;
-  totalCarbs: number;
-  items: FoodItem[];
-  // グループのキー（食品名+PFC値）
+  // 食品名 + PFC 値が同じ記録をまとめる
   groupKey: string;
+  name: string;
+  items: FoodItem[];
+  total: PFC;
 }
 
-// PFC表示用の小さなコンポーネント
-const PFCLine = ({ p, f, c, className }: { p: number, f: number, c: number, className?: string }) => (
-    <div className={cn("text-muted-foreground flex gap-2", className)}>
-        <span>P:{p.toFixed(1)}</span>
-        <span>F:{f.toFixed(1)}</span>
-        <span>C:{c.toFixed(1)}</span>
-    </div>
-);
+async function reRegister(item: FoodItem) {
+  if (await logFood(item, Date.now())) {
+    toast.success(`${item.name}を再登録しました`);
+  }
+}
 
 export function LogList() {
-  const [allItems, setAllItems] = useState<FoodItem[]>([]);
+  const { logs } = useAppState();
+  const allItems = useMemo(
+    () => Object.values(logs).flatMap((log) => log.items).sort((a, b) => b.timestamp - a.timestamp),
+    [logs],
+  );
   const [displayCount, setDisplayCount] = useState(100);
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
-
-  const refreshItems = useCallback(() => {
-    setAllItems(getAllLogItems());
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      refreshItems();
-    });
-  }, [refreshItems]);
-
-  const handleEditClick = (item: FoodItem) => {
-    setEditingItem(item);
-    setIsEditDrawerOpen(true);
-  };
-
-  const handleCallClick = (item: FoodItem) => {
-    // Open drawer with this item's data to allow editing
-    setCallingItem(item);
-    setIsAddDrawerOpen(true);
-  };
-
-  const handleReRegisterClick = async (item: FoodItem) => {
-    const { id: _id, ...rest } = item;
-    void _id;
-    try {
-      await addFoodItem({ ...rest, timestamp: getCurrentTimestamp() });
-      toast.success(`${item.name}を再登録しました`);
-      refreshItems();
-    } catch {
-      // addFoodItem 側でエラートーストを表示済み
-    }
-  };
-
-  const handleAddSuccess = () => {
-    setIsAddDrawerOpen(false);
-    setCallingItem(null);
-    refreshItems();
-  };
-
   const [callingItem, setCallingItem] = useState<FoodItem | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const toggleGroup = (groupKey: string) => {
-    setExpandedGroups(prev => {
+    setExpandedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(groupKey)) {
-        next.delete(groupKey);
-      } else {
-        next.add(groupKey);
-      }
+      if (!next.delete(groupKey)) next.add(groupKey);
       return next;
     });
   };
 
-  // Group items by date, then by food (name + PFC)
-  const groupedItems = useMemo(() => {
-    const dateGroups: Record<string, Record<string, GroupedFoodItem>> = {};
-    
-    allItems.slice(0, displayCount).forEach((item) => {
-      const dateKey = new Date(item.timestamp).toISOString().split('T')[0] ?? '';
-      // 食品名とPFC値でグループキーを作成
+  // 日付 → 食品(名前 + PFC) の2階層にまとめる。日付は新しい順。
+  const dateGroups = useMemo(() => {
+    const byDate = new Map<string, Map<string, FoodItem[]>>();
+    for (const item of allItems.slice(0, displayCount)) {
+      const dateKey = formatDate(item.timestamp);
       const groupKey = `${item.name}_${item.protein}_${item.fat}_${item.carbs}`;
-
-      const dayGroup = (dateGroups[dateKey] ??= {});
-      const group = (dayGroup[groupKey] ??= {
-        name: item.name,
-        count: 0,
-        totalCalories: 0,
-        totalProtein: 0,
-        totalFat: 0,
-        totalCarbs: 0,
-        items: [],
-        groupKey,
-      });
-      group.count++;
-      group.totalCalories += item.calories;
-      group.totalProtein += item.protein;
-      group.totalFat += item.fat;
-      group.totalCarbs += item.carbs;
-      group.items.push(item);
-    });
-    
-    return dateGroups;
+      const day = byDate.get(dateKey) ?? new Map<string, FoodItem[]>();
+      byDate.set(dateKey, day);
+      day.set(groupKey, [...(day.get(groupKey) ?? []), item]);
+    }
+    return Array.from(byDate, ([dateKey, groups]) => ({
+      dateKey,
+      groups: Array.from(
+        groups,
+        ([groupKey, items]): GroupedFoodItem => ({
+          groupKey,
+          name: items[0]?.name ?? '',
+          items,
+          total: sumPFC(items),
+        }),
+      ),
+    }));
   }, [allItems, displayCount]);
-
-  const sortedDateKeys = useMemo(() => {
-    return Object.keys(groupedItems).sort((a, b) => b.localeCompare(a));
-  }, [groupedItems]);
 
   return (
     <>
-      <Drawer open={isAddDrawerOpen} onOpenChange={(open) => {
-        setIsAddDrawerOpen(open);
+      <Drawer open={callingItem !== null} onOpenChange={(open) => {
         if (!open) setCallingItem(null);
       }}>
         <DrawerContent className="h-[90vh]">
@@ -165,7 +105,7 @@ export function LogList() {
             <DrawerTitle>データを追加</DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-8 overflow-y-auto">
-            <AddFoodForm onSuccess={handleAddSuccess} initialData={callingItem ?? undefined} />
+            <AddFoodForm onSuccess={() => { setCallingItem(null); }} initialData={callingItem ?? undefined} />
           </div>
         </DrawerContent>
       </Drawer>
@@ -177,9 +117,8 @@ export function LogList() {
       ) : (
         <ScrollArea className="h-[calc(100vh-160px)]">
           <div className="space-y-6 px-1 pb-20">
-            {sortedDateKeys.map((dateKey) => {
-              const dateItems = groupedItems[dateKey] ?? {};
-              const date = new Date(dateKey);
+            {dateGroups.map(({ dateKey, groups }) => {
+              const date = parseISO(dateKey);
               const formattedDate = format(date, 'M/d(eee)', { locale: ja });
               const isItemToday = isToday(date);
 
@@ -192,9 +131,9 @@ export function LogList() {
                       {isItemToday ? `今日 - ${formattedDate}` : formattedDate}
                     </h2>
                     <div className="space-y-2">
-                      {Object.values(dateItems).map((group) => {
+                      {groups.map((group) => {
                         const isExpanded = expandedGroups.has(group.groupKey);
-                        const isSingleItem = group.count === 1;
+                        const isSingleItem = group.items.length === 1;
                         const firstItem = group.items[0];
                         if (!firstItem) return null;
 
@@ -213,12 +152,12 @@ export function LogList() {
                                     {group.name}
                                     {!isSingleItem && (
                                       <span className="text-muted-foreground ml-2 text-xs font-normal">
-                                        ×{group.count}
+                                        ×{group.items.length}
                                       </span>
                                     )}
                                   </h3>
                                   <div className="text-muted-foreground mt-0.5 text-[10px]">
-                                    {group.totalCalories} kcal
+                                    {group.total.calories} kcal
                                   </div>
                                 </div>
                                 {!isSingleItem && (
@@ -236,14 +175,14 @@ export function LogList() {
                                 )}
                               </div>
 
-                              <PFCLine p={group.totalProtein} f={group.totalFat} c={group.totalCarbs} className="text-xs" />
+                              <PfcMacroLine food={group.total} showCalories={false} precision={1} />
 
                               {/* グループ全体の操作ボタン */}
                               <div className="flex gap-2 pt-1">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => { handleCallClick(firstItem); }}
+                                  onClick={() => { setCallingItem(firstItem); }}
                                   className="h-8 flex-1 text-xs"
                                 >
                                   呼び出し
@@ -251,14 +190,14 @@ export function LogList() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => { void handleReRegisterClick(firstItem); }}
+                                  onClick={() => { void reRegister(firstItem); }}
                                   className="h-8 flex-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
                                 >
                                   再登録
                                 </Button>
                                 {isSingleItem && (
                                   <IconButton
-                                    onClick={() => { handleEditClick(firstItem); }}
+                                    onClick={() => { setEditingItem(firstItem); }}
                                     className="h-8 w-8 text-muted-foreground"
                                     title="編集"
                                   >
@@ -283,10 +222,10 @@ export function LogList() {
                                           <div className="text-xs text-muted-foreground">
                                             {format(new Date(item.timestamp), 'HH:mm')} • {item.calories} kcal
                                           </div>
-                                          <PFCLine p={item.protein} f={item.fat} c={item.carbs} className="text-[10px] mt-1" />
+                                          <PfcMacroLine food={item} showCalories={false} precision={1} className="mt-1 text-[10px]" />
                                         </div>
                                         <IconButton
-                                          onClick={() => { handleEditClick(item); }}
+                                          onClick={() => { setEditingItem(item); }}
                                           className="h-7 w-7 text-muted-foreground"
                                           title="編集"
                                         >
@@ -321,12 +260,7 @@ export function LogList() {
         </ScrollArea>
       )}
 
-      <EditLogItemDrawer
-        item={editingItem}
-        open={isEditDrawerOpen}
-        onOpenChange={setIsEditDrawerOpen}
-        onSuccess={refreshItems}
-      />
+      <EditLogItemDrawer item={editingItem} onClose={() => { setEditingItem(null); }} />
     </>
   );
 }

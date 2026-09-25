@@ -1,14 +1,11 @@
-import { z } from 'zod';
-import { NextResponse } from 'next/server';
-import { defineRoute } from '@/lib/api/handler';
-import { replaceSettings } from '@/lib/persistent-store';
+import { defineRoute, noContent } from '@/lib/api/handler';
+import { settingsSchema } from '@/lib/api/schemas';
+import { replaceSettings } from '@/lib/server/settings';
 
-const bodySchema = z.object({ settings: z.record(z.string(), z.unknown()) });
-
-export const POST = defineRoute(
-  { label: '設定', auth: true, body: bodySchema },
+export const PUT = defineRoute(
+  { label: '設定の保存', auth: true, body: settingsSchema },
   async (_req, { userId, body }) => {
-    await replaceSettings(userId, body.settings);
-    return NextResponse.json({ ok: true });
+    await replaceSettings(userId, body);
+    return noContent();
   },
 );

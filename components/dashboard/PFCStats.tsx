@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addDays, format, parseISO } from 'date-fns';
-import { usePfcData } from '@/hooks/use-pfc-data';
+import { useAppState } from '@/lib/client/store';
+import { activityAdjustedCalorieTarget, computePfcDebt } from '@/lib/pfc';
+import { createEmptyDailyLog } from '@/lib/types';
 import { roundPFC } from '@/lib/utils';
-import { getAdjustedCalorieTarget } from '@/lib/storage/logs';
 import { IconButton } from '@/components/ui/icon-button';
 import { StatRow } from './StatRow';
 import { DebtStackedBars } from './DebtStackedBars';
@@ -20,12 +21,17 @@ interface PFCStatsProps {
 }
 
 export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
-  const { log: data, settings, debt } = usePfcData(selectedDate);
+  const { logs, settings, sports } = useAppState();
   const [direction, setDirection] = useState(0);
+  const { targetPFC } = settings;
+  const data = logs[selectedDate] ?? createEmptyDailyLog(selectedDate);
+  const debt = useMemo(
+    () => computePfcDebt(selectedDate, targetPFC, logs),
+    [selectedDate, targetPFC, logs],
+  );
 
   const { protein, fat, carbs, calories } = data.total;
-  const { targetPFC } = settings;
-  const boostedCalorieTarget = getAdjustedCalorieTarget(selectedDate);
+  const boostedCalorieTarget = activityAdjustedCalorieTarget(targetPFC.calories, data);
   const adjustedCalorieTarget = Math.max(0, boostedCalorieTarget - debt.calories);
   const remainingCalories = Math.max(0, adjustedCalorieTarget - calories);
   const activityBonusCalories = Math.max(0, boostedCalorieTarget - targetPFC.calories);
@@ -153,8 +159,8 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
 
           <SportActivityControls
             date={selectedDate}
-            sports={settings.sports ?? []}
-            activities={data.activities ?? []}
+            sports={sports}
+            activities={data.activities}
           />
 
           <Card>

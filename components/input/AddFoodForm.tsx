@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Camera, Eraser, Loader2, Plus, ScanBarcode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,14 +12,14 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { addFoodItem } from '@/lib/storage/logs';
-import { addFoodToDictionary } from '@/lib/storage/foods';
-import { FoodItem } from '@/lib/types';
-import { toFoodInput } from '@/lib/pfc';
+import { addFood, addFoodItem } from '@/lib/client/actions';
+import { useAppState } from '@/lib/client/store';
+import type { FoodItem } from '@/lib/types';
+import { toFoodInput } from '@/lib/food-form';
+import { collectStores } from '@/lib/store-sections';
 import { PfcMacroInputs, DatalistInput } from '@/components/input/PfcFieldsGroup';
 import { EatDateTimeCard } from '@/components/input/EatDateTimeFields';
 import { generateId } from '@/lib/utils';
-import { useFoodDictionary } from '@/hooks/use-food-dictionary';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { useBarcodeLookup } from '@/hooks/use-barcode-lookup';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
@@ -27,8 +27,8 @@ import { clearFormDraft, useFormDraft } from '@/hooks/use-form-draft';
 import { toast } from '@/lib/toast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { getSimilarFoodSuggestions } from '@/lib/food-suggestions';
-import { saveBarcodeMappingRequest } from '@/lib/barcode-client';
-import type { BarcodeFood } from '@/lib/barcode-mapping';
+import { saveBarcodeMapping } from '@/lib/client/api';
+import type { BarcodeFood } from '@/lib/barcode';
 
 export interface AddFoodFormProps {
   onSuccess?: () => void;
@@ -48,7 +48,7 @@ interface ManualFoodFormValues {
 const FORM_DRAFT_STORAGE_KEY = 'pfc_add_food_form_draft';
 
 interface AddFoodFormDraft {
-  form: ManualFoodFormValues;
+  form: Partial<ManualFoodFormValues>;
   aiInputText: string;
   saveToDictionary: boolean;
   activeTab: string;
@@ -57,7 +57,8 @@ interface AddFoodFormDraft {
 export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('manual');
-  const { foods, uniqueStores } = useFoodDictionary();
+  const { foods, logs } = useAppState();
+  const uniqueStores = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const [saveToDictionary, setSaveToDictionary] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
@@ -72,7 +73,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     reset,
     getValues,
     setValue,
-    watch,
+    control,
     formState: { isSubmitting },
   } = useForm<ManualFoodFormValues>({
       defaultValues: initialData
@@ -84,11 +85,9 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
             calories: initialData.calories,
             store: initialData.store,
           }
-        : undefined,
+        : { name: '' },
     });
-  const watchedValues = watch();
-  // 型上は string だが、defaultValues 未設定時は watch() が undefined を返し得るためガードする。
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const watchedValues = useWatch({ control });
   const watchedName = watchedValues.name ?? '';
   const similarFoods = useMemo(
     () => getSimilarFoodSuggestions(foods, watchedName),
@@ -192,24 +191,19 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     const item = toFoodInput(data, getSelectedTimestamp());
     const barcode = scannedBarcode;
 
-    // addFoodItem 内で即座に楽観的にUIへ反映される。API 応答は待たずに遷移し、
-    // 失敗時は runOptimistic 側がエラートースト表示＋ロールバックまで面倒を見る。
-    void addFoodItem(item).catch(() => {
-      // エラートースト/ロールバックは addFoodItem 内で処理済み。
-    });
+    // 楽観的に即時反映されるため API 応答は待たずに遷移する。失敗時のロールバックとトーストは actions 側で行う。
+    void addFoodItem(item);
 
     if (saveToDictionary) {
-      void addFoodToDictionary({ ...item, id: generateId() })
-        .then(() => toast.success('食品リストにも保存しました'))
-        .catch(() => {
-          // addFoodToDictionary 側でエラートーストを表示済み。
-        });
+      void addFood({ ...item, id: generateId() }).then((ok) => {
+        if (ok) toast.success('食品リストにも保存しました');
+      });
     }
 
     toast.success(item.name + 'を追加しました');
 
     if (barcode) {
-      void saveBarcodeMappingRequest([barcode], {
+      void saveBarcodeMapping([barcode], {
         name: item.name,
         protein: item.protein,
         fat: item.fat,
@@ -305,7 +299,7 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
         setEatTime={setEatTime}
       />
 
-      <Tabs defaultValue="manual" onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="manual">手動</TabsTrigger>
           <TabsTrigger value="photo">写真</TabsTrigger>

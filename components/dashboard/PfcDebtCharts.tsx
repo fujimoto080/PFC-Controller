@@ -13,8 +13,8 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLogs } from '@/lib/storage/logs';
-import { usePfcData } from '@/hooks/use-pfc-data';
+import { useAppState } from '@/lib/client/store';
+import { computePfcDebt } from '@/lib/pfc';
 
 interface PfcDebtChartsProps {
   referenceDate: string;
@@ -121,10 +121,10 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
     const reference = parseISO(referenceDate);
     return format(addDays(reference, -(days - 1)), 'yyyy-MM-dd');
   }, [referenceDate, days]);
-  const { settings, debt } = usePfcData(windowStartDate);
+  const { logs, settings } = useAppState();
 
   const chartData = useMemo(() => {
-    const logs = getLogs();
+    const debt = computePfcDebt(windowStartDate, settings.targetPFC, logs);
     const start = parseISO(windowStartDate);
     const data: Record<string, number | string>[] = [];
 
@@ -169,7 +169,7 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
     }
 
     return data;
-  }, [days, windowStartDate, settings, debt]);
+  }, [days, windowStartDate, settings, logs]);
 
   if (chartData.length === 0) return null;
 
@@ -253,7 +253,7 @@ function NutrientChart({
             <CartesianGrid {...gridProps} />
             <XAxis {...xAxisProps} />
             <YAxis {...yAxisProps} />
-            <Tooltip {...tooltipProps} formatter={(value: number) => [`${value.toFixed(1)} ${unit}`]} />
+            <Tooltip {...tooltipProps} formatter={(value) => [`${Number(value).toFixed(1)} ${unit}`]} />
             <ReferenceLine y={target} {...limitLineProps} />
             <Bar dataKey={`${dataKeyPrefix}Intake`} stackId={dataKeyPrefix} fill={color} name="当日摂取" />
             <Bar dataKey={`${dataKeyPrefix}Debt`} stackId={dataKeyPrefix} fill={color} fillOpacity={0.25} name="負債(上限内)" />

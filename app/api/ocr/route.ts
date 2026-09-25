@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ApiError, defineRoute } from '@/lib/api/handler';
-import { callGemini } from '@/lib/api/gemini';
-
-const MODEL_NAME = 'gemini-2.0-flash';
+import { callGemini } from '@/lib/server/gemini';
 
 const bodySchema = z.object({
   imageDataUrl: z.string().trim().min(1, '画像データが指定されていません'),
@@ -18,12 +16,11 @@ function parseDataUrl(imageDataUrl: string): { mimeType: string; base64Data: str
 }
 
 export const POST = defineRoute(
-  { label: 'OCR', body: bodySchema },
+  { label: 'OCR', auth: true, body: bodySchema },
   async (_req, { body }) => {
     const { mimeType, base64Data } = parseDataUrl(body.imageDataUrl);
 
     const text = await callGemini({
-      model: MODEL_NAME,
       parts: [
         {
           text: [

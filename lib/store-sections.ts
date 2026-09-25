@@ -1,4 +1,4 @@
-import type { FoodItem } from './types';
+import type { FoodItem, Logs } from './types';
 
 export const STORAGE_KEY_MANAGE_FOODS_COLLAPSE = 'pfc_manage_foods_collapse_state';
 
@@ -36,8 +36,8 @@ export interface StoreGroupSection {
   }[];
 }
 
-export const getStoreName = (food: FoodItem) => food.store ?? 'その他';
-export const getStoreGroupName = (food: FoodItem) => food.storeGroup ?? '未分類';
+const getStoreName = (food: FoodItem) => food.store ?? 'その他';
+const getStoreGroupName = (food: FoodItem) => food.storeGroup ?? '未分類';
 
 /** 食品リストを 店舗 → 店内グループ の 2 階層セクションに畳み込む純関数。 */
 export function buildStoreSections(foods: FoodItem[]): StoreGroupSection[] {
@@ -63,4 +63,13 @@ export function buildStoreSections(foods: FoodItem[]): StoreGroupSection[] {
   });
 
   return sections;
+}
+
+/** 食品辞書と食事記録に登場する店名を重複なしで昇順に返す。 */
+export function collectStores(foods: FoodItem[], logs: Logs): string[] {
+  const stores = new Set<string>();
+  for (const food of [...foods, ...Object.values(logs).flatMap((log) => log.items)]) {
+    if (food.store) stores.add(food.store);
+  }
+  return Array.from(stores).sort();
 }

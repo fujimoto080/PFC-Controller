@@ -18,30 +18,23 @@ import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FoodItem } from '@/lib/types';
-import { safePfcNumber } from '@/lib/pfc';
+import type { FoodItem } from '@/lib/types';
+import { toFoodInput, type PfcFormValues } from '@/lib/food-form';
 import { PfcMacroInputs } from '@/components/input/PfcFieldsGroup';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
-import { updateLogItem, deleteLogItem } from '@/lib/storage/logs';
+import { deleteLogItem, updateLogItem } from '@/lib/client/actions';
 
 interface EditLogItemDrawerProps {
     item: FoodItem | null;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onSuccess: () => void;
+    onClose: () => void;
 }
 
-export function EditLogItemDrawer({
-    item,
-    open,
-    onOpenChange,
-    onSuccess,
-}: EditLogItemDrawerProps) {
+export function EditLogItemDrawer({ item, onClose }: EditLogItemDrawerProps) {
     const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } =
         useEatDateTime(item?.timestamp);
 
-    const { register, handleSubmit, reset } = useForm<FoodItem>();
+    const { register, handleSubmit, reset } = useForm<PfcFormValues>();
 
     useEffect(() => {
         if (item) {
@@ -56,45 +49,28 @@ export function EditLogItemDrawer({
         }
     }, [item, reset]);
 
-    const onSubmit = async (data: FoodItem) => {
+    const onSubmit = async (data: PfcFormValues) => {
         if (!item) return;
-
-        const updatedItem: FoodItem = {
+        const updated: FoodItem = {
             ...item,
-            name: data.name,
-            protein: safePfcNumber(data.protein),
-            fat: safePfcNumber(data.fat),
-            carbs: safePfcNumber(data.carbs),
-            calories: safePfcNumber(data.calories),
-            store: data.store === '' ? undefined : data.store,
-            timestamp: getSelectedTimestamp(),
+            ...toFoodInput({ ...data, storeGroup: item.storeGroup }, getSelectedTimestamp()),
         };
-
-        try {
-            await updateLogItem(item.timestamp, updatedItem);
+        if (await updateLogItem(updated)) {
             toast.success('更新しました');
-            onSuccess();
-            onOpenChange(false);
-        } catch {
-            // updateLogItem 側でエラートーストを表示済み
+            onClose();
         }
     };
 
     const handleDelete = async () => {
-        if (!item) return;
-        if (confirm('この記録を削除しますか？')) {
-            try {
-                await deleteLogItem(item.id, item.timestamp);
-                toast.success('削除しました');
-                onOpenChange(false);
-            } catch {
-                // deleteLogItem 側でエラートーストを表示済み
-            }
+        if (!item || !confirm('この記録を削除しますか？')) return;
+        if (await deleteLogItem(item.id)) {
+            toast.success('削除しました');
+            onClose();
         }
     };
 
     return (
-        <Drawer open={open} onOpenChange={onOpenChange}>
+        <Drawer open={item !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
             <DrawerContent>
                 <div className="mx-auto w-full max-w-lg">
                     <DrawerHeader>
