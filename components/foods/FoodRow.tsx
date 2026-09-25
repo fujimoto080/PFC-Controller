@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Plus, Star, Trash } from 'lucide-react';
+import { Pencil, Star, Trash } from 'lucide-react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Checkbox } from '@/components/ui/checkbox';
 import { IconButton } from '@/components/ui/icon-button';
@@ -14,7 +14,6 @@ interface FoodRowProps {
   /** 選択モードでなければ null */
   selected: boolean | null;
   onToggleSelect: () => void;
-  onAddLog: () => void;
   onToggleFavorite: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -27,7 +26,6 @@ export function FoodRow({
   isFavorite,
   selected,
   onToggleSelect,
-  onAddLog,
   onToggleFavorite,
   onEdit,
   onDelete,
@@ -68,9 +66,6 @@ export function FoodRow({
         </div>
       ) : (
         <div className="flex gap-1">
-          <IconButton onClick={onAddLog} aria-label="食事記録に追加">
-            <Plus className="h-4 w-4" />
-          </IconButton>
           <IconButton onClick={onToggleFavorite} aria-label="お気に入り">
             <Star
               className={cn(

@@ -42,6 +42,12 @@ export function shiftDate(date: string, days: number): string {
   return formatDate(toJstTimestamp(date) + days * DAY_MS);
 }
 
+/** 記録の既定時刻。今日なら現在時刻、それ以外はその日の正午(JST)。 */
+export function defaultTimestampFor(date: string): number {
+  const now = Date.now();
+  return formatDate(now) === date ? now : toJstTimestamp(date, '12:00');
+}
+
 export function roundPFC(value: number, digits = 2): number {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;

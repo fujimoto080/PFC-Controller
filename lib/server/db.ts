@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Pool, type PoolClient } from 'pg';
+import { Pool } from 'pg';
 
 let pool: Pool | null = null;
 
@@ -13,22 +13,6 @@ export function getPool(): Pool {
     pool = new Pool({ connectionString: databaseUrl });
   }
   return pool;
-}
-
-export async function transaction(
-  fn: (client: PoolClient) => Promise<void>,
-): Promise<void> {
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await fn(client);
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
 }
 
 /** メールアドレスからユーザー ID を引く。存在しなければ null。 */

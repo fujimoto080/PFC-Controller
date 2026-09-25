@@ -8,6 +8,7 @@ import {
 } from 'html5-qrcode';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { isValidBarcode } from '@/lib/barcode-validation';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
@@ -60,6 +61,7 @@ export function BarcodeScanner({
   onClose,
 }: BarcodeScannerProps) {
   const [feedback, setFeedback] = useState<ScanFeedback>(null);
+  const [manualCode, setManualCode] = useState('');
   // マウント時に一度だけ起動するため、最新のコールバックは ref 経由で参照する
   const callbacksRef = useRef({ onScanSuccess, onClose });
   useEffect(() => {
@@ -160,6 +162,27 @@ export function BarcodeScanner({
               feedback && FEEDBACK_CLASS[feedback],
             )}
           />
+          <form
+            className="mt-4 flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const code = manualCode.trim();
+              if (code) onScanSuccess(code);
+            }}
+          >
+            <Input
+              value={manualCode}
+              onChange={(e) => {
+                setManualCode(e.target.value);
+              }}
+              inputMode="numeric"
+              placeholder="読み取れないときは番号を入力"
+              aria-label="バーコード番号"
+            />
+            <Button type="submit" variant="secondary">
+              照会
+            </Button>
+          </form>
         </div>
       </div>
     </div>

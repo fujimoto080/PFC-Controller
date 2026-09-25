@@ -1,4 +1,9 @@
-import { cn, formatDate } from '@/lib/utils';
+import {
+  cn,
+  defaultTimestampFor,
+  formatDate,
+  toJstTimestamp,
+} from '@/lib/utils';
 
 describe('cn', () => {
   it('should merge class names correctly', () => {
@@ -46,5 +51,20 @@ describe('formatDate (JST fixed)', () => {
     // At UTC midnight, in JST it is 09:00 of the same calendar day.
     const utc = Date.UTC(2026, 0, 1, 0, 0, 0);
     expect(formatDate(new Date(utc))).toBe('2026-01-01');
+  });
+});
+
+describe('defaultTimestampFor', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('今日なら現在時刻、それ以外はその日の正午(JST)', () => {
+    const now = toJstTimestamp('2026-09-25', '08:30');
+    jest.useFakeTimers({ now });
+    expect(defaultTimestampFor('2026-09-25')).toBe(now);
+    expect(defaultTimestampFor('2026-09-24')).toBe(
+      toJstTimestamp('2026-09-24', '12:00'),
+    );
   });
 });

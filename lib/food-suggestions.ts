@@ -1,4 +1,5 @@
-import { FoodItem } from '@/lib/types';
+import { buildFoodMatchKey } from '@/lib/barcode';
+import type { FoodItem, Logs } from '@/lib/types';
 
 const MAX_SUGGESTIONS = 5;
 
@@ -65,4 +66,30 @@ export function getSimilarFoodSuggestions(
     .filter((food) => food.similarityScore >= 0.5)
     .sort((a, b) => b.similarityScore - a.similarityScore)
     .slice(0, MAX_SUGGESTIONS);
+}
+
+const MAX_CANDIDATES = 30;
+
+/**
+ * 記録追加で選べる食品候補。過去の記録（新しい順）→ 食品リストの順に並べ、同じ内容のものは 1 件にまとめる。
+ * query が空なら全件、そうでなければ食品名に query を含むものに絞る。
+ */
+export function searchFoodCandidates(
+  foods: FoodItem[],
+  logs: Logs,
+  query: string,
+): FoodItem[] {
+  const normalizedQuery = normalizeFoodName(query.trim());
+  const history = Object.values(logs)
+    .flatMap((log) => log.items)
+    .sort((a, b) => b.timestamp - a.timestamp);
+
+  const candidates = new Map<string, FoodItem>();
+  for (const food of [...history, ...foods]) {
+    if (!normalizeFoodName(food.name).includes(normalizedQuery)) continue;
+    const key = buildFoodMatchKey(food);
+    if (!candidates.has(key)) candidates.set(key, food);
+    if (candidates.size >= MAX_CANDIDATES) break;
+  }
+  return [...candidates.values()];
 }

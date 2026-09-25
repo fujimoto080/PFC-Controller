@@ -1,20 +1,18 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { BulkStoreEditor } from '@/components/foods/BulkStoreEditor';
 import { CollapsibleSection } from '@/components/foods/CollapsibleSection';
 import { FoodEditor } from '@/components/foods/FoodEditor';
 import { FoodRow } from '@/components/foods/FoodRow';
-import { EatDateTimeCard } from '@/components/input/EatDateTimeFields';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { useBarcodesByFood } from '@/hooks/use-barcodes-by-food';
 import { useCollapsedKeys } from '@/hooks/use-collapsed-keys';
-import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import {
   deleteFood,
-  logFood,
   toggleFavoriteFood,
   updateFood,
 } from '@/lib/client/actions';
@@ -37,13 +35,12 @@ const COLLAPSED_STORAGE_KEY = 'pfc_manage_foods_collapsed';
 const storeKey = (store: string) => `store:${store}`;
 const groupKey = (store: string, group: string) => `group:${store}::${group}`;
 
-export default function ManageFoodsPage() {
+export default function FoodsPage() {
   const { foods, logs, settings } = useAppState();
   const [searchQuery, setSearchQuery] = useState('');
   const [editor, setEditor] = useState<EditorState>(null);
   const [selectedFoodIds, setSelectedFoodIds] = useState<string[] | null>(null);
   const collapsed = useCollapsedKeys(COLLAPSED_STORAGE_KEY);
-  const eatAt = useEatDateTime();
   const { barcodesOf, addBarcodes } = useBarcodesByFood();
 
   const storeOptions = useMemo(() => collectStores(foods, logs), [foods, logs]);
@@ -58,12 +55,6 @@ export default function ManageFoodsPage() {
   const handleDelete = (food: FoodItem) => {
     if (confirm(`「${food.name}」を削除してもよろしいですか？`)) {
       void deleteFood(food.id);
-    }
-  };
-
-  const handleAddLog = async (food: FoodItem) => {
-    if (await logFood(food, eatAt.timestamp)) {
-      toast.success(`${food.name}を食事記録に追加しました`);
     }
   };
 
@@ -83,8 +74,8 @@ export default function ManageFoodsPage() {
 
   if (editor) {
     return (
-      <div className="space-y-6 pb-28">
-        <PageTitle>食品データ管理</PageTitle>
+      <div className="space-y-6">
+        <PageTitle>食品リスト</PageTitle>
         <div className="px-4">
           <FoodEditor
             key={editor.food?.id ?? 'new'}
@@ -103,44 +94,45 @@ export default function ManageFoodsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-28">
-      <PageTitle>食品データ管理</PageTitle>
+    <div className="space-y-6">
+      <PageTitle>食品リスト</PageTitle>
 
       <div className="space-y-4 px-4">
-        <EatDateTimeCard value={eatAt.value} onChange={eatAt.onChange} />
-
         <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-20 -mx-4 space-y-2 px-4 py-2 backdrop-blur">
           <div className="flex gap-2">
-            {selectedFoodIds === null && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectedFoodIds([]);
-                }}
-              >
-                店舗/グループ変更
-              </Button>
-            )}
+            <Input
+              placeholder="食品を検索..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+              }}
+            />
             <Button
               onClick={() => {
                 setEditor({ food: null });
               }}
-              aria-label="新規追加"
             >
-              +
+              <Plus /> 新規
             </Button>
           </div>
-          <Input
-            placeholder="食品を検索..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-            }}
-          />
+          {selectedFoodIds === null && (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto px-0"
+              onClick={() => {
+                setSelectedFoodIds([]);
+              }}
+            >
+              店舗・グループをまとめて変更
+            </Button>
+          )}
         </div>
 
         {sections.length === 0 ? (
-          <p>食品が見つかりません</p>
+          <p className="text-muted-foreground py-6 text-center text-sm">
+            食品が見つかりません
+          </p>
         ) : (
           <div className="space-y-6">
             {sections.map(({ storeName, groups }) => (
@@ -178,9 +170,6 @@ export default function ManageFoodsPage() {
                             setSelectedFoodIds(
                               (prev) => prev && toggleItem(prev, food.id),
                             );
-                          }}
-                          onAddLog={() => {
-                            void handleAddLog(food);
                           }}
                           onToggleFavorite={() => {
                             void toggleFavoriteFood(food.id);

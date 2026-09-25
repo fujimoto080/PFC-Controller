@@ -19,14 +19,14 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-/** テキストから AI で栄養を推定し、画像からは OCR でテキストを抽出する。 */
+/** テキストから AI で栄養を推定する。画像は OCR で抽出したテキストからそのまま推定する。 */
 export function useAiNutrition(onEstimated: (food: BarcodeFood) => void) {
   const [text, setText] = useState('');
   const [isEstimating, setIsEstimating] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
 
-  const estimate = async () => {
-    const input = text.trim();
+  const estimate = async (source = text) => {
+    const input = source.trim();
     if (!input) {
       toast.info('食べた内容を入力してください');
       return;
@@ -44,22 +44,23 @@ export function useAiNutrition(onEstimated: (food: BarcodeFood) => void) {
 
   const extractFromImage = async (file: File) => {
     setIsExtracting(true);
+    let extracted: string;
     try {
-      const extracted = await toast.withLoading(
-        '画像から文字を抽出中...',
-        async () => ocrImage(await readFileAsDataUrl(file)),
+      extracted = await toast.withLoading('画像から文字を抽出中...', async () =>
+        ocrImage(await readFileAsDataUrl(file)),
       );
-      if (!extracted) {
-        toast.info('文字を抽出できませんでした。別の写真でお試しください');
-        return;
-      }
-      setText(extracted);
-      toast.success('文字を抽出しました。内容を確認してAI推定してください');
     } catch (error) {
       toast.fromError('OCRに失敗しました', error);
+      return;
     } finally {
       setIsExtracting(false);
     }
+    if (!extracted) {
+      toast.info('文字を抽出できませんでした。別の写真でお試しください');
+      return;
+    }
+    setText(extracted);
+    await estimate(extracted);
   };
 
   return {

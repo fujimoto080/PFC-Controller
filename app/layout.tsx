@@ -30,15 +30,18 @@ export default async function RootLayout({
 
   return (
     <html lang="ja">
-      <body className="bg-background text-foreground min-h-screen pb-20 antialiased">
+      <body className="bg-background text-foreground min-h-screen pb-24 antialiased">
         <SerwistProvider
           swUrl="/serwist/sw.js"
           disable={process.env.NODE_ENV !== 'production'}
         >
           <main className="container mx-auto max-w-md px-4 py-4">
-            <CloudDataProvider userId={userId}>{children}</CloudDataProvider>
+            {/* 記録シートがユーザーデータを使うため、ナビも読み込み完了後に描画する */}
+            <CloudDataProvider userId={userId}>
+              {children}
+              {userId && <BottomNav />}
+            </CloudDataProvider>
           </main>
-          {userId && <BottomNav />}
           <Toaster position="top-center" visibleToasts={3} />
         </SerwistProvider>
       </body>

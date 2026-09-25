@@ -1,5 +1,8 @@
-import { getSimilarFoodSuggestions } from '@/lib/food-suggestions';
-import { FoodItem } from '@/lib/types';
+import {
+  getSimilarFoodSuggestions,
+  searchFoodCandidates,
+} from '@/lib/food-suggestions';
+import { createEmptyDailyLog, type FoodItem, type Logs } from '@/lib/types';
 
 const foods: FoodItem[] = [
   {
@@ -44,5 +47,36 @@ describe('getSimilarFoodSuggestions', () => {
   it('区切り文字が異なる食品名でも候補に含む', () => {
     const suggestions = getSimilarFoodSuggestions(foods, 'サラダチキンバジル');
     expect(suggestions[0]?.id).toBe('2');
+  });
+});
+
+describe('searchFoodCandidates', () => {
+  const eaten = (id: string, timestamp: number, food: FoodItem): FoodItem => ({
+    ...food,
+    id,
+    timestamp,
+  });
+  const [chicken, basil, onigiri] = foods as [FoodItem, FoodItem, FoodItem];
+  const logs: Logs = {
+    '2026-09-24': {
+      ...createEmptyDailyLog('2026-09-24'),
+      items: [eaten('log-1', 100, onigiri), eaten('log-2', 300, chicken)],
+    },
+    '2026-09-25': {
+      ...createEmptyDailyLog('2026-09-25'),
+      items: [eaten('log-3', 200, onigiri)],
+    },
+  };
+
+  it('過去の記録を新しい順に並べ、同じ内容は 1 件にまとめて食品リストを続ける', () => {
+    expect(
+      searchFoodCandidates(foods, logs, '').map((food) => food.id),
+    ).toEqual(['log-2', 'log-3', '2']);
+  });
+
+  it('区切り文字を無視して食品名に検索語を含むものに絞る', () => {
+    expect(
+      searchFoodCandidates(foods, logs, 'チキン バジル').map((food) => food.id),
+    ).toEqual([basil.id]);
   });
 });

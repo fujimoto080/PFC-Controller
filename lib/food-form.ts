@@ -33,10 +33,11 @@ function safeNumber(value: unknown): number {
 
 const emptyToUndefined = (value?: string) => (value === '' ? undefined : value);
 
+/** 記録の元になる食品（食品リスト・過去の記録・バーコードマッピング）の共通部分。 */
+export type FoodTemplate = BarcodeFood & Pick<FoodItem, 'storeGroup'>;
+
 /** 既存の食品をフォームの初期値に変換する。 */
-export function toFormValues(
-  food: BarcodeFood & Pick<FoodItem, 'storeGroup'>,
-): PfcFormValues {
+export function toFormValues(food: FoodTemplate): PfcFormValues {
   return {
     name: food.name,
     protein: food.protein,
@@ -63,4 +64,12 @@ export function toFoodInput(
     storeGroup: emptyToUndefined(values.storeGroup),
     timestamp,
   };
+}
+
+/** 既存の食品を指定時刻の記録として追加するための入力に変換する。 */
+export function toLogInput(
+  { name, protein, fat, carbs, calories, store, storeGroup }: FoodTemplate,
+  timestamp: number,
+): FoodItemInput {
+  return { name, protein, fat, carbs, calories, store, storeGroup, timestamp };
 }

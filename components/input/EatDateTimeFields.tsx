@@ -1,7 +1,6 @@
 'use client';
 
 import type { MouseEvent } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { EatDateTime } from '@/hooks/use-eat-datetime';
@@ -41,16 +40,5 @@ export function EatDateTimeFields({ value, onChange }: EatDateTimeFieldsProps) {
         </div>
       ))}
     </div>
-  );
-}
-
-/** EatDateTimeFields を muted な Card で包んだもの（記録追加・食品管理ページで共通）。 */
-export function EatDateTimeCard(props: EatDateTimeFieldsProps) {
-  return (
-    <Card className="bg-muted/30">
-      <CardContent className="pt-6">
-        <EatDateTimeFields {...props} />
-      </CardContent>
-    </Card>
   );
 }

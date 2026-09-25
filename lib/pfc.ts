@@ -1,5 +1,5 @@
 import { PFC_KEYS, type PfcKey } from './macros';
-import { EMPTY_PFC, type DailyLog, type Logs, type PFC } from './types';
+import { EMPTY_PFC, type Logs, type PFC } from './types';
 import { roundPFC, shiftDate } from './utils';
 
 function mapPFC(fn: (key: PfcKey) => number): PFC {
@@ -18,29 +18,9 @@ export function sumPFC(items: readonly PFC[]): PFC {
   );
 }
 
-/** 目標に対する摂取割合(%)。0〜100 にクランプする。target<=0 の場合は 0。 */
-export function progressPct(current: number, target: number): number {
-  if (target <= 0) return 0;
-  return Math.min(100, Math.max(0, (current / target) * 100));
-}
-
-/** 閾値を超えているとき強調（赤・太字）、そうでなければ控えめな色を返す。 */
-export function overLimitTextClass(current: number, threshold: number): string {
-  return current > threshold
-    ? 'text-red-500 font-bold'
-    : 'text-muted-foreground';
-}
-
-/** 運動による消費カロリーを加算したカロリー目標。 */
-export function activityAdjustedCalorieTarget(
-  targetCalories: number,
-  log: DailyLog,
-): number {
-  const burned = log.activities.reduce(
-    (total, activity) => total + activity.caloriesBurned,
-    0,
-  );
-  return Math.max(0, targetCalories + burned);
+/** 栄養値を factor 倍する（数量 ×0.5 / ×2 などの記録用）。 */
+export function scalePFC<T extends PFC>(food: T, factor: number): T {
+  return { ...food, ...mapPFC((key) => roundPFC(food[key] * factor)) };
 }
 
 /**
@@ -63,15 +43,4 @@ export function computePfcDebt(
     }
   }
   return mapPFC((key) => roundPFC(debt[key]));
-}
-
-/** today を含む過去7日間の1日あたり平均（記録の無い日は 0 として扱う）。 */
-export function weeklyAverage(logs: Logs, today: string): PFC {
-  const totals = Array.from(
-    { length: 7 },
-    (_, i) => logs[shiftDate(today, -i)]?.total ?? EMPTY_PFC,
-  );
-  return mapPFC((key) =>
-    roundPFC(totals.reduce((acc, t) => acc + t[key], 0) / 7),
-  );
 }

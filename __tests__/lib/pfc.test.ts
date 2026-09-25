@@ -1,9 +1,4 @@
-import {
-  activityAdjustedCalorieTarget,
-  computePfcDebt,
-  sumPFC,
-  weeklyAverage,
-} from '@/lib/pfc';
+import { computePfcDebt, scalePFC, sumPFC } from '@/lib/pfc';
 import { createEmptyDailyLog, type Logs, type PFC } from '@/lib/types';
 
 const target: PFC = { protein: 100, fat: 50, carbs: 200, calories: 2000 };
@@ -72,43 +67,19 @@ describe('computePfcDebt', () => {
   });
 });
 
-describe('weeklyAverage', () => {
-  it('当日を含む過去7日間の合計を7で割る', () => {
-    const logs = logsOf({
-      '2026-09-25': { protein: 70, fat: 7, carbs: 14, calories: 700 },
-      '2026-09-19': { protein: 70, fat: 7, carbs: 14, calories: 700 },
-      '2026-09-18': { protein: 700, fat: 700, carbs: 700, calories: 7000 }, // 範囲外
+describe('scalePFC', () => {
+  it('栄養値だけを倍率で掛け、他の項目は保つ', () => {
+    expect(
+      scalePFC(
+        { name: 'おにぎり', protein: 3.3, fat: 1, carbs: 40, calories: 185 },
+        1.5,
+      ),
+    ).toEqual({
+      name: 'おにぎり',
+      protein: 4.95,
+      fat: 1.5,
+      carbs: 60,
+      calories: 277.5,
     });
-    expect(weeklyAverage(logs, '2026-09-25')).toEqual({
-      protein: 20,
-      fat: 2,
-      carbs: 4,
-      calories: 200,
-    });
-  });
-});
-
-describe('activityAdjustedCalorieTarget', () => {
-  it('運動の消費カロリーを目標に加算する', () => {
-    const log = {
-      ...createEmptyDailyLog('2026-09-25'),
-      activities: [
-        {
-          id: 'a',
-          sportId: 'walking',
-          name: 'ウォーキング',
-          caloriesBurned: 180,
-          timestamp: 1,
-        },
-        {
-          id: 'b',
-          sportId: 'running',
-          name: 'ランニング',
-          caloriesBurned: 320,
-          timestamp: 2,
-        },
-      ],
-    };
-    expect(activityAdjustedCalorieTarget(2000, log)).toBe(2500);
   });
 });
