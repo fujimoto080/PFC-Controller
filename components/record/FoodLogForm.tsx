@@ -1,19 +1,17 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Camera, Eraser, Plus, ScanBarcode, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { SimilarFoodSuggestions } from '@/components/input/SimilarFoodSuggestions';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { useFormDraft } from '@/hooks/use-form-draft';
-import { toBarcodeFood } from '@/lib/barcode';
+import { buildFoodMatchKey, toBarcodeFood } from '@/lib/barcode';
 import { addFood, addFoodItem } from '@/lib/client/actions';
 import { saveBarcodeMapping } from '@/lib/client/api';
 import { useAppState } from '@/lib/client/store';
@@ -33,7 +31,6 @@ const FORM_DRAFT_STORAGE_KEY = 'pfc_add_food_form_draft';
 interface FoodLogFormDraft {
   form: PfcFormValues;
   aiInputText: string;
-  saveToDictionary: boolean;
 }
 
 interface FoodLogFormProps {
@@ -58,9 +55,6 @@ export function FoodLogForm({
   const { foods, logs } = useAppState();
   const stores = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const isBlank = initial === undefined && barcode === undefined;
-  const [saveToDictionary, setSaveToDictionary] = useState(
-    barcode !== undefined && initial === undefined,
-  );
   const eatAt = useEatDateTime(initialTimestamp);
 
   const { register, handleSubmit, reset, control } = useForm<PfcFormValues>({
@@ -75,14 +69,13 @@ export function FoodLogForm({
   const { setText: setAiText } = ai;
 
   const draft = useMemo<FoodLogFormDraft>(
-    () => ({ form: formValues, aiInputText: ai.text, saveToDictionary }),
-    [formValues, ai.text, saveToDictionary],
+    () => ({ form: formValues, aiInputText: ai.text }),
+    [formValues, ai.text],
   );
   const applyDraft = useCallback(
     (saved: FoodLogFormDraft) => {
       reset(saved.form);
       setAiText(saved.aiInputText);
-      setSaveToDictionary(saved.saveToDictionary);
     },
     [reset, setAiText],
   );
@@ -96,7 +89,6 @@ export function FoodLogForm({
   const handleClear = () => {
     reset(EMPTY_FORM_VALUES);
     setAiText('');
-    setSaveToDictionary(false);
     clearDraft();
   };
 
@@ -107,7 +99,9 @@ export function FoodLogForm({
     void addFoodItem(item);
     toast.success(`${item.name}を記録しました`);
 
-    if (saveToDictionary) {
+    // 同じ内容の食品が既にあれば食品リストへは追加しない
+    const matchKey = buildFoodMatchKey(item);
+    if (!foods.some((food) => buildFoodMatchKey(food) === matchKey)) {
       void addFood({ ...item, id: crypto.randomUUID() }).then((ok) => {
         if (ok) toast.success('食品リストにも保存しました');
       });
@@ -162,18 +156,6 @@ export function FoodLogForm({
         placeholder="例: セブンイレブン"
       />
       <EatDateTimeFields value={eatAt.value} onChange={eatAt.onChange} />
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="saveToDict"
-          checked={saveToDictionary}
-          onCheckedChange={(checked) => {
-            setSaveToDictionary(checked === true);
-          }}
-        />
-        <Label htmlFor="saveToDict" className="text-sm">
-          食品リストにも保存する
-        </Label>
-      </div>
       <div className="flex gap-2">
         {isBlank && (
           <Button
