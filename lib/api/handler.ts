@@ -1,6 +1,6 @@
 import 'server-only';
-import { NextRequest, NextResponse } from 'next/server';
-import { ZodError, type ZodType } from 'zod';
+import { NextResponse, type NextRequest } from 'next/server';
+import type { ZodError, ZodType } from 'zod';
 import { auth } from '@/auth';
 
 export class ApiError extends Error {
@@ -13,39 +13,51 @@ export class ApiError extends Error {
   }
 }
 
-export interface AuthContext {
-  userId: string;
-}
-
-type RouteHandler<C> = (request: NextRequest, ctx: C) => Promise<NextResponse> | NextResponse;
-
-interface RouteOptions<TBody, TRequireAuth extends boolean> {
+interface RouteOptions<TBody, TParams, TAuth extends boolean> {
   label: string;
-  auth?: TRequireAuth;
+  /** false のときセッション認証を行わない（独自トークン認証のエンドポイント用）。 */
+  auth: TAuth;
   body?: ZodType<TBody>;
+  params?: ZodType<TParams>;
 }
 
-type HandlerContext<TBody, TRequireAuth extends boolean> = (TRequireAuth extends true
-  ? AuthContext
-  : Record<string, never>) &
-  (TBody extends undefined ? Record<string, never> : { body: TBody });
+type RouteContext<TBody, TParams, TAuth extends boolean> = {
+  body: TBody;
+  params: TParams;
+} & (TAuth extends true ? { userId: string } : unknown);
 
-export function defineRoute<TBody = undefined, TRequireAuth extends boolean = false>(
-  options: RouteOptions<TBody, TRequireAuth>,
-  handler: RouteHandler<HandlerContext<TBody, TRequireAuth>>,
+/**
+ * Route Handler の定型（認証・params/body の zod 検証・エラーの JSON 化）をまとめる。
+ * 検証に失敗した場合は 400、ApiError はその status、それ以外は 500 を返す。
+ */
+export function defineRoute<
+  TBody = undefined,
+  TParams = undefined,
+  TAuth extends boolean = true,
+>(
+  options: RouteOptions<TBody, TParams, TAuth>,
+  handler: (
+    request: NextRequest,
+    ctx: RouteContext<TBody, TParams, TAuth>,
+  ) => Promise<NextResponse> | NextResponse,
 ) {
-  return async function route(request: NextRequest) {
+  return async function route(
+    request: NextRequest,
+    routeContext: { params: Promise<unknown> },
+  ): Promise<NextResponse> {
     try {
-      const ctx = {} as HandlerContext<TBody, TRequireAuth>;
+      const params = options.params
+        ? parse(options.params, await routeContext.params)
+        : undefined;
 
+      let userId: string | undefined;
       if (options.auth) {
         const session = await auth();
-        if (!session?.user.id) {
-          throw new ApiError('認証が必要です', 401);
-        }
-        (ctx as AuthContext).userId = session.user.id;
+        userId = session?.user.id;
+        if (!userId) throw new ApiError('認証が必要です', 401);
       }
 
+      let body: TBody | undefined;
       if (options.body) {
         let raw: unknown;
         try {
@@ -53,81 +65,29 @@ export function defineRoute<TBody = undefined, TRequireAuth extends boolean = fa
         } catch {
           throw new ApiError('リクエスト JSON の解析に失敗しました', 400);
         }
-        const parsed = options.body.safeParse(raw);
-        if (!parsed.success) {
-          throw new ApiError(formatZodError(parsed.error), 400);
-        }
-        (ctx as { body: TBody }).body = parsed.data;
+        body = parse(options.body, raw);
       }
 
-      return await handler(request, ctx);
+      return await handler(request, { body, params, userId } as RouteContext<
+        TBody,
+        TParams,
+        TAuth
+      >);
     } catch (error) {
       return toErrorResponse(options.label, error);
     }
   };
 }
 
-/**
- * defineRoute の動的セグメント版。Next.js のルートハンドラ第二引数を受け取り、
- * params から body スキーマやラベルを決められる。
- */
-interface DynamicRouteOptions<TBody, TRequireAuth extends boolean, TParams> {
-  label: string | ((params: TParams) => string);
-  auth?: TRequireAuth;
-  body?: (params: TParams) => ZodType<TBody>;
-  // params 検証で 404 を返したい場合に使う
-  validateParams?: (params: TParams) => true | { status: number; message: string };
+/** 本文なしの成功レスポンス。 */
+export function noContent(): NextResponse {
+  return new NextResponse(null, { status: 204 });
 }
 
-export function defineDynamicRoute<
-  TBody = undefined,
-  TRequireAuth extends boolean = false,
-  TParams = Record<string, string>,
->(
-  options: DynamicRouteOptions<TBody, TRequireAuth, TParams>,
-  handler: RouteHandler<HandlerContext<TBody, TRequireAuth> & { params: TParams }>,
-) {
-  return async function route(
-    request: NextRequest,
-    routeContext: { params: Promise<TParams> },
-  ) {
-    const params = await routeContext.params;
-    const label = typeof options.label === 'function' ? options.label(params) : options.label;
-    try {
-      const validation = options.validateParams?.(params);
-      if (validation && validation !== true) {
-        throw new ApiError(validation.message, validation.status);
-      }
-
-      const ctx = { params } as HandlerContext<TBody, TRequireAuth> & { params: TParams };
-
-      if (options.auth) {
-        const session = await auth();
-        if (!session?.user.id) {
-          throw new ApiError('認証が必要です', 401);
-        }
-        (ctx as unknown as AuthContext).userId = session.user.id;
-      }
-
-      if (options.body) {
-        let raw: unknown;
-        try {
-          raw = await request.json();
-        } catch {
-          throw new ApiError('リクエスト JSON の解析に失敗しました', 400);
-        }
-        const parsed = options.body(params).safeParse(raw);
-        if (!parsed.success) {
-          throw new ApiError(formatZodError(parsed.error), 400);
-        }
-        (ctx as unknown as { body: TBody }).body = parsed.data;
-      }
-
-      return await handler(request, ctx);
-    } catch (error) {
-      return toErrorResponse(label, error);
-    }
-  };
+function parse<T>(schema: ZodType<T>, value: unknown): T {
+  const parsed = schema.safeParse(value);
+  if (!parsed.success) throw new ApiError(formatZodError(parsed.error), 400);
+  return parsed.data;
 }
 
 function formatZodError(error: ZodError): string {
@@ -139,8 +99,14 @@ function formatZodError(error: ZodError): string {
 
 function toErrorResponse(label: string, error: unknown): NextResponse {
   if (error instanceof ApiError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json(
+      { error: error.message },
+      { status: error.status },
+    );
   }
   console.error(`[${label}] unhandled error`, error);
-  return NextResponse.json({ error: `${label}の処理に失敗しました` }, { status: 500 });
+  return NextResponse.json(
+    { error: `${label}の処理に失敗しました` },
+    { status: 500 },
+  );
 }

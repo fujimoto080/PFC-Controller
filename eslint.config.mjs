@@ -24,6 +24,8 @@ const eslintConfig = defineConfig([
       'unused-imports': unusedImports,
     },
     rules: {
+      // 未使用変数の検出は unused-imports 側に一本化する
+      '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
         'error',
@@ -32,6 +34,7 @@ const eslintConfig = defineConfig([
           varsIgnorePattern: '^_',
           args: 'after-used',
           argsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
         },
       ],
       // テンプレートリテラルへの数値埋め込み（`${count}件` 等）は安全かつ一般的なので許可。

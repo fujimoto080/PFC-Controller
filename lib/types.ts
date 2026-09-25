@@ -16,13 +16,6 @@ export interface FoodItem extends PFC {
 
 export type FoodItemInput = Omit<FoodItem, 'id'>;
 
-export interface DailyLog {
-  date: string; // YYYY-MM-DD
-  items: FoodItem[];
-  total: PFC;
-  activities?: SportActivityLog[];
-}
-
 export interface SportDefinition {
   id: string;
   name: string;
@@ -39,6 +32,15 @@ export interface SportActivityLog {
 
 export type SportActivityInput = Omit<SportActivityLog, 'id'>;
 
+export interface DailyLog {
+  date: string; // YYYY-MM-DD
+  items: FoodItem[];
+  total: PFC;
+  activities: SportActivityLog[];
+}
+
+export type Logs = Record<string, DailyLog>;
+
 export interface UserProfile {
   gender: 'male' | 'female';
   age: number;
@@ -51,8 +53,15 @@ export interface UserProfile {
 export interface UserSettings {
   targetPFC: PFC;
   profile?: UserProfile;
-  favoriteFoodIds?: string[];
-  sports?: SportDefinition[];
+  favoriteFoodIds: string[];
+}
+
+/** GET /api/user-data のレスポンス。設定未保存のユーザーは settings が null。 */
+export interface UserData {
+  logs: Logs;
+  settings: UserSettings | null;
+  foods: FoodItem[];
+  sports: SportDefinition[];
 }
 
 export const DEFAULT_TARGET: PFC = {
@@ -62,10 +71,15 @@ export const DEFAULT_TARGET: PFC = {
   calories: 2000,
 };
 
+export const DEFAULT_SPORTS: readonly SportDefinition[] = [
+  { id: 'walking', name: 'ウォーキング', caloriesBurned: 180 },
+  { id: 'running', name: 'ランニング', caloriesBurned: 320 },
+  { id: 'cycling', name: 'サイクリング', caloriesBurned: 260 },
+];
+
 // 空 PFC 共通定数。直接参照すると意図せず共有されるため、利用側では必ずスプレッドで複製すること。
 export const EMPTY_PFC: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
-// 空の DailyLog を生成するファクトリ。total は EMPTY_PFC を複製して独立したオブジェクトを返す。
 export function createEmptyDailyLog(date: string): DailyLog {
   return { date, items: [], activities: [], total: { ...EMPTY_PFC } };
 }

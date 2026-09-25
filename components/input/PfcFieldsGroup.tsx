@@ -1,6 +1,10 @@
 'use client';
 
-import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
+import {
+  type FieldValues,
+  type Path,
+  type UseFormRegister,
+} from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -76,7 +80,12 @@ export function DatalistInput<T extends FieldValues>({
   return (
     <div className="space-y-2">
       <Label htmlFor={inputId}>{label}</Label>
-      <Input id={inputId} {...register(name)} placeholder={placeholder} list={listId} />
+      <Input
+        id={inputId}
+        {...register(name)}
+        placeholder={placeholder}
+        list={listId}
+      />
       <datalist id={listId}>
         {options.map((option) => (
           <option key={option} value={option} />

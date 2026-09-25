@@ -1,14 +1,11 @@
-import { z } from 'zod';
-import { NextResponse } from 'next/server';
-import { defineRoute } from '@/lib/api/handler';
-import { replaceSports } from '@/lib/persistent-store';
+import { defineRoute, noContent } from '@/lib/api/handler';
+import { sportsSchema } from '@/lib/api/schemas';
+import { replaceSports } from '@/lib/server/sports';
 
-const bodySchema = z.object({ sports: z.array(z.unknown()) });
-
-export const POST = defineRoute(
-  { label: 'スポーツ', auth: true, body: bodySchema },
+export const PUT = defineRoute(
+  { label: 'スポーツの保存', auth: true, body: sportsSchema },
   async (_req, { userId, body }) => {
-    await replaceSports(userId, body.sports);
-    return NextResponse.json({ ok: true });
+    await replaceSports(userId, body);
+    return noContent();
   },
 );

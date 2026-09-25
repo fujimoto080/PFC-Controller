@@ -49,14 +49,16 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
 - **Vercel**: デプロイ毎に `pnpm vercel-build` が走る（Vercel は `scripts.vercel-build` を自動検出）。マイグレーション → Next.js ビルドの順に実行される。Vercel のビルド環境から `DATABASE_URL` にネットワーク到達できる必要があります。
 
 生成されるテーブル:
+
 - NextAuth 用: `users`, `accounts`, `sessions`, `verification_token`
-- アプリ用: `pfc_user_settings`, `pfc_daily_logs`, `pfc_foods`, `pfc_sports`
+- アプリ用: `pfc_user_settings`, `pfc_log_items`, `pfc_log_activities`, `pfc_foods`, `pfc_sports`
 
 ## Gemini 連携設定（AIでPFC推定）
 
 追加画面の「写真」タブでは、食べた内容をテキスト入力して Gemini で **P/F/C とカロリーを推定**できます。
 
-- サーバー側API: `POST /api/ai-nutrition`
+- サーバー側API: `POST /api/ai-nutrition`（テキスト推定）, `POST /api/ocr`（画像から文字抽出）
+- 使用モデル: `lib/server/gemini.ts` の `MODEL`
 - 必要な環境変数: `GEMINI_API_KEY`
 
 ローカルで確認する場合は `.env.local` に以下を設定してください。

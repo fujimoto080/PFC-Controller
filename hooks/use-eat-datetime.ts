@@ -14,7 +14,8 @@ export function useEatDateTime(initialTimestamp?: number) {
 
   useEffect(() => {
     // 同期的な setState の警告 / ハイドレーションずれを避けるため queueMicrotask で反映
-    const base = initialTimestamp !== undefined ? new Date(initialTimestamp) : new Date();
+    const base =
+      initialTimestamp !== undefined ? new Date(initialTimestamp) : new Date();
     const date = formatDate(base);
     const time = `${String(base.getHours()).padStart(2, '0')}:${String(base.getMinutes()).padStart(2, '0')}`;
 

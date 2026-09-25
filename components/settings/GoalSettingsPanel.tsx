@@ -5,22 +5,27 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProfileCalculator } from './ProfileCalculator';
 import { SportSettingsForm } from './SportSettingsForm';
-import { PFC, SportDefinition, UserProfile } from '@/lib/types';
-import { saveSettings } from '@/lib/storage/settings';
+import type { PFC, SportDefinition, UserProfile } from '@/lib/types';
+import { saveSettings, saveSports } from '@/lib/client/actions';
+import { useAppState } from '@/lib/client/store';
 import { toast } from '@/lib/toast';
-import { usePfcData } from '@/hooks/use-pfc-data';
 
 export function GoalSettingsPanel() {
-  const { settings } = usePfcData();
+  const { settings, sports: savedSports } = useAppState();
   const [duration, setDuration] = useState<number | undefined>(undefined);
-  const [goals, setGoals] = useState<PFC | null>(settings.targetPFC);
-  const [profile, setProfile] = useState<UserProfile | undefined>(settings.profile);
-  const [sports, setSports] = useState<SportDefinition[]>(settings.sports ?? []);
+  const [goals, setGoals] = useState<PFC>(settings.targetPFC);
+  const [profile, setProfile] = useState<UserProfile | undefined>(
+    settings.profile,
+  );
+  const [sports, setSports] = useState<SportDefinition[]>(savedSports);
 
-  const handleCalculate = useCallback((newGoals: PFC, newProfile: UserProfile) => {
-    setGoals(newGoals);
-    setProfile(newProfile);
-  }, []);
+  const handleCalculate = useCallback(
+    (newGoals: PFC, newProfile: UserProfile) => {
+      setGoals(newGoals);
+      setProfile(newProfile);
+    },
+    [],
+  );
 
   const handleAddSport = (sport: SportDefinition) => {
     setSports((prev) => [...prev, sport]);
@@ -30,26 +35,17 @@ export function GoalSettingsPanel() {
     setSports((prev) => prev.filter((sport) => sport.id !== id));
   };
 
-  const handleSaveGoals = () => {
-    if (!goals) return;
-    saveSettings({
-      ...settings,
-      targetPFC: goals,
-      profile,
-      sports,
-    });
-    toast.success('目標設定を保存しました');
+  const handleSaveGoals = async () => {
+    if (await saveSettings({ ...settings, targetPFC: goals, profile })) {
+      toast.success('目標設定を保存しました');
+    }
   };
 
-  const handleSaveSports = () => {
-    saveSettings({
-      ...settings,
-      sports,
-    });
-    toast.success('スポーツマスタを保存しました');
+  const handleSaveSports = async () => {
+    if (await saveSports(sports)) {
+      toast.success('スポーツマスタを保存しました');
+    }
   };
-
-  if (!goals) return null;
 
   return (
     <>
@@ -65,7 +61,13 @@ export function GoalSettingsPanel() {
             onDurationChange={setDuration}
           />
           <div className="flex justify-end">
-            <Button onClick={handleSaveGoals}>目標設定を保存</Button>
+            <Button
+              onClick={() => {
+                void handleSaveGoals();
+              }}
+            >
+              目標設定を保存
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -81,7 +83,13 @@ export function GoalSettingsPanel() {
             onDeleteSport={handleDeleteSport}
           />
           <div className="flex justify-end">
-            <Button onClick={handleSaveSports}>スポーツマスタを保存</Button>
+            <Button
+              onClick={() => {
+                void handleSaveSports();
+              }}
+            >
+              スポーツマスタを保存
+            </Button>
           </div>
         </CardContent>
       </Card>

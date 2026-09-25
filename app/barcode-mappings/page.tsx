@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageTitle } from '@/components/ui/page-title';
-import { listBarcodeMappings } from '@/lib/barcode-kv';
+import { listBarcodeMappings } from '@/lib/server/barcode-kv';
 
 export const dynamic = 'force-dynamic';
 

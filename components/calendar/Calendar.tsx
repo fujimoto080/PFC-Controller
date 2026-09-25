@@ -1,212 +1,229 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { useState } from 'react';
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  format,
+  isSameMonth,
+  isSameDay,
+  addMonths,
+  subMonths,
+} from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getSettings } from '@/lib/storage/settings';
-import { UserSettings } from '@/lib/types';
 import { cn, formatDate, roundPFC } from '@/lib/utils';
-import { useAllLogs } from '@/hooks/use-logs';
-import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
+import { useAppState } from '@/lib/client/store';
 import { IconButton } from '@/components/ui/icon-button';
 import { Card } from '@/components/ui/card';
 
 export function Calendar() {
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-    const { logs } = useAllLogs();
-    const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const { logs, settings } = useAppState();
 
-    // 初回マウント時に設定を読み込む
-    useEffect(() => {
-        queueMicrotask(() => {
-            setSettings(getSettings());
-        });
-    }, []);
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
-    // pfc-update イベントで設定を再読み込み
-    const handlePfcUpdate = useCallback(() => {
-        queueMicrotask(() => {
-            setSettings(getSettings());
-        });
-    }, []);
-    useSubscribeToPfcUpdate(handlePfcUpdate);
+  const calendarDays = eachDayOfInterval({
+    start: startDate,
+    end: endDate,
+  });
 
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
-    const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  // Split days into weeks
+  const weeks: Date[][] = [];
+  for (let i = 0; i < calendarDays.length; i += 7) {
+    weeks.push(calendarDays.slice(i, i + 7));
+  }
 
-    const calendarDays = eachDayOfInterval({
-        start: startDate,
-        end: endDate,
-    });
+  const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
 
-    // Split days into weeks
-    const weeks: Date[][] = [];
-    for (let i = 0; i < calendarDays.length; i += 7) {
-        weeks.push(calendarDays.slice(i, i + 7));
-    }
+  const targetCalories = settings.targetPFC.calories;
+  const weeklyTarget = targetCalories * 7;
 
-    const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
+  const monthLogs = Object.values(logs).filter((log) =>
+    log.date.startsWith(format(currentMonth, 'yyyy-MM')),
+  );
+  const totalMonthCalories = monthLogs.reduce(
+    (acc, log) => acc + (log.total.calories || 0),
+    0,
+  );
+  const daysWithLogs = Math.max(
+    1,
+    monthLogs.filter((log) => log.total.calories > 0).length,
+  );
+  const averageCalories = totalMonthCalories / daysWithLogs;
 
-    if (!settings) return null;
-
-    const targetCalories = settings.targetPFC.calories;
-    const weeklyTarget = targetCalories * 7;
-
-    const monthLogs = Object.values(logs).filter(log => log.date.startsWith(format(currentMonth, 'yyyy-MM')));
-    const totalMonthCalories = monthLogs.reduce((acc, log) => acc + (log.total.calories || 0), 0);
-    const daysWithLogs = Math.max(1, monthLogs.filter(log => log.total.calories > 0).length);
-    const averageCalories = totalMonthCalories / daysWithLogs;
-
-    return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-                <h2 className="text-xl font-bold">
-                    {format(currentMonth, 'yyyy年 M月', { locale: ja })}
-                </h2>
-                <div className="flex gap-2">
-                    <IconButton
-                        onClick={() => { setCurrentMonth(subMonths(currentMonth, 1)); }}
-                        className="rounded-full"
-                    >
-                        <ChevronLeft size={24} />
-                    </IconButton>
-                    <IconButton
-                        onClick={() => { setCurrentMonth(addMonths(currentMonth, 1)); }}
-                        className="rounded-full"
-                    >
-                        <ChevronRight size={24} />
-                    </IconButton>
-                </div>
-            </div>
-
-            <Card className="rounded-3xl p-4">
-                <div className="mb-2 grid grid-cols-[repeat(7,1fr)_40px] gap-1">
-                    {weekDays.map((day, i) => (
-                        <div
-                            key={day}
-                            className={cn(
-                                "text-center text-xs font-medium text-muted-foreground",
-                                i === 0 && "text-red-400",
-                                i === 6 && "text-blue-400"
-                            )}
-                        >
-                            {day}
-                        </div>
-                    ))}
-                    <div className="text-center text-[10px] font-bold text-muted-foreground self-center">
-                        週
-                    </div>
-                </div>
-
-                <div className="space-y-1">
-                    {weeks.map((week, weekIdx) => {
-                        const weekCalories = week.reduce((acc, day) => {
-                            const dateStr = formatDate(day);
-                            return acc + (logs[dateStr]?.total.calories ?? 0);
-                        }, 0);
-                        const isWeekOver = weekCalories > weeklyTarget;
-
-                        return (
-                            <div key={weekIdx} className="grid grid-cols-[repeat(7,1fr)_40px] gap-1">
-                                {week.map((day) => {
-                                    const dateStr = formatDate(day);
-                                    const log = logs[dateStr];
-                                    const calories = log?.total.calories ?? 0;
-                                    const isToday = isSameDay(day, new Date());
-                                    const isCurrentMonth = isSameMonth(day, monthStart);
-                                    const isOver = calories > targetCalories;
-
-                                    return (
-                                        <div
-                                            key={dateStr}
-                                            className={cn(
-                                                "relative flex min-h-[60px] flex-col items-center justify-start rounded-xl p-1 transition-colors",
-                                                !isCurrentMonth && "opacity-20",
-                                                isToday && "bg-primary/5 ring-1 ring-primary/20"
-                                            )}
-                                        >
-                                            <span className={cn(
-                                                "text-[10px] font-medium",
-                                                isToday && "text-primary font-bold"
-                                            )}>
-                                                {format(day, 'd')}
-                                            </span>
-                                            {calories > 0 && (
-                                                <div className="mt-auto w-full text-center">
-                                                    <span className={cn(
-                                                        "block text-[8px] font-bold leading-tight sm:text-[10px]",
-                                                        isOver ? "text-red-500" : "text-muted-foreground"
-                                                    )}>
-                                                        {roundPFC(calories, 0)}
-                                                    </span>
-                                                    <div className="mx-auto mt-0.5 h-1 w-full max-w-[20px] bg-muted-foreground/10 overflow-hidden">
-                                                        <div
-                                                            className={cn(
-                                                                "h-full transition-all duration-500",
-                                                                isOver ? "bg-red-500" : "bg-primary"
-                                                            )}
-                                                            style={{ width: `${Math.min(100, (calories / targetCalories) * 100)}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                                { /* Weekly progress bar */}
-                                <div className="flex flex-col items-center justify-center border-l pl-1">
-                                    <div className="relative h-12 w-1.5 bg-muted-foreground/10 overflow-hidden">
-                                        {/* Pace lines (7 divisions) */}
-                                        <div className="absolute inset-0">
-                                            {[1, 2, 3, 4, 5, 6].map((i) => (
-                                                <div
-                                                    key={i}
-                                                    className="absolute h-[1px] w-full bg-muted-foreground/30"
-                                                    style={{ bottom: `${(i / 7) * 100}%` }}
-                                                />
-                                            ))}
-                                        </div>
-                                        <div
-                                            className={cn(
-                                                "absolute bottom-0 w-full transition-all duration-500",
-                                                isWeekOver ? "bg-red-500" : "bg-green-500"
-                                            )}
-                                            style={{ height: `${Math.min(100, (weekCalories / weeklyTarget) * 100)}%` }}
-                                        />
-                                    </div>
-                                    <span className={cn(
-                                        "mt-1 text-[7px] font-bold",
-                                        isWeekOver ? "text-red-500" : "text-muted-foreground"
-                                    )}>
-                                        {roundPFC(weekCalories, 0)}
-                                    </span>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </Card>
-
-            <Card className="glassmorphism rounded-2xl p-4">
-                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">今月のサマリー</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <p className="text-xs text-muted-foreground">総摂取カロリー</p>
-                        <p className="text-lg font-bold">
-                            {roundPFC(totalMonthCalories, 0).toLocaleString()} kcal
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">平均 / 日</p>
-                        <p className="text-lg font-bold">
-                            {roundPFC(averageCalories, 0).toLocaleString()} kcal
-                        </p>
-                    </div>
-                </div>
-            </Card>
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between px-2">
+        <h2 className="text-xl font-bold">
+          {format(currentMonth, 'yyyy年 M月', { locale: ja })}
+        </h2>
+        <div className="flex gap-2">
+          <IconButton
+            onClick={() => {
+              setCurrentMonth(subMonths(currentMonth, 1));
+            }}
+            className="rounded-full"
+          >
+            <ChevronLeft size={24} />
+          </IconButton>
+          <IconButton
+            onClick={() => {
+              setCurrentMonth(addMonths(currentMonth, 1));
+            }}
+            className="rounded-full"
+          >
+            <ChevronRight size={24} />
+          </IconButton>
         </div>
-    );
+      </div>
+
+      <Card className="rounded-3xl p-4">
+        <div className="mb-2 grid grid-cols-[repeat(7,1fr)_40px] gap-1">
+          {weekDays.map((day, i) => (
+            <div
+              key={day}
+              className={cn(
+                'text-muted-foreground text-center text-xs font-medium',
+                i === 0 && 'text-red-400',
+                i === 6 && 'text-blue-400',
+              )}
+            >
+              {day}
+            </div>
+          ))}
+          <div className="text-muted-foreground self-center text-center text-[10px] font-bold">
+            週
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          {weeks.map((week, weekIdx) => {
+            const weekCalories = week.reduce((acc, day) => {
+              const dateStr = formatDate(day);
+              return acc + (logs[dateStr]?.total.calories ?? 0);
+            }, 0);
+            const isWeekOver = weekCalories > weeklyTarget;
+
+            return (
+              <div
+                key={weekIdx}
+                className="grid grid-cols-[repeat(7,1fr)_40px] gap-1"
+              >
+                {week.map((day) => {
+                  const dateStr = formatDate(day);
+                  const log = logs[dateStr];
+                  const calories = log?.total.calories ?? 0;
+                  const isToday = isSameDay(day, new Date());
+                  const isCurrentMonth = isSameMonth(day, monthStart);
+                  const isOver = calories > targetCalories;
+
+                  return (
+                    <div
+                      key={dateStr}
+                      className={cn(
+                        'relative flex min-h-[60px] flex-col items-center justify-start rounded-xl p-1 transition-colors',
+                        !isCurrentMonth && 'opacity-20',
+                        isToday && 'bg-primary/5 ring-primary/20 ring-1',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'text-[10px] font-medium',
+                          isToday && 'text-primary font-bold',
+                        )}
+                      >
+                        {format(day, 'd')}
+                      </span>
+                      {calories > 0 && (
+                        <div className="mt-auto w-full text-center">
+                          <span
+                            className={cn(
+                              'block text-[8px] leading-tight font-bold sm:text-[10px]',
+                              isOver ? 'text-red-500' : 'text-muted-foreground',
+                            )}
+                          >
+                            {roundPFC(calories, 0)}
+                          </span>
+                          <div className="bg-muted-foreground/10 mx-auto mt-0.5 h-1 w-full max-w-[20px] overflow-hidden">
+                            <div
+                              className={cn(
+                                'h-full transition-all duration-500',
+                                isOver ? 'bg-red-500' : 'bg-primary',
+                              )}
+                              style={{
+                                width: `${Math.min(100, (calories / targetCalories) * 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {/* Weekly progress bar */}
+                <div className="flex flex-col items-center justify-center border-l pl-1">
+                  <div className="bg-muted-foreground/10 relative h-12 w-1.5 overflow-hidden">
+                    {/* Pace lines (7 divisions) */}
+                    <div className="absolute inset-0">
+                      {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div
+                          key={i}
+                          className="bg-muted-foreground/30 absolute h-[1px] w-full"
+                          style={{ bottom: `${(i / 7) * 100}%` }}
+                        />
+                      ))}
+                    </div>
+                    <div
+                      className={cn(
+                        'absolute bottom-0 w-full transition-all duration-500',
+                        isWeekOver ? 'bg-red-500' : 'bg-green-500',
+                      )}
+                      style={{
+                        height: `${Math.min(100, (weekCalories / weeklyTarget) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className={cn(
+                      'mt-1 text-[7px] font-bold',
+                      isWeekOver ? 'text-red-500' : 'text-muted-foreground',
+                    )}
+                  >
+                    {roundPFC(weekCalories, 0)}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card className="glassmorphism rounded-2xl p-4">
+        <h3 className="text-muted-foreground mb-2 text-sm font-semibold">
+          今月のサマリー
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-muted-foreground text-xs">総摂取カロリー</p>
+            <p className="text-lg font-bold">
+              {roundPFC(totalMonthCalories, 0).toLocaleString()} kcal
+            </p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-xs">平均 / 日</p>
+            <p className="text-lg font-bold">
+              {roundPFC(averageCalories, 0).toLocaleString()} kcal
+            </p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
 }

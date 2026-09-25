@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { deleteSportActivity, addSportActivity } from '@/lib/storage/sports';
+import { addSportActivity, deleteSportActivity } from '@/lib/client/actions';
 import { SportActivityLog, SportDefinition } from '@/lib/types';
 
 interface SportActivityControlsProps {
@@ -30,23 +30,6 @@ export function SportActivityControls({
     [selectedSportId, sports],
   );
 
-  const handleAddActivity = async () => {
-    if (!selectedSport) return;
-    try {
-      await addSportActivity(date, selectedSport);
-    } catch {
-      // addSportActivity 側でエラートーストを表示済み
-    }
-  };
-
-  const handleDeleteActivity = async (activityId: string) => {
-    try {
-      await deleteSportActivity(date, activityId);
-    } catch {
-      // deleteSportActivity 側でエラートーストを表示済み
-    }
-  };
-
   return (
     <div className="space-y-2 rounded-lg border p-3">
       <p className="text-sm font-medium">スポーツ消費カロリー</p>
@@ -63,7 +46,12 @@ export function SportActivityControls({
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={() => { void handleAddActivity(); }} disabled={!selectedSport}>
+        <Button
+          onClick={() => {
+            if (selectedSport) void addSportActivity(date, selectedSport);
+          }}
+          disabled={!selectedSport}
+        >
           追加
         </Button>
       </div>
@@ -82,7 +70,9 @@ export function SportActivityControls({
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-xs"
-                onClick={() => { void handleDeleteActivity(activity.id); }}
+                onClick={() => {
+                  void deleteSportActivity(date, activity.id);
+                }}
               >
                 削除
               </Button>

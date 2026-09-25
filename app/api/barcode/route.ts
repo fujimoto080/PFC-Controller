@@ -1,48 +1,37 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-
-import { normalizeBarcodes, type BarcodeFood } from '@/lib/barcode-mapping';
-import { getBarcodeMapping, saveBarcodeMapping } from '@/lib/barcode-kv';
-import { ApiError, defineRoute } from '@/lib/api/handler';
+import { ApiError, defineRoute, noContent } from '@/lib/api/handler';
+import { barcodeFoodSchema } from '@/lib/api/schemas';
+import { normalizeBarcodes } from '@/lib/barcode';
+import { getBarcodeMapping, saveBarcodeMapping } from '@/lib/server/barcode-kv';
 
 export const GET = defineRoute(
-  { label: 'バーコード取得' },
+  { label: 'バーコード取得', auth: true },
   async (request) => {
     const code = request.nextUrl.searchParams.get('code');
-    if (!code) {
-      throw new ApiError('バーコードが指定されていません', 400);
-    }
+    if (!code) throw new ApiError('バーコードが指定されていません', 400);
 
-    const foodData = await getBarcodeMapping(code);
-    if (!foodData) {
-      throw new ApiError('該当する商品が見つかりません', 404);
-    }
-    return NextResponse.json(foodData);
+    const food = await getBarcodeMapping(code);
+    if (!food) throw new ApiError('該当する商品が見つかりません', 404);
+    return NextResponse.json(food);
   },
 );
 
 const postSchema = z.object({
-  barcode: z.string().optional(),
-  barcodes: z.array(z.string()).optional(),
-  foodData: z.custom<BarcodeFood>((v) => !!v && typeof v === 'object', {
-    message: 'foodData は必須です',
-  }),
+  barcodes: z.array(z.string()),
+  food: barcodeFoodSchema,
 });
 
 export const POST = defineRoute(
-  { label: 'バーコード保存', body: postSchema },
+  { label: 'バーコード保存', auth: true, body: postSchema },
   async (_req, { body }) => {
-    const normalizedBarcodes = normalizeBarcodes(body.barcodes ?? body.barcode ?? '');
-    if (normalizedBarcodes.length === 0) {
+    const barcodes = normalizeBarcodes(body.barcodes);
+    if (barcodes.length === 0)
       throw new ApiError('バーコードを1件以上指定してください', 400);
-    }
 
     await Promise.all(
-      normalizedBarcodes.map((code) => saveBarcodeMapping(code, body.foodData)),
+      barcodes.map((code) => saveBarcodeMapping(code, body.food)),
     );
-    return NextResponse.json({
-      message: 'Barcode data saved successfully',
-      count: normalizedBarcodes.length,
-    });
+    return noContent();
   },
 );

@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import PostgresAdapter from '@auth/pg-adapter';
-import { getPool } from '@/lib/pg-pool';
+import { getPool } from '@/lib/server/db';
 
 export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   adapter: PostgresAdapter(getPool()),

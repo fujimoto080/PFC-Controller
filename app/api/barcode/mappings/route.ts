@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
-import { listBarcodeMappings } from '@/lib/barcode-kv';
 import { defineRoute } from '@/lib/api/handler';
+import { listBarcodeMappings } from '@/lib/server/barcode-kv';
 
 export const GET = defineRoute(
-  { label: 'バーコードマッピング一覧' },
-  async () => {
-    const mappings = await listBarcodeMappings();
-    return NextResponse.json(mappings);
-  },
+  { label: 'バーコードマッピング一覧', auth: true },
+  async () => NextResponse.json(await listBarcodeMappings()),
 );

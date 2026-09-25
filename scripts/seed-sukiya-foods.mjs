@@ -30,7 +30,10 @@ function loadEnv() {
       const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
       if (!m) continue;
       let val = m[2].trim();
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
         val = val.slice(1, -1);
       }
       if (process.env[m[1]] === undefined) process.env[m[1]] = val;
@@ -44,17 +47,27 @@ async function main() {
   if (!token) throw new Error('SEED_API_TOKEN が未設定です');
 
   const email = (process.argv[2] || process.env.SEED_USER_EMAIL || '').trim();
-  if (!email) throw new Error('投入先メールを引数か SEED_USER_EMAIL で指定してください');
+  if (!email)
+    throw new Error('投入先メールを引数か SEED_USER_EMAIL で指定してください');
 
-  const baseUrl = (process.env.SEED_API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
-  const foods = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'sukiya-foods.json'), 'utf8'));
+  const baseUrl = (
+    process.env.SEED_API_BASE_URL || 'http://localhost:3000'
+  ).replace(/\/$/, '');
+  const foods = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'data', 'sukiya-foods.json'), 'utf8'),
+  );
 
   const url = `${baseUrl}/api/foods/import`;
-  console.log(`[seed] ${url} へ ${foods.length} 件を投入します (user=${email})...`);
+  console.log(
+    `[seed] ${url} へ ${foods.length} 件を投入します (user=${email})...`,
+  );
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({ email, foods }),
   });
 

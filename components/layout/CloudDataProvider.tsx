@@ -2,64 +2,62 @@
 
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import {
-  loadCloudData,
-  isCloudDataLoaded,
   hydrateFromCache,
-} from '@/lib/storage/state';
-
-// SSR では useLayoutEffect が使えないので useEffect にフォールバック
-const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
-
-type Status = 'loading' | 'ready';
+  loadUserData,
+  useStoreSnapshot,
+} from '@/lib/client/store';
 
 interface Props {
   children: React.ReactNode;
-  isAuthenticated: boolean;
   userId: string | null;
 }
 
-export function CloudDataProvider({ children, isAuthenticated, userId }: Props) {
+export function CloudDataProvider({ children, userId }: Props) {
   const pathname = usePathname();
-  // SSR と CSR の初期値を揃えるため、初期値は常に 'loading'。
-  // useEffect 内でキャッシュを読み込んだら同期的に 'ready' に切り替える。
-  const [status, setStatus] = useState<Status>(() =>
-    !isAuthenticated || isCloudDataLoaded() ? 'ready' : 'loading',
-  );
+  const snapshot = useStoreSnapshot();
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  // localStorage からの hydrate は paint 前に行ってローディング画面のチラつきを防ぐ
-  useIsomorphicLayoutEffect(() => {
-    if (!isAuthenticated || !userId) return;
-    if (isCloudDataLoaded()) {
-      setStatus('ready');
-      return;
-    }
-    if (hydrateFromCache(userId)) {
-      setStatus('ready');
-    }
-  }, [isAuthenticated, userId]);
+  // キャッシュからの復元は paint 前に行ってローディング表示のチラつきを防ぐ
+  useLayoutEffect(() => {
+    if (userId) hydrateFromCache(userId);
+  }, [userId]);
 
   // 鮮度を保つため、マウント時 / ユーザー変更時に裏で再取得する
   useEffect(() => {
-    if (!isAuthenticated || !userId) return;
-    void loadCloudData(userId).finally(() => { setStatus('ready'); });
-  }, [isAuthenticated, userId]);
+    if (!userId) return;
+    void loadUserData(userId).then((ok) => {
+      setLoadFailed(!ok);
+    });
+  }, [userId]);
 
-  if (!isAuthenticated) {
-    if (pathname === '/login') return <>{children}</>;
-    return <UnauthenticatedGate />;
+  if (!userId) {
+    return pathname === '/login' ? children : <UnauthenticatedGate />;
   }
 
-  if (status === 'loading') {
-    return (
+  if (!snapshot) {
+    return loadFailed ? (
+      <div className="space-y-4 py-10 text-center">
+        <p className="text-muted-foreground text-sm">
+          データの読み込みに失敗しました。
+        </p>
+        <Button
+          onClick={() => {
+            window.location.reload();
+          }}
+        >
+          再読み込み
+        </Button>
+      </div>
+    ) : (
       <div className="text-muted-foreground py-10 text-center text-sm">
         データを読み込み中...
       </div>
     );
   }
 
-  return <>{children}</>;
+  return children;
 }
 
 function UnauthenticatedGate() {

@@ -1,53 +1,36 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { getFavoriteFoods } from '@/lib/storage/favorites';
-import { addFoodItem } from '@/lib/storage/logs';
-import { FoodItem } from '@/lib/types';
-import { Button } from '@/components/ui/button';
+import { useMemo } from 'react';
 import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { logFood } from '@/lib/client/actions';
+import { useAppState } from '@/lib/client/store';
 import { toast } from '@/lib/toast';
-import { useSubscribeToPfcUpdate } from '@/hooks/use-pfc-update';
+import type { FoodItem } from '@/lib/types';
 
-const getCurrentTimestamp = () => Date.now();
+async function quickAdd(food: FoodItem) {
+  if (await logFood(food, Date.now())) {
+    toast.success(`${food.name}を追加しました`);
+  }
+}
 
 export function QuickAddButtons() {
-  const [favorites, setFavorites] = useState<FoodItem[]>([]);
-
-  // 初回マウント時にお気に入りを読み込む
-  useEffect(() => {
-    queueMicrotask(() => {
-      setFavorites(getFavoriteFoods());
-    });
-  }, []);
-
-  // pfc-update イベントで再読み込み
-  const handlePfcUpdate = useCallback(() => {
-    queueMicrotask(() => {
-      setFavorites(getFavoriteFoods());
-    });
-  }, []);
-  useSubscribeToPfcUpdate(handlePfcUpdate);
-
-  const handleQuickAdd = useCallback(async (food: FoodItem) => {
-    const timestamp = getCurrentTimestamp();
-    const { id: _id, ...rest } = food;
-    void _id;
-    try {
-      await addFoodItem({ ...rest, timestamp });
-      toast.success(`${food.name}を追加しました`);
-    } catch {
-      // addFoodItem 側でエラートーストを表示済み
-    }
-  }, []);
+  const { foods, settings } = useAppState();
+  const favorites = useMemo(
+    () =>
+      settings.favoriteFoodIds.flatMap(
+        (id) => foods.find((food) => food.id === id) ?? [],
+      ),
+    [foods, settings.favoriteFoodIds],
+  );
 
   if (favorites.length === 0) {
     return (
       <div className="rounded-lg border border-dashed p-6 text-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           よく使う食べ物を設定すると、ここにクイック追加ボタンが表示されます。
         </p>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-xs">
           食品管理ページで星アイコンをクリックしてお気に入りに追加できます。
         </p>
       </div>
@@ -62,17 +45,21 @@ export function QuickAddButtons() {
           <Button
             key={food.id}
             variant="outline"
-            className="flex-shrink-0 flex-col items-start h-auto py-3 px-4 min-w-[140px]"
-            onClick={() => { void handleQuickAdd(food); }}
+            className="h-auto min-w-[140px] flex-shrink-0 flex-col items-start px-4 py-3"
+            onClick={() => {
+              void quickAdd(food);
+            }}
           >
-            <div className="flex items-center gap-2 mb-1">
+            <div className="mb-1 flex items-center gap-2">
               <Plus className="h-4 w-4" />
               {food.store && (
-                <span className="text-xs text-muted-foreground">{food.store}</span>
+                <span className="text-muted-foreground text-xs">
+                  {food.store}
+                </span>
               )}
             </div>
-            <span className="font-medium text-sm">{food.name}</span>
-            <span className="text-xs text-muted-foreground mt-1">
+            <span className="text-sm font-medium">{food.name}</span>
+            <span className="text-muted-foreground mt-1 text-xs">
               {food.calories}kcal
             </span>
           </Button>

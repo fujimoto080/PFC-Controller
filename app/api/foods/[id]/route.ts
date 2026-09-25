@@ -1,36 +1,24 @@
-import { z } from 'zod';
 import { NextResponse } from 'next/server';
-import { defineDynamicRoute } from '@/lib/api/handler';
-import { logItemInputSchema } from '@/lib/api/schemas';
+import { ApiError, defineRoute, noContent } from '@/lib/api/handler';
+import { foodInputSchema, foodParamsSchema } from '@/lib/api/schemas';
 import { deleteFood, upsertFood } from '@/lib/server/foods';
 
-interface Params { id: string }
-
-const isValidId = (id: string) => id.trim().length > 0;
-
-export const PATCH = defineDynamicRoute<z.infer<typeof logItemInputSchema>, true, Params>(
+export const PATCH = defineRoute(
   {
     label: '食品の更新',
     auth: true,
-    validateParams: ({ id }) =>
-      isValidId(id) ? true : { status: 400, message: '不正な ID' },
-    body: () => logItemInputSchema,
+    params: foodParamsSchema,
+    body: foodInputSchema,
   },
-  async (_req, { userId, body, params }) => {
-    const item = await upsertFood(userId, params.id, body);
-    return NextResponse.json({ item });
-  },
+  async (_req, { userId, params, body }) =>
+    NextResponse.json(await upsertFood(userId, params.id, body)),
 );
 
-export const DELETE = defineDynamicRoute<undefined, true, Params>(
-  {
-    label: '食品の削除',
-    auth: true,
-    validateParams: ({ id }) =>
-      isValidId(id) ? true : { status: 400, message: '不正な ID' },
-  },
+export const DELETE = defineRoute(
+  { label: '食品の削除', auth: true, params: foodParamsSchema },
   async (_req, { userId, params }) => {
-    await deleteFood(userId, params.id);
-    return NextResponse.json({ ok: true });
+    if (!(await deleteFood(userId, params.id)))
+      throw new ApiError('対象が見つかりません', 404);
+    return noContent();
   },
 );

@@ -13,8 +13,8 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLogs } from '@/lib/storage/logs';
-import { usePfcData } from '@/hooks/use-pfc-data';
+import { useAppState } from '@/lib/client/store';
+import { computePfcDebt } from '@/lib/pfc';
 
 interface PfcDebtChartsProps {
   referenceDate: string;
@@ -83,7 +83,11 @@ const tooltipProps = {
     fontSize: 12,
     padding: '8px 10px',
   },
-  labelStyle: { color: 'var(--muted-foreground)', fontSize: 11, marginBottom: 4 },
+  labelStyle: {
+    color: 'var(--muted-foreground)',
+    fontSize: 11,
+    marginBottom: 4,
+  },
   itemStyle: { padding: 0 },
 } as const;
 
@@ -91,7 +95,12 @@ const limitLineProps = {
   stroke: overLimitColor,
   strokeWidth: 1,
   strokeDasharray: '3 3',
-  label: { value: '上限', position: 'right', fill: overLimitColor, fontSize: 10 },
+  label: {
+    value: '上限',
+    position: 'right',
+    fill: overLimitColor,
+    fontSize: 10,
+  },
 } as const;
 
 const overflowBarProps = {
@@ -101,10 +110,17 @@ const overflowBarProps = {
   radius: [3, 3, 0, 0] as [number, number, number, number],
 };
 
-function calculateDebtVisual(intake: number, target: number, carry: number): DebtVisual {
+function calculateDebtVisual(
+  intake: number,
+  target: number,
+  carry: number,
+): DebtVisual {
   const safeTarget = Math.max(1, target);
   const intakeWithinLimit = Math.min(intake, safeTarget);
-  const debtWithinLimit = Math.min(carry, Math.max(0, safeTarget - intakeWithinLimit));
+  const debtWithinLimit = Math.min(
+    carry,
+    Math.max(0, safeTarget - intakeWithinLimit),
+  );
   const overflow = Math.max(0, intake + carry - safeTarget);
 
   return {
@@ -115,16 +131,19 @@ function calculateDebtVisual(intake: number, target: number, carry: number): Deb
   };
 }
 
-export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) {
+export function PfcDebtCharts({
+  referenceDate,
+  days = 20,
+}: PfcDebtChartsProps) {
   const [isSplitView, setIsSplitView] = useState(false);
   const windowStartDate = useMemo(() => {
     const reference = parseISO(referenceDate);
     return format(addDays(reference, -(days - 1)), 'yyyy-MM-dd');
   }, [referenceDate, days]);
-  const { settings, debt } = usePfcData(windowStartDate);
+  const { logs, settings } = useAppState();
 
   const chartData = useMemo(() => {
-    const logs = getLogs();
+    const debt = computePfcDebt(windowStartDate, settings.targetPFC, logs);
     const start = parseISO(windowStartDate);
     const data: Record<string, number | string>[] = [];
 
@@ -139,10 +158,26 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
       const label = format(date, 'M/d');
       const total = logs[dateStr]?.total;
 
-      const proteinVisual = calculateDebtVisual(total?.protein ?? 0, settings.targetPFC.protein, proteinCarry);
-      const fatVisual = calculateDebtVisual(total?.fat ?? 0, settings.targetPFC.fat, fatCarry);
-      const carbsVisual = calculateDebtVisual(total?.carbs ?? 0, settings.targetPFC.carbs, carbsCarry);
-      const caloriesVisual = calculateDebtVisual(total?.calories ?? 0, settings.targetPFC.calories, caloriesCarry);
+      const proteinVisual = calculateDebtVisual(
+        total?.protein ?? 0,
+        settings.targetPFC.protein,
+        proteinCarry,
+      );
+      const fatVisual = calculateDebtVisual(
+        total?.fat ?? 0,
+        settings.targetPFC.fat,
+        fatCarry,
+      );
+      const carbsVisual = calculateDebtVisual(
+        total?.carbs ?? 0,
+        settings.targetPFC.carbs,
+        carbsCarry,
+      );
+      const caloriesVisual = calculateDebtVisual(
+        total?.calories ?? 0,
+        settings.targetPFC.calories,
+        caloriesCarry,
+      );
 
       proteinCarry = proteinVisual.nextCarry;
       fatCarry = fatVisual.nextCarry;
@@ -163,23 +198,37 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
         caloriesIntake: caloriesVisual.intake,
         caloriesDebt: caloriesVisual.debtWithinLimit,
         caloriesOverflow: caloriesVisual.overflow,
-        pfcDebt: proteinVisual.debtWithinLimit + fatVisual.debtWithinLimit + carbsVisual.debtWithinLimit,
-        pfcOverflow: proteinVisual.overflow + fatVisual.overflow + carbsVisual.overflow,
+        pfcDebt:
+          proteinVisual.debtWithinLimit +
+          fatVisual.debtWithinLimit +
+          carbsVisual.debtWithinLimit,
+        pfcOverflow:
+          proteinVisual.overflow + fatVisual.overflow + carbsVisual.overflow,
       });
     }
 
     return data;
-  }, [days, windowStartDate, settings, debt]);
+  }, [days, windowStartDate, settings, logs]);
 
   if (chartData.length === 0) return null;
 
-  const pfcTargetTotal = settings.targetPFC.protein + settings.targetPFC.fat + settings.targetPFC.carbs;
+  const pfcTargetTotal =
+    settings.targetPFC.protein +
+    settings.targetPFC.fat +
+    settings.targetPFC.carbs;
 
   return (
     <div className="space-y-4">
-      <Card className="cursor-pointer" onClick={() => { setIsSplitView((prev) => !prev); }}>
+      <Card
+        className="cursor-pointer"
+        onClick={() => {
+          setIsSplitView((prev) => !prev);
+        }}
+      >
         <CardHeader>
-          <CardTitle>PFC積み上げグラフ（過去20日 / タップで栄養素別表示）</CardTitle>
+          <CardTitle>
+            PFC積み上げグラフ（過去20日 / タップで栄養素別表示）
+          </CardTitle>
         </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">
@@ -189,10 +238,31 @@ export function PfcDebtCharts({ referenceDate, days = 20 }: PfcDebtChartsProps) 
               <YAxis {...yAxisProps} />
               <Tooltip {...tooltipProps} />
               <ReferenceLine y={pfcTargetTotal} {...limitLineProps} />
-              <Bar dataKey="proteinIntake" stackId="pfc" fill={nutrientColors.protein} name="タンパク質" />
-              <Bar dataKey="fatIntake" stackId="pfc" fill={nutrientColors.fat} name="脂質" />
-              <Bar dataKey="carbsIntake" stackId="pfc" fill={nutrientColors.carbs} name="炭水化物" />
-              <Bar dataKey="pfcDebt" stackId="pfc" fill="var(--muted-foreground)" fillOpacity={0.18} name="負債(上限内)" />
+              <Bar
+                dataKey="proteinIntake"
+                stackId="pfc"
+                fill={nutrientColors.protein}
+                name="タンパク質"
+              />
+              <Bar
+                dataKey="fatIntake"
+                stackId="pfc"
+                fill={nutrientColors.fat}
+                name="脂質"
+              />
+              <Bar
+                dataKey="carbsIntake"
+                stackId="pfc"
+                fill={nutrientColors.carbs}
+                name="炭水化物"
+              />
+              <Bar
+                dataKey="pfcDebt"
+                stackId="pfc"
+                fill="var(--muted-foreground)"
+                fillOpacity={0.18}
+                name="負債(上限内)"
+              />
               <Bar dataKey="pfcOverflow" stackId="pfc" {...overflowBarProps} />
             </BarChart>
           </ResponsiveContainer>
@@ -253,11 +323,29 @@ function NutrientChart({
             <CartesianGrid {...gridProps} />
             <XAxis {...xAxisProps} />
             <YAxis {...yAxisProps} />
-            <Tooltip {...tooltipProps} formatter={(value: number) => [`${value.toFixed(1)} ${unit}`]} />
+            <Tooltip
+              {...tooltipProps}
+              formatter={(value) => [`${Number(value).toFixed(1)} ${unit}`]}
+            />
             <ReferenceLine y={target} {...limitLineProps} />
-            <Bar dataKey={`${dataKeyPrefix}Intake`} stackId={dataKeyPrefix} fill={color} name="当日摂取" />
-            <Bar dataKey={`${dataKeyPrefix}Debt`} stackId={dataKeyPrefix} fill={color} fillOpacity={0.25} name="負債(上限内)" />
-            <Bar dataKey={`${dataKeyPrefix}Overflow`} stackId={dataKeyPrefix} {...overflowBarProps} />
+            <Bar
+              dataKey={`${dataKeyPrefix}Intake`}
+              stackId={dataKeyPrefix}
+              fill={color}
+              name="当日摂取"
+            />
+            <Bar
+              dataKey={`${dataKeyPrefix}Debt`}
+              stackId={dataKeyPrefix}
+              fill={color}
+              fillOpacity={0.25}
+              name="負債(上限内)"
+            />
+            <Bar
+              dataKey={`${dataKeyPrefix}Overflow`}
+              stackId={dataKeyPrefix}
+              {...overflowBarProps}
+            />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

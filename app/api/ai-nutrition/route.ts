@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ApiError, defineRoute } from '@/lib/api/handler';
-import { callGemini } from '@/lib/api/gemini';
+import { callGemini } from '@/lib/server/gemini';
 import { roundPFC } from '@/lib/utils';
-
-const MODEL_NAME = 'gemini-2.0-flash';
 
 interface EstimatedNutrition {
   name: string;
@@ -29,7 +27,9 @@ function extractJsonObject(rawText: string): string {
   throw new ApiError('JSON形式の結果を取得できませんでした', 502);
 }
 
-function normalizeNutrition(data: Partial<EstimatedNutrition>): EstimatedNutrition {
+function normalizeNutrition(
+  data: Partial<EstimatedNutrition>,
+): EstimatedNutrition {
   const toNumber = (value: unknown) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric < 0) return 0;
@@ -49,7 +49,7 @@ function normalizeNutrition(data: Partial<EstimatedNutrition>): EstimatedNutriti
 }
 
 export const POST = defineRoute(
-  { label: 'AI栄養推定', body: bodySchema },
+  { label: 'AI栄養推定', auth: true, body: bodySchema },
   async (_req, { body }) => {
     const prompt = [
       'あなたは栄養計算アシスタントです。',
@@ -61,13 +61,14 @@ export const POST = defineRoute(
     ].join('\n');
 
     const generatedText = await callGemini({
-      model: MODEL_NAME,
       parts: [{ text: prompt }],
       temperature: 0.2,
       tools: [{ google_search: {} }],
     });
 
-    const parsed = JSON.parse(extractJsonObject(generatedText)) as Partial<EstimatedNutrition>;
+    const parsed = JSON.parse(
+      extractJsonObject(generatedText),
+    ) as Partial<EstimatedNutrition>;
     return NextResponse.json(normalizeNutrition(parsed));
   },
 );

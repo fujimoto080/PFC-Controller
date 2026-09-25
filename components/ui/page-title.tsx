@@ -8,7 +8,7 @@ export function PageTitle({ children, className, ...props }: PageTitleProps) {
   return (
     <h1
       className={cn(
-        'text-2xl font-bold tracking-tight py-2 mb-6 px-4',
+        'mb-6 px-4 py-2 text-2xl font-bold tracking-tight',
         className,
       )}
       {...props}

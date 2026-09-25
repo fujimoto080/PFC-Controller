@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ApiError, defineRoute } from '@/lib/api/handler';
-import { callGemini } from '@/lib/api/gemini';
-
-const MODEL_NAME = 'gemini-2.0-flash';
+import { callGemini } from '@/lib/server/gemini';
 
 const bodySchema = z.object({
   imageDataUrl: z.string().trim().min(1, '画像データが指定されていません'),
 });
 
-function parseDataUrl(imageDataUrl: string): { mimeType: string; base64Data: string } {
-  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(imageDataUrl);
+function parseDataUrl(imageDataUrl: string): {
+  mimeType: string;
+  base64Data: string;
+} {
+  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(
+    imageDataUrl,
+  );
   if (!match) {
     throw new ApiError('画像データの形式が不正です', 400);
   }
@@ -18,12 +21,11 @@ function parseDataUrl(imageDataUrl: string): { mimeType: string; base64Data: str
 }
 
 export const POST = defineRoute(
-  { label: 'OCR', body: bodySchema },
+  { label: 'OCR', auth: true, body: bodySchema },
   async (_req, { body }) => {
     const { mimeType, base64Data } = parseDataUrl(body.imageDataUrl);
 
     const text = await callGemini({
-      model: MODEL_NAME,
       parts: [
         {
           text: [

@@ -2,7 +2,10 @@ import type { ReactNode } from 'react';
 import { toast as sonnerToast, type ExternalToast } from 'sonner';
 
 type ToastMessage = string | ReactNode;
-type SonnerImpl = (message: ToastMessage, data?: ExternalToast) => string | number;
+type SonnerImpl = (
+  message: ToastMessage,
+  data?: ExternalToast,
+) => string | number;
 
 interface ToastApi {
   (message: ToastMessage, options?: ExternalToast): string | number;
@@ -21,7 +24,8 @@ interface ToastApi {
 }
 
 export const toast: ToastApi = Object.assign(
-  (message: ToastMessage, options?: ExternalToast) => sonnerToast(message, options),
+  (message: ToastMessage, options?: ExternalToast) =>
+    sonnerToast(message, options),
   {
     success: sonnerToast.success,
     info: sonnerToast.info,

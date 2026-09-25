@@ -1,44 +1,83 @@
 import { z } from 'zod';
+import type {
+  FoodItem,
+  FoodItemInput,
+  PFC,
+  SportActivityInput,
+  SportDefinition,
+  UserSettings,
+} from '@/lib/types';
+import type { BarcodeFood } from '@/lib/barcode';
 
-export const pfcMacroSchema = z.object({
-  protein: z.number().nonnegative(),
-  fat: z.number().nonnegative(),
-  carbs: z.number().nonnegative(),
-});
+const nonNegative = z.number().nonnegative();
 
-export const logBaseSchema = z.object({
+const pfcSchema = z.object({
+  protein: nonNegative,
+  fat: nonNegative,
+  carbs: nonNegative,
+  calories: nonNegative,
+}) satisfies z.ZodType<PFC>;
+
+const timestampSchema = z.number().int().positive();
+
+export const foodInputSchema = pfcSchema.extend({
   name: z.string().min(1),
-  timestamp: z.number().int().positive(),
-});
-
-export const logItemInputSchema = logBaseSchema.extend(pfcMacroSchema.shape).extend({
-  calories: z.number().nonnegative(),
+  timestamp: timestampSchema,
   store: z.string().optional(),
   storeGroup: z.string().optional(),
   image: z.string().optional(),
-});
+}) satisfies z.ZodType<FoodItemInput>;
 
-export const logActivityInputSchema = logBaseSchema.extend({
-  sportId: z.string().min(1),
-  caloriesBurned: z.number().nonnegative(),
-});
+// 食品辞書の id はクライアント採番（seed データは sukiya_NNN 形式）なので uuid に限定しない。
+const foodIdSchema = z.string().trim().min(1);
 
-// 食品辞書の1件分。フィールド構成は食事記録アイテムと同じなので logItemInputSchema を流用する。
-// 新規作成時は id をクライアント側で採番して送る（生成食品は uuid 以外の id を持つため
-// uuid には限定せず非空文字列とする）。
-export const foodCreateSchema = logItemInputSchema.extend({
-  id: z.string().min(1),
-});
-
-// 一括インポート（seed）用。1件の構成は foodCreateSchema と同じだが、
-// timestamp は任意（未指定ならサーバ側で現在時刻を採番する）。
-const foodImportItemSchema = foodCreateSchema.extend({
-  timestamp: z.number().int().positive().optional(),
-});
+export const foodCreateSchema = foodInputSchema.extend({
+  id: foodIdSchema,
+}) satisfies z.ZodType<FoodItem>;
 
 export const foodImportSchema = z.object({
   email: z.email(),
-  foods: z.array(foodImportItemSchema).min(1).max(2000),
+  foods: z
+    .array(foodCreateSchema.extend({ timestamp: timestampSchema.optional() }))
+    .min(1)
+    .max(2000),
 });
 
-export const uuidSchema = z.uuid();
+export const activityInputSchema = z.object({
+  sportId: z.string().min(1),
+  name: z.string().min(1),
+  caloriesBurned: nonNegative,
+  timestamp: timestampSchema,
+}) satisfies z.ZodType<SportActivityInput>;
+
+export const settingsSchema = z.object({
+  targetPFC: pfcSchema,
+  profile: z
+    .object({
+      gender: z.enum(['male', 'female']),
+      age: z.number().positive(),
+      height: z.number().positive(),
+      weight: z.number().positive(),
+      targetWeight: z.number().positive(),
+      activityLevel: z.number().positive(),
+    })
+    .optional(),
+  favoriteFoodIds: z.array(z.string()),
+}) satisfies z.ZodType<UserSettings>;
+
+export const sportsSchema = z.array(
+  z.object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    caloriesBurned: nonNegative,
+  }),
+) satisfies z.ZodType<SportDefinition[]>;
+
+export const uuidParamsSchema = z.object({ id: z.uuid() });
+
+export const foodParamsSchema = z.object({ id: foodIdSchema });
+
+export const barcodeFoodSchema = pfcSchema.extend({
+  name: z.string().min(1),
+  store: z.string().optional(),
+}) satisfies z.ZodType<BarcodeFood>;
