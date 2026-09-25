@@ -13,8 +13,7 @@ export const PATCH = defineRoute(
   async (_req, { userId, params, body }) => {
     const updated = await updateLogItem(userId, params.id, body);
     if (!updated) throw new ApiError('対象が見つかりません', 404);
-    const { date: _date, ...item } = updated;
-    return NextResponse.json(item);
+    return NextResponse.json(updated);
   },
 );
 

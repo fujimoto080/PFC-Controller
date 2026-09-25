@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,10 +15,7 @@ import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { AiEstimatePanel } from '@/components/input/AiEstimatePanel';
 import { BarcodeLookupPanel } from '@/components/input/BarcodeLookupPanel';
 import { EatDateTimeCard } from '@/components/input/EatDateTimeFields';
-import {
-  DatalistInput,
-  PfcMacroInputs,
-} from '@/components/input/PfcFieldsGroup';
+import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { SimilarFoodSuggestions } from '@/components/input/SimilarFoodSuggestions';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useBarcodeLookup } from '@/hooks/use-barcode-lookup';
@@ -190,9 +186,8 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                       onClear={barcode.clear}
                     />
                     <div className="space-y-2">
-                      <Label htmlFor="add-food-name">食品名</Label>
-                      <Input
-                        id="add-food-name"
+                      <LabeledInput
+                        label="食品名"
                         {...register('name', { required: true })}
                         placeholder="例: ランチセット"
                       />
@@ -206,11 +201,9 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                       />
                     </div>
                     <PfcMacroInputs register={register} />
-                    <DatalistInput
-                      register={register}
-                      name="store"
+                    <LabeledInput
                       label="店名 / ブランド (任意)"
-                      listId="store-suggestions"
+                      {...register('store')}
                       options={stores}
                       placeholder="例: セブンイレブン"
                     />

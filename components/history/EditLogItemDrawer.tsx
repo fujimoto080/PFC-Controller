@@ -15,11 +15,9 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import type { FoodItem } from '@/lib/types';
 import { toFoodInput, toFormValues, type PfcFormValues } from '@/lib/food-form';
-import { PfcMacroInputs } from '@/components/input/PfcFieldsGroup';
+import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { deleteLogItem, updateLogItem } from '@/lib/client/actions';
@@ -64,10 +62,7 @@ function EditLogItemForm({
   const onSubmit = async (values: PfcFormValues) => {
     const updated: FoodItem = {
       ...item,
-      ...toFoodInput(
-        { ...values, storeGroup: item.storeGroup },
-        eatAt.timestamp,
-      ),
+      ...toFoodInput(values, eatAt.timestamp),
     };
     if (await updateLogItem(updated)) {
       toast.success('更新しました');
@@ -99,13 +94,10 @@ function EditLogItemForm({
           }}
           className="space-y-4"
         >
-          <div className="space-y-2">
-            <Label htmlFor="edit-log-item-name">食品名</Label>
-            <Input
-              id="edit-log-item-name"
-              {...register('name', { required: true })}
-            />
-          </div>
+          <LabeledInput
+            label="食品名"
+            {...register('name', { required: true })}
+          />
           <EatDateTimeFields value={eatAt.value} onChange={eatAt.onChange} />
           <PfcMacroInputs register={register} />
         </form>

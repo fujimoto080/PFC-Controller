@@ -66,13 +66,8 @@ export function addFoodItem(input: FoodItemInput): Promise<boolean> {
         items: [...log.items, { ...input, id }],
       })),
     ),
-    request: () =>
-      api.post<FoodItem>(
-        '/api/log-items',
-        input,
-        '食事記録の追加に失敗しました',
-      ),
-    errorLabel: '追加に失敗しました',
+    request: () => api.post<FoodItem>('/api/log-items', input),
+    errorMessage: '食事記録の追加に失敗しました',
     onSuccess: (current, saved) =>
       withLogs((logs) => replaceLogItem(logs, id, saved))(current),
   });
@@ -95,25 +90,16 @@ export function updateLogItem(item: FoodItem): Promise<boolean> {
         items: [...log.items, item],
       }));
     }),
-    request: () =>
-      api.patch(
-        `/api/log-items/${encodeURIComponent(id)}`,
-        input,
-        '食事記録の更新に失敗しました',
-      ),
-    errorLabel: '更新に失敗しました',
+    request: () => api.patch(`/api/log-items/${encodeURIComponent(id)}`, input),
+    errorMessage: '食事記録の更新に失敗しました',
   });
 }
 
 export function deleteLogItem(id: string): Promise<boolean> {
   return optimistic({
     apply: withLogs((logs) => removeLogItem(logs, id)),
-    request: () =>
-      api.delete(
-        `/api/log-items/${encodeURIComponent(id)}`,
-        '食事記録の削除に失敗しました',
-      ),
-    errorLabel: '削除に失敗しました',
+    request: () => api.delete(`/api/log-items/${encodeURIComponent(id)}`),
+    errorMessage: '食事記録の削除に失敗しました',
   });
 }
 
@@ -127,8 +113,8 @@ function withFoods(fn: (foods: FoodItem[]) => FoodItem[]) {
 export function addFood(item: FoodItem): Promise<boolean> {
   return optimistic({
     apply: withFoods((foods) => [...foods, item]),
-    request: () => api.post('/api/foods', item, '食品の保存に失敗しました'),
-    errorLabel: '食品の保存に失敗しました',
+    request: () => api.post('/api/foods', item),
+    errorMessage: '食品の保存に失敗しました',
   });
 }
 
@@ -138,34 +124,24 @@ export function updateFood(item: FoodItem): Promise<boolean> {
     apply: withFoods((foods) =>
       foods.map((food) => (food.id === id ? item : food)),
     ),
-    request: () =>
-      api.patch(
-        `/api/foods/${encodeURIComponent(id)}`,
-        input,
-        '食品の更新に失敗しました',
-      ),
-    errorLabel: '食品の更新に失敗しました',
+    request: () => api.patch(`/api/foods/${encodeURIComponent(id)}`, input),
+    errorMessage: '食品の更新に失敗しました',
   });
 }
 
 export function deleteFood(id: string): Promise<boolean> {
   return optimistic({
     apply: withFoods((foods) => foods.filter((food) => food.id !== id)),
-    request: () =>
-      api.delete(
-        `/api/foods/${encodeURIComponent(id)}`,
-        '食品の削除に失敗しました',
-      ),
-    errorLabel: '食品の削除に失敗しました',
+    request: () => api.delete(`/api/foods/${encodeURIComponent(id)}`),
+    errorMessage: '食品の削除に失敗しました',
   });
 }
 
 export function saveSettings(settings: UserSettings): Promise<boolean> {
   return optimistic({
     apply: (current) => ({ ...current, settings }),
-    request: () =>
-      api.put('/api/settings', settings, '設定の保存に失敗しました'),
-    errorLabel: '設定の保存に失敗しました',
+    request: () => api.put('/api/settings', settings),
+    errorMessage: '設定の保存に失敗しました',
   });
 }
 
@@ -180,9 +156,8 @@ export function toggleFavoriteFood(id: string): Promise<boolean> {
 export function saveSports(sports: SportDefinition[]): Promise<boolean> {
   return optimistic({
     apply: (current) => ({ ...current, sports }),
-    request: () =>
-      api.put('/api/sports', sports, 'スポーツの保存に失敗しました'),
-    errorLabel: 'スポーツの保存に失敗しました',
+    request: () => api.put('/api/sports', sports),
+    errorMessage: 'スポーツの保存に失敗しました',
   });
 }
 
@@ -209,13 +184,8 @@ export function addSportActivity(
         activities: [...log.activities, { ...input, id }],
       })),
     ),
-    request: () =>
-      api.post<SportActivityLog>(
-        '/api/log-activities',
-        input,
-        '運動記録の追加に失敗しました',
-      ),
-    errorLabel: '運動の追加に失敗しました',
+    request: () => api.post<SportActivityLog>('/api/log-activities', input),
+    errorMessage: '運動記録の追加に失敗しました',
     onSuccess: (current, saved) =>
       withLogs((logs) =>
         updateDay(logs, date, (log) => ({
@@ -237,11 +207,7 @@ export function deleteSportActivity(
         activities: log.activities.filter((activity) => activity.id !== id),
       })),
     ),
-    request: () =>
-      api.delete(
-        `/api/log-activities/${encodeURIComponent(id)}`,
-        '運動記録の削除に失敗しました',
-      ),
-    errorLabel: '運動の削除に失敗しました',
+    request: () => api.delete(`/api/log-activities/${encodeURIComponent(id)}`),
+    errorMessage: '運動記録の削除に失敗しました',
   });
 }

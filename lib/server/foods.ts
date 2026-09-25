@@ -1,14 +1,15 @@
 import 'server-only';
 
-import { getPool } from '@/lib/server/db';
-import { toFoodItem, type FoodColumns } from '@/lib/server/log-items';
+import { deleteUserRow, getPool } from '@/lib/server/db';
+import {
+  FOOD_COLUMNS,
+  foodValues,
+  toFoodItem,
+  type FoodRow,
+} from '@/lib/server/food-row';
 import type { FoodItem, FoodItemInput } from '@/lib/types';
 
-interface FoodRow extends FoodColumns {
-  food_id: string;
-}
-
-const COLUMNS = `food_id, name, protein, fat, carbs, calories, timestamp_ms, store, store_group, image`;
+const COLUMNS = `food_id AS id, ${FOOD_COLUMNS}`;
 
 const UPSERT_SET = `
   name = EXCLUDED.name,
@@ -26,7 +27,7 @@ export async function listFoods(userId: string): Promise<FoodItem[]> {
     `SELECT ${COLUMNS} FROM pfc_foods WHERE user_id = $1 ORDER BY position ASC`,
     [userId],
   );
-  return result.rows.map((row) => toFoodItem(row.food_id, row));
+  return result.rows.map(toFoodItem);
 }
 
 /**
@@ -40,8 +41,7 @@ export async function upsertFood(
   input: FoodItemInput,
 ): Promise<FoodItem> {
   const result = await getPool().query<FoodRow>(
-    `INSERT INTO pfc_foods
-       (user_id, food_id, position, name, protein, fat, carbs, calories, timestamp_ms, store, store_group, image)
+    `INSERT INTO pfc_foods (user_id, food_id, position, ${FOOD_COLUMNS})
      VALUES (
        $1, $2,
        COALESCE((SELECT MAX(position) + 1 FROM pfc_foods WHERE user_id = $1), 0),
@@ -49,23 +49,11 @@ export async function upsertFood(
      )
      ON CONFLICT (user_id, food_id) DO UPDATE SET ${UPSERT_SET}
      RETURNING ${COLUMNS}`,
-    [
-      userId,
-      id,
-      input.name,
-      input.protein,
-      input.fat,
-      input.carbs,
-      input.calories,
-      input.timestamp,
-      input.store ?? null,
-      input.storeGroup ?? null,
-      input.image ?? null,
-    ],
+    [userId, id, ...foodValues(input)],
   );
   const row = result.rows[0];
   if (!row) throw new Error('食品の登録に失敗しました');
-  return toFoodItem(row.food_id, row);
+  return toFoodItem(row);
 }
 
 /**
@@ -85,12 +73,9 @@ export async function upsertFoodsBulk(
        SELECT * FROM unnest(
          $2::text[], $3::text[], $4::float8[], $5::float8[], $6::float8[],
          $7::float8[], $8::int8[], $9::text[], $10::text[], $11::text[]
-       ) WITH ORDINALITY AS t(
-         food_id, name, protein, fat, carbs, calories, timestamp_ms, store, store_group, image, ord
-       )
+       ) WITH ORDINALITY AS t(food_id, ${FOOD_COLUMNS}, ord)
      )
-     INSERT INTO pfc_foods
-       (user_id, food_id, position, name, protein, fat, carbs, calories, timestamp_ms, store, store_group, image)
+     INSERT INTO pfc_foods (user_id, food_id, position, ${FOOD_COLUMNS})
      SELECT $1, i.food_id, base.start + (i.ord - 1),
             i.name, i.protein, i.fat, i.carbs, i.calories, i.timestamp_ms, i.store, i.store_group, i.image
      FROM input i CROSS JOIN base
@@ -112,10 +97,6 @@ export async function upsertFoodsBulk(
   return result.rowCount ?? 0;
 }
 
-export async function deleteFood(userId: string, id: string): Promise<boolean> {
-  const result = await getPool().query(
-    `DELETE FROM pfc_foods WHERE user_id = $1 AND food_id = $2`,
-    [userId, id],
-  );
-  return (result.rowCount ?? 0) > 0;
+export function deleteFood(userId: string, id: string): Promise<boolean> {
+  return deleteUserRow('pfc_foods', 'food_id', userId, id);
 }

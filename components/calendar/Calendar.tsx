@@ -15,6 +15,7 @@ import {
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { progressPct } from '@/lib/pfc';
 import { cn, formatDate, roundPFC } from '@/lib/utils';
 import { useAppState } from '@/lib/client/store';
 import { IconButton } from '@/components/ui/icon-button';
@@ -34,7 +35,7 @@ export function Calendar() {
     end: endDate,
   });
 
-  // Split days into weeks
+  // 表示範囲の日付を週ごとに分割する
   const weeks: Date[][] = [];
   for (let i = 0; i < calendarDays.length; i += 7) {
     weeks.push(calendarDays.slice(i, i + 7));
@@ -158,7 +159,7 @@ export function Calendar() {
                                 isOver ? 'bg-red-500' : 'bg-primary',
                               )}
                               style={{
-                                width: `${Math.min(100, (calories / targetCalories) * 100)}%`,
+                                width: `${progressPct(calories, targetCalories)}%`,
                               }}
                             />
                           </div>
@@ -167,10 +168,10 @@ export function Calendar() {
                     </div>
                   );
                 })}
-                {/* Weekly progress bar */}
+                {/* 週合計の進捗バー */}
                 <div className="flex flex-col items-center justify-center border-l pl-1">
                   <div className="bg-muted-foreground/10 relative h-12 w-1.5 overflow-hidden">
-                    {/* Pace lines (7 divisions) */}
+                    {/* 1日ごとのペース目盛り（7分割） */}
                     <div className="absolute inset-0">
                       {[1, 2, 3, 4, 5, 6].map((i) => (
                         <div
@@ -186,7 +187,7 @@ export function Calendar() {
                         isWeekOver ? 'bg-red-500' : 'bg-green-500',
                       )}
                       style={{
-                        height: `${Math.min(100, (weekCalories / weeklyTarget) * 100)}%`,
+                        height: `${progressPct(weekCalories, weeklyTarget)}%`,
                       }}
                     />
                   </div>

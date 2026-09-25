@@ -3,27 +3,14 @@
 import { useSyncExternalStore } from 'react';
 import { api } from '@/lib/client/api';
 import { toast } from '@/lib/toast';
-import {
-  DEFAULT_SPORTS,
-  DEFAULT_TARGET,
-  type FoodItem,
-  type Logs,
-  type SportDefinition,
-  type UserData,
-  type UserSettings,
-} from '@/lib/types';
+import type { UserData } from '@/lib/types';
 
 /**
  * ログインユーザーのデータを保持するクライアントストア。
  * 状態は不変オブジェクトとして丸ごと差し替え、useSyncExternalStore で購読する。
  * 起動直後は localStorage のキャッシュで即時表示し、裏でサーバーから最新を取得する。
  */
-export interface AppState {
-  logs: Logs;
-  settings: UserSettings;
-  foods: FoodItem[];
-  sports: SportDefinition[];
-}
+export type AppState = UserData;
 
 // localStorage のキャッシュ形式。AppState の形を変えたらインクリメントする。
 const CACHE_KEY_PREFIX = 'pfc:cache:v2:';
@@ -99,23 +86,12 @@ export function hydrateFromCache(userId: string) {
 export async function loadUserData(userId: string): Promise<boolean> {
   selectUser(userId);
   try {
-    const data = await api.get<UserData>(
-      '/api/user-data',
-      'ユーザーデータ取得に失敗しました',
-    );
+    const data = await api.get<UserData>('/api/user-data');
     if (currentUserId !== userId) return false;
-    replaceState({
-      logs: data.logs,
-      settings: data.settings ?? {
-        targetPFC: DEFAULT_TARGET,
-        favoriteFoodIds: [],
-      },
-      foods: data.foods,
-      sports: data.sports.length > 0 ? data.sports : [...DEFAULT_SPORTS],
-    });
+    replaceState(data);
     return true;
   } catch (error) {
-    toast.fromError('ユーザーデータ読み込み失敗', error);
+    toast.fromError('ユーザーデータの読み込みに失敗しました', error);
     return false;
   }
 }
@@ -127,10 +103,10 @@ export async function loadUserData(userId: string): Promise<boolean> {
 export async function optimistic<T>(params: {
   apply: (current: AppState) => AppState;
   request: () => Promise<T>;
-  errorLabel: string;
+  errorMessage: string;
   onSuccess?: (current: AppState, result: T) => AppState;
 }): Promise<boolean> {
-  const { apply, request, errorLabel, onSuccess } = params;
+  const { apply, request, errorMessage, onSuccess } = params;
   const snapshot = getState();
   replaceState(apply(snapshot));
   try {
@@ -139,7 +115,7 @@ export async function optimistic<T>(params: {
     return true;
   } catch (error) {
     replaceState(snapshot);
-    toast.fromError(errorLabel, error);
+    toast.fromError(errorMessage, error);
     return false;
   }
 }

@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageTitle } from '@/components/ui/page-title';
 import { listBarcodeMappings } from '@/lib/server/barcode-kv';
@@ -5,6 +7,10 @@ import { listBarcodeMappings } from '@/lib/server/barcode-kv';
 export const dynamic = 'force-dynamic';
 
 export default async function BarcodeMappingsPage() {
+  // レイアウトの未ログイン表示とは別に、RSC ペイロードへデータを載せないようここで弾く
+  const session = await auth();
+  if (!session?.user.id) redirect('/login');
+
   const mappings = await listBarcodeMappings();
 
   return (

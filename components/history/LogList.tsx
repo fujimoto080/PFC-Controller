@@ -61,7 +61,8 @@ function groupLogItems(logs: Logs, limit: number) {
   const byDate = new Map<string, Map<string, FoodItem[]>>();
   for (const item of items.slice(0, limit)) {
     const date = formatDate(item.timestamp);
-    const key = `${item.name}_${item.protein}_${item.fat}_${item.carbs}`;
+    // 展開状態の管理にも使うため、日付を含めて日をまたいで衝突しないキーにする
+    const key = `${date}_${item.name}_${item.protein}_${item.fat}_${item.carbs}`;
     const groups = byDate.get(date) ?? new Map<string, FoodItem[]>();
     byDate.set(date, groups);
     groups.set(key, [...(groups.get(key) ?? []), item]);

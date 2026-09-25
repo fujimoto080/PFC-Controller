@@ -4,10 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Save, ScanBarcode, X } from 'lucide-react';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
-import {
-  DatalistInput,
-  PfcMacroInputs,
-} from '@/components/input/PfcFieldsGroup';
+import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -49,9 +46,7 @@ export function FoodEditor({
   const [barcodeInput, setBarcodeInput] = useState(initialBarcodes.join(', '));
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const { register, handleSubmit } = useForm<PfcFormValues>({
-    defaultValues: food
-      ? { ...toFormValues(food), storeGroup: food.storeGroup ?? '' }
-      : { ...EMPTY_FORM_VALUES, storeGroup: '' },
+    defaultValues: food ? toFormValues(food) : EMPTY_FORM_VALUES,
   });
 
   const onSubmit = async (values: PfcFormValues) => {
@@ -88,27 +83,21 @@ export function FoodEditor({
           }}
           className="space-y-4"
         >
-          <div className="space-y-2">
-            <Label>食品名</Label>
-            <Input
-              {...register('name', { required: true })}
-              placeholder="例: ハンバーグ"
-            />
-          </div>
+          <LabeledInput
+            label="食品名"
+            {...register('name', { required: true })}
+            placeholder="例: ハンバーグ"
+          />
           <PfcMacroInputs register={register} />
-          <DatalistInput
-            register={register}
-            name="store"
+          <LabeledInput
             label="店名 / ブランド (任意)"
-            listId="store-suggestions"
+            {...register('store')}
             options={storeOptions}
             placeholder="例: セブンイレブン"
           />
-          <DatalistInput
-            register={register}
-            name="storeGroup"
+          <LabeledInput
             label="店内グループ (任意)"
-            listId="store-group-suggestions"
+            {...register('storeGroup')}
             options={groupOptions}
             placeholder="例: おにぎり"
           />

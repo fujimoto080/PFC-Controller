@@ -1,5 +1,5 @@
 import type { BarcodeFood } from './barcode';
-import type { FoodItemInput } from './types';
+import type { FoodItem, FoodItemInput } from './types';
 
 /**
  * PFC フォームが共通で持つ入力値。
@@ -22,6 +22,7 @@ export const EMPTY_FORM_VALUES: PfcFormValues = {
   carbs: '',
   calories: '',
   store: '',
+  storeGroup: '',
 };
 
 /** 空欄由来の NaN / 空文字 / 不正文字列は 0 に丸める。 */
@@ -33,7 +34,9 @@ function safeNumber(value: unknown): number {
 const emptyToUndefined = (value?: string) => (value === '' ? undefined : value);
 
 /** 既存の食品をフォームの初期値に変換する。 */
-export function toFormValues(food: BarcodeFood): PfcFormValues {
+export function toFormValues(
+  food: BarcodeFood & Pick<FoodItem, 'storeGroup'>,
+): PfcFormValues {
   return {
     name: food.name,
     protein: food.protein,
@@ -41,6 +44,7 @@ export function toFormValues(food: BarcodeFood): PfcFormValues {
     carbs: food.carbs,
     calories: food.calories,
     store: food.store ?? '',
+    storeGroup: food.storeGroup ?? '',
   };
 }
 

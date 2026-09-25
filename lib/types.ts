@@ -56,26 +56,13 @@ export interface UserSettings {
   favoriteFoodIds: string[];
 }
 
-/** GET /api/user-data のレスポンス。設定未保存のユーザーは settings が null。 */
+/** GET /api/user-data のレスポンス。未保存の設定・スポーツはサーバー側で既定値が補われる。 */
 export interface UserData {
   logs: Logs;
-  settings: UserSettings | null;
+  settings: UserSettings;
   foods: FoodItem[];
   sports: SportDefinition[];
 }
-
-export const DEFAULT_TARGET: PFC = {
-  protein: 100,
-  fat: 60,
-  carbs: 250,
-  calories: 2000,
-};
-
-export const DEFAULT_SPORTS: readonly SportDefinition[] = [
-  { id: 'walking', name: 'ウォーキング', caloriesBurned: 180 },
-  { id: 'running', name: 'ランニング', caloriesBurned: 320 },
-  { id: 'cycling', name: 'サイクリング', caloriesBurned: 260 },
-];
 
 // 空 PFC 共通定数。直接参照すると意図せず共有されるため、利用側では必ずスプレッドで複製すること。
 export const EMPTY_PFC: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
