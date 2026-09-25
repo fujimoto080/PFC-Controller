@@ -2,11 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  Html5Qrcode,
-  Html5QrcodeScannerState,
-  Html5QrcodeSupportedFormats as Format,
-} from 'html5-qrcode';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,23 +14,21 @@ interface BarcodeScannerProps {
   onClose: () => void;
 }
 
-const REGION_ID = 'html5qr-code-full-region';
-
-const SUPPORTED_FORMATS = [
-  Format.EAN_13, // JAN
-  Format.EAN_8,
-  Format.UPC_A,
-  Format.UPC_E,
-  Format.CODE_128,
-  Format.CODE_39,
-  Format.CODE_93,
-  Format.ITF,
-  Format.CODABAR,
-  Format.QR_CODE,
+const SUPPORTED_FORMATS: BarcodeFormat[] = [
+  'ean_13', // JAN
+  'ean_8',
+  'upc_a',
+  'upc_e',
+  'code_128',
+  'code_39',
+  'code_93',
+  'itf',
+  'codabar',
+  'qr_code',
 ];
 
 // 誤読を避けるため、同じ値を指定回数読み取れたら確定する
-const REQUIRED_SCANS = 3;
+const REQUIRED_SCANS = 2;
 const FEEDBACK_MS = 300;
 
 type ScanFeedback = 'success' | 'error' | null;
@@ -47,14 +40,12 @@ const FEEDBACK_CLASS = {
     'shadow-[0_0_18px_rgba(239,68,68,0.9)] ring-4 ring-red-500 ring-offset-2 ring-offset-black',
 } as const;
 
-async function stopScanner(scanner: Html5Qrcode) {
-  const state = scanner.getState();
-  if (
-    state === Html5QrcodeScannerState.SCANNING ||
-    state === Html5QrcodeScannerState.PAUSED
-  ) {
-    await scanner.stop();
-  }
+function nextVideoFrame(video: HTMLVideoElement) {
+  return new Promise<void>((resolve) => {
+    video.requestVideoFrameCallback(() => {
+      resolve();
+    });
+  });
 }
 
 export function BarcodeScanner({
@@ -63,6 +54,7 @@ export function BarcodeScanner({
 }: BarcodeScannerProps) {
   const [feedback, setFeedback] = useState<ScanFeedback>(null);
   const [manualCode, setManualCode] = useState('');
+  const videoRef = useRef<HTMLVideoElement>(null);
   // マウント時に一度だけ起動するため、最新のコールバックは ref 経由で参照する
   const callbacksRef = useRef({ onScanSuccess, onClose });
   useEffect(() => {
@@ -70,13 +62,20 @@ export function BarcodeScanner({
   });
 
   useEffect(() => {
-    const scanner = new Html5Qrcode(REGION_ID, {
-      formatsToSupport: SUPPORTED_FORMATS,
-      verbose: false,
-    });
+    const video = videoRef.current;
+    if (!video) return;
     const scanCounts = new Map<string, number>();
+    // スキャン完了・失敗・アンマウントのいずれかで abort し、検出ループを止める
+    const controller = new AbortController();
+    const { signal } = controller;
+    let stream: MediaStream | undefined;
     let feedbackTimer: number | undefined;
-    let finished = false;
+
+    const stopCamera = () => {
+      stream?.getTracks().forEach((track) => {
+        track.stop();
+      });
+    };
 
     const showFeedback = (status: Exclude<ScanFeedback, null>) => {
       setFeedback(status);
@@ -86,43 +85,55 @@ export function BarcodeScanner({
       }, FEEDBACK_MS);
     };
 
-    const onDecoded = (decodedText: string, format?: Format) => {
-      if (finished) return;
-      if (!isValidBarcode(decodedText, format)) {
+    const onDetected = ({ rawValue, format }: DetectedBarcode) => {
+      if (!isValidBarcode(rawValue, format)) {
         showFeedback('error');
         return;
       }
-      const count = (scanCounts.get(decodedText) ?? 0) + 1;
-      scanCounts.set(decodedText, count);
+      const count = (scanCounts.get(rawValue) ?? 0) + 1;
+      scanCounts.set(rawValue, count);
       if (count < REQUIRED_SCANS) return;
 
-      finished = true;
+      controller.abort();
+      stopCamera();
       showFeedback('success');
-      void stopScanner(scanner).catch(() => undefined);
-      callbacksRef.current.onScanSuccess(decodedText);
+      callbacksRef.current.onScanSuccess(rawValue);
     };
 
-    const started = scanner
-      .start(
-        { facingMode: 'environment' },
-        { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
-        (decodedText, result) => {
-          onDecoded(decodedText, result.result.format?.format);
+    const scan = async () => {
+      if (typeof BarcodeDetector === 'undefined') {
+        throw new Error('この端末のブラウザはバーコード検出に対応していません');
+      }
+      const detector = new BarcodeDetector({ formats: SUPPORTED_FORMATS });
+      // 小さなバーコードも読めるよう高解像度を要求する
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
         },
-        () => undefined,
-      )
-      // 読み取り精度を上げるため高解像度を要求する。未対応端末では無視する
-      .then(() =>
-        scanner
-          .applyVideoConstraints({
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-          })
-          .catch(() => undefined),
-      );
+      });
+      signal.throwIfAborted();
+      video.srcObject = stream;
+      await video.play();
 
-    started.catch((error: unknown) => {
-      if (finished) return;
+      // 検出の完了を待ってから次のフレームを渡し、処理が詰まらないようにする
+      for (;;) {
+        const barcodes = await detector.detect(video);
+        for (const barcode of barcodes) {
+          signal.throwIfAborted();
+          onDetected(barcode);
+        }
+        signal.throwIfAborted();
+        await nextVideoFrame(video);
+      }
+    };
+
+    scan().catch((error: unknown) => {
+      // 起動完了前にアンマウントされてもカメラを確実に止める
+      stopCamera();
+      if (signal.aborted) return;
+      controller.abort();
       toast.fromError(
         'カメラの起動に失敗しました。カメラへのアクセスを許可してください。',
         error,
@@ -130,11 +141,10 @@ export function BarcodeScanner({
       callbacksRef.current.onClose();
     });
 
-    // 起動完了前にアンマウントされてもカメラを確実に止める
     return () => {
-      finished = true;
+      controller.abort();
       window.clearTimeout(feedbackTimer);
-      void started.then(() => stopScanner(scanner)).catch(() => undefined);
+      stopCamera();
     };
   }, []);
 
@@ -158,12 +168,20 @@ export function BarcodeScanner({
             JAN/EAN/UPC/Code128/ITFなどに対応しています
           </p>
           <div
-            id={REGION_ID}
             className={cn(
-              'min-h-[300px] w-full overflow-hidden rounded-md bg-black transition-shadow',
+              'relative aspect-[4/3] w-full overflow-hidden rounded-md bg-black transition-shadow',
               feedback && FEEDBACK_CLASS[feedback],
             )}
-          />
+          >
+            <video
+              ref={videoRef}
+              className="h-full w-full object-cover"
+              muted
+              playsInline
+            />
+            {/* 画面全体から検出するが、狙いやすいよう目安の枠を表示する */}
+            <div className="pointer-events-none absolute inset-x-[10%] top-1/2 h-1/3 -translate-y-1/2 rounded-md border-2 border-white/80" />
+          </div>
           <form
             className="mt-4 flex gap-2"
             onSubmit={(e) => {

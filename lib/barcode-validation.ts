@@ -1,5 +1,3 @@
-import { Html5QrcodeSupportedFormats as Format } from 'html5-qrcode';
-
 /**
  * GTIN 系(EAN/UPC/ITF)共通の mod10 チェックデジット検証。
  * チェックデジットを除いた末尾の桁から 3,1,3,1... の重みを掛けて合計する。
@@ -29,23 +27,23 @@ function expandUpcE(value: string): string | null {
   return `${numberSystem}${body}${checkDigit}`;
 }
 
-const RULES: Partial<Record<Format, (value: string) => boolean>> = {
-  [Format.EAN_13]: (v) => v.length === 13 && hasValidCheckDigit(v),
-  [Format.EAN_8]: (v) => v.length === 8 && hasValidCheckDigit(v),
-  [Format.UPC_A]: (v) => v.length === 12 && hasValidCheckDigit(v),
-  [Format.UPC_E]: (v) => {
+const RULES: Partial<Record<BarcodeFormat, (value: string) => boolean>> = {
+  ean_13: (v) => v.length === 13 && hasValidCheckDigit(v),
+  ean_8: (v) => v.length === 8 && hasValidCheckDigit(v),
+  upc_a: (v) => v.length === 12 && hasValidCheckDigit(v),
+  upc_e: (v) => {
     const expanded = expandUpcE(v);
     return expanded !== null && hasValidCheckDigit(expanded);
   },
-  [Format.ITF]: (v) => v.length % 2 === 0 && hasValidCheckDigit(v),
-  [Format.CODE_128]: (v) => /^[\x20-\x7E]{6,32}$/.test(v),
-  [Format.CODE_39]: (v) => /^[0-9A-Z .\-$/+%]{6,32}$/.test(v),
-  [Format.CODE_93]: (v) => /^[\x20-\x7E]{6,32}$/.test(v),
-  [Format.CODABAR]: (v) => /^[A-D][0-9\-$:/.+]{4,30}[A-D]$/.test(v),
+  itf: (v) => v.length % 2 === 0 && hasValidCheckDigit(v),
+  code_128: (v) => /^[\x20-\x7E]{6,32}$/.test(v),
+  code_39: (v) => /^[0-9A-Z .\-$/+%]{6,32}$/.test(v),
+  code_93: (v) => /^[\x20-\x7E]{6,32}$/.test(v),
+  codabar: (v) => /^[A-D][0-9\-$:/.+]{4,30}[A-D]$/.test(v),
 };
 
 /** 読み取った値がフォーマットの仕様（桁数・文字種・チェックデジット）を満たすか。 */
-export function isValidBarcode(value: string, format?: Format): boolean {
-  const rule = format === undefined ? undefined : RULES[format];
+export function isValidBarcode(value: string, format: BarcodeFormat): boolean {
+  const rule = RULES[format];
   return rule ? rule(value) : value.length > 0;
 }
