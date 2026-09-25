@@ -13,7 +13,9 @@ export async function AccountPanel() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="text-sm">
-          {session.user.name && <p className="font-medium">{session.user.name}</p>}
+          {session.user.name && (
+            <p className="font-medium">{session.user.name}</p>
+          )}
           {session.user.email && (
             <p className="text-muted-foreground">{session.user.email}</p>
           )}

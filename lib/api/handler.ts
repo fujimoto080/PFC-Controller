@@ -30,7 +30,11 @@ type RouteContext<TBody, TParams, TAuth extends boolean> = {
  * Route Handler の定型（認証・params/body の zod 検証・エラーの JSON 化）をまとめる。
  * 検証に失敗した場合は 400、ApiError はその status、それ以外は 500 を返す。
  */
-export function defineRoute<TBody = undefined, TParams = undefined, TAuth extends boolean = true>(
+export function defineRoute<
+  TBody = undefined,
+  TParams = undefined,
+  TAuth extends boolean = true,
+>(
   options: RouteOptions<TBody, TParams, TAuth>,
   handler: (
     request: NextRequest,
@@ -95,8 +99,14 @@ function formatZodError(error: ZodError): string {
 
 function toErrorResponse(label: string, error: unknown): NextResponse {
   if (error instanceof ApiError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json(
+      { error: error.message },
+      { status: error.status },
+    );
   }
   console.error(`[${label}] unhandled error`, error);
-  return NextResponse.json({ error: `${label}の処理に失敗しました` }, { status: 500 });
+  return NextResponse.json(
+    { error: `${label}の処理に失敗しました` },
+    { status: 500 },
+  );
 }

@@ -12,7 +12,9 @@ import { ja } from 'date-fns/locale';
 import { PageTitle } from '@/components/ui/page-title';
 
 export default function Home() {
-  const [selectedDate, setSelectedDate] = useState(() => formatDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(() =>
+    formatDate(new Date()),
+  );
 
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
@@ -39,7 +41,10 @@ export default function Home() {
       <WeeklyPFCStats />
 
       <div className="pb-4 text-right">
-        <Link href="/privacy-policy" className="text-muted-foreground text-xs underline">
+        <Link
+          href="/privacy-policy"
+          className="text-muted-foreground text-xs underline"
+        >
           プライバシーポリシー
         </Link>
       </div>

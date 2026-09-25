@@ -33,7 +33,9 @@ export function EatDateTimeFields({
           id="eatDate"
           type="date"
           value={eatDate}
-          onChange={(e) => { setEatDate(e.target.value); }}
+          onChange={(e) => {
+            setEatDate(e.target.value);
+          }}
           onClick={openNativePicker}
         />
       </div>
@@ -43,7 +45,9 @@ export function EatDateTimeFields({
           id="eatTime"
           type="time"
           value={eatTime}
-          onChange={(e) => { setEatTime(e.target.value); }}
+          onChange={(e) => {
+            setEatTime(e.target.value);
+          }}
           onClick={openNativePicker}
         />
       </div>

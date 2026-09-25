@@ -27,7 +27,9 @@ function extractJsonObject(rawText: string): string {
   throw new ApiError('JSON形式の結果を取得できませんでした', 502);
 }
 
-function normalizeNutrition(data: Partial<EstimatedNutrition>): EstimatedNutrition {
+function normalizeNutrition(
+  data: Partial<EstimatedNutrition>,
+): EstimatedNutrition {
   const toNumber = (value: unknown) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric < 0) return 0;
@@ -64,7 +66,9 @@ export const POST = defineRoute(
       tools: [{ google_search: {} }],
     });
 
-    const parsed = JSON.parse(extractJsonObject(generatedText)) as Partial<EstimatedNutrition>;
+    const parsed = JSON.parse(
+      extractJsonObject(generatedText),
+    ) as Partial<EstimatedNutrition>;
     return NextResponse.json(normalizeNutrition(parsed));
   },
 );

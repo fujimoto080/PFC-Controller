@@ -17,7 +17,10 @@ import { useAppState } from '@/lib/client/store';
 import type { FoodItem } from '@/lib/types';
 import { toFoodInput } from '@/lib/food-form';
 import { collectStores } from '@/lib/store-sections';
-import { PfcMacroInputs, DatalistInput } from '@/components/input/PfcFieldsGroup';
+import {
+  PfcMacroInputs,
+  DatalistInput,
+} from '@/components/input/PfcFieldsGroup';
 import { EatDateTimeCard } from '@/components/input/EatDateTimeFields';
 import { generateId } from '@/lib/utils';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
@@ -76,17 +79,17 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     control,
     formState: { isSubmitting },
   } = useForm<ManualFoodFormValues>({
-      defaultValues: initialData
-        ? {
-            name: initialData.name,
-            protein: initialData.protein,
-            fat: initialData.fat,
-            carbs: initialData.carbs,
-            calories: initialData.calories,
-            store: initialData.store,
-          }
-        : { name: '' },
-    });
+    defaultValues: initialData
+      ? {
+          name: initialData.name,
+          protein: initialData.protein,
+          fat: initialData.fat,
+          carbs: initialData.carbs,
+          calories: initialData.calories,
+          store: initialData.store,
+        }
+      : { name: '' },
+  });
   const watchedValues = useWatch({ control });
   const watchedName = watchedValues.name ?? '';
   const similarFoods = useMemo(
@@ -116,15 +119,16 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     return isNameValid && areMacrosValid;
   };
 
-  const clearForm = () =>
-    { reset({
+  const clearForm = () => {
+    reset({
       name: '',
       protein: undefined,
       fat: undefined,
       carbs: undefined,
       calories: undefined,
       store: '',
-    }); };
+    });
+  };
 
   // 手動入力フォームの入力内容(フォーム値・チェック・下書き)をまとめてクリアする
   const handleClearForm = () => {
@@ -154,7 +158,9 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
     handleExtractTextFromImage,
   } = useAiNutrition({
     applyFoodData: applyFoodDataToForm,
-    onApplied: () => { setActiveTab('manual'); },
+    onApplied: () => {
+      setActiveTab('manual');
+    },
   });
 
   // 編集モード (initialData 指定) では下書き機能は無効。新規追加時のみ有効化する
@@ -259,7 +265,11 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
       }
     } catch (error) {
       toast.dismiss(loadingToast);
-      toast.fromError('バーコード読み取りエラー', error, 'エラーが発生しました');
+      toast.fromError(
+        'バーコード読み取りエラー',
+        error,
+        'エラーが発生しました',
+      );
     }
   };
 
@@ -317,14 +327,18 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
               <Card>
                 <CardContent className="pt-6">
                   <form
-                    onSubmit={(e) => { void handleSubmit(onSubmitManual)(e); }}
+                    onSubmit={(e) => {
+                      void handleSubmit(onSubmitManual)(e);
+                    }}
                     className="space-y-4"
                   >
                     <Button
                       type="button"
                       variant="outline"
                       className="w-full gap-2"
-                      onClick={() => { setShowScanner(true); }}
+                      onClick={() => {
+                        setShowScanner(true);
+                      }}
                     >
                       <ScanBarcode className="h-4 w-4" />
                       バーコードから読み取る
@@ -354,15 +368,17 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                         <Input
                           id="barcodeLookup"
                           value={barcodeLookupInput}
-                          onChange={(event) =>
-                            { setBarcodeLookupInput(event.target.value); }
-                          }
+                          onChange={(event) => {
+                            setBarcodeLookupInput(event.target.value);
+                          }}
                           placeholder="例: 4900000000000"
                         />
                         <Button
                           type="button"
                           variant="secondary"
-                          onClick={() => { void handleLookupBarcode(); }}
+                          onClick={() => {
+                            void handleLookupBarcode();
+                          }}
                         >
                           確認
                         </Button>
@@ -407,14 +423,16 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                                 key={food.id}
                                 type="button"
                                 className="hover:bg-muted/80 w-full rounded-md border p-2 text-left transition-colors"
-                                onClick={() => { handleApplySuggestion(food); }}
+                                onClick={() => {
+                                  handleApplySuggestion(food);
+                                }}
                               >
                                 <p className="text-sm font-medium">
                                   {food.name}
                                 </p>
                                 <p className="text-muted-foreground text-xs">
-                                  P:{food.protein} F:{food.fat} C:{food.carbs}{' '}
-                                  / {food.calories}kcal
+                                  P:{food.protein} F:{food.fat} C:{food.carbs} /{' '}
+                                  {food.calories}kcal
                                   {food.store ? ` / ${food.store}` : ''}
                                 </p>
                               </button>
@@ -423,7 +441,11 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                         </div>
                       )}
                     </div>
-                    <PfcMacroInputs register={register} step="0.01" valueAsNumber />
+                    <PfcMacroInputs
+                      register={register}
+                      step="0.01"
+                      valueAsNumber
+                    />
                     <DatalistInput
                       register={register}
                       name="store"
@@ -436,9 +458,9 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                       <Checkbox
                         id="saveToDict"
                         checked={saveToDictionary}
-                        onCheckedChange={(checked) =>
-                          { setSaveToDictionary(checked as boolean); }
-                        }
+                        onCheckedChange={(checked) => {
+                          setSaveToDictionary(checked as boolean);
+                        }}
                       />
                       <Label
                         htmlFor="saveToDict"
@@ -516,13 +538,17 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
                     <Input
                       id="aiInputText"
                       value={aiInputText}
-                      onChange={(event) => { setAiInputText(event.target.value); }}
+                      onChange={(event) => {
+                        setAiInputText(event.target.value);
+                      }}
                       placeholder="例: コンビニのおにぎり2個とサラダチキン"
                     />
                     <Button
                       type="button"
                       className="w-full"
-                      onClick={() => { void handleEstimateByAi(); }}
+                      onClick={() => {
+                        void handleEstimateByAi();
+                      }}
                       disabled={isEstimatingNutrition || isExtractingText}
                     >
                       {isEstimatingNutrition
@@ -547,8 +573,12 @@ export function AddFoodForm({ onSuccess, initialData }: AddFoodFormProps) {
 
       {showScanner && (
         <BarcodeScanner
-          onScanSuccess={(code) => { void handleScanSuccess(code); }}
-          onClose={() => { setShowScanner(false); }}
+          onScanSuccess={(code) => {
+            void handleScanSuccess(code);
+          }}
+          onClose={() => {
+            setShowScanner(false);
+          }}
         />
       )}
     </div>

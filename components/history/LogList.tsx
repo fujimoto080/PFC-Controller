@@ -13,7 +13,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { toast } from '@/lib/toast';
 import { EditLogItemDrawer } from './EditLogItemDrawer';
 import { AddFoodForm } from '@/components/input/AddFoodForm';
@@ -55,7 +60,10 @@ async function reRegister(item: FoodItem) {
 export function LogList() {
   const { logs } = useAppState();
   const allItems = useMemo(
-    () => Object.values(logs).flatMap((log) => log.items).sort((a, b) => b.timestamp - a.timestamp),
+    () =>
+      Object.values(logs)
+        .flatMap((log) => log.items)
+        .sort((a, b) => b.timestamp - a.timestamp),
     [logs],
   );
   const [displayCount, setDisplayCount] = useState(100);
@@ -83,29 +91,34 @@ export function LogList() {
     }
     return Array.from(byDate, ([dateKey, groups]) => ({
       dateKey,
-      groups: Array.from(
-        groups,
-        ([groupKey, items]): GroupedFoodItem => ({
-          groupKey,
-          name: items[0]?.name ?? '',
-          items,
-          total: sumPFC(items),
-        }),
-      ),
+      groups: Array.from(groups, ([groupKey, items]): GroupedFoodItem => ({
+        groupKey,
+        name: items[0]?.name ?? '',
+        items,
+        total: sumPFC(items),
+      })),
     }));
   }, [allItems, displayCount]);
 
   return (
     <>
-      <Drawer open={callingItem !== null} onOpenChange={(open) => {
-        if (!open) setCallingItem(null);
-      }}>
+      <Drawer
+        open={callingItem !== null}
+        onOpenChange={(open) => {
+          if (!open) setCallingItem(null);
+        }}
+      >
         <DrawerContent className="h-[90vh]">
           <DrawerHeader>
             <DrawerTitle>データを追加</DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 pb-8 overflow-y-auto">
-            <AddFoodForm onSuccess={() => { setCallingItem(null); }} initialData={callingItem ?? undefined} />
+          <div className="overflow-y-auto px-4 pb-8">
+            <AddFoodForm
+              onSuccess={() => {
+                setCallingItem(null);
+              }}
+              initialData={callingItem ?? undefined}
+            />
           </div>
         </DrawerContent>
       </Drawer>
@@ -123,125 +136,150 @@ export function LogList() {
               const isItemToday = isToday(date);
 
               return (
-                  <div key={dateKey} className="space-y-2">
-                    <h2 className={cn(
-                      "text-xs font-semibold px-1 py-1 sticky top-0 bg-background/95 backdrop-blur z-10",
-                      isItemToday ? "text-primary" : "text-muted-foreground"
-                    )}>
-                      {isItemToday ? `今日 - ${formattedDate}` : formattedDate}
-                    </h2>
-                    <div className="space-y-2">
-                      {groups.map((group) => {
-                        const isExpanded = expandedGroups.has(group.groupKey);
-                        const isSingleItem = group.items.length === 1;
-                        const firstItem = group.items[0];
-                        if (!firstItem) return null;
+                <div key={dateKey} className="space-y-2">
+                  <h2
+                    className={cn(
+                      'bg-background/95 sticky top-0 z-10 px-1 py-1 text-xs font-semibold backdrop-blur',
+                      isItemToday ? 'text-primary' : 'text-muted-foreground',
+                    )}
+                  >
+                    {isItemToday ? `今日 - ${formattedDate}` : formattedDate}
+                  </h2>
+                  <div className="space-y-2">
+                    {groups.map((group) => {
+                      const isExpanded = expandedGroups.has(group.groupKey);
+                      const isSingleItem = group.items.length === 1;
+                      const firstItem = group.items[0];
+                      if (!firstItem) return null;
 
-                        return (
-                          <Card
-                            key={group.groupKey}
-                            className={cn(
-                              "overflow-hidden",
-                              getTimeOfDayGradient(firstItem.timestamp)
-                            )}
-                          >
-                            <CardContent className="space-y-3 p-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <h3 className="text-sm font-medium">
-                                    {group.name}
-                                    {!isSingleItem && (
-                                      <span className="text-muted-foreground ml-2 text-xs font-normal">
-                                        ×{group.items.length}
-                                      </span>
-                                    )}
-                                  </h3>
-                                  <div className="text-muted-foreground mt-0.5 text-[10px]">
-                                    {group.total.calories} kcal
-                                  </div>
+                      return (
+                        <Card
+                          key={group.groupKey}
+                          className={cn(
+                            'overflow-hidden',
+                            getTimeOfDayGradient(firstItem.timestamp),
+                          )}
+                        >
+                          <CardContent className="space-y-3 p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h3 className="text-sm font-medium">
+                                  {group.name}
+                                  {!isSingleItem && (
+                                    <span className="text-muted-foreground ml-2 text-xs font-normal">
+                                      ×{group.items.length}
+                                    </span>
+                                  )}
+                                </h3>
+                                <div className="text-muted-foreground mt-0.5 text-[10px]">
+                                  {group.total.calories} kcal
                                 </div>
-                                {!isSingleItem && (
-                                  <IconButton
-                                    onClick={() => { toggleGroup(group.groupKey); }}
-                                    className="h-8 w-8 text-muted-foreground"
-                                    title={isExpanded ? "折りたたむ" : "展開"}
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronUp className="h-4 w-4" />
-                                    ) : (
-                                      <ChevronDown className="h-4 w-4" />
-                                    )}
-                                  </IconButton>
-                                )}
                               </div>
-
-                              <PfcMacroLine food={group.total} showCalories={false} precision={1} />
-
-                              {/* グループ全体の操作ボタン */}
-                              <div className="flex gap-2 pt-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => { setCallingItem(firstItem); }}
-                                  className="h-8 flex-1 text-xs"
+                              {!isSingleItem && (
+                                <IconButton
+                                  onClick={() => {
+                                    toggleGroup(group.groupKey);
+                                  }}
+                                  className="text-muted-foreground h-8 w-8"
+                                  title={isExpanded ? '折りたたむ' : '展開'}
                                 >
-                                  呼び出し
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => { void reRegister(firstItem); }}
-                                  className="h-8 flex-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
-                                >
-                                  再登録
-                                </Button>
-                                {isSingleItem && (
-                                  <IconButton
-                                    onClick={() => { setEditingItem(firstItem); }}
-                                    className="h-8 w-8 text-muted-foreground"
-                                    title="編集"
-                                  >
-                                    <Edit2 className="h-4 w-4" />
-                                  </IconButton>
-                                )}
-                              </div>
-
-                              {/* 複数アイテムの場合は展開時に個別エントリを表示 */}
-                              {!isSingleItem && isExpanded && (
-                                <div className="border-t pt-3 space-y-2">
-                                  {group.items.map((item) => (
-                                    <div 
-                                      key={item.id} 
-                                      className={cn(
-                                        "rounded-lg p-2 space-y-2",
-                                        getTimeOfDayGradient(item.timestamp)
-                                      )}
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex-1">
-                                          <div className="text-xs text-muted-foreground">
-                                            {format(new Date(item.timestamp), 'HH:mm')} • {item.calories} kcal
-                                          </div>
-                                          <PfcMacroLine food={item} showCalories={false} precision={1} className="mt-1 text-[10px]" />
-                                        </div>
-                                        <IconButton
-                                          onClick={() => { setEditingItem(item); }}
-                                          className="h-7 w-7 text-muted-foreground"
-                                          title="編集"
-                                        >
-                                          <Edit2 className="h-3 w-3" />
-                                        </IconButton>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
+                                  {isExpanded ? (
+                                    <ChevronUp className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                  )}
+                                </IconButton>
                               )}
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
+                            </div>
+
+                            <PfcMacroLine
+                              food={group.total}
+                              showCalories={false}
+                              precision={1}
+                            />
+
+                            {/* グループ全体の操作ボタン */}
+                            <div className="flex gap-2 pt-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setCallingItem(firstItem);
+                                }}
+                                className="h-8 flex-1 text-xs"
+                              >
+                                呼び出し
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  void reRegister(firstItem);
+                                }}
+                                className="h-8 flex-1 border-blue-200 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                              >
+                                再登録
+                              </Button>
+                              {isSingleItem && (
+                                <IconButton
+                                  onClick={() => {
+                                    setEditingItem(firstItem);
+                                  }}
+                                  className="text-muted-foreground h-8 w-8"
+                                  title="編集"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </IconButton>
+                              )}
+                            </div>
+
+                            {/* 複数アイテムの場合は展開時に個別エントリを表示 */}
+                            {!isSingleItem && isExpanded && (
+                              <div className="space-y-2 border-t pt-3">
+                                {group.items.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className={cn(
+                                      'space-y-2 rounded-lg p-2',
+                                      getTimeOfDayGradient(item.timestamp),
+                                    )}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex-1">
+                                        <div className="text-muted-foreground text-xs">
+                                          {format(
+                                            new Date(item.timestamp),
+                                            'HH:mm',
+                                          )}{' '}
+                                          • {item.calories} kcal
+                                        </div>
+                                        <PfcMacroLine
+                                          food={item}
+                                          showCalories={false}
+                                          precision={1}
+                                          className="mt-1 text-[10px]"
+                                        />
+                                      </div>
+                                      <IconButton
+                                        onClick={() => {
+                                          setEditingItem(item);
+                                        }}
+                                        className="text-muted-foreground h-7 w-7"
+                                        title="編集"
+                                      >
+                                        <Edit2 className="h-3 w-3" />
+                                      </IconButton>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
+                </div>
               );
             })}
 
@@ -249,7 +287,9 @@ export function LogList() {
               <div className="flex justify-center pt-2 pb-6">
                 <Button
                   variant="outline"
-                  onClick={() => { setDisplayCount(prev => prev + 100); }}
+                  onClick={() => {
+                    setDisplayCount((prev) => prev + 100);
+                  }}
                   className="w-full"
                 >
                   さらに表示
@@ -260,7 +300,12 @@ export function LogList() {
         </ScrollArea>
       )}
 
-      <EditLogItemDrawer item={editingItem} onClose={() => { setEditingItem(null); }} />
+      <EditLogItemDrawer
+        item={editingItem}
+        onClose={() => {
+          setEditingItem(null);
+        }}
+      />
     </>
   );
 }

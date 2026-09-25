@@ -12,10 +12,15 @@ interface UseBarcodeLookupOptions {
 }
 
 /** バーコード↔食品マッピングの照会と、それに紐づく入力状態を管理するフック。 */
-export function useBarcodeLookup({ applyFoodData, clearForm }: UseBarcodeLookupOptions) {
+export function useBarcodeLookup({
+  applyFoodData,
+  clearForm,
+}: UseBarcodeLookupOptions) {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [barcodeLookupInput, setBarcodeLookupInput] = useState('');
-  const [mappedFoodData, setMappedFoodData] = useState<BarcodeFood | null>(null);
+  const [mappedFoodData, setMappedFoodData] = useState<BarcodeFood | null>(
+    null,
+  );
 
   /** バーコードを照会し、結果をフォームへ反映する。見つかった食品（なければ null）を返す。 */
   const runLookup = async (code: string): Promise<BarcodeFood | null> => {

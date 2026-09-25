@@ -12,7 +12,9 @@ interface SettingsRow {
   favorite_food_ids_json: string[] | null;
 }
 
-export async function getSettings(userId: string): Promise<UserSettings | null> {
+export async function getSettings(
+  userId: string,
+): Promise<UserSettings | null> {
   const result = await getPool().query<SettingsRow>(
     `SELECT target_protein, target_fat, target_carbs, target_calories,
             profile_json, favorite_food_ids_json
@@ -34,7 +36,10 @@ export async function getSettings(userId: string): Promise<UserSettings | null> 
   };
 }
 
-export async function replaceSettings(userId: string, settings: UserSettings): Promise<void> {
+export async function replaceSettings(
+  userId: string,
+  settings: UserSettings,
+): Promise<void> {
   await getPool().query(
     `INSERT INTO pfc_user_settings (
        user_id, target_protein, target_fat, target_carbs, target_calories,

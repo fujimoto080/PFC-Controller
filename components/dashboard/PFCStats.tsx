@@ -31,10 +31,19 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   );
 
   const { protein, fat, carbs, calories } = data.total;
-  const boostedCalorieTarget = activityAdjustedCalorieTarget(targetPFC.calories, data);
-  const adjustedCalorieTarget = Math.max(0, boostedCalorieTarget - debt.calories);
+  const boostedCalorieTarget = activityAdjustedCalorieTarget(
+    targetPFC.calories,
+    data,
+  );
+  const adjustedCalorieTarget = Math.max(
+    0,
+    boostedCalorieTarget - debt.calories,
+  );
   const remainingCalories = Math.max(0, adjustedCalorieTarget - calories);
-  const activityBonusCalories = Math.max(0, boostedCalorieTarget - targetPFC.calories);
+  const activityBonusCalories = Math.max(
+    0,
+    boostedCalorieTarget - targetPFC.calories,
+  );
 
   const navigateDate = (days: number) => {
     const currentDate = parseISO(selectedDate);
@@ -62,29 +71,33 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
   };
 
   return (
-    <div className="relative overflow-hidden group">
-      <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center px-2 pointer-events-none h-16">
+    <div className="group relative overflow-hidden">
+      <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex h-16 items-center justify-between px-2">
         <IconButton
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             navigateDate(-1);
           }}
-          onPointerDown={(e: React.PointerEvent) => { e.stopPropagation(); }}
-          className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
+          onPointerDown={(e: React.PointerEvent) => {
+            e.stopPropagation();
+          }}
+          className="bg-background/50 hover:bg-secondary/80 pointer-events-auto rounded-full shadow-sm backdrop-blur-sm active:scale-95"
           aria-label="Previous day"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="h-6 w-6" />
         </IconButton>
         <IconButton
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             navigateDate(1);
           }}
-          onPointerDown={(e: React.PointerEvent) => { e.stopPropagation(); }}
-          className="rounded-full bg-background/50 backdrop-blur-sm pointer-events-auto shadow-sm active:scale-95 hover:bg-secondary/80"
+          onPointerDown={(e: React.PointerEvent) => {
+            e.stopPropagation();
+          }}
+          className="bg-background/50 hover:bg-secondary/80 pointer-events-auto rounded-full shadow-sm backdrop-blur-sm active:scale-95"
           aria-label="Next day"
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="h-6 w-6" />
         </IconButton>
       </div>
 
@@ -111,35 +124,41 @@ export function PFCStats({ selectedDate, onDateChange }: PFCStatsProps) {
               navigateDate(-1);
             }
           }}
-          className="space-y-4 touch-pan-y"
+          className="touch-pan-y space-y-4"
         >
           <GradientCard>
             <div className="bg-primary/5 absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full blur-3xl" />
 
             <CardHeader className="pb-2">
-              <div className="flex justify-between items-center px-2">
+              <div className="flex items-center justify-between px-2">
                 {/* Spacers for the arrows that are positioned absolutely */}
                 <div className="w-12" />
-                <CardTitle className="text-muted-foreground text-lg font-medium text-center">
+                <CardTitle className="text-muted-foreground text-center text-lg font-medium">
                   摂取カロリー
                 </CardTitle>
                 <div className="w-12" />
               </div>
               <div className="flex items-baseline space-x-2">
-                <span className={`text-4xl font-bold tracking-tighter ${calories > adjustedCalorieTarget ? 'text-red-500' : ''}`}>
+                <span
+                  className={`text-4xl font-bold tracking-tighter ${calories > adjustedCalorieTarget ? 'text-red-500' : ''}`}
+                >
                   {roundPFC(calories)}
                 </span>
                 <span className="text-muted-foreground text-sm">
                   / {roundPFC(adjustedCalorieTarget)} kcal
                   {debt.calories > 0 && (
-                    <span className="text-red-500 text-[10px] ml-1">
+                    <span className="ml-1 text-[10px] text-red-500">
                       (負債: {debt.calories} kcal)
                     </span>
                   )}
                 </span>
               </div>
               <p className="text-muted-foreground text-xs">
-                今日はあと <span className="font-semibold">{roundPFC(remainingCalories)} kcal</span> 摂取できます
+                今日はあと{' '}
+                <span className="font-semibold">
+                  {roundPFC(remainingCalories)} kcal
+                </span>{' '}
+                摂取できます
                 {activityBonusCalories > 0 && (
                   <span className="ml-1 text-emerald-600">
                     (運動で +{roundPFC(activityBonusCalories)} kcal)

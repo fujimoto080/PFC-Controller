@@ -14,13 +14,18 @@ export function GoalSettingsPanel() {
   const { settings, sports: savedSports } = useAppState();
   const [duration, setDuration] = useState<number | undefined>(undefined);
   const [goals, setGoals] = useState<PFC>(settings.targetPFC);
-  const [profile, setProfile] = useState<UserProfile | undefined>(settings.profile);
+  const [profile, setProfile] = useState<UserProfile | undefined>(
+    settings.profile,
+  );
   const [sports, setSports] = useState<SportDefinition[]>(savedSports);
 
-  const handleCalculate = useCallback((newGoals: PFC, newProfile: UserProfile) => {
-    setGoals(newGoals);
-    setProfile(newProfile);
-  }, []);
+  const handleCalculate = useCallback(
+    (newGoals: PFC, newProfile: UserProfile) => {
+      setGoals(newGoals);
+      setProfile(newProfile);
+    },
+    [],
+  );
 
   const handleAddSport = (sport: SportDefinition) => {
     setSports((prev) => [...prev, sport]);
@@ -56,7 +61,13 @@ export function GoalSettingsPanel() {
             onDurationChange={setDuration}
           />
           <div className="flex justify-end">
-            <Button onClick={() => { void handleSaveGoals(); }}>目標設定を保存</Button>
+            <Button
+              onClick={() => {
+                void handleSaveGoals();
+              }}
+            >
+              目標設定を保存
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -72,7 +83,13 @@ export function GoalSettingsPanel() {
             onDeleteSport={handleDeleteSport}
           />
           <div className="flex justify-end">
-            <Button onClick={() => { void handleSaveSports(); }}>スポーツマスタを保存</Button>
+            <Button
+              onClick={() => {
+                void handleSaveSports();
+              }}
+            >
+              スポーツマスタを保存
+            </Button>
           </div>
         </CardContent>
       </Card>

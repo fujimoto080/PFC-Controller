@@ -3,7 +3,11 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { hydrateFromCache, loadUserData, useStoreSnapshot } from '@/lib/client/store';
+import {
+  hydrateFromCache,
+  loadUserData,
+  useStoreSnapshot,
+} from '@/lib/client/store';
 
 interface Props {
   children: React.ReactNode;
@@ -35,11 +39,21 @@ export function CloudDataProvider({ children, userId }: Props) {
   if (!snapshot) {
     return loadFailed ? (
       <div className="space-y-4 py-10 text-center">
-        <p className="text-muted-foreground text-sm">データの読み込みに失敗しました。</p>
-        <Button onClick={() => { window.location.reload(); }}>再読み込み</Button>
+        <p className="text-muted-foreground text-sm">
+          データの読み込みに失敗しました。
+        </p>
+        <Button
+          onClick={() => {
+            window.location.reload();
+          }}
+        >
+          再読み込み
+        </Button>
       </div>
     ) : (
-      <div className="text-muted-foreground py-10 text-center text-sm">データを読み込み中...</div>
+      <div className="text-muted-foreground py-10 text-center text-sm">
+        データを読み込み中...
+      </div>
     );
   }
 

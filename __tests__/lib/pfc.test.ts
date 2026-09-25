@@ -10,7 +10,10 @@ const target: PFC = { protein: 100, fat: 50, carbs: 200, calories: 2000 };
 
 function logsOf(totals: Record<string, PFC>): Logs {
   return Object.fromEntries(
-    Object.entries(totals).map(([date, total]) => [date, { ...createEmptyDailyLog(date), total }]),
+    Object.entries(totals).map(([date, total]) => [
+      date,
+      { ...createEmptyDailyLog(date), total },
+    ]),
   );
 }
 
@@ -54,12 +57,16 @@ describe('computePfcDebt', () => {
   });
 
   it('当日以降の記録は含めない', () => {
-    const logs = logsOf({ '2026-09-25': { protein: 500, fat: 500, carbs: 500, calories: 9000 } });
+    const logs = logsOf({
+      '2026-09-25': { protein: 500, fat: 500, carbs: 500, calories: 9000 },
+    });
     expect(computePfcDebt('2026-09-25', target, logs).calories).toBe(0);
   });
 
   it('月をまたいでも日付を正しく進める', () => {
-    const logs = logsOf({ '2026-08-31': { protein: 100, fat: 50, carbs: 200, calories: 2600 } });
+    const logs = logsOf({
+      '2026-08-31': { protein: 100, fat: 50, carbs: 200, calories: 2600 },
+    });
     expect(computePfcDebt('2026-09-01', target, logs).calories).toBe(600);
     expect(computePfcDebt('2026-09-02', target, logs).calories).toBe(0);
   });
@@ -86,8 +93,20 @@ describe('activityAdjustedCalorieTarget', () => {
     const log = {
       ...createEmptyDailyLog('2026-09-25'),
       activities: [
-        { id: 'a', sportId: 'walking', name: 'ウォーキング', caloriesBurned: 180, timestamp: 1 },
-        { id: 'b', sportId: 'running', name: 'ランニング', caloriesBurned: 320, timestamp: 2 },
+        {
+          id: 'a',
+          sportId: 'walking',
+          name: 'ウォーキング',
+          caloriesBurned: 180,
+          timestamp: 1,
+        },
+        {
+          id: 'b',
+          sportId: 'running',
+          name: 'ランニング',
+          caloriesBurned: 320,
+          timestamp: 2,
+        },
       ],
     };
     expect(activityAdjustedCalorieTarget(2000, log)).toBe(2500);

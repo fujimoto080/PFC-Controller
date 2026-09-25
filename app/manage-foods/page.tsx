@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Pencil, Plus, Star, Trash } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Star,
+  Trash,
+} from 'lucide-react';
 import { BulkStoreEditor } from '@/components/foods/BulkStoreEditor';
 import { FoodEditor } from '@/components/foods/FoodEditor';
 import { EatDateTimeCard } from '@/components/input/EatDateTimeFields';
@@ -13,7 +20,12 @@ import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { buildFoodMatchKey, type FoodMatchKeyInput } from '@/lib/barcode';
-import { deleteFood, logFood, toggleFavoriteFood, updateFood } from '@/lib/client/actions';
+import {
+  deleteFood,
+  logFood,
+  toggleFavoriteFood,
+  updateFood,
+} from '@/lib/client/actions';
 import { fetchBarcodeMappings } from '@/lib/client/api';
 import { useAppState } from '@/lib/client/store';
 import {
@@ -36,22 +48,33 @@ export default function ManageFoodsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editor, setEditor] = useState<EditorState>(null);
   const [selectedFoodIds, setSelectedFoodIds] = useState<string[] | null>(null);
-  const [barcodesByFoodKey, setBarcodesByFoodKey] = useState<Record<string, string[]>>({});
+  const [barcodesByFoodKey, setBarcodesByFoodKey] = useState<
+    Record<string, string[]>
+  >({});
   const [collapse, setCollapse] = useState(readCollapseState);
-  const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } = useEatDateTime();
+  const { eatDate, setEatDate, eatTime, setEatTime, getSelectedTimestamp } =
+    useEatDateTime();
 
   const storeOptions = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const groupOptions = useMemo(
-    () => Array.from(new Set(foods.flatMap((food) => food.storeGroup ?? []))).sort(),
+    () =>
+      Array.from(
+        new Set(foods.flatMap((food) => food.storeGroup ?? [])),
+      ).sort(),
     [foods],
   );
   const sections = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    return buildStoreSections(foods.filter((food) => food.name.toLowerCase().includes(query)));
+    return buildStoreSections(
+      foods.filter((food) => food.name.toLowerCase().includes(query)),
+    );
   }, [foods, searchQuery]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_MANAGE_FOODS_COLLAPSE, JSON.stringify(collapse));
+    localStorage.setItem(
+      STORAGE_KEY_MANAGE_FOODS_COLLAPSE,
+      JSON.stringify(collapse),
+    );
   }, [collapse]);
 
   useEffect(() => {
@@ -69,7 +92,8 @@ export default function ManageFoodsPage() {
       });
   }, []);
 
-  const barcodesOf = (food: FoodMatchKeyInput) => barcodesByFoodKey[buildFoodMatchKey(food)] ?? [];
+  const barcodesOf = (food: FoodMatchKeyInput) =>
+    barcodesByFoodKey[buildFoodMatchKey(food)] ?? [];
 
   const handleBarcodesSaved = (food: FoodMatchKeyInput, barcodes: string[]) => {
     const key = buildFoodMatchKey(food);
@@ -91,7 +115,10 @@ export default function ManageFoodsPage() {
     }
   };
 
-  const applyBulkUpdate = (store: string | undefined, storeGroup: string | undefined) => {
+  const applyBulkUpdate = (
+    store: string | undefined,
+    storeGroup: string | undefined,
+  ) => {
     const selected = new Set(selectedFoodIds);
     for (const food of foods) {
       if (selected.has(food.id)) {
@@ -117,7 +144,9 @@ export default function ManageFoodsPage() {
             storeOptions={storeOptions}
             groupOptions={groupOptions}
             onBarcodesSaved={handleBarcodesSaved}
-            onClose={() => { setEditor(null); }}
+            onClose={() => {
+              setEditor(null);
+            }}
           />
         ) : (
           <div className="space-y-4">
@@ -131,18 +160,30 @@ export default function ManageFoodsPage() {
             <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-20 -mx-4 space-y-2 px-4 py-2 backdrop-blur">
               <div className="flex gap-2">
                 {!isSelecting && (
-                  <Button variant="outline" onClick={() => { setSelectedFoodIds([]); }}>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedFoodIds([]);
+                    }}
+                  >
                     店舗/グループ変更
                   </Button>
                 )}
-                <Button onClick={() => { setEditor({ food: null }); }} aria-label="新規追加">
+                <Button
+                  onClick={() => {
+                    setEditor({ food: null });
+                  }}
+                  aria-label="新規追加"
+                >
                   +
                 </Button>
               </div>
               <Input
                 placeholder="食品を検索..."
                 value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); }}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                }}
               />
             </div>
 
@@ -151,7 +192,9 @@ export default function ManageFoodsPage() {
                 <p>食品が見つかりません</p>
               ) : (
                 sections.map((section) => {
-                  const isStoreCollapsed = collapse.collapsedStores.includes(section.storeName);
+                  const isStoreCollapsed = collapse.collapsedStores.includes(
+                    section.storeName,
+                  );
                   return (
                     <div key={section.storeName} className="pb-4">
                       <CollapseToggle
@@ -160,7 +203,10 @@ export default function ManageFoodsPage() {
                         onClick={() => {
                           setCollapse((prev) => ({
                             ...prev,
-                            collapsedStores: toggle(prev.collapsedStores, section.storeName),
+                            collapsedStores: toggle(
+                              prev.collapsedStores,
+                              section.storeName,
+                            ),
                           }));
                         }}
                       >
@@ -171,7 +217,8 @@ export default function ManageFoodsPage() {
                         <div className="space-y-3">
                           {section.groups.map((group) => {
                             const groupKey = `${section.storeName}::${group.groupName}`;
-                            const isGroupCollapsed = collapse.collapsedGroups.includes(groupKey);
+                            const isGroupCollapsed =
+                              collapse.collapsedGroups.includes(groupKey);
                             return (
                               <div
                                 key={groupKey}
@@ -183,7 +230,10 @@ export default function ManageFoodsPage() {
                                   onClick={() => {
                                     setCollapse((prev) => ({
                                       ...prev,
-                                      collapsedGroups: toggle(prev.collapsedGroups, groupKey),
+                                      collapsedGroups: toggle(
+                                        prev.collapsedGroups,
+                                        groupKey,
+                                      ),
                                     }));
                                   }}
                                 >
@@ -197,15 +247,31 @@ export default function ManageFoodsPage() {
                                         key={food.id}
                                         food={food}
                                         barcodes={barcodesOf(food)}
-                                        isFavorite={settings.favoriteFoodIds.includes(food.id)}
-                                        selected={selectedFoodIds?.includes(food.id) ?? null}
+                                        isFavorite={settings.favoriteFoodIds.includes(
+                                          food.id,
+                                        )}
+                                        selected={
+                                          selectedFoodIds?.includes(food.id) ??
+                                          null
+                                        }
                                         onToggleSelect={() => {
-                                          setSelectedFoodIds((prev) => prev && toggle(prev, food.id));
+                                          setSelectedFoodIds(
+                                            (prev) =>
+                                              prev && toggle(prev, food.id),
+                                          );
                                         }}
-                                        onAddLog={() => { void handleAddLog(food); }}
-                                        onToggleFavorite={() => { void toggleFavoriteFood(food.id); }}
-                                        onEdit={() => { setEditor({ food }); }}
-                                        onDelete={() => { handleDelete(food); }}
+                                        onAddLog={() => {
+                                          void handleAddLog(food);
+                                        }}
+                                        onToggleFavorite={() => {
+                                          void toggleFavoriteFood(food.id);
+                                        }}
+                                        onEdit={() => {
+                                          setEditor({ food });
+                                        }}
+                                        onDelete={() => {
+                                          handleDelete(food);
+                                        }}
                                       />
                                     ))}
                                   </div>
@@ -228,7 +294,9 @@ export default function ManageFoodsPage() {
         <BulkStoreEditor
           selectedCount={selectedFoodIds.length}
           onApply={applyBulkUpdate}
-          onCancel={() => { setSelectedFoodIds(null); }}
+          onCancel={() => {
+            setSelectedFoodIds(null);
+          }}
         />
       )}
     </div>
@@ -295,7 +363,9 @@ function FoodRow({
         <Checkbox
           checked={selected}
           onCheckedChange={onToggleSelect}
-          onClick={(e) => { e.stopPropagation(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
           aria-label={`${food.name}を選択`}
         />
       )}
@@ -303,11 +373,15 @@ function FoodRow({
         <div className="font-medium">{food.name}</div>
         <PfcMacroLine food={food} />
         {barcodes.length > 0 && (
-          <div className="text-muted-foreground text-xs">バーコード: {barcodes.join(', ')}</div>
+          <div className="text-muted-foreground text-xs">
+            バーコード: {barcodes.join(', ')}
+          </div>
         )}
       </div>
       {isSelecting ? (
-        <div className="text-primary text-xs">{selected ? '選択中' : 'タップで選択'}</div>
+        <div className="text-primary text-xs">
+          {selected ? '選択中' : 'タップで選択'}
+        </div>
       ) : (
         <div className="flex gap-1">
           <IconButton onClick={onAddLog}>

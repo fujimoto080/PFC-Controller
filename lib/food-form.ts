@@ -21,7 +21,10 @@ export interface PfcFormValues {
 }
 
 /** react-hook-form の値を FoodItemInput に整形する。空文字の store/storeGroup は undefined にする。 */
-export function toFoodInput(values: PfcFormValues, timestamp: number): FoodItemInput {
+export function toFoodInput(
+  values: PfcFormValues,
+  timestamp: number,
+): FoodItemInput {
   return {
     name: values.name,
     protein: safeNumber(values.protein),

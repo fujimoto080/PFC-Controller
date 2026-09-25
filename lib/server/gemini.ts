@@ -57,7 +57,9 @@ export async function callGemini({
 
   const result = (await response.json()) as GeminiResponse;
   // Google 検索グラウンディング時などはテキストが複数 part に分割されることがある
-  const text = result.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('');
+  const text = result.candidates?.[0]?.content?.parts
+    ?.map((part) => part.text ?? '')
+    .join('');
   if (!text) {
     if (allowEmptyResponse) return '';
     throw new ApiError('AI の出力を取得できませんでした', 502);

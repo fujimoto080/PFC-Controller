@@ -31,7 +31,10 @@ export default async function RootLayout({
   return (
     <html lang="ja">
       <body className="bg-background text-foreground min-h-screen pb-20 antialiased">
-        <SerwistProvider swUrl="/serwist/sw.js" disable={process.env.NODE_ENV !== 'production'}>
+        <SerwistProvider
+          swUrl="/serwist/sw.js"
+          disable={process.env.NODE_ENV !== 'production'}
+        >
           <main className="container mx-auto max-w-md px-4 py-4">
             <CloudDataProvider userId={userId}>{children}</CloudDataProvider>
           </main>

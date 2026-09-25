@@ -16,7 +16,10 @@ class HttpError extends Error {
   }
 }
 
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+async function readErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
   try {
     const data = (await response.json()) as { error?: unknown } | null;
     if (typeof data?.error === 'string' && data.error) return data.error;
@@ -37,10 +40,16 @@ async function request<T>(
     cache: 'no-store',
     ...(body === undefined
       ? {}
-      : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+      : {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
   });
   if (!response.ok) {
-    throw new HttpError(await readErrorMessage(response, errorMessage), response.status);
+    throw new HttpError(
+      await readErrorMessage(response, errorMessage),
+      response.status,
+    );
   }
   // 204 など本文が無いレスポンスでも壊れないようにする
   const text = await response.text();
@@ -48,7 +57,8 @@ async function request<T>(
 }
 
 export const api = {
-  get: <T>(url: string, errorMessage: string) => request<T>('GET', url, errorMessage),
+  get: <T>(url: string, errorMessage: string) =>
+    request<T>('GET', url, errorMessage),
   post: <T>(url: string, body: unknown, errorMessage: string) =>
     request<T>('POST', url, errorMessage, body),
   put: (url: string, body: unknown, errorMessage: string) =>
@@ -60,7 +70,9 @@ export const api = {
 };
 
 /** バーコードから登録済み食品を引く。未登録(404)は null、その他のエラーは throw。 */
-export async function fetchBarcodeFood(code: string): Promise<BarcodeFood | null> {
+export async function fetchBarcodeFood(
+  code: string,
+): Promise<BarcodeFood | null> {
   try {
     return await api.get<BarcodeFood>(
       `/api/barcode?code=${encodeURIComponent(code)}`,
@@ -73,11 +85,21 @@ export async function fetchBarcodeFood(code: string): Promise<BarcodeFood | null
 }
 
 export function fetchBarcodeMappings(): Promise<BarcodeMappingRow[]> {
-  return api.get('/api/barcode/mappings', 'バーコードマッピングの取得に失敗しました');
+  return api.get(
+    '/api/barcode/mappings',
+    'バーコードマッピングの取得に失敗しました',
+  );
 }
 
-export async function saveBarcodeMapping(barcodes: string[], food: BarcodeFood): Promise<void> {
-  await api.post('/api/barcode', { barcodes, food }, 'バーコードの保存に失敗しました');
+export async function saveBarcodeMapping(
+  barcodes: string[],
+  food: BarcodeFood,
+): Promise<void> {
+  await api.post(
+    '/api/barcode',
+    { barcodes, food },
+    'バーコードの保存に失敗しました',
+  );
 }
 
 /** テキストから AI で PFC・カロリーを推定する。 */
@@ -87,6 +109,10 @@ export function estimateNutrition(text: string): Promise<BarcodeFood> {
 
 /** 画像(dataURL)から OCR でテキストを抽出する。抽出できない場合は空文字。 */
 export async function ocrImage(imageDataUrl: string): Promise<string> {
-  const result = await api.post<{ text: string }>('/api/ocr', { imageDataUrl }, 'OCRに失敗しました');
+  const result = await api.post<{ text: string }>(
+    '/api/ocr',
+    { imageDataUrl },
+    'OCRに失敗しました',
+  );
   return result.text.trim();
 }

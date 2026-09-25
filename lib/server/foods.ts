@@ -73,7 +73,10 @@ export async function upsertFood(
  * position の採番と更新規則は upsertFood と同じ。1 クエリで処理する。
  * 返り値は挿入 or 更新された行数。
  */
-export async function upsertFoodsBulk(userId: string, items: FoodItem[]): Promise<number> {
+export async function upsertFoodsBulk(
+  userId: string,
+  items: FoodItem[],
+): Promise<number> {
   const result = await getPool().query(
     `WITH base AS (
        SELECT COALESCE(MAX(position) + 1, 0) AS start FROM pfc_foods WHERE user_id = $1

@@ -7,8 +7,13 @@ const bodySchema = z.object({
   imageDataUrl: z.string().trim().min(1, '画像データが指定されていません'),
 });
 
-function parseDataUrl(imageDataUrl: string): { mimeType: string; base64Data: string } {
-  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(imageDataUrl);
+function parseDataUrl(imageDataUrl: string): {
+  mimeType: string;
+  base64Data: string;
+} {
+  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(
+    imageDataUrl,
+  );
   if (!match) {
     throw new ApiError('画像データの形式が不正です', 400);
   }

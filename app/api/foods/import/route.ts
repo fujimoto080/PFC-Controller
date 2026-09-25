@@ -29,10 +29,15 @@ export const POST = defineRoute(
   async (request, { body }) => {
     const expected = process.env.SEED_API_TOKEN?.trim();
     if (!expected) {
-      throw new ApiError('インポート API は無効です（SEED_API_TOKEN 未設定）', 503);
+      throw new ApiError(
+        'インポート API は無効です（SEED_API_TOKEN 未設定）',
+        503,
+      );
     }
     const header = request.headers.get('authorization') ?? '';
-    const token = header.startsWith('Bearer ') ? header.slice('Bearer '.length).trim() : '';
+    const token = header.startsWith('Bearer ')
+      ? header.slice('Bearer '.length).trim()
+      : '';
     if (!token || !tokensMatch(token, expected)) {
       throw new ApiError('認証に失敗しました', 401);
     }
@@ -43,7 +48,10 @@ export const POST = defineRoute(
     }
 
     const now = Date.now();
-    const items = body.foods.map((f) => ({ ...f, timestamp: f.timestamp ?? now }));
+    const items = body.foods.map((f) => ({
+      ...f,
+      timestamp: f.timestamp ?? now,
+    }));
     const count = await upsertFoodsBulk(userId, items);
     return NextResponse.json({ count });
   },

@@ -49,6 +49,7 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
 - **Vercel**: デプロイ毎に `pnpm vercel-build` が走る（Vercel は `scripts.vercel-build` を自動検出）。マイグレーション → Next.js ビルドの順に実行される。Vercel のビルド環境から `DATABASE_URL` にネットワーク到達できる必要があります。
 
 生成されるテーブル:
+
 - NextAuth 用: `users`, `accounts`, `sessions`, `verification_token`
 - アプリ用: `pfc_user_settings`, `pfc_log_items`, `pfc_log_activities`, `pfc_foods`, `pfc_sports`
 

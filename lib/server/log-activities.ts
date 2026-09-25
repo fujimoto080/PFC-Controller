@@ -28,7 +28,9 @@ function toActivity(row: LogActivityRow): DatedActivity {
 
 const COLUMNS = `id, to_char(date, 'YYYY-MM-DD') AS date, sport_id, name, calories_burned, timestamp_ms`;
 
-export async function listLogActivities(userId: string): Promise<DatedActivity[]> {
+export async function listLogActivities(
+  userId: string,
+): Promise<DatedActivity[]> {
   const result = await getPool().query<LogActivityRow>(
     `SELECT ${COLUMNS} FROM pfc_log_activities WHERE user_id = $1 ORDER BY timestamp_ms ASC`,
     [userId],
@@ -59,7 +61,10 @@ export async function createLogActivity(
   return toActivity(row);
 }
 
-export async function deleteLogActivity(userId: string, id: string): Promise<boolean> {
+export async function deleteLogActivity(
+  userId: string,
+  id: string,
+): Promise<boolean> {
   const result = await getPool().query(
     `DELETE FROM pfc_log_activities WHERE user_id = $1 AND id = $2`,
     [userId, id],

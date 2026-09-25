@@ -74,7 +74,10 @@ function values(input: FoodItemInput) {
   ];
 }
 
-export async function createLogItem(userId: string, input: FoodItemInput): Promise<DatedFoodItem> {
+export async function createLogItem(
+  userId: string,
+  input: FoodItemInput,
+): Promise<DatedFoodItem> {
   const result = await getPool().query<LogItemRow>(
     `INSERT INTO pfc_log_items
        (user_id, date, name, protein, fat, carbs, calories, timestamp_ms, store, store_group, image)
@@ -103,7 +106,10 @@ export async function updateLogItem(
   return result.rows[0] ? toDatedFoodItem(result.rows[0]) : null;
 }
 
-export async function deleteLogItem(userId: string, id: string): Promise<boolean> {
+export async function deleteLogItem(
+  userId: string,
+  id: string,
+): Promise<boolean> {
   const result = await getPool().query(
     `DELETE FROM pfc_log_items WHERE user_id = $1 AND id = $2`,
     [userId, id],

@@ -10,90 +10,98 @@ import { overLimitTextClass, progressPct, weeklyAverage } from '@/lib/pfc';
 import { formatDate, roundPFC } from '@/lib/utils';
 
 export function WeeklyPFCStats() {
-    const { logs, settings } = useAppState();
-    const { protein, fat, carbs, calories } = useMemo(
-        () => weeklyAverage(logs, formatDate(new Date())),
-        [logs],
-    );
-    const { targetPFC } = settings;
+  const { logs, settings } = useAppState();
+  const { protein, fat, carbs, calories } = useMemo(
+    () => weeklyAverage(logs, formatDate(new Date())),
+    [logs],
+  );
+  const { targetPFC } = settings;
 
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="space-y-4"
-        >
-            <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">過去1週間の平均</h2>
-                <span className="text-muted-foreground text-xs">
-                    過去7日間の平均摂取量
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="space-y-4"
+    >
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">過去1週間の平均</h2>
+        <span className="text-muted-foreground text-xs">
+          過去7日間の平均摂取量
+        </span>
+      </div>
+
+      <GradientCard className="from-card to-secondary/5">
+        <CardHeader className="pb-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-muted-foreground text-xs font-medium">
+                平均カロリー
+              </p>
+              <div className="flex items-baseline space-x-1">
+                <span
+                  className={`text-2xl font-bold ${calories > targetPFC.calories ? 'text-red-500' : ''}`}
+                >
+                  {roundPFC(calories)}
                 </span>
+                <span className="text-muted-foreground text-xs">kcal</span>
+              </div>
+              <Progress
+                value={progressPct(calories, targetPFC.calories)}
+                className="mt-2 h-1.5"
+              />
             </div>
-
-            <GradientCard className="from-card to-secondary/5">
-                <CardHeader className="pb-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="text-muted-foreground text-xs font-medium">
-                                平均カロリー
-                            </p>
-                            <div className="flex items-baseline space-x-1">
-                                <span className={`text-2xl font-bold ${calories > targetPFC.calories ? 'text-red-500' : ''}`}>{roundPFC(calories)}</span>
-                                <span className="text-muted-foreground text-xs">kcal</span>
-                            </div>
-                            <Progress
-                                value={progressPct(calories, targetPFC.calories)}
-                                className="mt-2 h-1.5"
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 gap-2">
-                            <WeeklyStatSmall
-                                label="P"
-                                current={protein}
-                                target={targetPFC.protein}
-                                color="bg-blue-500"
-                            />
-                            <WeeklyStatSmall
-                                label="F"
-                                current={fat}
-                                target={targetPFC.fat}
-                                color="bg-yellow-500"
-                            />
-                            <WeeklyStatSmall
-                                label="C"
-                                current={carbs}
-                                target={targetPFC.carbs}
-                                color="bg-green-500"
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-            </GradientCard>
-        </motion.div>
-    );
+            <div className="grid grid-cols-1 gap-2">
+              <WeeklyStatSmall
+                label="P"
+                current={protein}
+                target={targetPFC.protein}
+                color="bg-blue-500"
+              />
+              <WeeklyStatSmall
+                label="F"
+                current={fat}
+                target={targetPFC.fat}
+                color="bg-yellow-500"
+              />
+              <WeeklyStatSmall
+                label="C"
+                current={carbs}
+                target={targetPFC.carbs}
+                color="bg-green-500"
+              />
+            </div>
+          </div>
+        </CardHeader>
+      </GradientCard>
+    </motion.div>
+  );
 }
 
 function WeeklyStatSmall({
-    label,
-    current,
-    target,
-    color,
+  label,
+  current,
+  target,
+  color,
 }: {
-    label: string;
-    current: number;
-    target: number;
-    color: string;
+  label: string;
+  current: number;
+  target: number;
+  color: string;
 }) {
-    return (
-        <div className="space-y-1">
-            <div className="flex justify-between text-[10px]">
-                <span className="font-bold">{label}</span>
-                <span className={overLimitTextClass(current, target)}>
-                    {roundPFC(current)}/{target}g
-                </span>
-            </div>
-            <Progress value={progressPct(current, target)} indicatorClassName={color} className="h-1" />
-        </div>
-    );
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-[10px]">
+        <span className="font-bold">{label}</span>
+        <span className={overLimitTextClass(current, target)}>
+          {roundPFC(current)}/{target}g
+        </span>
+      </div>
+      <Progress
+        value={progressPct(current, target)}
+        indicatorClassName={color}
+        className="h-1"
+      />
+    </div>
+  );
 }

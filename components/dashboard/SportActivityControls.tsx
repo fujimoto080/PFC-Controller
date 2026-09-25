@@ -30,7 +30,6 @@ export function SportActivityControls({
     [selectedSportId, sports],
   );
 
-
   return (
     <div className="space-y-2 rounded-lg border p-3">
       <p className="text-sm font-medium">スポーツ消費カロリー</p>
@@ -47,7 +46,12 @@ export function SportActivityControls({
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={() => { if (selectedSport) void addSportActivity(date, selectedSport); }} disabled={!selectedSport}>
+        <Button
+          onClick={() => {
+            if (selectedSport) void addSportActivity(date, selectedSport);
+          }}
+          disabled={!selectedSport}
+        >
           追加
         </Button>
       </div>
@@ -66,7 +70,9 @@ export function SportActivityControls({
                 variant="ghost"
                 size="sm"
                 className="h-6 px-2 text-xs"
-                onClick={() => { void deleteSportActivity(date, activity.id); }}
+                onClick={() => {
+                  void deleteSportActivity(date, activity.id);
+                }}
               >
                 削除
               </Button>

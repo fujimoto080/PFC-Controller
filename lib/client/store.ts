@@ -43,7 +43,10 @@ const getServerSnapshot = () => null;
 function writeCache() {
   if (!currentUserId || !state) return;
   try {
-    localStorage.setItem(CACHE_KEY_PREFIX + currentUserId, JSON.stringify(state));
+    localStorage.setItem(
+      CACHE_KEY_PREFIX + currentUserId,
+      JSON.stringify(state),
+    );
   } catch {
     // 容量超過などは無視
   }
@@ -96,11 +99,17 @@ export function hydrateFromCache(userId: string) {
 export async function loadUserData(userId: string): Promise<boolean> {
   selectUser(userId);
   try {
-    const data = await api.get<UserData>('/api/user-data', 'ユーザーデータ取得に失敗しました');
+    const data = await api.get<UserData>(
+      '/api/user-data',
+      'ユーザーデータ取得に失敗しました',
+    );
     if (currentUserId !== userId) return false;
     replaceState({
       logs: data.logs,
-      settings: data.settings ?? { targetPFC: DEFAULT_TARGET, favoriteFoodIds: [] },
+      settings: data.settings ?? {
+        targetPFC: DEFAULT_TARGET,
+        favoriteFoodIds: [],
+      },
       foods: data.foods,
       sports: data.sports.length > 0 ? data.sports : [...DEFAULT_SPORTS],
     });

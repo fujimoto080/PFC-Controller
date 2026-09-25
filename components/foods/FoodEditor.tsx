@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Save, ScanBarcode, X } from 'lucide-react';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
-import { DatalistInput, PfcMacroInputs } from '@/components/input/PfcFieldsGroup';
+import {
+  DatalistInput,
+  PfcMacroInputs,
+} from '@/components/input/PfcFieldsGroup';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,7 +41,13 @@ export function FoodEditor({
   const [barcodeInput, setBarcodeInput] = useState(initialBarcodes.join(', '));
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const { register, handleSubmit } = useForm<PfcFormValues>({
-    defaultValues: food ?? { name: '', protein: 0, fat: 0, carbs: 0, calories: 0 },
+    defaultValues: food ?? {
+      name: '',
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+      calories: 0,
+    },
   });
 
   const onSubmit = async (values: PfcFormValues) => {
@@ -65,11 +74,21 @@ export function FoodEditor({
   return (
     <Card>
       <CardContent className="pt-6">
-        <h2 className="mb-4 text-lg font-semibold">{food ? '食品を編集' : '新規食品を追加'}</h2>
-        <form onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} className="space-y-4">
+        <h2 className="mb-4 text-lg font-semibold">
+          {food ? '食品を編集' : '新規食品を追加'}
+        </h2>
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(onSubmit)(e);
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label>食品名</Label>
-            <Input {...register('name', { required: true })} placeholder="例: ハンバーグ" />
+            <Input
+              {...register('name', { required: true })}
+              placeholder="例: ハンバーグ"
+            />
           </div>
           <PfcMacroInputs register={register} step="0.1" />
           <DatalistInput
@@ -94,10 +113,18 @@ export function FoodEditor({
               <Input
                 id="barcode"
                 value={barcodeInput}
-                onChange={(event) => { setBarcodeInput(event.target.value); }}
+                onChange={(event) => {
+                  setBarcodeInput(event.target.value);
+                }}
                 placeholder="例: 4901234567890"
               />
-              <Button type="button" variant="outline" onClick={() => { setIsScannerOpen(true); }}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsScannerOpen(true);
+                }}
+              >
                 <ScanBarcode className="mr-2 h-4 w-4" />
                 スキャン
               </Button>
@@ -108,7 +135,12 @@ export function FoodEditor({
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={onClose}
+            >
               <X className="mr-2 h-4 w-4" /> キャンセル
             </Button>
             <Button type="submit" className="flex-1">
@@ -125,7 +157,9 @@ export function FoodEditor({
             setIsScannerOpen(false);
             toast.success(`バーコードを読み取りました: ${code}`);
           }}
-          onClose={() => { setIsScannerOpen(false); }}
+          onClose={() => {
+            setIsScannerOpen(false);
+          }}
         />
       )}
     </Card>

@@ -50,7 +50,9 @@ export function useFormDraft<T>(
       }
     }, debounceMs);
 
-    return () => { window.clearTimeout(timer); };
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [enabled, storageKey, value, debounceMs]);
 }
 

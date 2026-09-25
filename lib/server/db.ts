@@ -15,7 +15,9 @@ export function getPool(): Pool {
   return pool;
 }
 
-export async function transaction(fn: (client: PoolClient) => Promise<void>): Promise<void> {
+export async function transaction(
+  fn: (client: PoolClient) => Promise<void>,
+): Promise<void> {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -31,8 +33,9 @@ export async function transaction(fn: (client: PoolClient) => Promise<void>): Pr
 
 /** メールアドレスからユーザー ID を引く。存在しなければ null。 */
 export async function getUserIdByEmail(email: string): Promise<string | null> {
-  const result = await getPool().query<{ id: string }>('SELECT id FROM users WHERE email = $1', [
-    email,
-  ]);
+  const result = await getPool().query<{ id: string }>(
+    'SELECT id FROM users WHERE email = $1',
+    [email],
+  );
   return result.rows[0]?.id ?? null;
 }

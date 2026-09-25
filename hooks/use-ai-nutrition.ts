@@ -16,7 +16,9 @@ function readFileAsDataUrl(file: File): Promise<string> {
       }
       reject(new Error('画像の読み込みに失敗しました'));
     };
-    reader.onerror = () => { reject(new Error('画像の読み込みに失敗しました')); };
+    reader.onerror = () => {
+      reject(new Error('画像の読み込みに失敗しました'));
+    };
     reader.readAsDataURL(file);
   });
 }
@@ -29,7 +31,10 @@ interface UseAiNutritionOptions {
 }
 
 /** テキスト/画像から AI 推定・OCR を行い、結果をフォームへ反映するフック。 */
-export function useAiNutrition({ applyFoodData, onApplied }: UseAiNutritionOptions) {
+export function useAiNutrition({
+  applyFoodData,
+  onApplied,
+}: UseAiNutritionOptions) {
   const [aiInputText, setAiInputText] = useState('');
   const [isEstimatingNutrition, setIsEstimatingNutrition] = useState(false);
   const [isExtractingText, setIsExtractingText] = useState(false);

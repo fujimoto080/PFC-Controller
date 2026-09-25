@@ -21,7 +21,10 @@ export async function listSports(userId: string): Promise<SportDefinition[]> {
   }));
 }
 
-export function replaceSports(userId: string, sports: SportDefinition[]): Promise<void> {
+export function replaceSports(
+  userId: string,
+  sports: SportDefinition[],
+): Promise<void> {
   return transaction(async (client) => {
     await client.query(`DELETE FROM pfc_sports WHERE user_id = $1`, [userId]);
     await client.query(
@@ -29,7 +32,12 @@ export function replaceSports(userId: string, sports: SportDefinition[]): Promis
        SELECT $1, t.sport_id, t.ord - 1, t.name, t.calories_burned
        FROM unnest($2::text[], $3::text[], $4::float8[])
          WITH ORDINALITY AS t(sport_id, name, calories_burned, ord)`,
-      [userId, sports.map((s) => s.id), sports.map((s) => s.name), sports.map((s) => s.caloriesBurned)],
+      [
+        userId,
+        sports.map((s) => s.id),
+        sports.map((s) => s.name),
+        sports.map((s) => s.caloriesBurned),
+      ],
     );
   });
 }

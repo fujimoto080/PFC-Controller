@@ -1,13 +1,19 @@
 import type { FoodItem } from '@/lib/types';
 
-export type BarcodeFood = Pick<FoodItem, 'name' | 'protein' | 'fat' | 'carbs' | 'calories' | 'store'>;
+export type BarcodeFood = Pick<
+  FoodItem,
+  'name' | 'protein' | 'fat' | 'carbs' | 'calories' | 'store'
+>;
 
 export interface BarcodeMappingRow {
   barcode: string;
   food: BarcodeFood;
 }
 
-export type FoodMatchKeyInput = Pick<BarcodeFood, 'name' | 'protein' | 'fat' | 'carbs' | 'calories'>;
+export type FoodMatchKeyInput = Pick<
+  BarcodeFood,
+  'name' | 'protein' | 'fat' | 'carbs' | 'calories'
+>;
 
 export function normalizeBarcodes(value: string | string[]): string[] {
   const source = Array.isArray(value) ? value : [value];

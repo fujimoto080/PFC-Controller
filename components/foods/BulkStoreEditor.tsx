@@ -13,7 +13,11 @@ interface BulkStoreEditorProps {
 }
 
 /** 選択中の食品の店舗・店内グループを一括変更する下部バー。 */
-export function BulkStoreEditor({ selectedCount, onApply, onCancel }: BulkStoreEditorProps) {
+export function BulkStoreEditor({
+  selectedCount,
+  onApply,
+  onCancel,
+}: BulkStoreEditorProps) {
   const [store, setStore] = useState('');
   const [storeGroup, setStoreGroup] = useState('');
 
@@ -26,7 +30,9 @@ export function BulkStoreEditor({ selectedCount, onApply, onCancel }: BulkStoreE
             <Label className="text-xs">店舗（未入力でその他）</Label>
             <Input
               value={store}
-              onChange={(e) => { setStore(e.target.value); }}
+              onChange={(e) => {
+                setStore(e.target.value);
+              }}
               placeholder="店舗名を入力"
               list="store-suggestions"
             />
@@ -35,7 +41,9 @@ export function BulkStoreEditor({ selectedCount, onApply, onCancel }: BulkStoreE
             <Label className="text-xs">店内グループ（未入力で未分類）</Label>
             <Input
               value={storeGroup}
-              onChange={(e) => { setStoreGroup(e.target.value); }}
+              onChange={(e) => {
+                setStoreGroup(e.target.value);
+              }}
               placeholder="グループ名を入力"
               list="store-group-suggestions"
             />
@@ -46,7 +54,12 @@ export function BulkStoreEditor({ selectedCount, onApply, onCancel }: BulkStoreE
             </Button>
             <Button
               className="flex-1"
-              onClick={() => { onApply(store.trim() || undefined, storeGroup.trim() || undefined); }}
+              onClick={() => {
+                onApply(
+                  store.trim() || undefined,
+                  storeGroup.trim() || undefined,
+                );
+              }}
               disabled={selectedCount === 0}
             >
               保存
