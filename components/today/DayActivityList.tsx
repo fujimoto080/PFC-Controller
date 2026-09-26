@@ -27,23 +27,20 @@ export function DayActivityList({ date }: { date: string }) {
           でスポーツを登録すると、ここから記録できます。
         </p>
       ) : (
-        <div
-          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
-          data-swipe-ignore
-        >
+        <div className="flex flex-col gap-2">
           {sports.map((sport) => (
             <button
               key={sport.id}
               type="button"
-              className="bg-card hover:bg-muted/60 flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-transform active:scale-95"
+              className="bg-card hover:bg-muted/60 flex items-center gap-1.5 rounded-lg border px-3 py-2 text-left text-sm transition-transform active:scale-[0.98]"
               onClick={() => {
                 void addSportActivity(date, sport);
                 toast.success(`${sport.name}を記録しました`);
               }}
             >
               <Plus className="h-3.5 w-3.5" />
-              {sport.name}
-              <span className="text-muted-foreground text-xs">
+              <span className="min-w-0 flex-1 truncate">{sport.name}</span>
+              <span className="text-muted-foreground shrink-0 text-xs">
                 {sport.caloriesBurned}kcal
               </span>
             </button>
