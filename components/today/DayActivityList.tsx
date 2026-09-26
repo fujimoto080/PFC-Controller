@@ -3,7 +3,11 @@
 import Link from 'next/link';
 import { Plus, X } from 'lucide-react';
 import { IconButton } from '@/components/ui/icon-button';
-import { addSportActivity, deleteSportActivity } from '@/lib/client/actions';
+import {
+  addSportActivity,
+  deleteSportActivity,
+  isTempId,
+} from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
 import { toast } from '@/lib/toast';
 import { formatTime, roundPFC } from '@/lib/utils';
@@ -34,8 +38,18 @@ export function DayActivityList({ date }: { date: string }) {
               type="button"
               className="bg-card hover:bg-muted/60 flex items-center gap-1.5 rounded-lg border px-3 py-2 text-left text-sm transition-transform active:scale-[0.98]"
               onClick={() => {
-                void addSportActivity(date, sport);
-                toast.success(`${sport.name}を記録しました`);
+                const saving = addSportActivity(date, sport);
+                toast.success(`${sport.name}を記録しました`, {
+                  action: {
+                    label: '取り消す',
+                    // 保存完了を待ってから、確定した ID で削除する
+                    onClick: () => {
+                      void saving.then((id) => {
+                        if (id) void deleteSportActivity(date, id);
+                      });
+                    },
+                  },
+                });
               }}
             >
               <Plus className="h-3.5 w-3.5" />
@@ -69,6 +83,7 @@ export function DayActivityList({ date }: { date: string }) {
               </span>
               <IconButton
                 aria-label={`${activity.name}の記録を削除`}
+                disabled={isTempId(activity.id)}
                 onClick={() => {
                   void deleteSportActivity(date, activity.id);
                 }}

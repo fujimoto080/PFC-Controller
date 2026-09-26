@@ -153,18 +153,23 @@ export function saveSports(sports: SportDefinition[]): Promise<boolean> {
   });
 }
 
-export function addSportActivity(
+/** 仮 ID の記録はまだサーバーに保存されていないため、削除などの操作はできない。 */
+export const isTempId = (id: string) => id.startsWith('tmp-');
+
+/** 運動を記録する。成功時は保存された記録の ID（取り消し用）、失敗時は null を返す。 */
+export async function addSportActivity(
   date: string,
   sport: SportDefinition,
-): Promise<boolean> {
+): Promise<string | null> {
   const id = tempId();
+  let savedId: string | null = null;
   const input: SportActivityInput = {
     sportId: sport.id,
     name: sport.name,
     caloriesBurned: sport.caloriesBurned,
     timestamp: defaultTimestampFor(date),
   };
-  return optimistic({
+  await optimistic({
     apply: withLogs((logs) =>
       updateDay(logs, date, (log) => ({
         activities: [...log.activities, { ...input, id }],
@@ -172,15 +177,18 @@ export function addSportActivity(
     ),
     request: () => api.post<SportActivityLog>('/api/log-activities', input),
     errorMessage: '運動記録の追加に失敗しました',
-    onSuccess: (current, saved) =>
-      withLogs((logs) =>
+    onSuccess: (current, saved) => {
+      savedId = saved.id;
+      return withLogs((logs) =>
         updateDay(logs, date, (log) => ({
           activities: log.activities.map((activity) =>
             activity.id === id ? saved : activity,
           ),
         })),
-      )(current),
+      )(current);
+    },
   });
+  return savedId;
 }
 
 export function deleteSportActivity(
