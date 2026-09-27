@@ -5,22 +5,24 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { useAppState } from '@/lib/client/store';
 import { MACROS } from '@/lib/macros';
-import { computeDailyLimit } from '@/lib/pfc';
+import { CHEAT_DAY_STREAK, computeDailyLimit } from '@/lib/pfc';
 import { EMPTY_PFC } from '@/lib/types';
 import { cn, roundPFC } from '@/lib/utils';
 
 /**
  * 選択日の摂取量と上限の比較。運動した日は消費分だけ上限が増え、前日までの超過（負債）は上限から差し引く。
+ * チートデーは超過しても負債にならないため、超過を赤で示さない。
  */
 export function DaySummary({ date }: { date: string }) {
   const { logs, settings } = useAppState();
   const total = logs[date]?.total ?? EMPTY_PFC;
-  const { limit, target, debt, burnedCalories } = useMemo(
+  const { limit, target, debt, burnedCalories, isCheatDay, streak } = useMemo(
     () => computeDailyLimit(date, settings.targetPFC, logs),
     [date, settings.targetPFC, logs],
   );
 
   const calorieLeft = limit.calories - total.calories;
+  const isOver = (left: number) => left < 0 && !isCheatDay;
 
   return (
     <Card className="gap-5 px-5 py-5">
@@ -28,11 +30,16 @@ export function DaySummary({ date }: { date: string }) {
         <div>
           <p className="text-muted-foreground text-xs">
             {calorieLeft >= 0 ? 'あと' : '上限を超過'}
+            {isCheatDay && (
+              <span className="bg-primary text-primary-foreground ml-2 rounded-full px-2 py-0.5 font-semibold">
+                チートデー
+              </span>
+            )}
           </p>
           <p
             className={cn(
               'text-5xl font-bold tracking-tight tabular-nums',
-              calorieLeft < 0 && 'text-destructive',
+              isOver(calorieLeft) && 'text-destructive',
             )}
           >
             {roundPFC(Math.abs(calorieLeft), 0).toLocaleString()}
@@ -62,6 +69,7 @@ export function DaySummary({ date }: { date: string }) {
         target={target.calories}
         debt={debt.calories}
         barClass="bg-primary"
+        allowOver={isCheatDay}
       />
 
       <div className="grid grid-cols-3 gap-4">
@@ -73,7 +81,7 @@ export function DaySummary({ date }: { date: string }) {
               <p
                 className={cn(
                   'text-lg leading-none font-semibold tabular-nums',
-                  left < 0 && 'text-destructive',
+                  isOver(left) && 'text-destructive',
                 )}
               >
                 <span className="mr-1 text-[10px] font-normal">
@@ -89,6 +97,7 @@ export function DaySummary({ date }: { date: string }) {
                 target={target[key]}
                 debt={debt[key]}
                 barClass={barClass}
+                allowOver={isCheatDay}
                 thin
               />
               <p className="text-muted-foreground text-[10px] tabular-nums">
@@ -98,7 +107,45 @@ export function DaySummary({ date }: { date: string }) {
           );
         })}
       </div>
+
+      <CheatDayProgress isCheatDay={isCheatDay} streak={streak} />
     </Card>
+  );
+}
+
+/** チートデーの案内。チートデーでなければ、あと何日記録すれば迎えられるかを示す。 */
+function CheatDayProgress({
+  isCheatDay,
+  streak,
+}: {
+  isCheatDay: boolean;
+  streak: number;
+}) {
+  if (isCheatDay) {
+    return (
+      <p className="text-muted-foreground text-xs">
+        {CHEAT_DAY_STREAK}
+        日続けて記録できたのでチートデー。上限を超えても負債になりません
+      </p>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex gap-1" aria-hidden>
+        {Array.from({ length: CHEAT_DAY_STREAK }, (_, i) => (
+          <span
+            key={i}
+            className={cn(
+              'size-1.5 rounded-full',
+              i < streak ? 'bg-primary' : 'bg-muted',
+            )}
+          />
+        ))}
+      </div>
+      <p className="text-muted-foreground text-xs">
+        あと{CHEAT_DAY_STREAK - streak}日記録するとチートデー
+      </p>
+    </div>
   );
 }
 
@@ -108,14 +155,23 @@ interface LimitBarProps {
   /** 前日までの超過分。バーの右端から上限を削る。 */
   debt: number;
   barClass: string;
+  /** 超過しても赤くしない（チートデー） */
+  allowOver?: boolean;
   thin?: boolean;
 }
 
-/** 目標値を全幅とした摂取量バー。負債で削られた部分は斜線で示し、上限超過で赤くなる。 */
-function LimitBar({ current, target, debt, barClass, thin }: LimitBarProps) {
+/** 目標値を全幅とした摂取量バー。負債で削られた部分は斜線で示し、上限超過で赤くなる（allowOver なら赤くしない）。 */
+function LimitBar({
+  current,
+  target,
+  debt,
+  barClass,
+  allowOver,
+  thin,
+}: LimitBarProps) {
   const scale = Math.max(1, target);
   const pct = (value: number) => Math.min(100, (value / scale) * 100);
-  const isOver = current > target - debt;
+  const isOver = !allowOver && current > target - debt;
 
   return (
     <div

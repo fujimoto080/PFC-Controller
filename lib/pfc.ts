@@ -43,28 +43,64 @@ function dayTarget(target: PFC, log: DailyLog | undefined): PFC {
   return { ...target, calories: target.calories + burnedCalories(log) };
 }
 
+/** この日数だけ続けて食事を記録すると、翌日がチートデーになる。 */
+export const CHEAT_DAY_STREAK = 6;
+
+/** 食事を1件以上記録した日を「記録した日」とする。 */
+function isRecorded(log: DailyLog | undefined): boolean {
+  return (log?.items.length ?? 0) > 0;
+}
+
+interface PfcHistory {
+  debt: PFC;
+  /** currentDate の前日まで続いている記録の連続日数（チートデーを過ぎると 0 に戻る） */
+  streak: number;
+  isCheatDay: boolean;
+}
+
 /**
- * currentDate の前日までの累積超過（負債）を計算する。
- * 最初の記録日から1日ずつ「その日の摂取 - その日の目標」を積み上げ、0 未満にはならない。
+ * 最初の記録日から currentDate の前日までを1日ずつたどり、負債とチートデーの状態を求める。
+ * 負債は「その日の摂取 - その日の目標」を積み上げ、0 未満にはならない。
+ * CHEAT_DAY_STREAK 日続けて記録した翌日はチートデーで、その日の超過は負債に積まない（下回った分は返済する）。
  */
+function walkPfcHistory(
+  currentDate: string,
+  target: PFC,
+  logs: Logs,
+): PfcHistory {
+  const firstDate = Object.keys(logs).sort()[0];
+  const debt: PFC = { ...EMPTY_PFC };
+  let streak = 0;
+  if (firstDate !== undefined) {
+    for (let date = firstDate; date < currentDate; date = shiftDate(date, 1)) {
+      const log = logs[date];
+      const isCheatDay = streak >= CHEAT_DAY_STREAK;
+      const total = log?.total ?? EMPTY_PFC;
+      const goal = dayTarget(target, log);
+      for (const key of PFC_KEYS) {
+        const over = total[key] - goal[key];
+        debt[key] = Math.max(
+          0,
+          debt[key] + (isCheatDay ? Math.min(0, over) : over),
+        );
+      }
+      streak = !isCheatDay && isRecorded(log) ? streak + 1 : 0;
+    }
+  }
+  return {
+    debt: mapPFC((key) => roundPFC(debt[key])),
+    streak,
+    isCheatDay: streak >= CHEAT_DAY_STREAK,
+  };
+}
+
+/** currentDate の前日までの累積超過（負債）。 */
 export function computePfcDebt(
   currentDate: string,
   target: PFC,
   logs: Logs,
 ): PFC {
-  const firstDate = Object.keys(logs).sort()[0];
-  const debt: PFC = { ...EMPTY_PFC };
-  if (firstDate === undefined) return debt;
-
-  for (let date = firstDate; date < currentDate; date = shiftDate(date, 1)) {
-    const log = logs[date];
-    const total = log?.total ?? EMPTY_PFC;
-    const goal = dayTarget(target, log);
-    for (const key of PFC_KEYS) {
-      debt[key] = Math.max(0, debt[key] + total[key] - goal[key]);
-    }
-  }
-  return mapPFC((key) => roundPFC(debt[key]));
+  return walkPfcHistory(currentDate, target, logs).debt;
 }
 
 export interface DailyLimit {
@@ -74,6 +110,10 @@ export interface DailyLimit {
   target: PFC;
   debt: PFC;
   burnedCalories: number;
+  /** チートデーなら true。上限を超えても負債にならない */
+  isCheatDay: boolean;
+  /** 前日まで続いている記録の連続日数 */
+  streak: number;
 }
 
 export function computeDailyLimit(
@@ -83,11 +123,13 @@ export function computeDailyLimit(
 ): DailyLimit {
   const log = logs[date];
   const goal = dayTarget(target, log);
-  const debt = computePfcDebt(date, target, logs);
+  const { debt, streak, isCheatDay } = walkPfcHistory(date, target, logs);
   return {
     limit: mapPFC((key) => Math.max(0, roundPFC(goal[key] - debt[key]))),
     target: goal,
     debt,
     burnedCalories: burnedCalories(log),
+    isCheatDay,
+    streak,
   };
 }

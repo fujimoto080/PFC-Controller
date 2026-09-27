@@ -202,6 +202,11 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     `1日の上限: ${formatPfc(status.limit)}（運動の消費 +${status.burnedCalories}kcal、前日までの超過 -${Math.round(status.debt.calories)}kcal を反映済み）`,
     `摂取済み: ${formatPfc(status.consumed)}`,
     `残り: ${formatPfc(status.remaining)}`,
+    ...(status.isCheatDay
+      ? [
+          '今日はチートデー（毎日記録を続けたご褒美）。上限を超えても負債にならないので、残りにこだわらず食べたい物を楽しめる案も出してよい。',
+        ]
+      : []),
     `この食事を含めて今日はあと${mealsLeft}食。${
       mealsLeft === 1
         ? '今日の最後の食事なので、残りをちょうど使い切って1日を終えられる量にする。'

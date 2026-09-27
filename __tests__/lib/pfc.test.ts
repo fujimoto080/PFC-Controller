@@ -1,4 +1,5 @@
 import {
+  CHEAT_DAY_STREAK,
   burnedCalories,
   computeDailyLimit,
   computePfcDebt,
@@ -12,6 +13,7 @@ import {
   type Logs,
   type PFC,
 } from '@/lib/types';
+import { shiftDate } from '@/lib/utils';
 
 const target: PFC = { protein: 100, fat: 50, carbs: 200, calories: 2000 };
 
@@ -161,6 +163,8 @@ describe('運動を考慮した上限', () => {
       target: { ...target, calories: 2400 },
       debt: { protein: 20, fat: 0, carbs: 0, calories: 500 },
       burnedCalories: 400,
+      isCheatDay: false,
+      streak: 0,
     });
   });
 
@@ -170,6 +174,70 @@ describe('運動を考慮した上限', () => {
     });
     expect(computeDailyLimit('2026-09-25', target, logs).limit.calories).toBe(
       0,
+    );
+  });
+});
+
+/** start から days 日分、total の食事を1件ずつ記録したログ。 */
+function recordedDays(start: string, days: number, total: PFC): Logs {
+  return Object.fromEntries(
+    Array.from({ length: days }, (_, i) => {
+      const date = shiftDate(start, i);
+      const item = { id: date, name: '食事', timestamp: i, ...total };
+      return [date, { ...createEmptyDailyLog(date), items: [item], total }];
+    }),
+  );
+}
+
+describe('チートデー', () => {
+  const start = '2026-09-01';
+  const cheatDate = shiftDate(start, CHEAT_DAY_STREAK);
+
+  it('続けて記録した日数を数え、規定日数に達した翌日がチートデーになる', () => {
+    const logs = recordedDays(start, CHEAT_DAY_STREAK, target);
+    expect(
+      computeDailyLimit(shiftDate(cheatDate, -1), target, logs),
+    ).toMatchObject({ isCheatDay: false, streak: CHEAT_DAY_STREAK - 1 });
+    expect(computeDailyLimit(cheatDate, target, logs)).toMatchObject({
+      isCheatDay: true,
+      streak: CHEAT_DAY_STREAK,
+    });
+  });
+
+  it('記録の無い日があると数え直す', () => {
+    // 3日目だけ記録が無い
+    const logs = {
+      ...recordedDays(start, 2, target),
+      ...recordedDays(shiftDate(start, 3), CHEAT_DAY_STREAK - 3, target),
+    };
+    expect(computeDailyLimit(cheatDate, target, logs)).toMatchObject({
+      isCheatDay: false,
+      streak: CHEAT_DAY_STREAK - 3,
+    });
+  });
+
+  it('チートデーの超過は負債にならず、翌日から数え直す', () => {
+    const logs = {
+      ...recordedDays(start, CHEAT_DAY_STREAK, target),
+      ...recordedDays(cheatDate, 1, { ...target, calories: 3500 }),
+    };
+    const nextDay = shiftDate(cheatDate, 1);
+    expect(computeDailyLimit(nextDay, target, logs)).toMatchObject({
+      debt: { calories: 0 },
+      isCheatDay: false,
+      streak: 0,
+    });
+  });
+
+  it('チートデーに目標を下回れば負債を返済する', () => {
+    const logs = {
+      ...recordedDays(start, 1, { ...target, calories: 2500 }),
+      ...recordedDays(shiftDate(start, 1), CHEAT_DAY_STREAK - 1, target),
+      ...recordedDays(cheatDate, 1, { ...target, calories: 1800 }),
+    };
+    expect(computePfcDebt(cheatDate, target, logs).calories).toBe(500);
+    expect(computePfcDebt(shiftDate(cheatDate, 1), target, logs).calories).toBe(
+      300,
     );
   });
 });

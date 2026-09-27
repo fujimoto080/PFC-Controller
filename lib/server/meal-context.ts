@@ -51,6 +51,7 @@ export async function getNutritionStatus(userId: string, date: string) {
     limit,
     debt,
     burnedCalories: burned,
+    isCheatDay,
   } = computeDailyLimit(date, settings.targetPFC, logs);
   const log = logs[date];
   const consumed = log?.total ?? { ...EMPTY_PFC };
@@ -64,6 +65,8 @@ export async function getNutritionStatus(userId: string, date: string) {
     limit,
     consumed,
     remaining: subtractPFC(limit, consumed),
+    /** チートデーなら true。上限を超えても負債にならない */
+    isCheatDay,
     meals: log ? toDay(log).meals : [],
     activities: log ? log.activities.map(toActivity) : [],
     profile: settings.profile,
