@@ -79,7 +79,7 @@ function EditLogItemForm({
   };
 
   return (
-    <div className="mx-auto w-full max-w-lg">
+    <div className="mx-auto w-full max-w-lg overflow-y-auto">
       <DrawerHeader>
         <DrawerTitle>記録を編集</DrawerTitle>
         <DrawerDescription>

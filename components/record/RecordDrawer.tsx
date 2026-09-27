@@ -50,7 +50,7 @@ export function RecordDrawer({
         if (!isOpen) onClosed?.();
       }}
     >
-      <DrawerContent className="data-[vaul-drawer-direction=bottom]:max-h-[92vh]">
+      <DrawerContent className="data-[vaul-drawer-direction=bottom]:max-h-[92dvh]">
         <DrawerHeader className="relative">
           {onBack && (
             <IconButton
