@@ -109,6 +109,12 @@ const daysBetween = (from: string, to: string) =>
 const formatPfc = ({ calories, protein, fat, carbs }: PFC) =>
   `${Math.round(calories)}kcal P${roundPFC(protein, 1)}g F${roundPFC(fat, 1)}g C${roundPFC(carbs, 1)}g`;
 
+/** 前日までの繰越（正なら超過、負なら不足）のカロリー表記。 */
+const formatCarryover = (calories: number) =>
+  calories >= 0
+    ? `前日までの超過 -${Math.round(calories)}kcal`
+    : `前日までの不足 +${Math.round(-calories)}kcal`;
+
 type MealHistory = Awaited<ReturnType<typeof getMealHistory>>;
 
 /** 食べた物を最後に食べた日の近さで「避ける」「また食べてよい」に分ける。 */
@@ -199,7 +205,7 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     ...(surroundings.length === 0 ? ['位置情報は取得できていない。'] : []),
     '',
     '## 今日の栄養',
-    `1日の上限: ${formatPfc(status.limit)}（運動の消費 +${status.burnedCalories}kcal、前日までの超過 -${Math.round(status.debt.calories)}kcal を反映済み）`,
+    `1日の上限: ${formatPfc(status.limit)}（運動の消費 +${status.burnedCalories}kcal、${formatCarryover(status.carryover.calories)} を反映済み）`,
     `摂取済み: ${formatPfc(status.consumed)}`,
     `残り: ${formatPfc(status.remaining)}`,
     ...(status.isCheatDay

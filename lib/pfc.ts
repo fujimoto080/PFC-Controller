@@ -1,5 +1,5 @@
 import { PFC_KEYS, type PfcKey } from './macros';
-import { EMPTY_PFC, type DailyLog, type Logs, type PFC } from './types';
+import type { DailyLog, Logs, PFC } from './types';
 import { roundPFC, shiftDate } from './utils';
 
 function mapPFC(fn: (key: PfcKey) => number): PFC {
@@ -73,8 +73,55 @@ function cheatDayCap(goal: PFC, overDays: number): PFC | null {
   return mapPFC((key) => roundPFC(goal[key] * ratio));
 }
 
+/** その日の超過・不足は、翌日からこの日数のあいだ上限に繰り越され、その後は消える。 */
+export const CARRYOVER_DAYS = 7;
+
+/** 繰越の1件。amount は正なら超過、負なら不足。 */
+interface CarryoverLot {
+  date: string;
+  amount: number;
+}
+
+/**
+ * 繰越の残りに新しい日の差分を加える。期限切れを捨ててから、
+ * 符号が逆の繰越を古い順に相殺し、残った分を新しい繰越として積む。
+ */
+function addCarryover(
+  lots: CarryoverLot[],
+  date: string,
+  amount: number,
+): CarryoverLot[] {
+  const oldest = shiftDate(date, -CARRYOVER_DAYS);
+  const next = lots.filter((lot) => lot.date >= oldest);
+  let rest = amount;
+  let head = next[0];
+  while (head && rest * head.amount < 0) {
+    const sum = head.amount + rest;
+    if (sum * rest >= 0) {
+      // 古い繰越を使い切り、残りを次の繰越の相殺に回す
+      next.shift();
+      head = next[0];
+      rest = sum;
+    } else {
+      next[0] = { ...head, amount: sum };
+      rest = 0;
+    }
+  }
+  if (rest !== 0) next.push({ date, amount: rest });
+  return next;
+}
+
+/** currentDate に効いている繰越の合計。 */
+function carryoverTotal(lots: CarryoverLot[], currentDate: string): number {
+  const oldest = shiftDate(currentDate, -CARRYOVER_DAYS);
+  return lots
+    .filter((lot) => lot.date >= oldest)
+    .reduce((total, lot) => total + lot.amount, 0);
+}
+
 interface PfcHistory {
-  debt: PFC;
+  /** 前日までの超過（正）・不足（負）の繰越 */
+  carryover: PFC;
   /** currentDate の前日まで続いている記録の連続日数（チートデーを過ぎると 0 に戻る） */
   streak: number;
   /** streak のうちカロリーを超過した日数 */
@@ -83,9 +130,10 @@ interface PfcHistory {
 }
 
 /**
- * 最初の記録日から currentDate の前日までを1日ずつたどり、負債とチートデーの状態を求める。
- * 負債は「その日の摂取 - その日の目標」を積み上げ、0 未満にはならない。
- * CHEAT_DAY_STREAK 日続けて記録した翌日はチートデーで、その日の超過は負債に積まない（下回った分は返済する）。
+ * 最初の記録日から currentDate の前日までを1日ずつたどり、繰越とチートデーの状態を求める。
+ * 記録した日の「その日の摂取 - その日の目標」を繰越とし、超過と不足は古い順に相殺する。
+ * 各日の繰越は CARRYOVER_DAYS 日で消える。食事を記録していない日は繰越に影響しない。
+ * CHEAT_DAY_STREAK 日続けて記録した翌日はチートデーで、その日の超過は繰り越さない（下回った分は不足として繰り越す）。
  * ただし連続記録中に超過した日が多いと、免除する超過に上限が付く（cheatDayCap）。
  */
 function walkPfcHistory(
@@ -94,24 +142,30 @@ function walkPfcHistory(
   logs: Logs,
 ): PfcHistory {
   const firstDate = Object.keys(logs).sort()[0];
-  const debt: PFC = { ...EMPTY_PFC };
+  const lots: Record<PfcKey, CarryoverLot[]> = {
+    protein: [],
+    fat: [],
+    carbs: [],
+    calories: [],
+  };
   let streak = 0;
   let overDays = 0;
   if (firstDate !== undefined) {
     for (let date = firstDate; date < currentDate; date = shiftDate(date, 1)) {
       const log = logs[date];
       const isCheatDay = streak >= CHEAT_DAY_STREAK;
-      const total = log?.total ?? EMPTY_PFC;
       const goal = dayTarget(target, log);
-      const cap = isCheatDay ? cheatDayCap(goal, overDays) : undefined;
-      for (const key of PFC_KEYS) {
-        const over = total[key] - goal[key];
-        // チートデーは上限（null なら無制限）までの超過を免除する
-        const forgiven =
-          cap === undefined
-            ? 0
-            : Math.max(0, Math.min(over, cap?.[key] ?? over));
-        debt[key] = Math.max(0, debt[key] + over - forgiven);
+      if (log && isRecorded(log)) {
+        const cap = isCheatDay ? cheatDayCap(goal, overDays) : undefined;
+        for (const key of PFC_KEYS) {
+          const over = log.total[key] - goal[key];
+          // チートデーは上限（null なら無制限）までの超過を免除する
+          const forgiven =
+            cap === undefined
+              ? 0
+              : Math.max(0, Math.min(over, cap?.[key] ?? over));
+          lots[key] = addCarryover(lots[key], date, over - forgiven);
+        }
       }
       if (!isCheatDay && isRecorded(log)) {
         streak += 1;
@@ -123,28 +177,22 @@ function walkPfcHistory(
     }
   }
   return {
-    debt: mapPFC((key) => roundPFC(debt[key])),
+    carryover: mapPFC((key) =>
+      roundPFC(carryoverTotal(lots[key], currentDate)),
+    ),
     streak,
     overDays,
     isCheatDay: streak >= CHEAT_DAY_STREAK,
   };
 }
 
-/** currentDate の前日までの累積超過（負債）。 */
-export function computePfcDebt(
-  currentDate: string,
-  target: PFC,
-  logs: Logs,
-): PFC {
-  return walkPfcHistory(currentDate, target, logs).debt;
-}
-
 export interface DailyLimit {
-  /** 運動の消費分を足した目標から、前日までの超過を差し引いたその日の上限 */
+  /** 運動の消費分を足した目標から、前日までの繰越を差し引いたその日の上限 */
   limit: PFC;
   /** 運動の消費分を足した目標 */
   target: PFC;
-  debt: PFC;
+  /** 前日までの繰越。正なら超過（上限が減る）、負なら不足（上限が増える） */
+  carryover: PFC;
   burnedCalories: number;
   /** チートデーなら true。上限を超えても負債にならない（cheatDayCap があればその分まで） */
   isCheatDay: boolean;
@@ -163,15 +211,15 @@ export function computeDailyLimit(
 ): DailyLimit {
   const log = logs[date];
   const goal = dayTarget(target, log);
-  const { debt, streak, overDays, isCheatDay } = walkPfcHistory(
+  const { carryover, streak, overDays, isCheatDay } = walkPfcHistory(
     date,
     target,
     logs,
   );
   return {
-    limit: mapPFC((key) => Math.max(0, roundPFC(goal[key] - debt[key]))),
+    limit: mapPFC((key) => Math.max(0, roundPFC(goal[key] - carryover[key]))),
     target: goal,
-    debt,
+    carryover,
     burnedCalories: burnedCalories(log),
     isCheatDay,
     cheatDayCap: isCheatDay ? cheatDayCap(goal, overDays) : null,

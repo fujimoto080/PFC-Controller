@@ -4,6 +4,7 @@ import type { McpServer, ServerContext } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import { foodInputSchema } from '@/lib/api/schemas';
 import { rankFrequentFoods } from '@/lib/food-suggestions';
+import { CARRYOVER_DAYS } from '@/lib/pfc';
 import { listFoods } from '@/lib/server/foods';
 import {
   getMealHistory,
@@ -157,8 +158,7 @@ export function registerMealPlanningTools(server: McpServer) {
     'get_nutrition_status',
     {
       title: '摂取状況の取得',
-      description:
-        '指定日（省略時は今日）の1日の上限と摂取状況を返す。limit がその日の上限（PFC は g、calories は kcal）で、baseTarget（設定した目標）にその日の運動の消費カロリー burnedCalories を足し、前日までの超過 debt を差し引いたもの。remaining = limit - consumed（負なら超過）。isCheatDay が true の日はチートデーで、上限を超えても負債にならない（cheatDayCap があれば、免除される超過はその量まで）。食べた物 meals・運動 activities・プロフィール・食の好み mealPreferences（苦手な食材 dislikes と、お店ごとの定番メニュー stores）も返す。献立を考えるときは最初にこれを呼び、苦手な食材は避け、お店ごとの定番メニューに従う。',
+      description: `指定日（省略時は今日）の1日の上限と摂取状況を返す。limit がその日の上限（PFC は g、calories は kcal）で、baseTarget（設定した目標）にその日の運動の消費カロリー burnedCalories を足し、前日までの繰越 carryover を差し引いたもの（carryover は正なら超過で上限が減り、負なら不足で上限が増える。各日の超過・不足は${CARRYOVER_DAYS}日で消える）。remaining = limit - consumed（負なら超過）。isCheatDay が true の日はチートデーで、上限を超えても負債にならない（cheatDayCap があれば、免除される超過はその量まで）。食べた物 meals・運動 activities・プロフィール・食の好み mealPreferences（苦手な食材 dislikes と、お店ごとの定番メニュー stores）も返す。献立を考えるときは最初にこれを呼び、苦手な食材は避け、お店ごとの定番メニューに従う。`,
       inputSchema: z.object({ date: dateSchema.optional() }),
       annotations: { readOnlyHint: true },
     },

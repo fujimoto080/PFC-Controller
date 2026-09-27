@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { useAppState } from '@/lib/client/store';
 import { MACROS, type PfcKey } from '@/lib/macros';
 import {
+  CARRYOVER_DAYS,
   CHEAT_DAY_FREE_OVER_DAYS,
   CHEAT_DAY_STREAK,
   computeDailyLimit,
@@ -14,7 +15,7 @@ import { EMPTY_PFC } from '@/lib/types';
 import { cn, roundPFC } from '@/lib/utils';
 
 /**
- * 選択日の摂取量と上限の比較。運動した日は消費分だけ上限が増え、前日までの超過（負債）は上限から差し引く。
+ * 選択日の摂取量と上限の比較。運動した日は消費分だけ上限が増え、前日までの超過（負債）は上限から差し引き、不足は上限に足す。
  * チートデーは超過しても負債にならないため、免除される範囲の超過は赤で示さない。
  */
 export function DaySummary({ date }: { date: string }) {
@@ -23,7 +24,7 @@ export function DaySummary({ date }: { date: string }) {
   const {
     limit,
     target,
-    debt,
+    carryover,
     burnedCalories,
     isCheatDay,
     cheatDayCap,
@@ -72,10 +73,22 @@ export function DaySummary({ date }: { date: string }) {
           {burnedCalories > 0 && (
             <span className="block">運動 +{roundPFC(burnedCalories, 0)}</span>
           )}
-          {debt.calories > 0 && (
-            <span className="text-destructive block">
-              前日までの超過 −{roundPFC(debt.calories, 0)}
-            </span>
+          {carryover.calories !== 0 && (
+            <>
+              <span
+                className={cn(
+                  'block',
+                  carryover.calories > 0 && 'text-destructive',
+                )}
+              >
+                {carryover.calories > 0
+                  ? `超過の繰越 −${roundPFC(carryover.calories, 0)}`
+                  : `不足の繰越 +${roundPFC(-carryover.calories, 0)}`}
+              </span>
+              <span className="block">
+                各日の繰越は{CARRYOVER_DAYS}日で消えます
+              </span>
+            </>
           )}
         </Link>
       </div>
@@ -83,7 +96,7 @@ export function DaySummary({ date }: { date: string }) {
       <LimitBar
         current={total.calories}
         target={target.calories}
-        debt={debt.calories}
+        limit={limit.calories}
         barClass="bg-primary"
         allowance={allowance('calories')}
       />
@@ -111,7 +124,7 @@ export function DaySummary({ date }: { date: string }) {
               <LimitBar
                 current={total[key]}
                 target={target[key]}
-                debt={debt[key]}
+                limit={limit[key]}
                 barClass={barClass}
                 allowance={allowance(key)}
                 thin
@@ -184,26 +197,29 @@ function CheatDayProgress({
 interface LimitBarProps {
   current: number;
   target: number;
-  /** 前日までの超過分。バーの右端から上限を削る。 */
-  debt: number;
+  /** 繰越を反映した上限。目標より小さければ右端を削り、大きければバーを延ばす。 */
+  limit: number;
   barClass: string;
   /** 上限をこの量まで超えても赤くしない（チートデー） */
   allowance?: number;
   thin?: boolean;
 }
 
-/** 目標値を全幅とした摂取量バー。負債で削られた部分は斜線で示し、上限を allowance より多く超えると赤くなる。 */
+/**
+ * 目標値と上限の大きい方を全幅とした摂取量バー。超過の繰越で削られた部分は斜線、
+ * 不足の繰越で増えた部分は薄い色で示し、上限を allowance より多く超えると赤くなる。
+ */
 function LimitBar({
   current,
   target,
-  debt,
+  limit,
   barClass,
   allowance = 0,
   thin,
 }: LimitBarProps) {
-  const scale = Math.max(1, target);
+  const scale = Math.max(1, target, limit);
   const pct = (value: number) => Math.min(100, (value / scale) * 100);
-  const isOver = current > target - debt + allowance;
+  const isOver = current > limit + allowance;
 
   return (
     <div
@@ -212,10 +228,16 @@ function LimitBar({
         thin ? 'h-1.5' : 'h-2.5',
       )}
     >
-      {debt > 0 && (
+      {limit < target && (
         <div
           className="absolute inset-y-0 right-0 bg-[repeating-linear-gradient(135deg,var(--muted-foreground)_0_2px,transparent_2px_5px)] opacity-40"
-          style={{ width: `${pct(debt)}%` }}
+          style={{ width: `${pct(target - limit)}%` }}
+        />
+      )}
+      {limit > target && (
+        <div
+          className={cn('absolute inset-y-0 right-0 opacity-25', barClass)}
+          style={{ width: `${pct(limit - target)}%` }}
         />
       )}
       <div
