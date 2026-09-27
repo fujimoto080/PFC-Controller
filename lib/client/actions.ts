@@ -149,7 +149,9 @@ export function deleteFood(id: string): Promise<boolean> {
   });
 }
 
-export function saveSettings(settings: UserSettings): Promise<boolean> {
+/** 保存時点の最新の設定に patch を重ねて保存する。別の画面・パネルの変更を上書きしない。 */
+export function updateSettings(patch: Partial<UserSettings>): Promise<boolean> {
+  const settings = { ...getState().settings, ...patch };
   return optimistic({
     apply: (current) => ({ ...current, settings }),
     request: () => api.put('/api/settings', settings),
@@ -158,10 +160,8 @@ export function saveSettings(settings: UserSettings): Promise<boolean> {
 }
 
 export function toggleFavoriteFood(id: string): Promise<boolean> {
-  const { settings } = getState();
-  return saveSettings({
-    ...settings,
-    favoriteFoodIds: toggleItem(settings.favoriteFoodIds, id),
+  return updateSettings({
+    favoriteFoodIds: toggleItem(getState().settings.favoriteFoodIds, id),
   });
 }
 

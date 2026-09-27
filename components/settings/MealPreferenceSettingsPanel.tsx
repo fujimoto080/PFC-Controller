@@ -8,11 +8,12 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CHAIN_STORES } from '@/lib/chain-stores';
-import { saveSettings } from '@/lib/client/actions';
+import { useAutoSave } from '@/hooks/use-auto-save';
+import { updateSettings } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
 import { collectStores } from '@/lib/store-sections';
-import { toast } from '@/lib/toast';
 import type { StorePreference } from '@/lib/types';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 
 /** 「、」「,」や改行で区切った入力を食材名の配列にする。 */
 function splitWords(text: string): string[] {
@@ -54,24 +55,24 @@ export function MealPreferenceSettingsPanel() {
     );
   };
 
-  const handleSave = async () => {
-    const mealPreferences = {
-      dislikes: splitWords(dislikes),
-      stores: stores
-        .map((s) => ({ store: s.store.trim(), menu: s.menu.trim() }))
-        .filter((s) => s.store !== '' && s.menu !== ''),
-    };
-    if (await saveSettings({ ...settings, mealPreferences })) {
-      setDislikes(mealPreferences.dislikes.join('、'));
-      setStores(mealPreferences.stores);
-      toast.success('食の好みを保存しました');
-    }
-  };
+  // 画面の入力はそのままに、店名かメニューが空の行は除いて保存する
+  const status = useAutoSave(
+    {
+      mealPreferences: {
+        dislikes: splitWords(dislikes),
+        stores: stores
+          .map((s) => ({ store: s.store.trim(), menu: s.menu.trim() }))
+          .filter((s) => s.store !== '' && s.menu !== ''),
+      },
+    },
+    updateSettings,
+  );
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>食の好み</CardTitle>
+        <AutoSaveIndicator status={status} />
       </CardHeader>
       <CardContent className="space-y-5">
         <p className="text-muted-foreground text-sm">
@@ -143,16 +144,6 @@ export function MealPreferenceSettingsPanel() {
           >
             <Plus />
             お店を追加
-          </Button>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            onClick={() => {
-              void handleSave();
-            }}
-          >
-            好みを保存
           </Button>
         </div>
       </CardContent>

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { saveSettings } from '@/lib/client/actions';
+import { useAutoSave } from '@/hooks/use-auto-save';
+import { updateSettings } from '@/lib/client/actions';
 import {
   getCurrentPosition,
   getPushSubscription,
@@ -23,6 +24,9 @@ import {
 import { toast } from '@/lib/toast';
 import type { MealSchedule, NamedPlace } from '@/lib/types';
 import { cn, toggleItem } from '@/lib/utils';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** 食事提案で居場所を推定するための予定と、朝昼晩の提案通知の設定。 */
 export function MealSuggestionSettingsPanel() {
@@ -34,16 +38,18 @@ export function MealSuggestionSettingsPanel() {
     setSchedule((current) => ({ ...current, ...patch }));
   };
 
-  const handleSave = async () => {
-    if (await saveSettings({ ...settings, mealSchedule: schedule })) {
-      toast.success('予定を保存しました');
-    }
-  };
+  // 時刻欄を消している途中は保存しない
+  const status = useAutoSave(
+    { mealSchedule: schedule },
+    updateSettings,
+    [schedule.workStart, schedule.workEnd].every((t) => HHMM.test(t)),
+  );
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>食事の提案</CardTitle>
+        <AutoSaveIndicator status={status} />
       </CardHeader>
       <CardContent className="space-y-5">
         <PushToggle />
@@ -105,16 +111,6 @@ export function MealSuggestionSettingsPanel() {
             update({ remoteDays: toggleItem(schedule.remoteDays, day) });
           }}
         />
-
-        <div className="flex justify-end">
-          <Button
-            onClick={() => {
-              void handleSave();
-            }}
-          >
-            予定を保存
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
@@ -201,7 +197,7 @@ function PlaceField({
       return;
     }
     onChange({ ...place, point });
-    toast.success(`現在地を${title}に設定しました（保存で確定）`);
+    toast.success(`現在地を${title}に設定しました`);
   };
 
   return (

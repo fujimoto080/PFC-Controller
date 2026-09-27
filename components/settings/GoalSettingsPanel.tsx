@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAutoSave } from '@/hooks/use-auto-save';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { ProfileCalculator } from './ProfileCalculator';
 import type { UserProfile } from '@/lib/types';
-import { saveSettings } from '@/lib/client/actions';
+import { updateSettings } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
 import {
   DEFAULT_PROFILE,
   calculateGoals,
   initialDuration,
 } from '@/lib/nutrition-goals';
-import { toast } from '@/lib/toast';
 
 export function GoalSettingsPanel() {
   const { settings } = useAppState();
@@ -21,19 +21,22 @@ export function GoalSettingsPanel() {
   );
   const [duration, setDuration] = useState(() => initialDuration(profile));
   const goals = calculateGoals(profile, duration);
-
-  const handleSaveGoals = async () => {
-    const { protein, fat, carbs, calories } = goals;
-    const targetPFC = { protein, fat, carbs, calories };
-    if (await saveSettings({ ...settings, targetPFC, profile })) {
-      toast.success('1日の上限を保存しました');
-    }
-  };
+  const { protein, fat, carbs, calories } = goals;
+  const targetPFC = { protein, fat, carbs, calories };
+  // 数値欄を消して打ち直している途中（0 や空欄）は保存しない
+  const valid =
+    [profile.age, profile.height, profile.weight, profile.targetWeight].every(
+      (n) => n > 0,
+    ) &&
+    duration > 0 &&
+    Object.values(targetPFC).every((n) => Number.isFinite(n) && n >= 0);
+  const status = useAutoSave({ targetPFC, profile }, updateSettings, valid);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>1日の上限</CardTitle>
+        <AutoSaveIndicator status={status} />
       </CardHeader>
       <CardContent className="space-y-4">
         <ProfileCalculator
@@ -43,15 +46,6 @@ export function GoalSettingsPanel() {
           onDurationChange={setDuration}
           goals={goals}
         />
-        <div className="flex justify-end">
-          <Button
-            onClick={() => {
-              void handleSaveGoals();
-            }}
-          >
-            上限を保存
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
