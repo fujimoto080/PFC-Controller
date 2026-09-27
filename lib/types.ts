@@ -76,11 +76,26 @@ export interface MealSchedule {
   remoteDays: number[];
 }
 
+/** お店ごとの定番メニューや注文のしかた。 */
+export interface StorePreference {
+  store: string;
+  /** 例: 牛丼ミニ＋サラダ＋とん汁が定番。紅しょうがは不要 */
+  menu: string;
+}
+
+/** 食事提案で参考にする食の好み。 */
+export interface MealPreferences {
+  /** 苦手な食材（例: パクチー、レバー） */
+  dislikes: string[];
+  stores: StorePreference[];
+}
+
 export interface UserSettings {
   targetPFC: PFC;
   profile?: UserProfile;
   favoriteFoodIds: string[];
   mealSchedule?: MealSchedule;
+  mealPreferences?: MealPreferences;
 }
 
 export type MealSlot = 'breakfast' | 'lunch' | 'dinner';

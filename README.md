@@ -78,6 +78,7 @@ GitHub Actions で運用する場合は、リポジトリの **Settings > Secret
 
 - 周辺のお店・最寄り駅: OpenStreetMap の Overpass API（キー不要）
 - 予定（自宅・会社の位置、勤務時間、在宅の曜日）と通知のオン/オフ: 設定画面の「食事の提案」
+- 苦手な食材・お店ごとの定番メニュー: 設定画面の「食の好み」
 - 定期実行: `vercel.json` の `crons` → `GET /api/cron/meal-suggestions?slot=...`（Vercel Hobby では起動が指定時刻から最大1時間ずれることがある）
 - 必要な環境変数:
   - `OPENAI_API_KEY`

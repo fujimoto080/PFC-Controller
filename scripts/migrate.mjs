@@ -129,9 +129,11 @@ const APP_SCHEMA_SQL = `
     expires_at TIMESTAMPTZ NOT NULL
   );
 
-  -- 食事提案。居場所の推定に使う予定、最後に取得した現在地、提案結果、Web Push の購読
+  -- 食事提案。居場所の推定に使う予定・食の好み、最後に取得した現在地、提案結果、Web Push の購読
   ALTER TABLE pfc_user_settings
     ADD COLUMN IF NOT EXISTS meal_schedule_json JSONB;
+  ALTER TABLE pfc_user_settings
+    ADD COLUMN IF NOT EXISTS meal_preferences_json JSONB;
 
   CREATE TABLE IF NOT EXISTS pfc_user_locations (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,

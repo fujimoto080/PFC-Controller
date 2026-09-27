@@ -163,6 +163,10 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     (store, index, all) => all.findIndex((s) => s.id === store.id) === index,
   );
 
+  const { dislikes, stores: storePreferences } = settings.mealPreferences ?? {
+    dislikes: [],
+    stores: [],
+  };
   const mealsLeft = remainingMealCount(request.slot);
   const { avoid, welcome } = classifyRecentFoods(history, today);
   const slotLabel = mealSlotLabel(request.slot);
@@ -212,6 +216,11 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     '- 栄養値は Web 検索で公式サイトなどの公表値を確認して使う。見つからない場合だけ推定する。',
     '- 実際にその店で買える・注文できるメニューにする。コンビニなら複数品の組み合わせでもよい。',
     '- タンパク質を優先して確保し、脂質は残りを超えないようにする。',
+    ...(dislikes.length > 0
+      ? [
+          `- 苦手な食材: ${dislikes.join('、')}。これらが入ったメニューは出さない（抜き・別添えにできるならその旨を reason に書いてもよい）。`,
+        ]
+      : []),
     '',
     '## 近くのお店',
     ...(stores.length > 0
@@ -219,6 +228,15 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
       : ['- 取得できなかった。居場所の説明から考える。']),
     `栄養を公開している主なチェーン: ${CHAIN_STORES.map((c) => c.name).join('、')}`,
   ];
+
+  if (storePreferences.length > 0) {
+    lines.push(
+      '',
+      '## お店ごとのユーザーの好み',
+      'これらのお店を提案するときは、ここに書かれた定番メニュー・注文のしかた・避けたい物に従う。',
+      ...storePreferences.map((p) => `- ${p.store}: ${p.menu}`),
+    );
+  }
 
   if (request.stores && request.stores.length > 0) {
     lines.push(

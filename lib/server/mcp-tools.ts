@@ -158,7 +158,7 @@ export function registerMealPlanningTools(server: McpServer) {
     {
       title: '摂取状況の取得',
       description:
-        '指定日（省略時は今日）の1日の上限と摂取状況を返す。limit がその日の上限（PFC は g、calories は kcal）で、baseTarget（設定した目標）にその日の運動の消費カロリー burnedCalories を足し、前日までの超過 debt を差し引いたもの。remaining = limit - consumed（負なら超過）。食べた物 meals・運動 activities・プロフィールも返す。献立を考えるときは最初にこれを呼ぶ。',
+        '指定日（省略時は今日）の1日の上限と摂取状況を返す。limit がその日の上限（PFC は g、calories は kcal）で、baseTarget（設定した目標）にその日の運動の消費カロリー burnedCalories を足し、前日までの超過 debt を差し引いたもの。remaining = limit - consumed（負なら超過）。食べた物 meals・運動 activities・プロフィール・食の好み mealPreferences（苦手な食材 dislikes と、お店ごとの定番メニュー stores）も返す。献立を考えるときは最初にこれを呼び、苦手な食材は避け、お店ごとの定番メニューに従う。',
       inputSchema: z.object({ date: dateSchema.optional() }),
       annotations: { readOnlyHint: true },
     },

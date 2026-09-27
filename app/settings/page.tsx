@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PageTitle } from '@/components/ui/page-title';
 import { GoalSettingsPanel } from '@/components/settings/GoalSettingsPanel';
 import { AccountPanel } from '@/components/settings/AccountPanel';
+import { MealPreferenceSettingsPanel } from '@/components/settings/MealPreferenceSettingsPanel';
 import { MealSuggestionSettingsPanel } from '@/components/settings/MealSuggestionSettingsPanel';
 import { SportSettingsPanel } from '@/components/settings/SportSettingsPanel';
 
@@ -16,6 +17,7 @@ export default function SettingsPage() {
 
       <MealSuggestionSettingsPanel />
 
+      <MealPreferenceSettingsPanel />
       <AccountPanel />
 
       <div className="text-right">

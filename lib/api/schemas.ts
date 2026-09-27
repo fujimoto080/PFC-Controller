@@ -3,6 +3,7 @@ import type {
   FoodItem,
   FoodItemInput,
   GeoPoint,
+  MealPreferences,
   MealSchedule,
   MealSlot,
   MealSuggestionRequest,
@@ -69,6 +70,18 @@ const mealScheduleSchema = z.object({
   remoteDays: weekdaysSchema,
 }) satisfies z.ZodType<MealSchedule>;
 
+const mealPreferencesSchema = z.object({
+  dislikes: z.array(z.string().trim().min(1).max(50)).max(50),
+  stores: z
+    .array(
+      z.object({
+        store: z.string().trim().min(1).max(100),
+        menu: z.string().trim().min(1).max(500),
+      }),
+    )
+    .max(50),
+}) satisfies z.ZodType<MealPreferences>;
+
 export const mealSlotSchema = z.enum([
   'breakfast',
   'lunch',
@@ -123,6 +136,7 @@ export const sportsSchema = z.array(
 ) satisfies z.ZodType<SportDefinition[]>;
 
 export const activityInputSchema = z.object({
+  mealPreferences: mealPreferencesSchema.optional(),
   sportId: z.string().min(1),
   name: z.string().min(1),
   caloriesBurned: nonNegative,
