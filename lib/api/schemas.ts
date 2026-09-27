@@ -55,6 +55,7 @@ const geoPointSchema = z.object({
   lon: z.number().min(-180).max(180),
 }) satisfies z.ZodType<GeoPoint>;
 
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const hhmmSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const weekdaysSchema = z.array(z.number().int().min(0).max(6));
 const namedPlaceSchema = z.object({
@@ -139,6 +140,7 @@ export const settingsSchema = z.object({
     })
     .optional(),
   favoriteFoodIds: z.array(z.string()),
+  carryoverExcludedDates: z.array(dateSchema),
   mealSchedule: mealScheduleSchema.optional(),
   mealPreferences: mealPreferencesSchema.optional(),
 }) satisfies z.ZodType<UserSettings>;

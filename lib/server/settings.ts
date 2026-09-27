@@ -15,6 +15,7 @@ interface SettingsRow {
   target_calories: number;
   profile_json: UserProfile | null;
   favorite_food_ids_json: string[] | null;
+  carryover_excluded_dates_json: string[] | null;
   meal_schedule_json: MealSchedule | null;
   meal_preferences_json: MealPreferences | null;
 }
@@ -22,6 +23,7 @@ interface SettingsRow {
 const DEFAULT_SETTINGS: UserSettings = {
   targetPFC: { protein: 100, fat: 60, carbs: 250, calories: 2000 },
   favoriteFoodIds: [],
+  carryoverExcludedDates: [],
 };
 
 /** ユーザー設定を返す。未保存なら既定値。 */
@@ -29,7 +31,7 @@ export async function getSettings(userId: string): Promise<UserSettings> {
   const result = await getPool().query<SettingsRow>(
     `SELECT target_protein, target_fat, target_carbs, target_calories,
             profile_json, favorite_food_ids_json, meal_schedule_json,
-            meal_preferences_json
+            meal_preferences_json, carryover_excluded_dates_json
      FROM pfc_user_settings
      WHERE user_id = $1`,
     [userId],
@@ -45,6 +47,7 @@ export async function getSettings(userId: string): Promise<UserSettings> {
     },
     profile: row.profile_json ?? undefined,
     favoriteFoodIds: row.favorite_food_ids_json ?? [],
+    carryoverExcludedDates: row.carryover_excluded_dates_json ?? [],
     mealSchedule: row.meal_schedule_json ?? undefined,
     mealPreferences: row.meal_preferences_json ?? undefined,
   };
@@ -58,8 +61,9 @@ export async function replaceSettings(
     `INSERT INTO pfc_user_settings (
        user_id, target_protein, target_fat, target_carbs, target_calories,
        profile_json, favorite_food_ids_json, meal_schedule_json,
-       meal_preferences_json
-     ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, $9::jsonb)
+       meal_preferences_json, carryover_excluded_dates_json
+     ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, $9::jsonb,
+               $10::jsonb)
      ON CONFLICT (user_id) DO UPDATE SET
        target_protein = EXCLUDED.target_protein,
        target_fat = EXCLUDED.target_fat,
@@ -68,7 +72,8 @@ export async function replaceSettings(
        profile_json = EXCLUDED.profile_json,
        favorite_food_ids_json = EXCLUDED.favorite_food_ids_json,
        meal_schedule_json = EXCLUDED.meal_schedule_json,
-       meal_preferences_json = EXCLUDED.meal_preferences_json`,
+       meal_preferences_json = EXCLUDED.meal_preferences_json,
+       carryover_excluded_dates_json = EXCLUDED.carryover_excluded_dates_json`,
     [
       userId,
       settings.targetPFC.protein,
@@ -79,6 +84,7 @@ export async function replaceSettings(
       JSON.stringify(settings.favoriteFoodIds),
       JSON.stringify(settings.mealSchedule ?? null),
       JSON.stringify(settings.mealPreferences ?? null),
+      JSON.stringify(settings.carryoverExcludedDates),
     ],
   );
 }

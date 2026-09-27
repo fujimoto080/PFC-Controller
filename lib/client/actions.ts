@@ -165,6 +165,16 @@ export function toggleFavoriteFood(id: string): Promise<boolean> {
   });
 }
 
+/** その日の超過・不足を繰り越すかどうかを切り替える。 */
+export function toggleCarryoverExcludedDate(date: string): Promise<boolean> {
+  return updateSettings({
+    carryoverExcludedDates: toggleItem(
+      getState().settings.carryoverExcludedDates,
+      date,
+    ),
+  });
+}
+
 export function saveSports(sports: SportDefinition[]): Promise<boolean> {
   return optimistic({
     apply: (current) => ({ ...current, sports }),

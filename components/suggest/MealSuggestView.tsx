@@ -258,7 +258,7 @@ function SuggestionSection({ suggestion }: { suggestion: MealSuggestion }) {
 function RemainingLine() {
   const { logs, settings } = useAppState();
   const [today] = useState(() => formatDate(Date.now()));
-  const { limit } = computeDailyLimit(today, settings.targetPFC, logs);
+  const { limit } = computeDailyLimit(today, settings, logs);
   const remaining = subtractPFC(limit, logs[today]?.total ?? EMPTY_PFC);
   return (
     <p className="text-muted-foreground text-sm">

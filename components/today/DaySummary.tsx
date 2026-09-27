@@ -3,6 +3,9 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { toggleCarryoverExcludedDate } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
 import { MACROS, type PfcKey } from '@/lib/macros';
 import {
@@ -31,8 +34,8 @@ export function DaySummary({ date }: { date: string }) {
     streak,
     overDays,
   } = useMemo(
-    () => computeDailyLimit(date, settings.targetPFC, logs),
-    [date, settings.targetPFC, logs],
+    () => computeDailyLimit(date, settings, logs),
+    [date, settings, logs],
   );
 
   // 負債にならずに超えてよい量（チートデーでなければ 0、上限が無ければ無制限）
@@ -143,6 +146,16 @@ export function DaySummary({ date }: { date: string }) {
         streak={streak}
         overDays={overDays}
       />
+
+      <Label className="text-muted-foreground text-xs font-normal">
+        <Checkbox
+          checked={settings.carryoverExcludedDates.includes(date)}
+          onCheckedChange={() => {
+            void toggleCarryoverExcludedDate(date);
+          }}
+        />
+        この日の超過・不足を翌日以降に繰り越さない（入れ忘れた日など）
+      </Label>
     </Card>
   );
 }

@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
+import { FoodNameField } from '@/components/input/FoodNameField';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { NutrientTiles } from '@/components/record/ConfirmFood';
@@ -381,7 +382,7 @@ function ItemEditor({
   onSave: (values: PfcFormValues) => void;
   onCancel: () => void;
 }) {
-  const { register, handleSubmit } = useForm<PfcFormValues>({
+  const { register, handleSubmit, reset, control } = useForm<PfcFormValues>({
     defaultValues: item.food ? toFormValues(item.food) : EMPTY_FORM_VALUES,
   });
 
@@ -393,10 +394,12 @@ function ItemEditor({
       }}
     >
       <BarcodeLabel barcode={item.barcode} />
-      <LabeledInput
-        label="食品名"
-        {...register('name', { required: true })}
-        placeholder="例: サラダチキン"
+      <FoodNameField
+        register={register}
+        control={control}
+        onSelect={(food) => {
+          reset(toFormValues(food));
+        }}
       />
       <PfcMacroInputs register={register} />
       <LabeledInput

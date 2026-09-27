@@ -1,5 +1,5 @@
 import { PFC_KEYS, type PfcKey } from './macros';
-import type { DailyLog, Logs, PFC } from './types';
+import type { DailyLog, Logs, PFC, UserSettings } from './types';
 import { roundPFC, shiftDate } from './utils';
 
 function mapPFC(fn: (key: PfcKey) => number): PFC {
@@ -119,6 +119,12 @@ function carryoverTotal(lots: CarryoverLot[], currentDate: string): number {
     .reduce((total, lot) => total + lot.amount, 0);
 }
 
+/** 上限の計算に使う設定。 */
+type CarryoverSettings = Pick<
+  UserSettings,
+  'targetPFC' | 'carryoverExcludedDates'
+>;
+
 interface PfcHistory {
   /** 前日までの超過（正）・不足（負）の繰越 */
   carryover: PFC;
@@ -132,15 +138,17 @@ interface PfcHistory {
 /**
  * 最初の記録日から currentDate の前日までを1日ずつたどり、繰越とチートデーの状態を求める。
  * 記録した日の「その日の摂取 - その日の目標」を繰越とし、超過と不足は古い順に相殺する。
- * 各日の繰越は CARRYOVER_DAYS 日で消える。食事を記録していない日は繰越に影響しない。
+ * 各日の繰越は CARRYOVER_DAYS 日で消える。食事を記録していない日と、繰り越さない日に選んだ日は繰越に影響しない。
+ * 繰り越さない日は記録の連続日数には数えるが、超過した日には数えない。
  * CHEAT_DAY_STREAK 日続けて記録した翌日はチートデーで、その日の超過は繰り越さない（下回った分は不足として繰り越す）。
  * ただし連続記録中に超過した日が多いと、免除する超過に上限が付く（cheatDayCap）。
  */
 function walkPfcHistory(
   currentDate: string,
-  target: PFC,
+  { targetPFC: target, carryoverExcludedDates }: CarryoverSettings,
   logs: Logs,
 ): PfcHistory {
+  const excluded = new Set(carryoverExcludedDates);
   const firstDate = Object.keys(logs).sort()[0];
   const lots: Record<PfcKey, CarryoverLot[]> = {
     protein: [],
@@ -155,7 +163,8 @@ function walkPfcHistory(
       const log = logs[date];
       const isCheatDay = streak >= CHEAT_DAY_STREAK;
       const goal = dayTarget(target, log);
-      if (log && isRecorded(log)) {
+      const carries = !excluded.has(date);
+      if (log && isRecorded(log) && carries) {
         const cap = isCheatDay ? cheatDayCap(goal, overDays) : undefined;
         for (const key of PFC_KEYS) {
           const over = log.total[key] - goal[key];
@@ -169,7 +178,7 @@ function walkPfcHistory(
       }
       if (!isCheatDay && isRecorded(log)) {
         streak += 1;
-        if (isOverDay(log, goal)) overDays += 1;
+        if (carries && isOverDay(log, goal)) overDays += 1;
       } else {
         streak = 0;
         overDays = 0;
@@ -206,14 +215,14 @@ export interface DailyLimit {
 
 export function computeDailyLimit(
   date: string,
-  target: PFC,
+  settings: CarryoverSettings,
   logs: Logs,
 ): DailyLimit {
   const log = logs[date];
-  const goal = dayTarget(target, log);
+  const goal = dayTarget(settings.targetPFC, log);
   const { carryover, streak, overDays, isCheatDay } = walkPfcHistory(
     date,
-    target,
+    settings,
     logs,
   );
   return {

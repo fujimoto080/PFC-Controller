@@ -6,9 +6,9 @@ import { Eraser, Plus, ScanBarcode, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
+import { FoodNameField } from '@/components/input/FoodNameField';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { NutritionPhotoButton } from '@/components/input/NutritionPhotoButton';
-import { SimilarFoodSuggestions } from '@/components/input/SimilarFoodSuggestions';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { useFormDraft } from '@/hooks/use-form-draft';
@@ -127,20 +127,11 @@ export function FoodLogForm({
 
       <AiAssist ai={ai} />
 
-      <div className="space-y-2">
-        <LabeledInput
-          label="食品名"
-          {...register('name', { required: true })}
-          placeholder="例: サラダチキン"
-        />
-        <SimilarFoodSuggestions
-          foods={foods}
-          name={formValues.name}
-          onSelect={(food) => {
-            applyFood(food);
-          }}
-        />
-      </div>
+      <FoodNameField
+        register={register}
+        control={control}
+        onSelect={applyFood}
+      />
       <PfcMacroInputs register={register} />
       <LabeledInput
         label="店名 / ブランド (任意)"

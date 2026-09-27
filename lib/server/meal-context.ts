@@ -53,7 +53,7 @@ export async function getNutritionStatus(userId: string, date: string) {
     burnedCalories: burned,
     isCheatDay,
     cheatDayCap,
-  } = computeDailyLimit(date, settings.targetPFC, logs);
+  } = computeDailyLimit(date, settings, logs);
   const log = logs[date];
   const consumed = log?.total ?? { ...EMPTY_PFC };
   const now = Date.now();

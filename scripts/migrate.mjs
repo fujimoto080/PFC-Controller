@@ -135,6 +135,10 @@ const APP_SCHEMA_SQL = `
   ALTER TABLE pfc_user_settings
     ADD COLUMN IF NOT EXISTS meal_preferences_json JSONB;
 
+  -- 超過・不足を繰り越さない日（記録を入れ忘れた日など）
+  ALTER TABLE pfc_user_settings
+    ADD COLUMN IF NOT EXISTS carryover_excluded_dates_json JSONB;
+
   CREATE TABLE IF NOT EXISTS pfc_user_locations (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     lat DOUBLE PRECISION NOT NULL,

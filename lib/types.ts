@@ -94,6 +94,8 @@ export interface UserSettings {
   targetPFC: PFC;
   profile?: UserProfile;
   favoriteFoodIds: string[];
+  /** 超過・不足を繰り越さない日（YYYY-MM-DD）。記録を入れ忘れた日などに使う */
+  carryoverExcludedDates: string[];
   mealSchedule?: MealSchedule;
   mealPreferences?: MealPreferences;
 }
