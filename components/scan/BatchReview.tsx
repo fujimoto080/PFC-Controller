@@ -99,6 +99,10 @@ export function BatchReview({
                 onCancel={() => {
                   setEditingId(null);
                 }}
+                onRetakePhoto={() => {
+                  setEditingId(null);
+                  onTakePhoto(item.id);
+                }}
               />
             </li>
           ) : (
@@ -376,11 +380,14 @@ function ItemEditor({
   stores,
   onSave,
   onCancel,
+  onRetakePhoto,
 }: {
   item: BatchItem;
   stores: string[];
   onSave: (values: PfcFormValues) => void;
   onCancel: () => void;
+  /** 成分表示を撮り直して読み取り直す（編集中の内容は破棄する） */
+  onRetakePhoto: () => void;
 }) {
   const { register, handleSubmit, reset, control } = useForm<PfcFormValues>({
     defaultValues: item.food ? toFormValues(item.food) : EMPTY_FORM_VALUES,
@@ -394,6 +401,15 @@ function ItemEditor({
       }}
     >
       <BarcodeLabel barcode={item.barcode} />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={onRetakePhoto}
+      >
+        <Camera /> 成分表示を{item.food ? '撮り直す' : '撮影'}
+      </Button>
       <FoodNameField
         register={register}
         control={control}

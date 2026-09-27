@@ -114,8 +114,9 @@ export function useScanBatch() {
     }
   };
 
-  /** 未登録のバーコード商品の成分表示を撮った写真から栄養値を入れる。 */
+  /** 成分表示を撮った写真から栄養値を入れる（未登録の商品の入力・登録済みの商品の撮り直し）。 */
   const fillFromPhoto = async (id: string, imageDataUrl: string) => {
+    const previous = itemsRef.current.find((i) => i.id === id);
     patch(id, { status: 'loading', loadingLabel: '成分表示を読み取り中' });
     try {
       const food = await estimateNutritionFromImage(imageDataUrl);
@@ -126,7 +127,11 @@ export function useScanBatch() {
         loadingLabel: undefined,
       });
     } catch (error) {
-      patch(id, { status: 'missing', loadingLabel: undefined });
+      // 撮り直しに失敗したら元の内容に戻す
+      patch(id, {
+        status: previous?.food ? 'ready' : 'missing',
+        loadingLabel: undefined,
+      });
       toast.fromError('写真の読み取りに失敗しました', error);
     }
   };
