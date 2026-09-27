@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RefreshCw, Sparkles, Store } from 'lucide-react';
+import {
+  ChevronRight,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  Store,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
@@ -13,6 +19,7 @@ import { computeDailyLimit, subtractPFC } from '@/lib/pfc';
 import { toast } from '@/lib/toast';
 import {
   EMPTY_PFC,
+  MEAL_SUGGESTION_AVOID_LIMIT,
   type MealSlot,
   type MealSuggestion,
   type NearbyStore,
@@ -30,24 +37,22 @@ export function MealSuggestView({ initialSlot }: Props) {
   const [slot, setSlot] = useState<MealSlot>(
     () => initialSlot ?? slotForTime(Date.now()),
   );
-  const [suggestions, setSuggestions] = useState<
-    Partial<Record<MealSlot, MealSuggestion>>
-  >({});
+  // 今日の提案すべて（新しい順）。やり直しても前の提案は残す
+  const [suggestions, setSuggestions] = useState<MealSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState('');
   const [pickingStores, setPickingStores] = useState(false);
 
   useEffect(() => {
     fetchMealSuggestions()
-      .then((list) => {
-        setSuggestions(Object.fromEntries(list.map((s) => [s.slot, s])));
-      })
+      .then(setSuggestions)
       .catch((error: unknown) => {
         toast.fromError('提案の読み込みに失敗しました', error);
       });
   }, []);
 
-  const current = suggestions[slot];
+  const slotSuggestions = suggestions.filter((s) => s.slot === slot);
+  const [current, ...previous] = slotSuggestions;
 
   const generate = async (options: {
     stores?: NearbyStore[];
@@ -64,7 +69,7 @@ export function MealSuggestView({ initialSlot }: Props) {
         note: note.trim() || undefined,
         ...options,
       });
-      setSuggestions((prev) => ({ ...prev, [slot]: suggestion }));
+      setSuggestions((prev) => [suggestion, ...prev]);
     } catch (error) {
       toast.fromError('提案に失敗しました', error);
     } finally {
@@ -72,11 +77,18 @@ export function MealSuggestView({ initialSlot }: Props) {
     }
   };
 
+  // 今日この食事枠で出した案すべてを避けさせ、同じ案に戻らないようにする
   const retry = () => {
     void generate({
-      avoid: current?.options.map(
-        (o) => `${o.store} ${o.items.map((i) => i.name).join('＋')}`,
-      ),
+      avoid: slotSuggestions
+        .flatMap((s) => s.options)
+        .map((o) =>
+          `${o.store} ${o.items.map((i) => i.name).join('＋')}`.slice(
+            0,
+            MEAL_SUGGESTION_AVOID_LIMIT.length,
+          ),
+        )
+        .slice(0, MEAL_SUGGESTION_AVOID_LIMIT.count),
     });
   };
 
@@ -126,7 +138,7 @@ export function MealSuggestView({ initialSlot }: Props) {
           >
             <Sparkles />
             {current
-              ? '最初から提案し直す'
+              ? '改めて提案してもらう'
               : `${mealSlotLabel(slot)}を提案してもらう`}
           </Button>
           {current && (
@@ -161,44 +173,84 @@ export function MealSuggestView({ initialSlot }: Props) {
         />
       )}
 
-      {loading ? (
-        <p className="text-muted-foreground py-10 text-center text-sm">
+      {/* 考えている間も前の提案は見られるよう、読み込み表示は一覧の上に出す */}
+      {loading && (
+        <p className="bg-muted/50 flex items-center justify-center gap-2 rounded-xl py-6 text-sm">
+          <Loader2 className="size-4 animate-spin" />
           近くのお店と新商品を調べて考えています…（30秒〜1分ほど）
         </p>
-      ) : current ? (
-        <section className="space-y-3">
-          <p className="text-muted-foreground text-xs">
-            {formatTime(current.createdAt)} の提案
-          </p>
-          {current.options.map((option, index) => (
-            <SuggestionOptionCard key={index} option={option} />
-          ))}
-          {current.sources.length > 0 && (
-            <details className="text-muted-foreground text-xs">
-              <summary>参照した情報</summary>
-              <ul className="mt-1 space-y-1">
-                {current.sources.map((source) => (
-                  <li key={source.url} className="truncate">
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline"
-                    >
-                      {source.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </section>
+      )}
+
+      {current ? (
+        <SuggestionSection suggestion={current} />
       ) : (
-        <p className="text-muted-foreground py-10 text-center text-sm">
-          まだ提案はありません。
-        </p>
+        !loading && (
+          <p className="text-muted-foreground py-10 text-center text-sm">
+            まだ提案はありません。
+          </p>
+        )
+      )}
+
+      {previous.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-muted-foreground text-xs font-medium">
+            前の提案（{previous.length}件）
+          </h2>
+          {previous.map((suggestion) => (
+            <details
+              key={suggestion.createdAt}
+              className="group rounded-xl border"
+            >
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm">
+                <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-90" />
+                <span className="text-muted-foreground shrink-0 tabular-nums">
+                  {formatTime(suggestion.createdAt)}
+                </span>
+                <span className="min-w-0 flex-1 truncate">
+                  {suggestion.options.map((o) => o.store).join(' / ')}
+                </span>
+              </summary>
+              <div className="px-3 pb-3">
+                <SuggestionSection suggestion={suggestion} />
+              </div>
+            </details>
+          ))}
+        </section>
       )}
     </div>
+  );
+}
+
+/** 1 回分の提案（3 案と参照した情報）。 */
+function SuggestionSection({ suggestion }: { suggestion: MealSuggestion }) {
+  return (
+    <section className="space-y-3">
+      <p className="text-muted-foreground text-xs">
+        {formatTime(suggestion.createdAt)} の提案
+      </p>
+      {suggestion.options.map((option, index) => (
+        <SuggestionOptionCard key={index} option={option} />
+      ))}
+      {suggestion.sources.length > 0 && (
+        <details className="text-muted-foreground text-xs">
+          <summary>参照した情報</summary>
+          <ul className="mt-1 space-y-1">
+            {suggestion.sources.map((source) => (
+              <li key={source.url} className="truncate">
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline"
+                >
+                  {source.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </section>
   );
 }
 

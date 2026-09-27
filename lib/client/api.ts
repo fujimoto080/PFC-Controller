@@ -105,7 +105,7 @@ export function readFoodsFromImage(
   return api.post('/api/ai-nutrition/image/items', { imageDataUrl });
 }
 
-/** 今日の食事提案（食事枠ごとに最新の 1 件）。 */
+/** 今日の食事提案すべて（やり直した分も含む）。新しい順。 */
 export function fetchMealSuggestions(): Promise<MealSuggestion[]> {
   return api.get('/api/meal-suggestions');
 }

@@ -13,6 +13,7 @@ import type {
   SportDefinition,
   UserSettings,
 } from '@/lib/types';
+import { MEAL_SUGGESTION_AVOID_LIMIT } from '@/lib/types';
 import type { BarcodeFood } from '@/lib/barcode';
 
 const nonNegative = z.number().nonnegative();
@@ -102,7 +103,10 @@ export const mealSuggestionRequestSchema = z.object({
   slot: mealSlotSchema,
   location: geoPointSchema.optional(),
   stores: z.array(nearbyStoreSchema).max(30).optional(),
-  avoid: z.array(z.string().max(100)).max(30).optional(),
+  avoid: z
+    .array(z.string().max(MEAL_SUGGESTION_AVOID_LIMIT.length))
+    .max(MEAL_SUGGESTION_AVOID_LIMIT.count)
+    .optional(),
   note: z.string().trim().max(500).optional(),
 }) satisfies z.ZodType<MealSuggestionRequest>;
 

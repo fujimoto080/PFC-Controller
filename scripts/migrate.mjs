@@ -142,13 +142,21 @@ const APP_SCHEMA_SQL = `
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
 
+  -- やり直した提案も残すため、食事枠ごとに作成時刻つきで何件でも持つ
   CREATE TABLE IF NOT EXISTS pfc_meal_suggestions (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     slot TEXT NOT NULL CHECK (slot IN ('breakfast', 'lunch', 'dinner')),
     suggestion_json JSONB NOT NULL,
-    PRIMARY KEY (user_id, date, slot)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
+  -- 食事枠ごとに 1 件だった頃のテーブルからの移行
+  ALTER TABLE pfc_meal_suggestions
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+  ALTER TABLE pfc_meal_suggestions
+    DROP CONSTRAINT IF EXISTS pfc_meal_suggestions_pkey;
+  CREATE INDEX IF NOT EXISTS pfc_meal_suggestions_user_date_idx
+    ON pfc_meal_suggestions (user_id, date, created_at);
 
   CREATE TABLE IF NOT EXISTS pfc_push_subscriptions (
     endpoint TEXT PRIMARY KEY,

@@ -158,7 +158,10 @@ export interface MealSuggestionRequest {
   location?: GeoPoint;
   /** ユーザーが選んだお店。指定時はこの中からだけ提案する */
   stores?: NearbyStore[];
-  /** 直前に出した案の料理名。やり直し時に別の案を出させる */
+  /** 既に出した案の料理名。やり直し時に別の案を出させる（MEAL_SUGGESTION_AVOID_LIMIT まで） */
   avoid?: string[];
   note?: string;
 }
+
+/** やり直し時に避けさせる案の件数と、1 件あたりの文字数の上限。 */
+export const MEAL_SUGGESTION_AVOID_LIMIT = { count: 30, length: 100 } as const;

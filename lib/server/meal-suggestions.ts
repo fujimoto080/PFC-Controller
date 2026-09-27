@@ -71,22 +71,28 @@ async function saveSuggestion(
   suggestion: MealSuggestion,
 ): Promise<void> {
   await getPool().query(
-    `INSERT INTO pfc_meal_suggestions (user_id, date, slot, suggestion_json)
-     VALUES ($1, $2, $3, $4::jsonb)
-     ON CONFLICT (user_id, date, slot) DO UPDATE SET
-       suggestion_json = EXCLUDED.suggestion_json`,
-    [userId, suggestion.date, suggestion.slot, JSON.stringify(suggestion)],
+    `INSERT INTO pfc_meal_suggestions
+       (user_id, date, slot, suggestion_json, created_at)
+     VALUES ($1, $2, $3, $4::jsonb, to_timestamp($5 / 1000.0))`,
+    [
+      userId,
+      suggestion.date,
+      suggestion.slot,
+      JSON.stringify(suggestion),
+      suggestion.createdAt,
+    ],
   );
 }
 
-/** その日の提案（食事枠ごとに最新の 1 件）。 */
+/** その日の提案すべて（やり直した分も含む）。新しい順。 */
 export async function listSuggestions(
   userId: string,
   date: string,
 ): Promise<MealSuggestion[]> {
   const result = await getPool().query<{ suggestion_json: MealSuggestion }>(
     `SELECT suggestion_json FROM pfc_meal_suggestions
-     WHERE user_id = $1 AND date = $2`,
+     WHERE user_id = $1 AND date = $2
+     ORDER BY created_at DESC`,
     [userId, date],
   );
   return result.rows.map((row) => row.suggestion_json);
