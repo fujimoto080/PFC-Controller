@@ -11,6 +11,7 @@ import {
 } from '@/lib/meal-schedule';
 import { sumPFC } from '@/lib/pfc';
 import { getPool } from '@/lib/server/db';
+import { getCalendarEventLines } from '@/lib/server/google-calendar';
 import { getMealHistory, getNutritionStatus } from '@/lib/server/meal-context';
 import { findSurroundings } from '@/lib/server/nearby-stores';
 import { extractJsonObject } from '@/lib/server/nutrition';
@@ -139,10 +140,11 @@ function describeStores(stores: NearbyStore[]): string[] {
 async function buildPrompt(userId: string, request: MealSuggestionRequest) {
   const now = Date.now();
   const today = formatDate(now);
-  const [settings, status, history] = await Promise.all([
+  const [settings, status, history, calendar] = await Promise.all([
     getSettings(userId),
     getNutritionStatus(userId, today),
     getMealHistory(userId, HISTORY_DAYS),
+    getCalendarEventLines(userId, today),
   ]);
   const plan = planMeal(settings.mealSchedule, today, request.slot);
 
@@ -183,6 +185,12 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     '',
     '## 今日の予定と居場所',
     ...plan.description,
+    ...(calendar
+      ? [
+          'Google カレンダーの今日の予定（食事の時間帯に会議・移動・外出があれば、その場所で買える・食べられる物や、空き時間で済ませられる物にする）:',
+          ...(calendar.length > 0 ? calendar : ['- 予定なし']),
+        ]
+      : []),
     ...(request.note ? [`ユーザーのメモ: ${request.note}`] : []),
     ...surroundings.map(
       (s) =>

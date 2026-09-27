@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import PostgresAdapter from '@auth/pg-adapter';
 import { getPool } from '@/lib/server/db';
+import { saveCalendarTokens } from '@/lib/server/google-calendar';
 
 export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   adapter: PostgresAdapter(getPool()),
@@ -11,6 +12,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
+  },
+  events: {
+    async signIn({ account }) {
+      if (account) await saveCalendarTokens(account);
+    },
   },
   callbacks: {
     jwt({ token, user }) {

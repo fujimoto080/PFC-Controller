@@ -40,6 +40,7 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
    - `http://localhost:3000/api/auth/callback/google`（開発）
    - `https://<vercel-domain>/api/auth/callback/google`（本番）
 3. 取得した Client ID / Secret を `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` に設定。
+4. 食事提案の Google カレンダー連携を使う場合は、同じプロジェクトで Google Calendar API を有効にし、OAuth 同意画面のスコープに `https://www.googleapis.com/auth/calendar.readonly` を追加する（同意画面が「テスト」のままだとリフレッシュトークンが7日で失効するため、定期実行で使い続けるなら「本番」に公開する）。
 
 ### DB マイグレーション
 
