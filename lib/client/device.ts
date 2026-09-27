@@ -24,6 +24,11 @@ export function getCurrentPosition(): Promise<GeoPoint | undefined> {
   });
 }
 
+/** 端末を短く振動させる。iOS Safari など非対応の端末では何もしない。 */
+export function vibrate(ms: number): void {
+  if ('vibrate' in navigator) navigator.vibrate(ms);
+}
+
 export function isPushSupported(): boolean {
   return (
     'serviceWorker' in navigator &&

@@ -1,6 +1,7 @@
 'use client';
 
-import { api } from '@/lib/client/api';
+import { buildFoodMatchKey, toBarcodeFood } from '@/lib/barcode';
+import { api, saveBarcodeMapping } from '@/lib/client/api';
 import { getState, optimistic, type AppState } from '@/lib/client/store';
 import { sumPFC } from '@/lib/pfc';
 import {
@@ -108,6 +109,25 @@ export function addFood(item: FoodItem): Promise<boolean> {
     request: () => api.post('/api/foods', item),
     errorMessage: '食品の保存に失敗しました',
   });
+}
+
+/**
+ * 記録した食品を次回から選べるよう残す。同じ内容が食品リストに無ければ追加し、
+ * バーコードがあれば食品情報を紐付ける。保存しなかったものは undefined。
+ */
+export function rememberFood(food: FoodItemInput, barcode?: string) {
+  const matchKey = buildFoodMatchKey(food);
+  const exists = getState().foods.some(
+    (saved) => buildFoodMatchKey(saved) === matchKey,
+  );
+  return {
+    foodAdded: exists
+      ? undefined
+      : addFood({ ...food, id: crypto.randomUUID() }),
+    mappingSaved: barcode
+      ? saveBarcodeMapping([barcode], toBarcodeFood(food))
+      : undefined,
+  };
 }
 
 export function updateFood(item: FoodItem): Promise<boolean> {

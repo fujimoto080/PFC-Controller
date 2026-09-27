@@ -3,12 +3,22 @@ import { ApiError } from '@/lib/api/handler';
 import type { BarcodeFood } from '@/lib/barcode';
 import { roundPFC } from '@/lib/utils';
 
-/** 返答させる JSON の形式。プロンプトの末尾に付ける。 */
-const RESPONSE_FORMAT_INSTRUCTIONS = [
-  '次のJSONのみを返してください。',
-  '{"name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}',
+const FOOD_JSON =
+  '{"name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}';
+
+const VALUE_INSTRUCTIONS = [
   '数値は必ず半角数字で、単位はg/kcalです。',
   '不明な値は0を設定してください。説明文やMarkdownは不要です。',
+];
+
+/** 写真の栄養成分表示・料理から栄養値を読み取らせるときの共通の指示。 */
+export const IMAGE_READING_INSTRUCTIONS = [
+  'あなたは栄養計算アシスタントです。',
+  '画像に栄養成分表示があれば、記載された数値をそのまま読み取ってください。',
+  '1包装・1個・1食など食べる単位あたりの値を優先し、100gあたりの表示しかない場合は内容量が読み取れればその量に換算してください。',
+  '炭水化物の表示がなく糖質と食物繊維が表示されている場合は、その合計を carbs にしてください。',
+  '栄養成分表示が写っていない料理や食品の写真であれば、写っている量から推定してください。',
+  'name は商品名（読み取れなければ料理名）、store はメーカー・ブランド・店名です。',
 ];
 
 export function extractJsonObject(rawText: string): string {
@@ -48,10 +58,35 @@ export async function askNutrition(
   generate: (prompt: string) => Promise<string>,
 ): Promise<BarcodeFood> {
   const generatedText = await generate(
-    [...instructions, ...RESPONSE_FORMAT_INSTRUCTIONS].join('\n'),
+    [
+      ...instructions,
+      '次のJSONのみを返してください。',
+      FOOD_JSON,
+      ...VALUE_INSTRUCTIONS,
+    ].join('\n'),
   );
 
   return normalizeNutrition(
     JSON.parse(extractJsonObject(generatedText)) as Partial<BarcodeFood>,
   );
+}
+
+/** askNutrition の複数件版。写っている商品ごとに 1 件ずつ返させる（0 件もあり得る）。 */
+export async function askNutritionList(
+  instructions: string[],
+  generate: (prompt: string) => Promise<string>,
+): Promise<BarcodeFood[]> {
+  const generatedText = await generate(
+    [
+      ...instructions,
+      '次のJSONのみを返してください。foods は商品ごとに1件ずつ並べ、食品が写っていなければ空配列にします。',
+      `{"foods":[${FOOD_JSON}]}`,
+      ...VALUE_INSTRUCTIONS,
+    ].join('\n'),
+  );
+
+  const parsed = JSON.parse(extractJsonObject(generatedText)) as {
+    foods?: Partial<BarcodeFood>[];
+  };
+  return (parsed.foods ?? []).map(normalizeNutrition);
 }

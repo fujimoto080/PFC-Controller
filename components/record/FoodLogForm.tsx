@@ -12,9 +12,7 @@ import { SimilarFoodSuggestions } from '@/components/input/SimilarFoodSuggestion
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { useFormDraft } from '@/hooks/use-form-draft';
-import { buildFoodMatchKey, toBarcodeFood } from '@/lib/barcode';
-import { addFood, addFoodItem } from '@/lib/client/actions';
-import { saveBarcodeMapping } from '@/lib/client/api';
+import { addFoodItem, rememberFood } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
 import {
   EMPTY_FORM_VALUES,
@@ -100,21 +98,15 @@ export function FoodLogForm({
     void addFoodItem(item);
     toast.success(`${item.name}を記録しました`);
 
-    // 同じ内容の食品が既にあれば食品リストへは追加しない
-    const matchKey = buildFoodMatchKey(item);
-    if (!foods.some((food) => buildFoodMatchKey(food) === matchKey)) {
-      void addFood({ ...item, id: crypto.randomUUID() }).then((ok) => {
-        if (ok) toast.success('食品リストにも保存しました');
-      });
-    }
-
-    if (barcode) {
-      saveBarcodeMapping([barcode], toBarcodeFood(item))
-        .then(() => toast.success('バーコード情報も保存しました'))
-        .catch((error: unknown) =>
-          toast.fromError('バーコード情報の保存に失敗しました', error),
-        );
-    }
+    const { foodAdded, mappingSaved } = rememberFood(item, barcode);
+    void foodAdded?.then((ok) => {
+      if (ok) toast.success('食品リストにも保存しました');
+    });
+    mappingSaved
+      ?.then(() => toast.success('バーコード情報も保存しました'))
+      .catch((error: unknown) =>
+        toast.fromError('バーコード情報の保存に失敗しました', error),
+      );
 
     clearDraft();
     onDone();

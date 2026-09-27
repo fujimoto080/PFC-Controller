@@ -106,6 +106,17 @@ export const mealSuggestionRequestSchema = z.object({
   note: z.string().trim().max(500).optional(),
 }) satisfies z.ZodType<MealSuggestionRequest>;
 
+/** 栄養成分表示・料理の写真の読み取りリクエスト。 */
+export const imageBodySchema = z.object({
+  imageDataUrl: z
+    .string()
+    .trim()
+    .regex(
+      /^data:image\/[a-zA-Z0-9.+-]+;base64,.+$/,
+      '画像データの形式が不正です',
+    ),
+});
+
 export const pushSubscriptionSchema = z.object({
   endpoint: z.url(),
   keys: z.object({ p256dh: z.string().min(1), auth: z.string().min(1) }),
@@ -125,6 +136,7 @@ export const settingsSchema = z.object({
     .optional(),
   favoriteFoodIds: z.array(z.string()),
   mealSchedule: mealScheduleSchema.optional(),
+  mealPreferences: mealPreferencesSchema.optional(),
 }) satisfies z.ZodType<UserSettings>;
 
 export const sportsSchema = z.array(
@@ -136,7 +148,6 @@ export const sportsSchema = z.array(
 ) satisfies z.ZodType<SportDefinition[]>;
 
 export const activityInputSchema = z.object({
-  mealPreferences: mealPreferencesSchema.optional(),
   sportId: z.string().min(1),
   name: z.string().min(1),
   caloriesBurned: nonNegative,

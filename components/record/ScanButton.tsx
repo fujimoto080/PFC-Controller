@@ -2,49 +2,32 @@
 
 import { useState } from 'react';
 import { ScanBarcode } from 'lucide-react';
-import { BarcodeScanner } from '@/components/BarcodeScanner';
-import { fetchBarcodeFood } from '@/lib/client/api';
-import { toast } from '@/lib/toast';
-import { RecordDrawer, RecordStepView, type RecordStep } from './RecordDrawer';
+import { BatchReview } from '@/components/scan/BatchReview';
+import { BatchCamera, PhotoCamera } from '@/components/scan/ScanCamera';
+import { useScanBatch } from '@/hooks/use-scan-batch';
+import { RecordDrawer } from './RecordDrawer';
 
-interface ScanResult {
-  barcode: string;
-  timestamp: number;
-  step: RecordStep;
-}
+/** 表示中の画面。photo は未登録の商品（id）の成分表示を撮るカメラ。 */
+type View =
+  | { kind: 'camera' }
+  | { kind: 'review' }
+  | { kind: 'photo'; id: string }
+  | null;
 
-const TITLES = {
-  confirm: '読み取った商品',
-  form: '商品の栄養を入力',
-} as const;
-
-/** 押すとすぐカメラを起動し、登録済みなら確認シート、未登録なら入力フォームを開く。 */
+/**
+ * 押すとカメラを開き、バーコードや成分表示の写真で商品を次々に溜める。
+ * 確認画面でまとめて記録（または食品リストに登録）する。溜めた商品は閉じても残り、件数をバッジで示す。
+ */
 export function ScanButton() {
-  const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<ScanResult | null>(null);
-  // 閉じるアニメーション中も内容を残すため、開閉は結果と別に持つ
-  const [open, setOpen] = useState(false);
+  const batch = useScanBatch();
+  const [view, setView] = useState<View>(null);
+  const count = batch.items.length;
 
-  const handleScanned = async (code: string) => {
-    setScanning(false);
-    try {
-      const food = await toast.withLoading('商品情報を確認中...', () =>
-        fetchBarcodeFood(code),
-      );
-      if (!food) toast.info('未登録の商品です。栄養を入力すると登録されます');
-      setResult({
-        barcode: code,
-        timestamp: Date.now(),
-        step: food ? { kind: 'confirm', food } : { kind: 'form' },
-      });
-      setOpen(true);
-    } catch (error) {
-      toast.fromError('バーコード照会エラー', error, 'エラーが発生しました');
-    }
+  const openReview = () => {
+    setView({ kind: 'review' });
   };
-
   const close = () => {
-    setOpen(false);
+    setView(null);
   };
 
   return (
@@ -52,45 +35,54 @@ export function ScanButton() {
       <button
         type="button"
         onClick={() => {
-          setScanning(true);
+          setView({ kind: 'camera' });
         }}
         className="-mt-7 flex flex-col items-center"
-        aria-label="バーコードをスキャン"
+        aria-label={
+          count > 0
+            ? `バーコードをスキャン（${count}品を確認待ち）`
+            : 'バーコードをスキャン'
+        }
       >
-        <span className="bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-transform active:scale-95">
+        <span className="bg-primary text-primary-foreground relative rounded-full p-4 shadow-lg transition-transform active:scale-95">
           <ScanBarcode size={30} />
+          {count > 0 && (
+            <span className="bg-destructive border-background absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 px-1 text-xs font-bold text-white tabular-nums">
+              {count}
+            </span>
+          )}
         </span>
         <span className="mt-1 text-[11px] font-medium">スキャン</span>
       </button>
 
-      {scanning && (
-        <BarcodeScanner
-          onScanSuccess={(code) => {
-            void handleScanned(code);
+      {view?.kind === 'camera' && (
+        <BatchCamera batch={batch} onDone={openReview} onClose={close} />
+      )}
+      {view?.kind === 'photo' && (
+        <PhotoCamera
+          onCapture={(dataUrl) => {
+            void batch.fillFromPhoto(view.id, dataUrl);
+            openReview();
           }}
-          onClose={() => {
-            setScanning(false);
-          }}
+          onClose={openReview}
         />
       )}
 
       <RecordDrawer
-        open={open}
+        open={view?.kind === 'review'}
         onClose={close}
-        title={result ? TITLES[result.step.kind] : ''}
+        title={count > 0 ? `まとめて記録（${count}品）` : 'まとめて記録'}
       >
-        {result && (
-          <RecordStepView
-            key={result.timestamp}
-            step={result.step}
-            timestamp={result.timestamp}
-            barcode={result.barcode}
-            onStepChange={(step) => {
-              setResult({ ...result, step });
-            }}
-            onDone={close}
-          />
-        )}
+        <BatchReview
+          batch={batch}
+          onScanMore={() => {
+            setView({ kind: 'camera' });
+          }}
+          onTakePhoto={(id) => {
+            setView({ kind: 'photo', id });
+          }}
+          onDone={close}
+        />
       </RecordDrawer>
     </>
   );

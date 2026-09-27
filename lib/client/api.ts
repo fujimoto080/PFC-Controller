@@ -98,6 +98,13 @@ export function estimateNutritionFromImage(
   return api.post('/api/ai-nutrition/image', { imageDataUrl });
 }
 
+/** 画像(dataURL)に写った複数の商品の栄養成分表示をまとめて読み取る。 */
+export function readFoodsFromImage(
+  imageDataUrl: string,
+): Promise<BarcodeFood[]> {
+  return api.post('/api/ai-nutrition/image/items', { imageDataUrl });
+}
+
 /** 今日の食事提案（食事枠ごとに最新の 1 件）。 */
 export function fetchMealSuggestions(): Promise<MealSuggestion[]> {
   return api.get('/api/meal-suggestions');
