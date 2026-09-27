@@ -3,6 +3,7 @@ import {
   CHEAT_DAY_STREAK,
   burnedCalories,
   computeDailyLimit,
+  hasNutrition,
   scalePFC,
   subtractPFC,
   sumPFC,
@@ -163,6 +164,17 @@ describe('繰越', () => {
     expect(
       carryoverOn(shiftDate('2026-09-02', CARRYOVER_DAYS + 1), logs).calories,
     ).toBe(0);
+  });
+});
+
+describe('hasNutrition', () => {
+  it('全部 0 なら false、どれかが 0 より大きければ true', () => {
+    expect(hasNutrition({ protein: 0, fat: 0, carbs: 0, calories: 0 })).toBe(
+      false,
+    );
+    expect(hasNutrition({ protein: 0, fat: 0, carbs: 0, calories: 5 })).toBe(
+      true,
+    );
   });
 });
 

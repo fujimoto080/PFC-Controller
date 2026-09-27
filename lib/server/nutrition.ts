@@ -1,6 +1,7 @@
 import 'server-only';
 import { ApiError } from '@/lib/api/handler';
 import type { BarcodeFood } from '@/lib/barcode';
+import { hasNutrition } from '@/lib/pfc';
 import { roundPFC } from '@/lib/utils';
 
 const FOOD_JSON =
@@ -52,6 +53,7 @@ function normalizeNutrition(data: Partial<BarcodeFood>): BarcodeFood {
 
 /**
  * 指示文に JSON 形式の指定を付け足して AI に栄養値を答えさせ、食品として整形する。
+ * 栄養値が全部 0 なら読み取れなかったものとしてエラーにする。
  */
 export async function askNutrition(
   instructions: string[],
@@ -66,12 +68,16 @@ export async function askNutrition(
     ].join('\n'),
   );
 
-  return normalizeNutrition(
+  const food = normalizeNutrition(
     JSON.parse(extractJsonObject(generatedText)) as Partial<BarcodeFood>,
   );
+  if (!hasNutrition(food)) {
+    throw new ApiError('栄養値を読み取れませんでした', 422);
+  }
+  return food;
 }
 
-/** askNutrition の複数件版。写っている商品ごとに 1 件ずつ返させる（0 件もあり得る）。 */
+/** askNutrition の複数件版。写っている商品ごとに 1 件ずつ返させる（0 件もあり得る）。栄養値が全部 0 の商品は除く。 */
 export async function askNutritionList(
   instructions: string[],
   generate: (prompt: string) => Promise<string>,
@@ -88,5 +94,5 @@ export async function askNutritionList(
   const parsed = JSON.parse(extractJsonObject(generatedText)) as {
     foods?: Partial<BarcodeFood>[];
   };
-  return (parsed.foods ?? []).map(normalizeNutrition);
+  return (parsed.foods ?? []).map(normalizeNutrition).filter(hasNutrition);
 }

@@ -28,6 +28,11 @@ export function scalePFC<T extends PFC>(food: T, factor: number): T {
   return { ...food, ...mapPFC((key) => roundPFC(food[key] * factor)) };
 }
 
+/** P/F/C/カロリーのどれかが 0 より大きい（全部 0 の読み取り結果は栄養値として意味がない）。 */
+export function hasNutrition(pfc: PFC): boolean {
+  return PFC_KEYS.some((key) => pfc[key] > 0);
+}
+
 /** その日の運動による消費カロリーの合計。 */
 export function burnedCalories(log: DailyLog | undefined): number {
   return roundPFC(
