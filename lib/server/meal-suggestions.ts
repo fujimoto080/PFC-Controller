@@ -204,7 +204,9 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     `残り: ${formatPfc(status.remaining)}`,
     ...(status.isCheatDay
       ? [
-          '今日はチートデー（毎日記録を続けたご褒美）。上限を超えても負債にならないので、残りにこだわらず食べたい物を楽しめる案も出してよい。',
+          status.cheatDayCap === null
+            ? '今日はチートデー（毎日記録を続けたご褒美）。上限を超えても負債にならないので、残りにこだわらず食べたい物を楽しめる案も出してよい。'
+            : `今日はチートデー（毎日記録を続けたご褒美）。ただし最近超過した日が多いため、負債にならないのは上限から+${formatPfc(status.cheatDayCap)}まで。その範囲で食べたい物を楽しめる案も出してよい。`,
         ]
       : []),
     `この食事を含めて今日はあと${mealsLeft}食。${

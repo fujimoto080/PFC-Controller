@@ -4,25 +4,41 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { useAppState } from '@/lib/client/store';
-import { MACROS } from '@/lib/macros';
-import { CHEAT_DAY_STREAK, computeDailyLimit } from '@/lib/pfc';
+import { MACROS, type PfcKey } from '@/lib/macros';
+import {
+  CHEAT_DAY_FREE_OVER_DAYS,
+  CHEAT_DAY_STREAK,
+  computeDailyLimit,
+} from '@/lib/pfc';
 import { EMPTY_PFC } from '@/lib/types';
 import { cn, roundPFC } from '@/lib/utils';
 
 /**
  * 選択日の摂取量と上限の比較。運動した日は消費分だけ上限が増え、前日までの超過（負債）は上限から差し引く。
- * チートデーは超過しても負債にならないため、超過を赤で示さない。
+ * チートデーは超過しても負債にならないため、免除される範囲の超過は赤で示さない。
  */
 export function DaySummary({ date }: { date: string }) {
   const { logs, settings } = useAppState();
   const total = logs[date]?.total ?? EMPTY_PFC;
-  const { limit, target, debt, burnedCalories, isCheatDay, streak } = useMemo(
+  const {
+    limit,
+    target,
+    debt,
+    burnedCalories,
+    isCheatDay,
+    cheatDayCap,
+    streak,
+    overDays,
+  } = useMemo(
     () => computeDailyLimit(date, settings.targetPFC, logs),
     [date, settings.targetPFC, logs],
   );
 
+  // 負債にならずに超えてよい量（チートデーでなければ 0、上限が無ければ無制限）
+  const allowance = (key: PfcKey) =>
+    isCheatDay ? (cheatDayCap?.[key] ?? Infinity) : 0;
   const calorieLeft = limit.calories - total.calories;
-  const isOver = (left: number) => left < 0 && !isCheatDay;
+  const isOver = (key: PfcKey, left: number) => left < -allowance(key);
 
   return (
     <Card className="gap-5 px-5 py-5">
@@ -39,7 +55,7 @@ export function DaySummary({ date }: { date: string }) {
           <p
             className={cn(
               'text-5xl font-bold tracking-tight tabular-nums',
-              isOver(calorieLeft) && 'text-destructive',
+              isOver('calories', calorieLeft) && 'text-destructive',
             )}
           >
             {roundPFC(Math.abs(calorieLeft), 0).toLocaleString()}
@@ -69,7 +85,7 @@ export function DaySummary({ date }: { date: string }) {
         target={target.calories}
         debt={debt.calories}
         barClass="bg-primary"
-        allowOver={isCheatDay}
+        allowance={allowance('calories')}
       />
 
       <div className="grid grid-cols-3 gap-4">
@@ -81,7 +97,7 @@ export function DaySummary({ date }: { date: string }) {
               <p
                 className={cn(
                   'text-lg leading-none font-semibold tabular-nums',
-                  isOver(left) && 'text-destructive',
+                  isOver(key, left) && 'text-destructive',
                 )}
               >
                 <span className="mr-1 text-[10px] font-normal">
@@ -97,7 +113,7 @@ export function DaySummary({ date }: { date: string }) {
                 target={target[key]}
                 debt={debt[key]}
                 barClass={barClass}
-                allowOver={isCheatDay}
+                allowance={allowance(key)}
                 thin
               />
               <p className="text-muted-foreground text-[10px] tabular-nums">
@@ -108,24 +124,38 @@ export function DaySummary({ date }: { date: string }) {
         })}
       </div>
 
-      <CheatDayProgress isCheatDay={isCheatDay} streak={streak} />
+      <CheatDayProgress
+        isCheatDay={isCheatDay}
+        cheatDayCalorieCap={cheatDayCap?.calories ?? null}
+        streak={streak}
+        overDays={overDays}
+      />
     </Card>
   );
 }
 
-/** チートデーの案内。チートデーでなければ、あと何日記録すれば迎えられるかを示す。 */
+/**
+ * チートデーの案内。チートデーでなければ、あと何日記録すれば迎えられるかを示す。
+ * 超過した日が多いとチートデーに上限が付くため、その旨も示す。
+ */
 function CheatDayProgress({
   isCheatDay,
+  cheatDayCalorieCap,
   streak,
+  overDays,
 }: {
   isCheatDay: boolean;
+  cheatDayCalorieCap: number | null;
   streak: number;
+  overDays: number;
 }) {
   if (isCheatDay) {
     return (
       <p className="text-muted-foreground text-xs">
-        {CHEAT_DAY_STREAK}
-        日続けて記録できたのでチートデー。上限を超えても負債になりません
+        {CHEAT_DAY_STREAK}日続けて記録できたのでチートデー。
+        {cheatDayCalorieCap === null
+          ? '上限を超えても負債になりません'
+          : `超過した日が${overDays}日あったため、負債にならないのは上限から+${roundPFC(cheatDayCalorieCap, 0)}kcalまで`}
       </p>
     );
   }
@@ -144,6 +174,8 @@ function CheatDayProgress({
       </div>
       <p className="text-muted-foreground text-xs">
         あと{CHEAT_DAY_STREAK - streak}日記録するとチートデー
+        {overDays > CHEAT_DAY_FREE_OVER_DAYS &&
+          `（超過${overDays}日のため上限付き）`}
       </p>
     </div>
   );
@@ -155,23 +187,23 @@ interface LimitBarProps {
   /** 前日までの超過分。バーの右端から上限を削る。 */
   debt: number;
   barClass: string;
-  /** 超過しても赤くしない（チートデー） */
-  allowOver?: boolean;
+  /** 上限をこの量まで超えても赤くしない（チートデー） */
+  allowance?: number;
   thin?: boolean;
 }
 
-/** 目標値を全幅とした摂取量バー。負債で削られた部分は斜線で示し、上限超過で赤くなる（allowOver なら赤くしない）。 */
+/** 目標値を全幅とした摂取量バー。負債で削られた部分は斜線で示し、上限を allowance より多く超えると赤くなる。 */
 function LimitBar({
   current,
   target,
   debt,
   barClass,
-  allowOver,
+  allowance = 0,
   thin,
 }: LimitBarProps) {
   const scale = Math.max(1, target);
   const pct = (value: number) => Math.min(100, (value / scale) * 100);
-  const isOver = !allowOver && current > target - debt;
+  const isOver = current > target - debt + allowance;
 
   return (
     <div

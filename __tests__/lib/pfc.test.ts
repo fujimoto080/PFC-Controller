@@ -164,7 +164,9 @@ describe('運動を考慮した上限', () => {
       debt: { protein: 20, fat: 0, carbs: 0, calories: 500 },
       burnedCalories: 400,
       isCheatDay: false,
+      cheatDayCap: null,
       streak: 0,
+      overDays: 0,
     });
   });
 
@@ -225,8 +227,41 @@ describe('チートデー', () => {
     expect(computeDailyLimit(nextDay, target, logs)).toMatchObject({
       debt: { calories: 0 },
       isCheatDay: false,
+      cheatDayCap: null,
       streak: 0,
+      overDays: 0,
     });
+  });
+
+  it('超過した日が少なければ免除は無制限', () => {
+    const logs = {
+      ...recordedDays(start, 1, { ...target, calories: 2500 }),
+      ...recordedDays(shiftDate(start, 1), CHEAT_DAY_STREAK - 1, target),
+    };
+    expect(computeDailyLimit(cheatDate, target, logs)).toMatchObject({
+      isCheatDay: true,
+      cheatDayCap: null,
+      overDays: 1,
+    });
+  });
+
+  it('超過した日が多いと免除に上限が付き、上限を超えた分は負債になる', () => {
+    // 2日超過（+100kcal ずつ）、残り4日は目標どおり
+    const logs = {
+      ...recordedDays(start, 2, { ...target, calories: 2100 }),
+      ...recordedDays(shiftDate(start, 2), CHEAT_DAY_STREAK - 2, target),
+      ...recordedDays(cheatDate, 1, { ...target, calories: 3500 }),
+    };
+    // 超過しなかった4日 × 10% = 目標の40%
+    expect(computeDailyLimit(cheatDate, target, logs)).toMatchObject({
+      isCheatDay: true,
+      overDays: 2,
+      cheatDayCap: { protein: 40, fat: 20, carbs: 80, calories: 800 },
+    });
+    // 前日までの負債200 + 超過1500 - 免除800
+    expect(computePfcDebt(shiftDate(cheatDate, 1), target, logs).calories).toBe(
+      900,
+    );
   });
 
   it('チートデーに目標を下回れば負債を返済する', () => {
