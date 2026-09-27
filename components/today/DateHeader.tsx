@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { IconButton } from '@/components/ui/icon-button';
 import { formatDate, shiftDate } from '@/lib/utils';
 
@@ -13,7 +12,7 @@ interface DateHeaderProps {
   onChange: (date: string) => void;
 }
 
-/** 表示日の切り替えと設定への導線。今日以外を見ているときは今日へ戻れる。 */
+/** 表示日の切り替え。今日以外を見ているときは今日へ戻れる。 */
 export function DateHeader({ date, onChange }: DateHeaderProps) {
   const [today] = useState(() => formatDate(Date.now()));
   const label = format(parseISO(date), 'M月d日(eee)', { locale: ja });
@@ -53,11 +52,6 @@ export function DateHeader({ date, onChange }: DateHeaderProps) {
         aria-label="翌日"
       >
         <ChevronRight />
-      </IconButton>
-      <IconButton asChild className="ml-auto" aria-label="設定">
-        <Link href="/settings">
-          <Settings />
-        </Link>
       </IconButton>
     </header>
   );

@@ -51,10 +51,76 @@ export interface UserProfile {
   activityLevel: number; // 1.2, 1.375, 1.55, 1.725, 1.9
 }
 
+export interface GeoPoint {
+  lat: number;
+  lon: number;
+}
+
+/** 自宅・会社など、予定から居場所を推定するための地点。 */
+export interface NamedPlace {
+  /** 例: 自宅（中野駅） */
+  label: string;
+  point?: GeoPoint;
+}
+
+/** 食事提案で居場所を推定するための平日の予定。曜日は 0=日〜6=土。 */
+export interface MealSchedule {
+  home: NamedPlace;
+  office: NamedPlace;
+  /** HH:mm */
+  workStart: string;
+  /** HH:mm */
+  workEnd: string;
+  workDays: number[];
+  /** 仕事の日のうち在宅勤務の曜日 */
+  remoteDays: number[];
+}
+
 export interface UserSettings {
   targetPFC: PFC;
   profile?: UserProfile;
   favoriteFoodIds: string[];
+  mealSchedule?: MealSchedule;
+}
+
+export type MealSlot = 'breakfast' | 'lunch' | 'dinner';
+
+/** 提案時に周辺で見つかった飲食店・小売店。 */
+export interface NearbyStore {
+  id: string;
+  name: string;
+  /** コンビニ・ファストフードなどの種別 */
+  category: string;
+  point: GeoPoint;
+  /** 検索の起点（現在地・自宅・会社）の名前 */
+  near: string;
+  distanceM: number;
+  /** 栄養成分を公開しているチェーン店なら true */
+  isChain: boolean;
+}
+
+interface SuggestedFood extends PFC {
+  name: string;
+}
+
+export interface MealSuggestionOption {
+  store: string;
+  items: SuggestedFood[];
+  total: PFC;
+  reason: string;
+  /** 新商品を含むなら true */
+  hasNewProduct: boolean;
+}
+
+export interface MealSuggestion {
+  date: string;
+  slot: MealSlot;
+  createdAt: number;
+  /** 提案全体の一言（通知本文にも使う） */
+  summary: string;
+  options: MealSuggestionOption[];
+  stores: NearbyStore[];
+  sources: { title: string; url: string }[];
 }
 
 /** GET /api/user-data のレスポンス。未保存の設定はサーバー側で既定値が補われる。 */
@@ -70,4 +136,14 @@ export const EMPTY_PFC: PFC = { protein: 0, fat: 0, carbs: 0, calories: 0 };
 
 export function createEmptyDailyLog(date: string): DailyLog {
   return { date, items: [], total: { ...EMPTY_PFC }, activities: [] };
+}
+
+export interface MealSuggestionRequest {
+  slot: MealSlot;
+  location?: GeoPoint;
+  /** ユーザーが選んだお店。指定時はこの中からだけ提案する */
+  stores?: NearbyStore[];
+  /** 直前に出した案の料理名。やり直し時に別の案を出させる */
+  avoid?: string[];
+  note?: string;
 }

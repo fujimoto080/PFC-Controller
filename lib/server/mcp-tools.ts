@@ -4,24 +4,21 @@ import type { McpServer, ServerContext } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import { foodInputSchema } from '@/lib/api/schemas';
 import { rankFrequentFoods } from '@/lib/food-suggestions';
-import { burnedCalories, computeDailyLimit, subtractPFC } from '@/lib/pfc';
 import { listFoods } from '@/lib/server/foods';
+import {
+  getMealHistory,
+  getNutritionStatus,
+  pfcOf,
+  toActivity,
+  toMeal,
+} from '@/lib/server/meal-context';
 import { createLogActivity } from '@/lib/server/log-activities';
 import { createLogItem, listLogItemsBetween } from '@/lib/server/log-items';
 import { getSettings } from '@/lib/server/settings';
 import { listSports } from '@/lib/server/sports';
-import { getLogsBetween, getUserData } from '@/lib/server/user-data';
-import {
-  EMPTY_PFC,
-  type DailyLog,
-  type FoodItem,
-  type PFC,
-  type SportActivityLog,
-} from '@/lib/types';
 import {
   defaultTimestampFor,
   formatDate,
-  formatTime,
   shiftDate,
   toJstTimestamp,
 } from '@/lib/utils';
@@ -56,71 +53,6 @@ function userIdOf(ctx: ServerContext): string {
 
 function jsonResult(data: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(data) }] };
-}
-
-function pfcOf({ protein, fat, carbs, calories }: PFC): PFC {
-  return { protein, fat, carbs, calories };
-}
-
-function toMeal(item: FoodItem) {
-  return {
-    time: formatTime(item.timestamp),
-    name: item.name,
-    store: item.store,
-    ...pfcOf(item),
-  };
-}
-
-function toActivity(activity: SportActivityLog) {
-  return {
-    time: formatTime(activity.timestamp),
-    name: activity.name,
-    caloriesBurned: activity.caloriesBurned,
-  };
-}
-
-function toDay(log: DailyLog) {
-  return {
-    date: log.date,
-    total: log.total,
-    burnedCalories: burnedCalories(log),
-    meals: [...log.items].sort((a, b) => a.timestamp - b.timestamp).map(toMeal),
-    activities: log.activities.map(toActivity),
-  };
-}
-
-async function getNutritionStatus(userId: string, date: string) {
-  // 上限は前日までの超過（負債）に依存するため全履歴を読む
-  const { logs, settings } = await getUserData(userId);
-  const {
-    limit,
-    debt,
-    burnedCalories: burned,
-  } = computeDailyLimit(date, settings.targetPFC, logs);
-  const log = logs[date];
-  const consumed = log?.total ?? { ...EMPTY_PFC };
-  const now = Date.now();
-  return {
-    date,
-    currentTime: formatDate(now) === date ? formatTime(now) : undefined,
-    baseTarget: settings.targetPFC,
-    burnedCalories: burned,
-    debt,
-    limit,
-    consumed,
-    remaining: subtractPFC(limit, consumed),
-    meals: log ? toDay(log).meals : [],
-    activities: log ? log.activities.map(toActivity) : [],
-    profile: settings.profile,
-  };
-}
-
-async function getMealHistory(userId: string, days: number) {
-  const today = formatDate(Date.now());
-  const logs = await getLogsBetween(userId, shiftDate(today, 1 - days), today);
-  return Object.values(logs)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .map(toDay);
 }
 
 async function searchFoods(userId: string, keyword: string | undefined) {

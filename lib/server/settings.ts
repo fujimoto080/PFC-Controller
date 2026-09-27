@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { getPool } from '@/lib/server/db';
-import type { UserProfile, UserSettings } from '@/lib/types';
+import type { MealSchedule, UserProfile, UserSettings } from '@/lib/types';
 
 interface SettingsRow {
   target_protein: number;
@@ -10,6 +10,7 @@ interface SettingsRow {
   target_calories: number;
   profile_json: UserProfile | null;
   favorite_food_ids_json: string[] | null;
+  meal_schedule_json: MealSchedule | null;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -21,7 +22,7 @@ const DEFAULT_SETTINGS: UserSettings = {
 export async function getSettings(userId: string): Promise<UserSettings> {
   const result = await getPool().query<SettingsRow>(
     `SELECT target_protein, target_fat, target_carbs, target_calories,
-            profile_json, favorite_food_ids_json
+            profile_json, favorite_food_ids_json, meal_schedule_json
      FROM pfc_user_settings
      WHERE user_id = $1`,
     [userId],
@@ -37,6 +38,7 @@ export async function getSettings(userId: string): Promise<UserSettings> {
     },
     profile: row.profile_json ?? undefined,
     favoriteFoodIds: row.favorite_food_ids_json ?? [],
+    mealSchedule: row.meal_schedule_json ?? undefined,
   };
 }
 
@@ -47,15 +49,16 @@ export async function replaceSettings(
   await getPool().query(
     `INSERT INTO pfc_user_settings (
        user_id, target_protein, target_fat, target_carbs, target_calories,
-       profile_json, favorite_food_ids_json
-     ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
+       profile_json, favorite_food_ids_json, meal_schedule_json
+     ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb)
      ON CONFLICT (user_id) DO UPDATE SET
        target_protein = EXCLUDED.target_protein,
        target_fat = EXCLUDED.target_fat,
        target_carbs = EXCLUDED.target_carbs,
        target_calories = EXCLUDED.target_calories,
        profile_json = EXCLUDED.profile_json,
-       favorite_food_ids_json = EXCLUDED.favorite_food_ids_json`,
+       favorite_food_ids_json = EXCLUDED.favorite_food_ids_json,
+       meal_schedule_json = EXCLUDED.meal_schedule_json`,
     [
       userId,
       settings.targetPFC.protein,
@@ -64,6 +67,7 @@ export async function replaceSettings(
       settings.targetPFC.calories,
       JSON.stringify(settings.profile ?? null),
       JSON.stringify(settings.favoriteFoodIds),
+      JSON.stringify(settings.mealSchedule ?? null),
     ],
   );
 }

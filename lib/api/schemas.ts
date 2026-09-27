@@ -2,6 +2,11 @@ import { z } from 'zod';
 import type {
   FoodItem,
   FoodItemInput,
+  GeoPoint,
+  MealSchedule,
+  MealSlot,
+  MealSuggestionRequest,
+  NearbyStore,
   PFC,
   SportActivityInput,
   SportDefinition,
@@ -43,6 +48,56 @@ export const foodImportSchema = z.object({
     .max(2000),
 });
 
+const geoPointSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lon: z.number().min(-180).max(180),
+}) satisfies z.ZodType<GeoPoint>;
+
+const hhmmSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+const weekdaysSchema = z.array(z.number().int().min(0).max(6));
+const namedPlaceSchema = z.object({
+  label: z.string().trim(),
+  point: geoPointSchema.optional(),
+});
+
+const mealScheduleSchema = z.object({
+  home: namedPlaceSchema,
+  office: namedPlaceSchema,
+  workStart: hhmmSchema,
+  workEnd: hhmmSchema,
+  workDays: weekdaysSchema,
+  remoteDays: weekdaysSchema,
+}) satisfies z.ZodType<MealSchedule>;
+
+export const mealSlotSchema = z.enum([
+  'breakfast',
+  'lunch',
+  'dinner',
+]) satisfies z.ZodType<MealSlot>;
+
+const nearbyStoreSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  category: z.string(),
+  point: geoPointSchema,
+  near: z.string(),
+  distanceM: z.number().nonnegative(),
+  isChain: z.boolean(),
+}) satisfies z.ZodType<NearbyStore>;
+
+export const mealSuggestionRequestSchema = z.object({
+  slot: mealSlotSchema,
+  location: geoPointSchema.optional(),
+  stores: z.array(nearbyStoreSchema).max(30).optional(),
+  avoid: z.array(z.string().max(100)).max(30).optional(),
+  note: z.string().trim().max(500).optional(),
+}) satisfies z.ZodType<MealSuggestionRequest>;
+
+export const pushSubscriptionSchema = z.object({
+  endpoint: z.url(),
+  keys: z.object({ p256dh: z.string().min(1), auth: z.string().min(1) }),
+});
+
 export const settingsSchema = z.object({
   targetPFC: pfcSchema,
   profile: z
@@ -56,6 +111,7 @@ export const settingsSchema = z.object({
     })
     .optional(),
   favoriteFoodIds: z.array(z.string()),
+  mealSchedule: mealScheduleSchema.optional(),
 }) satisfies z.ZodType<UserSettings>;
 
 export const sportsSchema = z.array(

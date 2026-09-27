@@ -72,6 +72,19 @@ OPENAI_API_KEY=your_openai_api_key
 GitHub Actions で運用する場合は、リポジトリの **Settings > Secrets and variables > Actions** に
 `GEMINI_API_KEY` と `OPENAI_API_KEY` を登録して管理してください。
 
+## 食事の提案（朝昼晩の通知）
+
+提案画面（`/suggest`）で、今日の残り・直近10日の食事・予定・端末の現在地・周辺のお店をもとに OpenAI（Web 検索付き）が朝昼晩の食事を提案します。毎日 7:00 / 11:00 / 17:00（JST）に Vercel Cron が提案を作り、Web Push で通知します。
+
+- 周辺のお店・最寄り駅: OpenStreetMap の Overpass API（キー不要）
+- 予定（自宅・会社の位置、勤務時間、在宅の曜日）と通知のオン/オフ: 設定画面の「食事の提案」
+- 定期実行: `vercel.json` の `crons` → `GET /api/cron/meal-suggestions?slot=...`（Vercel Hobby では起動が指定時刻から最大1時間ずれることがある）
+- 必要な環境変数:
+  - `OPENAI_API_KEY`
+  - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT`（例: `mailto:you@example.com`）。鍵は `pnpm exec web-push generate-vapid-keys` で生成
+  - `CRON_SECRET`（Vercel が Cron 呼び出し時に Bearer トークンとして付与する）
+- 通知は Service Worker が必要なため本番ビルド（PWA / TWA）でのみ動作する
+
 ## ChatGPT 連携（MCP サーバー）
 
 `/api/mcp` がリモート MCP サーバーになっており、ChatGPT から今日の摂取状況・食事履歴・登録食品を読み取って献立を提案させたり、食べた物や運動を記録させたりできます。

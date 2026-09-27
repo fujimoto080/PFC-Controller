@@ -1,4 +1,5 @@
 import type { BarcodeFood, BarcodeMappingRow } from '@/lib/barcode';
+import type { MealSuggestion, MealSuggestionRequest } from '@/lib/types';
 
 /**
  * クライアント側の fetch ラッパ。
@@ -56,7 +57,8 @@ export const api = {
     request<T>('POST', url, body),
   put: (url: string, body: unknown) => request<undefined>('PUT', url, body),
   patch: (url: string, body: unknown) => request<undefined>('PATCH', url, body),
-  delete: (url: string) => request<undefined>('DELETE', url),
+  delete: (url: string, body?: unknown) =>
+    request<undefined>('DELETE', url, body),
 };
 
 /** バーコードから登録済み食品を引く。未登録(404)は null、その他のエラーは throw。 */
@@ -94,4 +96,16 @@ export function estimateNutritionFromImage(
   imageDataUrl: string,
 ): Promise<BarcodeFood> {
   return api.post('/api/ai-nutrition/image', { imageDataUrl });
+}
+
+/** 今日の食事提案（食事枠ごとに最新の 1 件）。 */
+export function fetchMealSuggestions(): Promise<MealSuggestion[]> {
+  return api.get('/api/meal-suggestions');
+}
+
+/** AI に食事を提案させる。Web 検索を伴うため数十秒かかる。 */
+export function requestMealSuggestion(
+  request: MealSuggestionRequest,
+): Promise<MealSuggestion> {
+  return api.post('/api/meal-suggestions', request);
 }

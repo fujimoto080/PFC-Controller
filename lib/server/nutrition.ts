@@ -11,7 +11,7 @@ const RESPONSE_FORMAT_INSTRUCTIONS = [
   '不明な値は0を設定してください。説明文やMarkdownは不要です。',
 ];
 
-function extractJsonObject(rawText: string): string {
+export function extractJsonObject(rawText: string): string {
   const fencedMatch = /```json\s*([\s\S]*?)\s*```/i.exec(rawText);
   if (fencedMatch?.[1]) return fencedMatch[1].trim();
 

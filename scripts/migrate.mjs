@@ -128,6 +128,35 @@ const APP_SCHEMA_SQL = `
     client_id TEXT NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL
   );
+
+  -- 食事提案。居場所の推定に使う予定、最後に取得した現在地、提案結果、Web Push の購読
+  ALTER TABLE pfc_user_settings
+    ADD COLUMN IF NOT EXISTS meal_schedule_json JSONB;
+
+  CREATE TABLE IF NOT EXISTS pfc_user_locations (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    lat DOUBLE PRECISION NOT NULL,
+    lon DOUBLE PRECISION NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+
+  CREATE TABLE IF NOT EXISTS pfc_meal_suggestions (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    slot TEXT NOT NULL CHECK (slot IN ('breakfast', 'lunch', 'dinner')),
+    suggestion_json JSONB NOT NULL,
+    PRIMARY KEY (user_id, date, slot)
+  );
+
+  CREATE TABLE IF NOT EXISTS pfc_push_subscriptions (
+    endpoint TEXT PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS idx_pfc_push_subscriptions_user
+    ON pfc_push_subscriptions (user_id);
 `;
 
 async function main() {
