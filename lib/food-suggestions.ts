@@ -71,22 +71,37 @@ export function getSimilarFoodSuggestions(
 const MAX_CANDIDATES = 30;
 
 /**
+ * 食品名か店名が検索語に当てはまるか。
+ * 区切り文字を無視して食品名・店名のどちらかに含まれるか、空白区切りの各語が食品名・店名のいずれかに含まれれば当てはまる。
+ */
+const matchesFoodQuery = (food: FoodItem, query: string): boolean => {
+  const name = normalizeFoodName(food.name);
+  const store = normalizeFoodName(food.store ?? '');
+  const matches = (term: string) => name.includes(term) || store.includes(term);
+  if (matches(normalizeFoodName(query))) return true;
+  return query
+    .split(/[\s　]+/)
+    .map(normalizeFoodName)
+    .every(matches);
+};
+
+/**
  * 記録追加で選べる食品候補。過去の記録（新しい順）→ 食品リストの順に並べ、同じ内容のものは 1 件にまとめる。
- * query が空なら全件、そうでなければ食品名に query を含むものに絞る。
+ * query が空なら全件、そうでなければ食品名か店名が query に当てはまるものに絞る。
  */
 export function searchFoodCandidates(
   foods: FoodItem[],
   logs: Logs,
   query: string,
 ): FoodItem[] {
-  const normalizedQuery = normalizeFoodName(query.trim());
+  const trimmedQuery = query.trim();
   const history = Object.values(logs)
     .flatMap((log) => log.items)
     .sort((a, b) => b.timestamp - a.timestamp);
 
   const candidates = new Map<string, FoodItem>();
   for (const food of [...history, ...foods]) {
-    if (!normalizeFoodName(food.name).includes(normalizedQuery)) continue;
+    if (!matchesFoodQuery(food, trimmedQuery)) continue;
     const key = buildFoodMatchKey(food);
     if (!candidates.has(key)) candidates.set(key, food);
     if (candidates.size >= MAX_CANDIDATES) break;

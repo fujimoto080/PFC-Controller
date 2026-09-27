@@ -80,6 +80,20 @@ describe('searchFoodCandidates', () => {
       searchFoodCandidates(foods, logs, 'チキン バジル').map((food) => food.id),
     ).toEqual([basil.id]);
   });
+
+  it('店名でも検索でき、店名と食品名を組み合わせて絞り込める', () => {
+    const stored = [
+      { ...chicken, id: 's1', store: 'セブンイレブン' },
+      { ...onigiri, id: 's2', store: 'セブンイレブン' },
+      { ...chicken, id: 's3', protein: 25, store: 'ローソン' },
+    ];
+    expect(
+      searchFoodCandidates(stored, {}, 'セブン').map((food) => food.id),
+    ).toEqual(['s1', 's2']);
+    expect(
+      searchFoodCandidates(stored, {}, 'セブン チキン').map((food) => food.id),
+    ).toEqual(['s1']);
+  });
 });
 
 describe('rankFrequentFoods', () => {

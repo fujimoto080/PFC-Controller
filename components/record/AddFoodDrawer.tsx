@@ -96,7 +96,7 @@ function FoodSearch({
           onChange={(e) => {
             onQueryChange(e.target.value);
           }}
-          placeholder="過去の記録・食品リストを検索"
+          placeholder="食品名・店名で検索"
           className="pl-9"
           aria-label="食品を検索"
         />
