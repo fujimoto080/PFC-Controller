@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { ManualBarcodeForm } from '@/components/BarcodeScanner';
+import { CameraControls } from '@/components/scan/CameraControls';
 import { Button } from '@/components/ui/button';
 import {
   SCAN_FEEDBACK_CLASS,
@@ -39,7 +40,7 @@ export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [lastId, setLastId] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
-  const { feedback, detectorSupported } = useBarcodeCamera(videoRef, {
+  const { feedback, detectorSupported, track } = useBarcodeCamera(videoRef, {
     continuous: true,
     onScan: (code) => {
       setLastId(batch.addBarcode(code).id);
@@ -61,6 +62,7 @@ export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
     >
       <Viewfinder
         videoRef={videoRef}
+        track={track}
         className={cn(feedback && SCAN_FEEDBACK_CLASS[feedback])}
         guide="barcode"
         shutterLabel="成分表示を撮影"
@@ -115,7 +117,10 @@ export function PhotoCamera({
   onClose: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  useBarcodeCamera(videoRef, { detect: false, onError: onClose });
+  const { track } = useBarcodeCamera(videoRef, {
+    detect: false,
+    onError: onClose,
+  });
 
   return (
     <CameraShell
@@ -125,6 +130,7 @@ export function PhotoCamera({
     >
       <Viewfinder
         videoRef={videoRef}
+        track={track}
         guide="label"
         shutterLabel="撮影"
         onCapture={onCapture}
@@ -172,12 +178,14 @@ function CameraShell({
 
 function Viewfinder({
   videoRef,
+  track,
   guide,
   shutterLabel,
   onCapture,
   className,
 }: {
   videoRef: RefObject<HTMLVideoElement | null>;
+  track: MediaStreamTrack | null;
   /** 狙いやすいよう出す目安の枠。検出は画面全体から行う */
   guide: 'barcode' | 'label';
   shutterLabel: string;
@@ -223,6 +231,7 @@ function Viewfinder({
             : 'top-[45%] h-3/5 w-4/5 border-dashed',
         )}
       />
+      <CameraControls track={track} videoRef={videoRef} />
       {flashKey > 0 && (
         <div
           key={flashKey}

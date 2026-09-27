@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { CameraControls } from '@/components/scan/CameraControls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,7 +23,7 @@ export function BarcodeScanner({
   onClose,
 }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { feedback, detectorSupported } = useBarcodeCamera(videoRef, {
+  const { feedback, detectorSupported, track } = useBarcodeCamera(videoRef, {
     onScan: onScanSuccess,
     onError: onClose,
   });
@@ -62,6 +63,7 @@ export function BarcodeScanner({
             />
             {/* 画面全体から検出するが、狙いやすいよう目安の枠を表示する */}
             <div className="pointer-events-none absolute inset-x-[10%] top-1/2 h-1/3 -translate-y-1/2 rounded-md border-2 border-white/80" />
+            <CameraControls track={track} videoRef={videoRef} />
           </div>
           <ManualBarcodeForm
             className="mt-4"

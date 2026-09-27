@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { isValidBarcode } from '@/lib/barcode-validation';
+import { setContinuousFocus } from '@/lib/client/camera';
 import { vibrate } from '@/lib/client/device';
 import { toast } from '@/lib/toast';
 
@@ -56,6 +57,7 @@ function nextVideoFrame(video: HTMLVideoElement) {
 /**
  * 背面カメラの映像を video に映し、バーコードを検出する。
  * BarcodeDetector 非対応の端末でも映像は映し、detectorSupported=false を返す（番号入力・撮影で代替する）。
+ * 映像を映し始めたら track を返す（ピント・ズーム・ライトの操作に使う）。
  * オプションはマウント時のものを使うため、切り替える場合は key で再マウントする。
  */
 export function useBarcodeCamera(
@@ -64,6 +66,7 @@ export function useBarcodeCamera(
 ) {
   const [feedback, setFeedback] = useState<ScanFeedback>(null);
   const [detectorSupported, setDetectorSupported] = useState(true);
+  const [track, setTrack] = useState<MediaStreamTrack | null>(null);
   // マウント時に一度だけ起動するため、最新のオプションは ref 経由で参照する
   const optionsRef = useRef(options);
   useEffect(() => {
@@ -134,6 +137,13 @@ export function useBarcodeCamera(
       signal.throwIfAborted();
       video.srcObject = stream;
       await video.play();
+      signal.throwIfAborted();
+      const [videoTrack] = stream.getVideoTracks();
+      if (videoTrack) {
+        // ピントの設定に失敗しても読み取りは続ける
+        await setContinuousFocus(videoTrack).catch(() => undefined);
+        setTrack(videoTrack);
+      }
       if (!canDetect) return;
 
       const detector = new BarcodeDetector({ formats: SUPPORTED_FORMATS });
@@ -168,5 +178,5 @@ export function useBarcodeCamera(
     };
   }, [videoRef]);
 
-  return { feedback, detectorSupported };
+  return { feedback, detectorSupported, track };
 }
