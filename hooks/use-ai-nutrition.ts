@@ -17,28 +17,32 @@ export function useAiNutrition(onEstimated: (food: BarcodeFood) => void) {
   const [text, setText] = useState('');
   const [pending, setPending] = useState<AiNutritionPending>(null);
 
+  /** 推定できたら true を返す。 */
   const run = async (
     kind: Exclude<AiNutritionPending, null>,
     request: () => Promise<BarcodeFood>,
-  ) => {
+  ): Promise<boolean> => {
     setPending(kind);
     try {
       onEstimated(await request());
       toast.success('AIでPFCとカロリーを入力しました');
+      return true;
     } catch (error) {
       toast.fromError('AIでの入力に失敗しました', error);
+      return false;
     } finally {
       setPending(null);
     }
   };
 
-  const estimate = async () => {
-    const input = text.trim();
+  /** 文章から推定する。省略時は入力欄の text を使う。 */
+  const estimate = async (source: string = text) => {
+    const input = source.trim();
     if (!input) {
       toast.info('食べた内容を入力してください');
-      return;
+      return false;
     }
-    await run('text', () => estimateNutrition(input));
+    return run('text', () => estimateNutrition(input));
   };
 
   const estimateFromImage = (file: File) =>

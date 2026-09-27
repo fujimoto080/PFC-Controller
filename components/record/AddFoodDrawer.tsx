@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { PenLine, Search } from 'lucide-react';
+import { Loader2, PenLine, Search, Sparkles } from 'lucide-react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useAppState } from '@/lib/client/store';
 import { searchFoodCandidates } from '@/lib/food-suggestions';
 import { defaultTimestampFor } from '@/lib/utils';
@@ -14,6 +15,8 @@ interface AddFoodDrawerProps {
   open: boolean;
   /** 記録先の日付 (YYYY-MM-DD) */
   date: string;
+  /** 開いたときに最初に出す画面。未指定なら検索から始める。 */
+  initialStep?: RecordStep;
   onClose: () => void;
 }
 
@@ -29,9 +32,22 @@ interface Selection {
   timestamp: number;
 }
 
-export function AddFoodDrawer({ open, date, onClose }: AddFoodDrawerProps) {
+export function AddFoodDrawer({
+  open,
+  date,
+  initialStep,
+  onClose,
+}: AddFoodDrawerProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [query, setQuery] = useState('');
+  const [wasOpen, setWasOpen] = useState(open);
+  // 開いた瞬間に、指定された画面から始める
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open && initialStep) {
+      setSelection({ step: initialStep, timestamp: defaultTimestampFor(date) });
+    }
+  }
 
   return (
     <RecordDrawer
@@ -86,6 +102,9 @@ function FoodSearch({
     () => searchFoodCandidates(foods, logs, query),
     [foods, logs, query],
   );
+  const ai = useAiNutrition((food) => {
+    onSelect({ kind: 'confirm', food });
+  });
 
   return (
     <div className="space-y-3">
@@ -110,6 +129,23 @@ function FoodSearch({
       >
         <PenLine /> 新しく入力する
       </Button>
+      {query.trim() && (
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={ai.pending !== null}
+          onClick={() => {
+            void ai.estimate(query);
+          }}
+        >
+          {ai.pending ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <Sparkles className="text-primary" />
+          )}
+          <span className="truncate">「{query.trim()}」をAIで推定</span>
+        </Button>
+      )}
 
       <p className="text-muted-foreground pt-1 text-xs">
         {query ? '検索結果' : '最近食べたもの'}
