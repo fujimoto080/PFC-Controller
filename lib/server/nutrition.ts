@@ -7,6 +7,10 @@ import { roundPFC } from '@/lib/utils';
 const FOOD_JSON =
   '{"name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}';
 
+/** 写真の読み取りで答えさせる 1 件分の形。evidence は確認用で、食品の値には使わない。 */
+const IMAGE_FOOD_JSON =
+  '{"evidence":"判断の根拠","name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}';
+
 const VALUE_INSTRUCTIONS = [
   '数値は必ず半角数字で、単位はg/kcalです。',
   '不明な値は0を設定してください。説明文やMarkdownは不要です。',
@@ -101,14 +105,17 @@ export async function readNutritionImage(
   generate: (prompt: string) => Promise<string>,
 ): Promise<ImageReading> {
   const response = await generate(
-    multiple
-      ? [
-          ...instructions,
-          '次のJSONのみを返してください。foods は商品ごとに1件ずつ並べ、食品が写っていなければ空配列にします。',
-          `{"foods":[${FOOD_JSON}]}`,
-          ...VALUE_INSTRUCTIONS,
-        ].join('\n')
-      : nutritionPrompt(instructions),
+    [
+      ...instructions,
+      ...(multiple
+        ? [
+            '次のJSONのみを返してください。foods は商品ごとに1件ずつ並べ、食品が写っていなければ空配列にします。',
+            `{"foods":[${IMAGE_FOOD_JSON}]}`,
+          ]
+        : ['次のJSONのみを返してください。', IMAGE_FOOD_JSON]),
+      'evidence には、各値を表示のどの記載から読み取ったか、換算・合算・推定をしたならその計算や根拠を簡潔に書いてください。',
+      ...VALUE_INSTRUCTIONS,
+    ].join('\n'),
   );
   const parsed = parseJsonOutput(response);
   const candidates: unknown = multiple

@@ -10,8 +10,12 @@ const read = (response: string, multiple: boolean) =>
   readNutritionImage([], multiple, () => Promise.resolve(response));
 
 describe('readNutritionImage', () => {
-  it('1 件の読み取りで食品と応答をそのまま返す', async () => {
-    const response = JSON.stringify({ ...FOOD, store: '' });
+  it('1 件の読み取りで食品と応答をそのまま返し、evidence は食品に含めない', async () => {
+    const response = JSON.stringify({
+      evidence: '1個あたりの表示を読み取った',
+      ...FOOD,
+      store: '',
+    });
     await expect(read(response, false)).resolves.toEqual({
       foods: [{ ...FOOD, store: undefined }],
       response,
