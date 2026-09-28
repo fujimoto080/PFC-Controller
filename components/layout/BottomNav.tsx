@@ -2,18 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Settings, Sparkles, Utensils } from 'lucide-react';
+import { Home, Settings, Sparkles } from 'lucide-react';
 import { ScanButton } from '@/components/record/ScanButton';
 import { cn } from '@/lib/utils';
 
-// 中央のスキャンボタンを挟んで左右に 2 つずつ並べる
+// 中央のスキャンボタンを挟んで左右に並べる
 const LEFT_ITEMS = [
   { href: '/', icon: Home, label: '今日' },
   { href: '/suggest', icon: Sparkles, label: '提案' },
 ] as const;
 
 const RIGHT_ITEMS = [
-  { href: '/foods', icon: Utensils, label: '食品' },
   { href: '/settings', icon: Settings, label: '設定' },
 ] as const;
 
@@ -40,11 +39,12 @@ export function BottomNav() {
   return (
     <nav className="bg-background/80 pb-safe fixed right-0 bottom-0 left-0 z-40 border-t backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-md items-center">
-        {LEFT_ITEMS.map(renderItem)}
-        <div className="flex flex-1 justify-center">
+        {/* 左右の項目数が違ってもスキャンボタンが中央に来るよう、左右を同じ幅にする */}
+        <div className="flex h-full flex-1">{LEFT_ITEMS.map(renderItem)}</div>
+        <div className="flex justify-center px-4">
           <ScanButton />
         </div>
-        {RIGHT_ITEMS.map(renderItem)}
+        <div className="flex h-full flex-1">{RIGHT_ITEMS.map(renderItem)}</div>
       </div>
     </nav>
   );
