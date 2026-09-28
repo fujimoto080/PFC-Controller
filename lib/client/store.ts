@@ -3,17 +3,17 @@
 import { useSyncExternalStore } from 'react';
 import { api, HttpError } from '@/lib/client/api';
 import { toast } from '@/lib/toast';
-import type { UserData, UserDataResponse } from '@/lib/types';
+import type { AppData, UserDataResponse } from '@/lib/types';
 
 /**
  * ログインユーザーのデータを保持するクライアントストア。
  * 状態は不変オブジェクトとして丸ごと差し替え、useSyncExternalStore で購読する。
  * 起動直後は localStorage のキャッシュで即時表示し、裏でサーバーから最新を取得する。
  */
-export type AppState = UserData;
+export type AppState = AppData;
 
 // localStorage のキャッシュ形式。AppState の形を変えたらインクリメントする。
-const CACHE_KEY_PREFIX = 'pfc:cache:v5:';
+const CACHE_KEY_PREFIX = 'pfc:cache:v6:';
 
 let state: AppState | null = null;
 let currentUserId: string | null = null;
@@ -50,7 +50,7 @@ export function getState(): AppState {
   return state;
 }
 
-function setState(updater: (current: AppState) => AppState) {
+export function setState(updater: (current: AppState) => AppState) {
   replaceState(updater(getState()));
 }
 

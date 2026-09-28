@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ChevronRight,
   Loader2,
@@ -15,11 +15,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAutoSave } from '@/hooks/use-auto-save';
 import { PageTitle } from '@/components/ui/page-title';
 import {
-  fetchMealNote,
-  fetchMealSuggestions,
   requestMealSuggestions,
   saveMealNote,
-} from '@/lib/client/api';
+  todayMeal,
+} from '@/lib/client/actions';
 import { getCurrentPosition } from '@/lib/client/device';
 import { useAppState } from '@/lib/client/store';
 import {
@@ -43,28 +42,11 @@ import { SuggestionOptionCard } from './SuggestionOptionCard';
 
 /** 今日の残りと予定・現在地から、AI に朝昼晩の食事をまとめて提案させ、食事ごとに提案し直せる画面。 */
 export function MealSuggestView() {
-  // 今日の提案すべて（新しい順）。やり直しても前の提案は残す
-  const [suggestions, setSuggestions] = useState<MealSuggestion[]>([]);
+  const meal = todayMeal(useAppState().meal);
   // 提案を考えている最中の食事枠
   const [loadingSlots, setLoadingSlots] = useState<MealSlot[]>([]);
-  // 今日の予定・気分。読み込むまでは null
-  const [note, setNote] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchMealSuggestions()
-      .then(setSuggestions)
-      .catch((error: unknown) => {
-        toast.fromError('提案の読み込みに失敗しました', error);
-      });
-    fetchMealNote()
-      .then((data) => {
-        setNote(data.note);
-      })
-      .catch((error: unknown) => {
-        toast.fromError('今日の予定・気分の読み込みに失敗しました', error);
-        setNote('');
-      });
-  }, []);
+  // 入力中の今日の予定・気分。入力が止まると自動保存する
+  const [note, setNote] = useState(meal.note);
 
   /** slot 指定時はその食事だけ、省略時は今日これからの食事をまとめて提案させる。 */
   const generate = async (request: {
@@ -78,13 +60,13 @@ export function MealSuggestView() {
     setLoadingSlots((prev) => [...prev, ...slots]);
     try {
       // サーバーは保存済みの予定・気分を使うので、自動保存を待たずに保存しておく
-      const [location] = await Promise.all([
+      const [location, noteSaved] = await Promise.all([
         getCurrentPosition(),
-        note === null ? undefined : saveMealNote({ note }),
+        saveMealNote(note.trim()),
       ]);
+      if (!noteSaved) return;
       if (!location) toast.info('現在地を取得できないため、予定から考えます');
-      const created = await requestMealSuggestions({ location, ...request });
-      setSuggestions((prev) => [...created, ...prev]);
+      await requestMealSuggestions({ location, ...request });
     } catch (error) {
       toast.fromError('提案に失敗しました', error);
     } finally {
@@ -98,7 +80,7 @@ export function MealSuggestView() {
 
       <RemainingLine />
 
-      {note !== null && <MealNoteCard note={note} onChange={setNote} />}
+      <MealNoteCard note={note} onChange={setNote} />
 
       <Button
         className="w-full"
@@ -115,7 +97,7 @@ export function MealSuggestView() {
         <SlotSection
           key={slot}
           slot={slot}
-          suggestions={suggestions.filter((s) => s.slot === slot)}
+          suggestions={meal.suggestions.filter((s) => s.slot === slot)}
           loading={loadingSlots.includes(slot)}
           onGenerate={(request) => {
             void generate({ slot, ...request });
@@ -134,15 +116,7 @@ function MealNoteCard({
   note: string;
   onChange: (note: string) => void;
 }) {
-  const status = useAutoSave(note.trim(), async (value) => {
-    try {
-      await saveMealNote({ note: value });
-      return true;
-    } catch (error) {
-      toast.fromError('今日の予定・気分の保存に失敗しました', error);
-      return false;
-    }
-  });
+  const status = useAutoSave(note.trim(), saveMealNote);
   return (
     <Card>
       <CardHeader>

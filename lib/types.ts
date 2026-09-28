@@ -148,10 +148,22 @@ export interface UserData {
   sports: SportDefinition[];
 }
 
+/** その日の食事提案すべて（新しい順）と、提案に使う予定・気分。 */
+export interface TodayMeal {
+  date: string;
+  note: string;
+  suggestions: MealSuggestion[];
+}
+
+/** クライアントが起動時に読み込むデータ。提案画面をすぐ表示できるよう今日の食事提案も含める。 */
+export interface AppData extends UserData {
+  meal: TodayMeal;
+}
+
 /** GET /api/user-data のレスポンス。どのユーザーのデータかをクライアントのキャッシュ切り替えに使う。 */
 export interface UserDataResponse {
   userId: string;
-  data: UserData;
+  data: AppData;
 }
 
 // 空 PFC 共通定数。直接参照すると意図せず共有されるため、利用側では必ずスプレッドで複製すること。

@@ -5,11 +5,6 @@ import type {
 } from '@/lib/barcode';
 import { recordAiReading } from '@/lib/client/ai-readings';
 import { toast } from '@/lib/toast';
-import type {
-  MealNote,
-  MealSuggestion,
-  MealSuggestionRequest,
-} from '@/lib/types';
 
 /**
  * クライアント側の fetch ラッパ。
@@ -139,25 +134,4 @@ export function readFoodsFromImage(
   imageDataUrl: string,
 ): Promise<BarcodeFood[]> {
   return readImage('/api/ai-nutrition/image/items', imageDataUrl);
-}
-
-/** 今日の予定・気分（食事提案に使う）。 */
-export function fetchMealNote(): Promise<MealNote> {
-  return api.get('/api/meal-note');
-}
-
-export function saveMealNote(note: MealNote): Promise<void> {
-  return api.put('/api/meal-note', note);
-}
-
-/** 今日の食事提案すべて（やり直した分も含む）。新しい順。 */
-export function fetchMealSuggestions(): Promise<MealSuggestion[]> {
-  return api.get('/api/meal-suggestions');
-}
-
-/** AI に食事を提案させる（食事枠ごとに 1 件）。Web 検索を伴うため数十秒かかる。 */
-export function requestMealSuggestions(
-  request: MealSuggestionRequest,
-): Promise<MealSuggestion[]> {
-  return api.post('/api/meal-suggestions', request);
 }

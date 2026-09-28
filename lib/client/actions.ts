@@ -2,7 +2,12 @@
 
 import { buildFoodMatchKey, toBarcodeFood } from '@/lib/barcode';
 import { api, saveBarcodeMapping } from '@/lib/client/api';
-import { getState, optimistic, type AppState } from '@/lib/client/store';
+import {
+  getState,
+  optimistic,
+  setState,
+  type AppState,
+} from '@/lib/client/store';
 import { sumPFC } from '@/lib/pfc';
 import {
   createEmptyDailyLog,
@@ -10,9 +15,13 @@ import {
   type FoodItem,
   type FoodItemInput,
   type Logs,
+  type MealNote,
+  type MealSuggestion,
+  type MealSuggestionRequest,
   type SportActivityInput,
   type SportActivityLog,
   type SportDefinition,
+  type TodayMeal,
   type UserSettings,
 } from '@/lib/types';
 import { defaultTimestampFor, formatDate, toggleItem } from '@/lib/utils';
@@ -234,4 +243,47 @@ export function deleteSportActivity(
     request: () => api.delete(`/api/log-activities/${encodeURIComponent(id)}`),
     errorMessage: '運動記録の削除に失敗しました',
   });
+}
+
+/** 今日の食事提案と予定・気分。キャッシュが前日以前のものなら空として扱う。 */
+export function todayMeal(meal: TodayMeal): TodayMeal {
+  const today = formatDate(Date.now());
+  return meal.date === today
+    ? meal
+    : { date: today, note: '', suggestions: [] };
+}
+
+function withTodayMeal(fn: (meal: TodayMeal) => TodayMeal) {
+  return (current: AppState): AppState => ({
+    ...current,
+    meal: fn(todayMeal(current.meal)),
+  });
+}
+
+/** 今日の予定・気分（食事提案に使う）を保存する。 */
+export function saveMealNote(note: string): Promise<boolean> {
+  return optimistic({
+    apply: withTodayMeal((meal) => ({ ...meal, note })),
+    request: () => api.put('/api/meal-note', { note } satisfies MealNote),
+    errorMessage: '今日の予定・気分の保存に失敗しました',
+  });
+}
+
+/**
+ * AI に食事を提案させ（食事枠ごとに 1 件）、今日の提案の先頭に加える。Web 検索を伴うため数十秒かかる。
+ * 待つ間の他の変更を巻き戻さないよう、失敗時は楽観的更新をせず throw する。
+ */
+export async function requestMealSuggestions(
+  request: MealSuggestionRequest,
+): Promise<void> {
+  const created = await api.post<MealSuggestion[]>(
+    '/api/meal-suggestions',
+    request,
+  );
+  setState(
+    withTodayMeal((meal) => ({
+      ...meal,
+      suggestions: [...created, ...meal.suggestions],
+    })),
+  );
 }

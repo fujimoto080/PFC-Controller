@@ -28,6 +28,7 @@ import type {
   MealSuggestionRequest,
   NearbyStore,
   PFC,
+  TodayMeal,
 } from '@/lib/types';
 import { formatDate, formatTime, roundPFC, toJstTimestamp } from '@/lib/utils';
 
@@ -95,7 +96,7 @@ async function saveSuggestions(
 }
 
 /** その日の提案すべて（やり直した分も含む）。新しい順。 */
-export async function listSuggestions(
+async function listSuggestions(
   userId: string,
   date: string,
 ): Promise<MealSuggestion[]> {
@@ -106,6 +107,18 @@ export async function listSuggestions(
     [userId, date],
   );
   return result.rows.map((row) => row.suggestion_json);
+}
+
+/** その日の提案すべてと予定・気分。 */
+export async function getTodayMeal(
+  userId: string,
+  date: string,
+): Promise<TodayMeal> {
+  const [note, suggestions] = await Promise.all([
+    getMealNote(userId, date),
+    listSuggestions(userId, date),
+  ]);
+  return { date, note, suggestions };
 }
 
 // ---- コンテキスト ----
