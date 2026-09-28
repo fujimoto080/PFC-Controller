@@ -219,8 +219,9 @@ interface LimitBarProps {
 }
 
 /**
- * 目標値と上限の大きい方を全幅とした摂取量バー。超過の繰越で削られた部分は斜線、
- * 不足の繰越で増えた部分は薄い色で示し、上限を allowance より多く超えると赤くなる。
+ * 目標値・上限・摂取量の最大を全幅とした摂取量バー。超過の繰越で削られた部分は斜線、
+ * 不足の繰越で増えた部分は薄い色で示す。上限を超えた分は上限の目盛りの先に延ばし、
+ * allowance より多く超えていれば赤くする。
  */
 function LimitBar({
   current,
@@ -230,8 +231,8 @@ function LimitBar({
   allowance = 0,
   thin,
 }: LimitBarProps) {
-  const scale = Math.max(1, target, limit);
-  const pct = (value: number) => Math.min(100, (value / scale) * 100);
+  const scale = Math.max(1, target, limit, current);
+  const pct = (value: number) => (value / scale) * 100;
   const isOver = current > limit + allowance;
 
   return (
@@ -243,23 +244,41 @@ function LimitBar({
     >
       {limit < target && (
         <div
-          className="absolute inset-y-0 right-0 bg-[repeating-linear-gradient(135deg,var(--muted-foreground)_0_2px,transparent_2px_5px)] opacity-40"
-          style={{ width: `${pct(target - limit)}%` }}
+          className="absolute inset-y-0 bg-[repeating-linear-gradient(135deg,var(--muted-foreground)_0_2px,transparent_2px_5px)] opacity-40"
+          style={{ left: `${pct(limit)}%`, width: `${pct(target - limit)}%` }}
         />
       )}
       {limit > target && (
         <div
-          className={cn('absolute inset-y-0 right-0 opacity-25', barClass)}
-          style={{ width: `${pct(limit - target)}%` }}
+          className={cn('absolute inset-y-0 opacity-25', barClass)}
+          style={{ left: `${pct(target)}%`, width: `${pct(limit - target)}%` }}
         />
       )}
       <div
         className={cn(
           'absolute inset-y-0 left-0 rounded-full transition-[width] duration-500',
-          isOver ? 'bg-destructive' : barClass,
+          barClass,
         )}
-        style={{ width: `${pct(current)}%` }}
+        style={{ width: `${pct(Math.min(current, limit))}%` }}
       />
+      {current > limit && (
+        <>
+          <div
+            className={cn(
+              'absolute inset-y-0 rounded-r-full transition-[width] duration-500',
+              isOver ? 'bg-destructive' : barClass,
+            )}
+            style={{
+              left: `${pct(limit)}%`,
+              width: `${pct(current - limit)}%`,
+            }}
+          />
+          <div
+            className="bg-foreground absolute inset-y-0 w-0.5 -translate-x-1/2"
+            style={{ left: `${pct(limit)}%` }}
+          />
+        </>
+      )}
     </div>
   );
 }
