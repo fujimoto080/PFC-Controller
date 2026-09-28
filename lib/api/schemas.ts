@@ -6,6 +6,7 @@ import type {
   MealPreferences,
   MealSchedule,
   MealSlot,
+  MealNote,
   MealSuggestionRequest,
   NearbyStore,
   PFC,
@@ -108,8 +109,11 @@ export const mealSuggestionRequestSchema = z.object({
     .array(z.string().max(MEAL_SUGGESTION_AVOID_LIMIT.length))
     .max(MEAL_SUGGESTION_AVOID_LIMIT.count)
     .optional(),
-  note: z.string().trim().max(500).optional(),
 }) satisfies z.ZodType<MealSuggestionRequest>;
+
+export const mealNoteSchema = z.object({
+  note: z.string().trim().max(500),
+}) satisfies z.ZodType<MealNote>;
 
 /** 栄養成分表示・料理の写真の読み取りリクエスト。 */
 export const imageBodySchema = z.object({

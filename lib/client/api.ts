@@ -1,5 +1,9 @@
 import type { BarcodeFood, BarcodeMappingRow } from '@/lib/barcode';
-import type { MealSuggestion, MealSuggestionRequest } from '@/lib/types';
+import type {
+  MealNote,
+  MealSuggestion,
+  MealSuggestionRequest,
+} from '@/lib/types';
 
 /**
  * クライアント側の fetch ラッパ。
@@ -103,6 +107,15 @@ export function readFoodsFromImage(
   imageDataUrl: string,
 ): Promise<BarcodeFood[]> {
   return api.post('/api/ai-nutrition/image/items', { imageDataUrl });
+}
+
+/** 今日の予定・気分（食事提案に使う）。 */
+export function fetchMealNote(): Promise<MealNote> {
+  return api.get('/api/meal-note');
+}
+
+export function saveMealNote(note: MealNote): Promise<void> {
+  return api.put('/api/meal-note', note);
 }
 
 /** 今日の食事提案すべて（やり直した分も含む）。新しい順。 */

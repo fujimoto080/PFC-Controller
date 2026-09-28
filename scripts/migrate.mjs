@@ -162,6 +162,15 @@ const APP_SCHEMA_SQL = `
   CREATE INDEX IF NOT EXISTS pfc_meal_suggestions_user_date_idx
     ON pfc_meal_suggestions (user_id, date, created_at);
 
+  -- 食事提案に使うその日の予定・気分。やり直しや定期実行でも使うため日ごとに保存する
+  CREATE TABLE IF NOT EXISTS pfc_meal_notes (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    note TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, date)
+  );
+
   CREATE TABLE IF NOT EXISTS pfc_push_subscriptions (
     endpoint TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

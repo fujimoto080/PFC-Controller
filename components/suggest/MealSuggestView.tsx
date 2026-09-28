@@ -9,9 +9,17 @@ import {
   Store,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { AutoSaveIndicator } from '@/components/settings/AutoSaveIndicator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { useAutoSave } from '@/hooks/use-auto-save';
 import { PageTitle } from '@/components/ui/page-title';
-import { fetchMealSuggestions, requestMealSuggestions } from '@/lib/client/api';
+import {
+  fetchMealNote,
+  fetchMealSuggestions,
+  requestMealSuggestions,
+  saveMealNote,
+} from '@/lib/client/api';
 import { getCurrentPosition } from '@/lib/client/device';
 import { useAppState } from '@/lib/client/store';
 import {
@@ -39,13 +47,22 @@ export function MealSuggestView() {
   const [suggestions, setSuggestions] = useState<MealSuggestion[]>([]);
   // 提案を考えている最中の食事枠
   const [loadingSlots, setLoadingSlots] = useState<MealSlot[]>([]);
-  const [note, setNote] = useState('');
+  // 今日の予定・気分。読み込むまでは null
+  const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMealSuggestions()
       .then(setSuggestions)
       .catch((error: unknown) => {
         toast.fromError('提案の読み込みに失敗しました', error);
+      });
+    fetchMealNote()
+      .then((data) => {
+        setNote(data.note);
+      })
+      .catch((error: unknown) => {
+        toast.fromError('今日の予定・気分の読み込みに失敗しました', error);
+        setNote('');
       });
   }, []);
 
@@ -60,13 +77,13 @@ export function MealSuggestView() {
       : remainingSlots(slotForTime(Date.now()));
     setLoadingSlots((prev) => [...prev, ...slots]);
     try {
-      const location = await getCurrentPosition();
+      // サーバーは保存済みの予定・気分を使うので、自動保存を待たずに保存しておく
+      const [location] = await Promise.all([
+        getCurrentPosition(),
+        note === null ? undefined : saveMealNote({ note }),
+      ]);
       if (!location) toast.info('現在地を取得できないため、予定から考えます');
-      const created = await requestMealSuggestions({
-        location,
-        note: note.trim() || undefined,
-        ...request,
-      });
+      const created = await requestMealSuggestions({ location, ...request });
       setSuggestions((prev) => [...created, ...prev]);
     } catch (error) {
       toast.fromError('提案に失敗しました', error);
@@ -81,25 +98,18 @@ export function MealSuggestView() {
 
       <RemainingLine />
 
-      <div className="space-y-2">
-        <Input
-          value={note}
-          onChange={(e) => {
-            setNote(e.target.value);
-          }}
-          placeholder="今日の予定・気分（例: 13時から外出、麺が食べたい）"
-        />
-        <Button
-          className="w-full"
-          disabled={loadingSlots.length > 0}
-          onClick={() => {
-            void generate({});
-          }}
-        >
-          <Sparkles />
-          今日の食事をまとめて提案してもらう
-        </Button>
-      </div>
+      {note !== null && <MealNoteCard note={note} onChange={setNote} />}
+
+      <Button
+        className="w-full"
+        disabled={loadingSlots.length > 0}
+        onClick={() => {
+          void generate({});
+        }}
+      >
+        <Sparkles />
+        今日の食事をまとめて提案してもらう
+      </Button>
 
       {MEAL_SLOTS.map(({ slot }) => (
         <SlotSection
@@ -113,6 +123,47 @@ export function MealSuggestView() {
         />
       ))}
     </div>
+  );
+}
+
+/** 今日の予定・気分。入力すると自動保存し、今日の提案（やり直し・朝の通知も）すべてで使う。 */
+function MealNoteCard({
+  note,
+  onChange,
+}: {
+  note: string;
+  onChange: (note: string) => void;
+}) {
+  const status = useAutoSave(note.trim(), async (value) => {
+    try {
+      await saveMealNote({ note: value });
+      return true;
+    } catch (error) {
+      toast.fromError('今日の予定・気分の保存に失敗しました', error);
+      return false;
+    }
+  });
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <label htmlFor="meal-note">今日の予定・気分</label>
+        </CardTitle>
+        <AutoSaveIndicator status={status} />
+      </CardHeader>
+      <CardContent>
+        <Textarea
+          id="meal-note"
+          rows={3}
+          maxLength={500}
+          value={note}
+          onChange={(e) => {
+            onChange(e.target.value);
+          }}
+          placeholder="例: 13時から外出、夜は飲み会。麺が食べたい"
+        />
+      </CardContent>
+    </Card>
   );
 }
 

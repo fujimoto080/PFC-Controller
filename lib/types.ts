@@ -169,7 +169,11 @@ export interface MealSuggestionRequest {
   stores?: NearbyStore[];
   /** 既に出した案の料理名。やり直し時に別の案を出させる（MEAL_SUGGESTION_AVOID_LIMIT まで） */
   avoid?: string[];
-  note?: string;
+}
+
+/** 食事提案に使うその日の予定・気分。 */
+export interface MealNote {
+  note: string;
 }
 
 /** やり直し時に避けさせる案の件数と、1 件あたりの文字数の上限。 */

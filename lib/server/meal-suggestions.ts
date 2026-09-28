@@ -16,6 +16,7 @@ import { sumPFC } from '@/lib/pfc';
 import { getPool } from '@/lib/server/db';
 import { getCalendarEventLines } from '@/lib/server/google-calendar';
 import { getMealHistory, getNutritionStatus } from '@/lib/server/meal-context';
+import { getMealNote } from '@/lib/server/meal-notes';
 import { findSurroundings } from '@/lib/server/nearby-stores';
 import { extractJsonObject } from '@/lib/server/nutrition';
 import { callOpenAIWithWebSearch } from '@/lib/server/openai';
@@ -173,11 +174,12 @@ async function buildPrompt(
 ) {
   const now = Date.now();
   const today = formatDate(now);
-  const [settings, status, history, calendar] = await Promise.all([
+  const [settings, status, history, calendar, note] = await Promise.all([
     getSettings(userId),
     getNutritionStatus(userId, today),
     getMealHistory(userId, HISTORY_DAYS),
     getCalendarEventLines(userId, today),
+    getMealNote(userId, today),
   ]);
   const plans = slots.map((slot) =>
     planMeal(settings.mealSchedule, today, slot),
@@ -228,7 +230,7 @@ async function buildPrompt(
           ...(calendar.length > 0 ? calendar : ['- 予定なし']),
         ]
       : []),
-    ...(request.note ? [`ユーザーのメモ: ${request.note}`] : []),
+    ...(note ? [`ユーザーが書いた今日の予定・気分: ${note}`] : []),
     ...surroundings.map(
       (s) =>
         `${s.near}: 緯度${s.point.lat.toFixed(4)} 経度${s.point.lon.toFixed(4)}${s.stations.length > 0 ? `（最寄り駅: ${s.stations.join('、')}）` : ''}`,
