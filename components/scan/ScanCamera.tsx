@@ -7,11 +7,13 @@ import {
   Camera,
   Check,
   CircleAlert,
+  ImagePlus,
   Keyboard,
   Loader2,
   X,
 } from 'lucide-react';
 import { ManualBarcodeForm } from '@/components/BarcodeScanner';
+import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { CameraControls } from '@/components/scan/CameraControls';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +24,7 @@ import type { ScanBatch } from '@/hooks/use-scan-batch';
 import { vibrate } from '@/lib/client/device';
 import {
   captureVideoFrame,
+  imageToDataUrl,
   supportsTakePhoto,
   takePhoto,
 } from '@/lib/client/image';
@@ -59,7 +62,7 @@ export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
       title="まとめてスキャン"
       hint={
         detectorSupported
-          ? 'バーコードを次々かざす／成分表示はシャッターで撮影'
+          ? 'バーコードを次々かざす／成分表示はシャッターで撮影か画像を選択'
           : 'このブラウザはバーコード検出に非対応です。番号入力か撮影を使ってください'
       }
       onClose={onClose}
@@ -129,7 +132,7 @@ export function PhotoCamera({
   return (
     <CameraShell
       title="成分表示を撮影"
-      hint="栄養成分表示が枠に収まるように撮ってください"
+      hint="栄養成分表示が枠に収まるように撮るか、右下から画像を選んでください"
       onClose={onClose}
     >
       <Viewfinder
@@ -214,6 +217,16 @@ function Viewfinder({
   const [mode, setMode] = useState(readCaptureMode);
   const [taking, setTaking] = useState(false);
   const canTakePhoto = track !== null && supportsTakePhoto();
+  const pickerRef = useRef<HTMLInputElement | null>(null);
+
+  const pick = async ([file]: File[]) => {
+    if (!file) return;
+    try {
+      onCapture(await imageToDataUrl(file));
+    } catch (error) {
+      toast.fromError('画像の読み込みに失敗しました', error);
+    }
+  };
 
   const capture = async () => {
     const video = videoRef.current;
@@ -287,6 +300,20 @@ function Viewfinder({
           ))}
         </fieldset>
       )}
+      <button
+        type="button"
+        className="absolute right-3 bottom-7 flex size-10 items-center justify-center rounded-full bg-black/50"
+        aria-label="保存済みの画像を選ぶ"
+        onClick={() => pickerRef.current?.click()}
+      >
+        <ImagePlus className="size-5" />
+      </button>
+      <ImageFileInput
+        ref={pickerRef}
+        onSelect={(files) => {
+          void pick(files);
+        }}
+      />
       <div className="pointer-events-none absolute inset-x-0 bottom-3 flex flex-col items-center gap-1">
         <button
           type="button"

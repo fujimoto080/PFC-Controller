@@ -17,6 +17,7 @@ import {
 import { AiReadingLog } from '@/components/input/AiReadingLog';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { FoodNameField } from '@/components/input/FoodNameField';
+import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { NutrientTiles } from '@/components/record/ConfirmFood';
@@ -220,18 +221,11 @@ function AddMoreButtons({
       <Button variant="outline" onClick={() => inputRef.current?.click()}>
         <ImagePlus /> 写真から追加
       </Button>
-      {/* 撮影済みの写真を複数まとめて選べるよう capture は付けない */}
-      <input
+      <ImageFileInput
         ref={inputRef}
-        type="file"
-        accept="image/*"
         multiple
-        className="hidden"
-        onClick={(event) => {
-          event.currentTarget.value = '';
-        }}
-        onChange={(event) => {
-          void addFiles([...(event.target.files ?? [])]);
+        onSelect={(files) => {
+          void addFiles(files);
         }}
       />
     </div>
