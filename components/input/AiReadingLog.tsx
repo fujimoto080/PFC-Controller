@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { ReadingConfidence } from '@/lib/barcode';
 import { useAiReadings, type AiReading } from '@/lib/client/ai-readings';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
@@ -25,6 +26,12 @@ export function AiReadingLog({ className }: { className?: string }) {
     </details>
   );
 }
+
+const CONFIDENCE_LABELS: Record<ReadingConfidence, string> = {
+  high: '確か',
+  medium: 'やや不確か',
+  low: '不確か',
+};
 
 function ReadingEntry({ reading }: { reading: AiReading }) {
   const [size, setSize] = useState<string | null>(null);
@@ -72,7 +79,12 @@ function ReadingEntry({ reading }: { reading: AiReading }) {
         <p className="text-xs">
           読み取れた食品: {reading.foods.length}件
           {reading.foods.length > 0 &&
-            `（${reading.foods.map((food) => food.name).join('、')}）`}
+            `（${reading.foods
+              .map(
+                ({ food, confidence }) =>
+                  `${food.name}: ${CONFIDENCE_LABELS[confidence]}`,
+              )
+              .join('、')}）`}
         </p>
       )}
       {response !== undefined && (

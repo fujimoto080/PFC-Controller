@@ -1,6 +1,12 @@
 import 'server-only';
 import { ApiError } from '@/lib/api/handler';
-import type { BarcodeFood, ImageReading } from '@/lib/barcode';
+import {
+  READING_CONFIDENCES,
+  type BarcodeFood,
+  type ImageReading,
+  type ImageReadingFood,
+  type ReadingConfidence,
+} from '@/lib/barcode';
 import { hasNutrition } from '@/lib/pfc';
 import { roundPFC } from '@/lib/utils';
 
@@ -8,12 +14,23 @@ const FOOD_JSON =
   '{"name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}';
 
 /** 写真の読み取りで答えさせる 1 件分の形。evidence は確認用で、食品の値には使わない。 */
-const IMAGE_FOOD_JSON =
-  '{"evidence":"判断の根拠","name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}';
+const IMAGE_FOOD_JSON = `{"evidence":"判断の根拠","confidence":"${READING_CONFIDENCES.join('|')}","name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}`;
+
+const NUMBER_FORMAT_INSTRUCTION = '数値は必ず半角数字で、単位はg/kcalです。';
 
 const VALUE_INSTRUCTIONS = [
-  '数値は必ず半角数字で、単位はg/kcalです。',
+  NUMBER_FORMAT_INSTRUCTION,
   '不明な値は0を設定してください。説明文やMarkdownは不要です。',
+];
+
+/** 写真の読み取りで、値の確かさを答えさせて不鮮明さを理由に 0 にさせないための指示。 */
+const IMAGE_VALUE_INSTRUCTIONS = [
+  'evidence には、各値を表示のどの記載から読み取ったか、換算・合算・推定をしたならその計算や根拠を簡潔に書いてください。',
+  '文字が不鮮明・一部が隠れている・ピンぼけなどで確信が持てなくても、値を0にせず、読み取れる範囲の文字や他の項目・商品の種類から最も妥当な値を入れてください。',
+  '値を0にするのは、表示に0と記載されている場合だけです。',
+  'confidence は値の確かさです。すべての値をはっきり読み取れたら high、一部が不鮮明で読み取りに自信がない・推定を含むなら medium、大半を推定したなら low にしてください。',
+  NUMBER_FORMAT_INSTRUCTION,
+  '説明文やMarkdownは不要です。',
 ];
 
 /** 写真の栄養成分表示・料理から栄養値を読み取らせるときの共通の指示。 */
@@ -94,6 +111,13 @@ function parseJsonOutput(text: string): unknown {
   }
 }
 
+/** 確かさを答えなかった・形式外の答えは、確認を促すよう最も低い確かさとみなす。 */
+function normalizeConfidence(value: unknown): ReadingConfidence {
+  return (
+    READING_CONFIDENCES.find((confidence) => confidence === value) ?? 'low'
+  );
+}
+
 /**
  * 写真を AI に読み取らせる。確認できるよう AI の応答テキストもそのまま返す。
  * 応答を解釈できない・栄養値が全部 0 のものは foods に含めない（読み取れなければ空配列）。
@@ -113,8 +137,7 @@ export async function readNutritionImage(
             `{"foods":[${IMAGE_FOOD_JSON}]}`,
           ]
         : ['次のJSONのみを返してください。', IMAGE_FOOD_JSON]),
-      'evidence には、各値を表示のどの記載から読み取ったか、換算・合算・推定をしたならその計算や根拠を簡潔に書いてください。',
-      ...VALUE_INSTRUCTIONS,
+      ...IMAGE_VALUE_INSTRUCTIONS,
     ].join('\n'),
   );
   const parsed = parseJsonOutput(response);
@@ -124,11 +147,14 @@ export async function readNutritionImage(
   const foods = Array.isArray(candidates)
     ? candidates
         .filter(
-          (value): value is Partial<BarcodeFood> =>
+          (value): value is Partial<BarcodeFood> & { confidence?: unknown } =>
             typeof value === 'object' && value !== null,
         )
-        .map(normalizeNutrition)
-        .filter(hasNutrition)
+        .map((value): ImageReadingFood => ({
+          food: normalizeNutrition(value),
+          confidence: normalizeConfidence(value.confidence),
+        }))
+        .filter(({ food }) => hasNutrition(food))
     : [];
   return {
     foods,

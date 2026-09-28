@@ -1,7 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import type { BarcodeFood } from '@/lib/barcode';
+import type { ImageReadingFood } from '@/lib/barcode';
 
 // 写真の AI 読み取りがうまくいかないとき、送った画像と AI の応答を見て原因を確かめられるよう直近の分を残す。
 // 画像が大きいため保存はせずメモリにだけ持つ。
@@ -15,8 +15,8 @@ export interface AiReading {
   image: string;
   /** AI の応答テキスト。通信・AI の呼び出しに失敗した場合は無い */
   response?: string;
-  /** 応答から読み取れた食品 */
-  foods: BarcodeFood[];
+  /** 応答から読み取れた食品と確かさ */
+  foods: ImageReadingFood[];
   /** 失敗したときのメッセージ */
   error?: string;
 }

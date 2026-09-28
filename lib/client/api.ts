@@ -4,6 +4,7 @@ import type {
   ImageReading,
 } from '@/lib/barcode';
 import { recordAiReading } from '@/lib/client/ai-readings';
+import { toast } from '@/lib/toast';
 import type {
   MealNote,
   MealSuggestion,
@@ -110,7 +111,10 @@ async function readImage(
       imageDataUrl,
     });
     recordAiReading({ image: imageDataUrl, response, foods });
-    return foods;
+    if (foods.some(({ confidence }) => confidence !== 'high')) {
+      toast.info('読み取りに自信のない値があります。数値を確認してください');
+    }
+    return foods.map(({ food }) => food);
   } catch (error) {
     recordAiReading({
       image: imageDataUrl,

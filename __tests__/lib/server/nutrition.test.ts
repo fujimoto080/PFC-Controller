@@ -10,16 +10,25 @@ const read = (response: string, multiple: boolean) =>
   readNutritionImage([], multiple, () => Promise.resolve(response));
 
 describe('readNutritionImage', () => {
-  it('1 件の読み取りで食品と応答をそのまま返し、evidence は食品に含めない', async () => {
+  it('1 件の読み取りで食品・確かさと応答をそのまま返し、evidence は食品に含めない', async () => {
     const response = JSON.stringify({
       evidence: '1個あたりの表示を読み取った',
+      confidence: 'medium',
       ...FOOD,
       store: '',
     });
     await expect(read(response, false)).resolves.toEqual({
-      foods: [{ ...FOOD, store: undefined }],
+      foods: [{ food: { ...FOOD, store: undefined }, confidence: 'medium' }],
       response,
     });
+  });
+
+  it('確かさが無い・形式外なら low とみなす', async () => {
+    const response = JSON.stringify({
+      foods: [FOOD, { ...FOOD, confidence: 'sure' }],
+    });
+    const { foods } = await read(response, true);
+    expect(foods.map(({ confidence }) => confidence)).toEqual(['low', 'low']);
   });
 
   it('複数件の読み取りで栄養値が全部 0 の商品を除く', async () => {
@@ -30,7 +39,7 @@ describe('readNutritionImage', () => {
       ],
     })}\n\`\`\``;
     const { foods } = await read(response, true);
-    expect(foods.map((food) => food.name)).toEqual(['おにぎり']);
+    expect(foods.map(({ food }) => food.name)).toEqual(['おにぎり']);
   });
 
   it('応答を解釈できなくてもエラーにせず応答を返す', async () => {

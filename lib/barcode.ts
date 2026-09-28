@@ -5,9 +5,18 @@ export type BarcodeFood = Pick<
   'name' | 'protein' | 'fat' | 'carbs' | 'calories' | 'store'
 >;
 
+/** 写真から読み取った値の確かさ。AI 自身の判断 */
+export const READING_CONFIDENCES = ['high', 'medium', 'low'] as const;
+export type ReadingConfidence = (typeof READING_CONFIDENCES)[number];
+
+export interface ImageReadingFood {
+  food: BarcodeFood;
+  confidence: ReadingConfidence;
+}
+
 /** 写真の AI 読み取り結果。response は AI が返したテキストそのもの（確認用） */
 export interface ImageReading {
-  foods: BarcodeFood[];
+  foods: ImageReadingFood[];
   response: string;
 }
 
