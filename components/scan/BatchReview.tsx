@@ -45,6 +45,7 @@ import {
 } from '@/lib/scan-batch';
 import { collectStores } from '@/lib/store-sections';
 import { toast } from '@/lib/toast';
+import { cn } from '@/lib/utils';
 
 interface BatchReviewProps {
   batch: ScanBatch;
@@ -155,7 +156,13 @@ export function BatchReview({
         )}
       </div>
 
-      <div className="bg-background sticky bottom-0 -mx-4 space-y-1.5 border-t px-4 pt-3 pb-1">
+      {/* 修正中は記録できず、入力欄とキーボードの間に挟まって邪魔になるので画面下に固定しない */}
+      <div
+        className={cn(
+          'bg-background -mx-4 space-y-1.5 border-t px-4 pt-3 pb-1',
+          editingId === null && 'sticky bottom-0',
+        )}
+      >
         {pendingCount > 0 && (
           <p className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
             <CircleAlert className="size-3.5" />
