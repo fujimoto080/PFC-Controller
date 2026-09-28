@@ -1,25 +1,40 @@
 import 'server-only';
+import { z } from 'zod';
 import { ApiError } from '@/lib/api/handler';
 import {
   READING_CONFIDENCES,
   type BarcodeFood,
   type ImageReading,
-  type ImageReadingFood,
-  type ReadingConfidence,
 } from '@/lib/barcode';
 import { hasNutrition } from '@/lib/pfc';
+import type { JsonSchemaFormat } from '@/lib/server/openai';
 import { roundPFC } from '@/lib/utils';
 
 const FOOD_JSON =
   '{"name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}';
 
 /** 写真の読み取りで答えさせる 1 件分の形。evidence は確認用で、食品の値には使わない。 */
-const IMAGE_FOOD_JSON = `{"evidence":"判断の根拠","confidence":"${READING_CONFIDENCES.join('|')}","name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}`;
+const imageFoodSchema = z.strictObject({
+  evidence: z.string(),
+  confidence: z.enum(READING_CONFIDENCES),
+  name: z.string(),
+  protein: z.number(),
+  fat: z.number(),
+  carbs: z.number(),
+  calories: z.number(),
+  store: z.string(),
+});
 
-const NUMBER_FORMAT_INSTRUCTION = '数値は必ず半角数字で、単位はg/kcalです。';
+const imageFoodsSchema = z.strictObject({ foods: z.array(imageFoodSchema) });
+
+/** Structured Outputs に渡す形。OpenAI は $schema を受け付けないので外す。 */
+function toJsonSchemaFormat(name: string, schema: z.ZodType): JsonSchemaFormat {
+  const { $schema: _, ...jsonSchema } = z.toJSONSchema(schema);
+  return { name, schema: jsonSchema };
+}
 
 const VALUE_INSTRUCTIONS = [
-  NUMBER_FORMAT_INSTRUCTION,
+  '数値は必ず半角数字で、単位はg/kcalです。',
   '不明な値は0を設定してください。説明文やMarkdownは不要です。',
 ];
 
@@ -29,8 +44,7 @@ const IMAGE_VALUE_INSTRUCTIONS = [
   '文字が不鮮明・一部が隠れている・ピンぼけなどで確信が持てなくても、値を0にせず、読み取れる範囲の文字や他の項目・商品の種類から最も妥当な値を入れてください。',
   '値を0にするのは、表示に0と記載されている場合だけです。',
   'confidence は値の確かさです。すべての値をはっきり読み取れたら high、一部が不鮮明で読み取りに自信がない・推定を含むなら medium、大半を推定したなら low にしてください。',
-  NUMBER_FORMAT_INSTRUCTION,
-  '説明文やMarkdownは不要です。',
+  '単位はg/kcalです。換算・合算をしたら、式ではなく計算した結果の数値を入れてください。',
 ];
 
 /** 写真の栄養成分表示・料理から栄養値を読み取らせるときの共通の指示。 */
@@ -102,20 +116,13 @@ export async function askNutrition(
   return food;
 }
 
-/** AI の出力から JSON を取り出して解釈する。JSON が無い・壊れている場合は undefined。 */
-function parseJsonOutput(text: string): unknown {
+/** AI の出力を JSON として解釈する。JSON でない場合は undefined。 */
+function parseJson(text: string): unknown {
   try {
-    return JSON.parse(extractJsonObject(text));
+    return JSON.parse(text);
   } catch {
     return undefined;
   }
-}
-
-/** 確かさを答えなかった・形式外の答えは、確認を促すよう最も低い確かさとみなす。 */
-function normalizeConfidence(value: unknown): ReadingConfidence {
-  return (
-    READING_CONFIDENCES.find((confidence) => confidence === value) ?? 'low'
-  );
 }
 
 /**
@@ -126,36 +133,31 @@ function normalizeConfidence(value: unknown): ReadingConfidence {
 export async function readNutritionImage(
   instructions: string[],
   multiple: boolean,
-  generate: (prompt: string) => Promise<string>,
+  generate: (prompt: string, format: JsonSchemaFormat) => Promise<string>,
 ): Promise<ImageReading> {
   const response = await generate(
     [
       ...instructions,
-      ...(multiple
-        ? [
-            '次のJSONのみを返してください。foods は商品ごとに1件ずつ並べ、食品が写っていなければ空配列にします。',
-            `{"foods":[${IMAGE_FOOD_JSON}]}`,
-          ]
-        : ['次のJSONのみを返してください。', IMAGE_FOOD_JSON]),
+      multiple
+        ? 'foods には商品ごとに1件ずつ並べ、食品が写っていなければ空配列にしてください。'
+        : '食品1件分を答えてください。',
       ...IMAGE_VALUE_INSTRUCTIONS,
     ].join('\n'),
+    multiple
+      ? toJsonSchemaFormat('foods', imageFoodsSchema)
+      : toJsonSchemaFormat('food', imageFoodSchema),
   );
-  const parsed = parseJsonOutput(response);
-  const candidates: unknown = multiple
-    ? (parsed as { foods?: unknown } | undefined)?.foods
-    : [parsed];
-  const foods = Array.isArray(candidates)
-    ? candidates
-        .filter(
-          (value): value is Partial<BarcodeFood> & { confidence?: unknown } =>
-            typeof value === 'object' && value !== null,
-        )
-        .map((value): ImageReadingFood => ({
-          food: normalizeNutrition(value),
-          confidence: normalizeConfidence(value.confidence),
-        }))
-        .filter(({ food }) => hasNutrition(food))
-    : [];
+  const parsed = parseJson(response);
+  const candidates = multiple
+    ? imageFoodsSchema.safeParse(parsed).data?.foods
+    : [imageFoodSchema.safeParse(parsed).data];
+  const foods = (candidates ?? [])
+    .filter((value) => value !== undefined)
+    .map(({ confidence, ...value }) => ({
+      food: normalizeNutrition(value),
+      confidence,
+    }))
+    .filter(({ food }) => hasNutrition(food));
   return {
     foods,
     response,

@@ -17,8 +17,12 @@ export const POST = defineRoute(
         '画像に複数の商品や栄養成分表示が写っている場合は、それぞれを別の食品として読み取ってください。同じ商品の表と裏など、同一商品と分かるものは1件にまとめます。',
       ],
       true,
-      (prompt) =>
-        callOpenAIWithImage({ prompt, imageDataUrl: body.imageDataUrl }),
+      (prompt, format) =>
+        callOpenAIWithImage({
+          prompt,
+          format,
+          imageDataUrl: body.imageDataUrl,
+        }),
     );
     return NextResponse.json(reading);
   },

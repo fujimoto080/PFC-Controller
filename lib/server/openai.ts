@@ -18,6 +18,12 @@ interface OpenAIResponse {
   output?: { type: string; content?: OutputText[] }[];
 }
 
+/** Structured Outputs で応答の形を固定するための JSON Schema。 */
+export interface JsonSchemaFormat {
+  name: string;
+  schema: Record<string, unknown>;
+}
+
 export interface Citation {
   title: string;
   url: string;
@@ -36,6 +42,7 @@ async function callOpenAI(body: {
   reasoning: { effort: 'minimal' | 'low' | 'medium' };
   input: { role: 'user'; content: InputContent[] }[];
   tools?: unknown[];
+  text?: { format: JsonSchemaFormat & { type: 'json_schema'; strict: true } };
 }): Promise<{ text: string; citations: Citation[] }> {
   const response = await fetch(ENDPOINT, {
     method: 'POST',
@@ -67,12 +74,14 @@ async function callOpenAI(body: {
   };
 }
 
-/** 指示文と画像（data URL）を渡して OpenAI にテキストを生成させる。 */
+/** 指示文と画像（data URL）を渡して OpenAI に format の形の JSON を生成させる。 */
 export async function callOpenAIWithImage({
   prompt,
+  format,
   imageDataUrl,
 }: {
   prompt: string;
+  format: JsonSchemaFormat;
   imageDataUrl: string;
 }): Promise<string> {
   const { text } = await callOpenAI({
@@ -88,6 +97,7 @@ export async function callOpenAIWithImage({
         ],
       },
     ],
+    text: { format: { type: 'json_schema', strict: true, ...format } },
   });
   return text;
 }

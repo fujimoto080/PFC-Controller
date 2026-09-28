@@ -14,8 +14,12 @@ export const POST = defineRoute(
     const reading = await readNutritionImage(
       IMAGE_READING_INSTRUCTIONS,
       false,
-      (prompt) =>
-        callOpenAIWithImage({ prompt, imageDataUrl: body.imageDataUrl }),
+      (prompt, format) =>
+        callOpenAIWithImage({
+          prompt,
+          format,
+          imageDataUrl: body.imageDataUrl,
+        }),
     );
     return NextResponse.json(reading);
   },
