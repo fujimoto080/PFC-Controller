@@ -1,12 +1,14 @@
 'use client';
 
-import { Loader2, Sparkles } from 'lucide-react';
+import { useRef } from 'react';
+import { ImagePlus, Loader2, Sparkles } from 'lucide-react';
+import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import type { FoodTemplate } from '@/lib/food-form';
 
-/** 食べた物を文章で書くだけで AI が栄養値を推定する入力欄。推定結果は onEstimated に渡す。 */
+/** 食べた物を文章で書くか画像を送るだけで AI が栄養値を推定する入力欄。推定結果は onEstimated に渡す。 */
 export function QuickAiInput({
   onEstimated,
 }: {
@@ -14,6 +16,7 @@ export function QuickAiInput({
 }) {
   const ai = useAiNutrition(onEstimated);
   const busy = ai.pending !== null;
+  const pickerRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <form
@@ -39,9 +42,29 @@ export function QuickAiInput({
           disabled={busy}
         />
       </div>
-      <Button type="submit" disabled={busy} aria-label="AI で推定">
-        {busy ? <Loader2 className="animate-spin" /> : '推定'}
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={() => pickerRef.current?.click()}
+        disabled={busy}
+        aria-label="画像を送ってAIで記録"
+      >
+        {ai.pending === 'image' ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          <ImagePlus />
+        )}
       </Button>
+      <Button type="submit" disabled={busy} aria-label="AI で推定">
+        {ai.pending === 'text' ? <Loader2 className="animate-spin" /> : '推定'}
+      </Button>
+      <ImageFileInput
+        ref={pickerRef}
+        onSelect={([file]) => {
+          if (file) void ai.estimateFromImage(file);
+        }}
+      />
     </form>
   );
 }
