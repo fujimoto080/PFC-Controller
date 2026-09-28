@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "sh scripts/ignore-build.sh",
   "crons": [
     {
       "path": "/api/cron/meal-suggestions?slot=breakfast",

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "node scripts/migrate.mjs && next build",
+    "vercel-build": "pnpm run \"/^(migrate|build)$/\"",
     "migrate": "node scripts/migrate.mjs",
     "seed:sukiya": "node scripts/seed-sukiya-foods.mjs",
     "start": "next start",
