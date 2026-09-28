@@ -41,6 +41,7 @@ export function CollapsibleSection({
         )}
         onClick={onToggle}
         aria-expanded={!collapsed}
+        data-track="セクションの開閉"
       >
         <Icon className="mr-1 h-4 w-4" />
         {title}

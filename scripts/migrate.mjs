@@ -180,6 +180,18 @@ const APP_SCHEMA_SQL = `
   );
   CREATE INDEX IF NOT EXISTS idx_pfc_push_subscriptions_user
     ON pfc_push_subscriptions (user_id);
+
+  -- 使われていない機能を見つけるための利用状況（画面表示・操作・MCP のツール呼び出し）
+  CREATE TABLE IF NOT EXISTS pfc_usage_events (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('page', 'click', 'swipe', 'mcp')),
+    name TEXT NOT NULL,
+    path TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS idx_pfc_usage_events_user
+    ON pfc_usage_events (user_id);
 `;
 
 async function main() {

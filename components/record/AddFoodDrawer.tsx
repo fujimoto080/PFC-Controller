@@ -10,6 +10,7 @@ import { useAppState } from '@/lib/client/store';
 import { searchFoodCandidates } from '@/lib/food-suggestions';
 import { defaultTimestampFor } from '@/lib/utils';
 import { RecordDrawer, RecordStepView, type RecordStep } from './RecordDrawer';
+import { StatusMessage } from '@/components/ui/status-message';
 
 interface AddFoodDrawerProps {
   open: boolean;
@@ -151,15 +152,14 @@ function FoodSearch({
         {query ? '検索結果' : '最近食べたもの'}
       </p>
       {candidates.length === 0 ? (
-        <p className="text-muted-foreground py-6 text-center text-sm">
-          見つかりませんでした
-        </p>
+        <StatusMessage>見つかりませんでした</StatusMessage>
       ) : (
         <ul className="divide-y rounded-lg border">
           {candidates.map((food) => (
             <li key={food.id}>
               <button
                 type="button"
+                data-track="検索結果の食品を選択"
                 className="hover:bg-muted/60 w-full px-3 py-2.5 text-left"
                 onClick={() => {
                   onSelect({ kind: 'confirm', food });

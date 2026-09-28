@@ -23,6 +23,7 @@ export function StorePicker({
           <li key={store.id} className="flex items-center gap-3 py-2 text-sm">
             <Checkbox
               id={`store-${store.id}`}
+              data-track="お店を選択"
               checked={selectedIds.includes(store.id)}
               onCheckedChange={() => {
                 setSelectedIds((ids) => toggleItem(ids, store.id));

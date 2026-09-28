@@ -49,6 +49,7 @@ export function FoodRow({
             e.stopPropagation();
           }}
           aria-label={`${food.name}を選択`}
+          data-track="食品を選択"
         />
       )}
       <div className="flex-1 pr-2">

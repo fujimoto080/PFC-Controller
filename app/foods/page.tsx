@@ -25,6 +25,7 @@ import {
 import { toast } from '@/lib/toast';
 import type { FoodItem } from '@/lib/types';
 import { toggleItem } from '@/lib/utils';
+import { StatusMessage } from '@/components/ui/status-message';
 
 /** 編集フォームの状態。null は一覧表示、food: null は新規追加。 */
 type EditorState = { food: FoodItem | null } | null;
@@ -130,9 +131,7 @@ export default function FoodsPage() {
         </div>
 
         {sections.length === 0 ? (
-          <p className="text-muted-foreground py-6 text-center text-sm">
-            食品が見つかりません
-          </p>
+          <StatusMessage>食品が見つかりません</StatusMessage>
         ) : (
           <div className="space-y-6">
             {sections.map(({ storeName, groups }) => (

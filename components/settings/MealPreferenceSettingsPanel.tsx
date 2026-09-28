@@ -120,6 +120,7 @@ export function MealPreferenceSettingsPanel() {
                 />
                 <IconButton
                   aria-label={`${pref.store || 'このお店'}を削除`}
+                  data-track="お店ごとのメニューを削除"
                   onClick={() => {
                     setStores((current) =>
                       current.filter((_, i) => i !== index),

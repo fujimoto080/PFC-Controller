@@ -258,6 +258,7 @@ function ItemCard({
     <IconButton
       className="text-muted-foreground"
       aria-label={`${item.food?.name ?? 'この商品'}を外す`}
+      data-track="スキャンした商品を外す"
       onClick={onRemove}
     >
       <X />
@@ -308,6 +309,7 @@ function ItemCard({
         className="min-w-0 flex-1 text-left"
         onClick={onEdit}
         aria-label={`${food.name}を修正`}
+        data-track="スキャンした商品を修正"
       >
         {food.store && (
           <p className="text-muted-foreground truncate text-[11px]">

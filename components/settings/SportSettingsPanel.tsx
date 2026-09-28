@@ -91,6 +91,7 @@ export function SportSettingsPanel() {
                 </span>
                 <IconButton
                   aria-label={`${sport.name}を削除`}
+                  data-track="スポーツを削除"
                   onClick={() => {
                     void saveSports(sports.filter((s) => s.id !== sport.id));
                   }}

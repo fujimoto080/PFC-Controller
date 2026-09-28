@@ -52,6 +52,7 @@ export function DayLogList({ date, onAdd }: DayLogListProps) {
             <li key={item.id}>
               <button
                 type="button"
+                data-track="食事の記録を編集"
                 className="hover:bg-muted/60 flex w-full items-center gap-3 px-3 py-2.5 text-left"
                 onClick={() => {
                   setEditingItem(item);

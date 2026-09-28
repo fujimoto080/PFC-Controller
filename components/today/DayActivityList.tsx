@@ -36,6 +36,7 @@ export function DayActivityList({ date }: { date: string }) {
             <button
               key={sport.id}
               type="button"
+              data-track="運動を記録"
               className="bg-card hover:bg-muted/60 flex items-center gap-1.5 rounded-lg border px-3 py-2 text-left text-sm transition-transform active:scale-[0.98]"
               onClick={() => {
                 const saving = addSportActivity(date, sport);
@@ -83,6 +84,7 @@ export function DayActivityList({ date }: { date: string }) {
               </span>
               <IconButton
                 aria-label={`${activity.name}の記録を削除`}
+                data-track="運動の記録を削除"
                 disabled={isTempId(activity.id)}
                 onClick={() => {
                   void deleteSportActivity(date, activity.id);

@@ -12,6 +12,7 @@ import type {
   PFC,
   SportActivityInput,
   SportDefinition,
+  UsageEventInput,
   UserSettings,
 } from '@/lib/types';
 import { MEAL_SUGGESTION_AVOID_LIMIT } from '@/lib/types';
@@ -114,6 +115,16 @@ export const mealSuggestionRequestSchema = z.object({
 export const mealNoteSchema = z.object({
   note: z.string().trim().max(500),
 }) satisfies z.ZodType<MealNote>;
+
+const usageEventSchema = z.object({
+  kind: z.enum(['page', 'click', 'swipe']),
+  name: z.string().trim().min(1).max(100),
+  path: z.string().max(200),
+}) satisfies z.ZodType<UsageEventInput>;
+
+export const usageEventsSchema = z.object({
+  events: z.array(usageEventSchema).min(1).max(100),
+});
 
 /** 栄養成分表示・料理の写真の読み取りリクエスト。 */
 export const imageBodySchema = z.object({

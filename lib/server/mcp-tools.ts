@@ -17,6 +17,7 @@ import { createLogActivity } from '@/lib/server/log-activities';
 import { createLogItem, listLogItemsBetween } from '@/lib/server/log-items';
 import { getSettings } from '@/lib/server/settings';
 import { listSports } from '@/lib/server/sports';
+import { recordUsageEvents } from '@/lib/server/usage-events';
 import {
   defaultTimestampFor,
   formatDate,
@@ -152,8 +153,28 @@ const WRITE_ANNOTATIONS = {
   idempotentHint: false,
 };
 
+type ToolCallback = (...args: unknown[]) => unknown;
+
+/** registerTool の型はオーバーロードが多いため、差し替え用に引数を緩めて扱う。 */
+interface ToolRegistry {
+  registerTool(name: string, config: unknown, cb: ToolCallback): unknown;
+}
+
+/** 登録するツールの呼び出しを利用状況として記録する。コールバックの最後の引数が ctx になる。 */
+function trackToolCalls(server: McpServer) {
+  const registry = server as unknown as ToolRegistry;
+  const registerTool = registry.registerTool.bind(registry);
+  registry.registerTool = (name, config, cb) =>
+    registerTool(name, config, async (...args) => {
+      const userId = userIdOf(args.at(-1) as ServerContext);
+      await recordUsageEvents(userId, [{ kind: 'mcp', name, path: null }]);
+      return cb(...args);
+    });
+}
+
 /** 献立の提案と食事・運動の記録に使うツール群。栄養値の単位は g / kcal。 */
 export function registerMealPlanningTools(server: McpServer) {
+  trackToolCalls(server);
   server.registerTool(
     'get_nutrition_status',
     {

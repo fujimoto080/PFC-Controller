@@ -30,6 +30,7 @@ export function FavoriteChips({ date }: { date: string }) {
         <button
           key={food.id}
           type="button"
+          data-track="お気に入りから記録"
           className="bg-card hover:bg-muted/60 flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-transform active:scale-95"
           onClick={() => {
             void addFoodItem(toLogInput(food, defaultTimestampFor(date)));

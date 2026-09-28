@@ -28,13 +28,14 @@ export default function PrivacyPolicyPage() {
           また、ユーザーが同期キーを設定した場合に限り、同データをクラウド（PostgreSQL）へ保存します。
           Google
           カレンダーと連携した場合に限り、食事の提案を作る際に当日の予定（時間・タイトル・場所）を読み取ります。予定は提案の作成にのみ使い、保存しません。
+          機能の改善のため、表示した画面と操作したボタンの名前・日時を記録します。
         </p>
       </section>
 
       <section className="space-y-3 text-sm leading-7">
         <h2 className="text-base font-semibold">2. 情報の利用目的</h2>
         <p>
-          取得した情報は、PFCバランスの計算、履歴表示、入力補助など、本アプリの機能提供のためにのみ利用します。
+          取得した情報は、PFCバランスの計算、履歴表示、入力補助など、本アプリの機能提供と改善のためにのみ利用します。
         </p>
       </section>
 

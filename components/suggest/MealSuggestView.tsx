@@ -275,7 +275,10 @@ function SlotSection({
                   key={suggestion.createdAt}
                   className="group rounded-xl border"
                 >
-                  <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm">
+                  <summary
+                    data-track="過去の提案を開く"
+                    className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm"
+                  >
                     <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-90" />
                     <span className="text-muted-foreground shrink-0 tabular-nums">
                       {formatTime(suggestion.createdAt)}

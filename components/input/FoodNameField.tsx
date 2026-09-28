@@ -43,6 +43,7 @@ export function FoodNameField({
             <button
               key={food.id}
               type="button"
+              data-track="食品名の候補を選択"
               className="hover:bg-muted/80 w-full rounded-md border p-2 text-left transition-colors"
               onClick={() => {
                 onSelect(food);

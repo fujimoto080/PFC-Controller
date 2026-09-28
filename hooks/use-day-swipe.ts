@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
+import { trackUsage } from '@/lib/client/usage';
 
 // 指に対して画面をどれだけ動かすか
 const DRAG_RATIO = 0.6;
@@ -80,6 +81,7 @@ export function useDaySwipe(date: string, onShift: (days: 1 | -1) => void) {
       if (dir !== 'Left' && dir !== 'Right') return;
       if (isIgnored(event)) return;
       const days = dir === 'Left' ? 1 : -1;
+      trackUsage('swipe', days === 1 ? '翌日へ' : '前日へ');
       if (prefersReducedMotion()) {
         onShift(days);
         return;

@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { UsageTracker } from '@/components/layout/UsageTracker';
 import { Button } from '@/components/ui/button';
 import {
   hydrateFromCache,
@@ -66,6 +67,7 @@ export function CloudDataProvider({ children }: { children: React.ReactNode }) {
     <>
       {children}
       <BottomNav />
+      <UsageTracker />
     </>
   );
 }

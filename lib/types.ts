@@ -190,3 +190,23 @@ export interface MealNote {
 
 /** やり直し時に避けさせる案の件数と、1 件あたりの文字数の上限。 */
 export const MEAL_SUGGESTION_AVOID_LIMIT = { count: 30, length: 100 } as const;
+
+/** 利用状況の記録の種類。mcp はサーバー側でだけ記録する。 */
+export type UsageEventKind = 'page' | 'click' | 'swipe' | 'mcp';
+
+export interface UsageEventInput {
+  kind: Exclude<UsageEventKind, 'mcp'>;
+  /** 画面ならパス、操作ならボタンの名前など */
+  name: string;
+  /** 操作した画面のパス */
+  path: string;
+}
+
+/** 種類・名前・画面ごとの利用回数と最後に使った日時。 */
+export interface UsageSummaryRow {
+  kind: UsageEventKind;
+  name: string;
+  path: string | null;
+  count: number;
+  lastUsedAt: string;
+}

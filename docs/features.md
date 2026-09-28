@@ -18,6 +18,7 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 
 - **食品リスト**（`/foods`）
 - **バーコード一覧**（`/barcodes`）
+- **利用状況**（`/usage`）
 
 補助ページ:
 
@@ -282,6 +283,13 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 
 - `pfc_add_food_form_draft`（追加フォームの入力途中データ）
 - `pfc_manage_foods_collapsed`（食品管理画面の折りたたみ状態）
+
+### 10.4 利用状況の記録
+
+- 使われていない機能を見つけるため、画面表示・クリックした操作・日付移動のスワイプ・MCP のツール呼び出しを `pfc_usage_events` に記録する
+- クライアントは `components/layout/UsageTracker.tsx` がクリックを拾い、5 秒ごと・画面を離れるときにまとめて `POST /api/usage-events` へ送る
+- 操作名は `data-track` > `aria-label` > 表示テキスト > アイコン名 の順に決める（`lib/client/usage.ts`）。食品名など中身で変わるボタンには `data-track` で固定の名前を付ける
+- 設定画面「登録データ」の「利用状況」（`/usage`）で、種類ごとに回数と最後に使った日時を多い順に表示する
 
 ---
 

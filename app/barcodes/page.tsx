@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { PageTitle } from '@/components/ui/page-title';
+import { StatusMessage } from '@/components/ui/status-message';
 import type { BarcodeMappingRow } from '@/lib/barcode';
 import { fetchBarcodeMappings } from '@/lib/client/api';
 
@@ -26,11 +27,11 @@ export default function BarcodesPage() {
 
       <div className="space-y-2 px-4">
         {mappings === 'loading' ? (
-          <Message>読み込み中...</Message>
+          <StatusMessage>読み込み中...</StatusMessage>
         ) : mappings === 'failed' ? (
-          <Message>バーコードの取得に失敗しました</Message>
+          <StatusMessage>バーコードの取得に失敗しました</StatusMessage>
         ) : mappings.length === 0 ? (
-          <Message>登録済みのバーコードはありません</Message>
+          <StatusMessage>登録済みのバーコードはありません</StatusMessage>
         ) : (
           <>
             <p className="text-muted-foreground text-sm">
@@ -54,11 +55,5 @@ export default function BarcodesPage() {
         )}
       </div>
     </div>
-  );
-}
-
-function Message({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-muted-foreground py-6 text-center text-sm">{children}</p>
   );
 }
