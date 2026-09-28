@@ -16,6 +16,7 @@
     "format:check": "oxfmt --check",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:e2e": "playwright test",
     "knip": "knip"
   },
   "dependencies": {
@@ -47,6 +48,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.61.1",
     "@serwist/turbopack": "^9.5.12",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/dom": "^10.4.2",

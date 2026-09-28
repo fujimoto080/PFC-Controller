@@ -134,3 +134,16 @@ PFC Balance で今日の摂取状況と直近の食事履歴を確認して、�
 pnpm test
 pnpm lint
 ```
+
+### E2E テスト
+
+Playwright でビルドしたアプリを起動し、モバイル端末（Pixel 7）の画面で主要な操作を確かめます（`e2e/`）。
+Google ログインは経由せず、テストごとに DB にユーザーを作り、アプリと同じ `AUTH_SECRET` で発行したセッション Cookie でログインします。
+接続先・認証設定は `e2e/env.ts` に固定しており、`.env.local` の DB は使いません。
+
+```bash
+# テスト用 Postgres（初回のみ作成。2 回目以降は docker start pfc-e2e-postgres）
+docker run -d --name pfc-e2e-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=pfc_e2e -p 54329:5432 postgres:17
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
