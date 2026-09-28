@@ -8,9 +8,11 @@ import {
   Sparkles,
   Store,
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
+import { mealSlotSchema } from '@/lib/api/schemas';
 import { fetchMealSuggestions, requestMealSuggestion } from '@/lib/client/api';
 import { getCurrentPosition } from '@/lib/client/device';
 import { useAppState } from '@/lib/client/store';
@@ -28,14 +30,12 @@ import { cn, formatDate, formatTime } from '@/lib/utils';
 import { StorePicker } from './StorePicker';
 import { SuggestionOptionCard } from './SuggestionOptionCard';
 
-interface Props {
-  initialSlot?: MealSlot;
-}
-
 /** 今日の残りと予定・現在地から、AI に朝昼晩の食事を提案させる画面。 */
-export function MealSuggestView({ initialSlot }: Props) {
-  const [slot, setSlot] = useState<MealSlot>(
-    () => initialSlot ?? slotForTime(Date.now()),
+export function MealSuggestView() {
+  // 通知からは ?slot=lunch のように食事枠を指定して開かれる
+  const slotParam = mealSlotSchema.safeParse(useSearchParams().get('slot'));
+  const [slot, setSlot] = useState<MealSlot>(() =>
+    slotParam.success ? slotParam.data : slotForTime(Date.now()),
   );
   // 今日の提案すべて（新しい順）。やり直しても前の提案は残す
   const [suggestions, setSuggestions] = useState<MealSuggestion[]>([]);

@@ -7,7 +7,7 @@ import type { MealSuggestion, MealSuggestionRequest } from '@/lib/types';
  * サーバ側の `defineRoute`（lib/api/handler.ts）と対になる。
  */
 
-class HttpError extends Error {
+export class HttpError extends Error {
   constructor(
     message: string,
     readonly status: number,

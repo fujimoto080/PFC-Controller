@@ -140,12 +140,18 @@ export interface MealSuggestion {
   sources: { title: string; url: string }[];
 }
 
-/** GET /api/user-data のレスポンス。未保存の設定はサーバー側で既定値が補われる。 */
+/** ログインユーザーの全データ。未保存の設定はサーバー側で既定値が補われる。 */
 export interface UserData {
   logs: Logs;
   settings: UserSettings;
   foods: FoodItem[];
   sports: SportDefinition[];
+}
+
+/** GET /api/user-data のレスポンス。どのユーザーのデータかをクライアントのキャッシュ切り替えに使う。 */
+export interface UserDataResponse {
+  userId: string;
+  data: UserData;
 }
 
 // 空 PFC 共通定数。直接参照すると意図せず共有されるため、利用側では必ずスプレッドで複製すること。

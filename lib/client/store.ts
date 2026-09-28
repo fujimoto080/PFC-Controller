@@ -1,9 +1,9 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { api } from '@/lib/client/api';
+import { api, HttpError } from '@/lib/client/api';
 import { toast } from '@/lib/toast';
-import type { UserData } from '@/lib/types';
+import type { UserData, UserDataResponse } from '@/lib/types';
 
 /**
  * ログインユーザーのデータを保持するクライアントストア。
@@ -65,34 +65,55 @@ export function useAppState(): AppState {
   return snapshot;
 }
 
-function selectUser(userId: string) {
-  if (currentUserId === userId) return;
-  currentUserId = userId;
-  state = null;
-}
+/** 最後にデータを取得できたユーザー。起動直後にどのキャッシュを表示するかに使う。 */
+const LAST_USER_KEY = 'pfc:last-user';
 
-/** キャッシュがあれば即座にストアへ反映する。 */
-export function hydrateFromCache(userId: string) {
-  selectUser(userId);
+/** 前回のユーザーのキャッシュがあれば即座にストアへ反映する。 */
+export function hydrateFromCache() {
   if (state) return;
   try {
-    const raw = localStorage.getItem(CACHE_KEY_PREFIX + userId);
-    if (raw) replaceState(JSON.parse(raw) as AppState);
+    const userId = localStorage.getItem(LAST_USER_KEY);
+    const raw = userId && localStorage.getItem(CACHE_KEY_PREFIX + userId);
+    if (!raw) return;
+    currentUserId = userId;
+    replaceState(JSON.parse(raw) as AppState);
   } catch {
     // 壊れたキャッシュは無視してサーバー取得を待つ
   }
 }
 
-export async function loadUserData(userId: string): Promise<boolean> {
-  selectUser(userId);
+function clearUser() {
+  currentUserId = null;
+  state = null;
   try {
-    const data = await api.get<UserData>('/api/user-data');
-    if (currentUserId !== userId) return false;
+    localStorage.removeItem(LAST_USER_KEY);
+  } catch {
+    // 削除できなくても次回の取得で正しいユーザーに切り替わる
+  }
+  for (const listener of listeners) listener();
+}
+
+export type LoadResult = 'ok' | 'unauthenticated' | 'failed';
+
+/** サーバーから最新を取得する。未ログインならキャッシュの表示もやめる。 */
+export async function loadUserData(): Promise<LoadResult> {
+  try {
+    const { userId, data } = await api.get<UserDataResponse>('/api/user-data');
+    currentUserId = userId;
+    try {
+      localStorage.setItem(LAST_USER_KEY, userId);
+    } catch {
+      // 保存できなくても次回はサーバー取得を待つだけ
+    }
     replaceState(data);
-    return true;
+    return 'ok';
   } catch (error) {
+    if (error instanceof HttpError && error.status === 401) {
+      clearUser();
+      return 'unauthenticated';
+    }
     toast.fromError('ユーザーデータの読み込みに失敗しました', error);
-    return false;
+    return 'failed';
   }
 }
 

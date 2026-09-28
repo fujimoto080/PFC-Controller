@@ -3,45 +3,45 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { Button } from '@/components/ui/button';
 import {
   hydrateFromCache,
   loadUserData,
   useStoreSnapshot,
+  type LoadResult,
 } from '@/lib/client/store';
 
 /** ユーザーデータを使わず、読み込み完了を待たずに表示する画面。 */
 const STANDALONE_PATHS = ['/login', '/oauth/authorize'];
 
-interface Props {
-  children: React.ReactNode;
-  userId: string | null;
-}
-
-export function CloudDataProvider({ children, userId }: Props) {
+/**
+ * ページは静的に配信し、ログイン状態とユーザーデータはクライアントで解決する。
+ * 前回のキャッシュで即表示しつつ、サーバーからの取得結果（未ログインなら 401）で確定させる。
+ */
+export function CloudDataProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const standalone = STANDALONE_PATHS.includes(pathname);
   const snapshot = useStoreSnapshot();
-  const [loadFailed, setLoadFailed] = useState(false);
+  const [result, setResult] = useState<LoadResult | null>(null);
 
   // キャッシュからの復元は paint 前に行ってローディング表示のチラつきを防ぐ
   useLayoutEffect(() => {
-    if (userId) hydrateFromCache(userId);
-  }, [userId]);
+    hydrateFromCache();
+  }, []);
 
-  // 鮮度を保つため、マウント時 / ユーザー変更時に裏で再取得する
+  // 鮮度を保つため、ユーザーデータを使う画面に入ったら裏で再取得する
   useEffect(() => {
-    if (!userId) return;
-    void loadUserData(userId).then((ok) => {
-      setLoadFailed(!ok);
-    });
-  }, [userId]);
+    if (standalone) return;
+    void loadUserData().then(setResult);
+  }, [standalone]);
 
-  if (STANDALONE_PATHS.includes(pathname)) return children;
+  if (standalone) return children;
 
-  if (!userId) return <UnauthenticatedGate />;
+  if (result === 'unauthenticated') return <UnauthenticatedGate />;
 
   if (!snapshot) {
-    return loadFailed ? (
+    return result === 'failed' ? (
       <div className="space-y-4 py-10 text-center">
         <p className="text-muted-foreground text-sm">
           データの読み込みに失敗しました。
@@ -61,7 +61,13 @@ export function CloudDataProvider({ children, userId }: Props) {
     );
   }
 
-  return children;
+  // 記録シートがユーザーデータを使うため、ナビも読み込み完了後に描画する
+  return (
+    <>
+      {children}
+      <BottomNav />
+    </>
+  );
 }
 
 function UnauthenticatedGate() {
