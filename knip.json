@@ -2,7 +2,6 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": ["app/sw.ts", "scripts/**/*.mjs"],
   "project": ["**/*.{ts,tsx,mjs,css}", "!twa/**"],
-  "ignoreDependencies": ["ts-node"],
   "ignoreIssues": {
     "components/ui/**": ["exports"]
   }
