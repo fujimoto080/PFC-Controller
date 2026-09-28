@@ -2,6 +2,7 @@ import type { BarcodeFood } from '@/lib/barcode';
 import {
   addBarcodeItem,
   batchTotal,
+  finishLoading,
   replaceWithFoods,
   restoreItems,
   type BatchItem,
@@ -69,6 +70,39 @@ describe('replaceWithFoods', () => {
       ['n1', 'サラダチキン'],
       ['n2', 'おにぎり'],
     ]);
+  });
+});
+
+describe('finishLoading', () => {
+  const loading = (food?: BarcodeFood): BatchItem => ({
+    id: 'a',
+    status: 'loading',
+    loadingLabel: '成分表示を読み取り中',
+    barcode: '4901234567894',
+    food,
+    quantity: 1,
+    linkBarcode: false,
+  });
+
+  it('読み取れた栄養値を入れて ready にする', () => {
+    expect(
+      finishLoading([loading()], 'a', { food: chicken, linkBarcode: true }),
+    ).toEqual([
+      expect.objectContaining({
+        status: 'ready',
+        food: chicken,
+        linkBarcode: true,
+        loadingLabel: undefined,
+      }),
+    ]);
+  });
+
+  it('失敗したら元の栄養値があれば ready、なければ未登録に戻す', () => {
+    expect(finishLoading([loading(onigiri)], 'a')[0]).toMatchObject({
+      status: 'ready',
+      food: onigiri,
+    });
+    expect(finishLoading([loading()], 'a')[0]?.status).toBe('missing');
   });
 });
 

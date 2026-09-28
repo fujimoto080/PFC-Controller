@@ -12,6 +12,7 @@ import {
 import { toLogInput } from '@/lib/food-form';
 import {
   addBarcodeItem,
+  finishLoading,
   readyFoods,
   replaceWithFoods,
   restoreItems,
@@ -58,6 +59,9 @@ export function useScanBatch() {
   const patch = (id: string, value: Partial<BatchItem>) => {
     update((current) => updateItem(current, id, value));
   };
+  const finish = (id: string, value?: Partial<BatchItem>) => {
+    update((current) => finishLoading(current, id, value));
+  };
   const remove = (id: string) => {
     update((current) => current.filter((item) => item.id !== id));
   };
@@ -73,15 +77,10 @@ export function useScanBatch() {
     }
     fetchBarcodeFood(barcode)
       .then((food) => {
-        patch(
-          id,
-          food
-            ? { status: 'ready', food, loadingLabel: undefined }
-            : { status: 'missing', loadingLabel: undefined },
-        );
+        finish(id, food ? { food } : undefined);
       })
       .catch((error: unknown) => {
-        patch(id, { status: 'missing', loadingLabel: undefined });
+        finish(id);
         toast.fromError('バーコード照会エラー', error);
       });
     return { id, duplicate: false };
@@ -119,22 +118,13 @@ export function useScanBatch() {
 
   /** 成分表示を撮った写真から栄養値を入れる（未登録の商品の入力・登録済みの商品の撮り直し）。 */
   const fillFromPhoto = async (id: string, imageDataUrl: string) => {
-    const previous = itemsRef.current.find((i) => i.id === id);
     patch(id, { status: 'loading', loadingLabel: '成分表示を読み取り中' });
     try {
       const food = await estimateNutritionFromImage(imageDataUrl);
-      patch(id, {
-        status: 'ready',
-        food,
-        linkBarcode: true,
-        loadingLabel: undefined,
-      });
+      finish(id, { food, linkBarcode: true });
     } catch (error) {
       // 撮り直しに失敗したら元の内容に戻す
-      patch(id, {
-        status: previous?.food ? 'ready' : 'missing',
-        loadingLabel: undefined,
-      });
+      finish(id);
       toast.fromError('写真の読み取りに失敗しました', error);
     }
   };

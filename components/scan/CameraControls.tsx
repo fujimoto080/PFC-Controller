@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Flashlight, FlashlightOff } from 'lucide-react';
 import {
+  applyCameraSettings,
   setContinuousFocus,
   supportsFocusMode,
   toVideoPoint,
@@ -68,8 +69,8 @@ function TrackControls({
   const zoomValue = zoom ?? min ?? 1;
 
   /** 設定を反映する。失敗したらトーストを出して false を返す */
-  const apply = (constraints: MediaTrackConstraintSet, failure: string) =>
-    track.applyConstraints({ advanced: [constraints] }).then(
+  const apply = (settings: MediaTrackConstraintSet, failure: string) =>
+    applyCameraSettings(track, settings).then(
       () => true,
       (error: unknown) => {
         toast.fromError(failure, error);
@@ -101,7 +102,7 @@ function TrackControls({
     // 商品を次々かざすため、しばらくしたら被写体に合わせ続けるモードに戻す
     window.clearTimeout(focusTimer.current);
     focusTimer.current = window.setTimeout(() => {
-      void setContinuousFocus(track).catch(() => undefined);
+      void setContinuousFocus(track);
     }, TAP_FOCUS_HOLD_MS);
   };
 

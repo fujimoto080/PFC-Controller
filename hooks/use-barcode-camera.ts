@@ -140,8 +140,7 @@ export function useBarcodeCamera(
       signal.throwIfAborted();
       const [videoTrack] = stream.getVideoTracks();
       if (videoTrack) {
-        // ピントの設定に失敗しても読み取りは続ける
-        await setContinuousFocus(videoTrack).catch(() => undefined);
+        await setContinuousFocus(videoTrack);
         setTrack(videoTrack);
       }
       if (!canDetect) return;

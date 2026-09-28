@@ -8,12 +8,22 @@ export function supportsFocusMode(
   return track.getCapabilities().focusMode?.includes(mode) ?? false;
 }
 
-/** 対応していれば、被写体に合わせてピントを合わせ続けるモードにする。 */
+/** カメラの設定（ピント・ズーム・ライトなど）を反映する。 */
+export function applyCameraSettings(
+  track: MediaStreamTrack,
+  settings: MediaTrackConstraintSet,
+): Promise<void> {
+  return track.applyConstraints({ advanced: [settings] });
+}
+
+/** 対応していれば、被写体に合わせてピントを合わせ続けるモードにする。失敗しても撮影・読み取りは続けられるため無視する。 */
 export async function setContinuousFocus(
   track: MediaStreamTrack,
 ): Promise<void> {
   if (!supportsFocusMode(track, 'continuous')) return;
-  await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+  await applyCameraSettings(track, { focusMode: 'continuous' }).catch(
+    () => undefined,
+  );
 }
 
 /**

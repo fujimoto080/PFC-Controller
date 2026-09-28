@@ -82,18 +82,32 @@ export function updateItem(
   return items.map((item) => (item.id === id ? { ...item, ...patch } : item));
 }
 
+/** 読み取り中を終える。栄養値があれば ready、なければ未登録にする。 */
+function settle(item: BatchItem): BatchItem {
+  return {
+    ...item,
+    status: item.food ? 'ready' : 'missing',
+    loadingLabel: undefined,
+  };
+}
+
+/** 照会・読み取りの結果（patch）を反映して読み取り中を終える。失敗なら patch は空で、元の栄養値に戻る。 */
+export function finishLoading(
+  items: BatchItem[],
+  id: string,
+  patch: Partial<BatchItem> = {},
+): BatchItem[] {
+  return items.map((item) =>
+    item.id === id ? settle({ ...item, ...patch }) : item,
+  );
+}
+
 /** 保存しておいた一覧を復元する。中断された照会は未登録、写真の読み取りは取り消す。 */
 export function restoreItems(items: BatchItem[]): BatchItem[] {
   return items.flatMap((item) => {
     if (item.status !== 'loading') return [item];
     if (!item.barcode) return [];
-    return [
-      {
-        ...item,
-        status: item.food ? ('ready' as const) : ('missing' as const),
-        loadingLabel: undefined,
-      },
-    ];
+    return [settle(item)];
   });
 }
 

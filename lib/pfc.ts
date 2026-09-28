@@ -2,7 +2,7 @@ import { PFC_KEYS, type PfcKey } from './macros';
 import type { DailyLog, Logs, PFC, UserSettings } from './types';
 import { roundPFC, shiftDate } from './utils';
 
-function mapPFC(fn: (key: PfcKey) => number): PFC {
+function mapPFC<T = number>(fn: (key: PfcKey) => T): Record<PfcKey, T> {
   return {
     protein: fn('protein'),
     fat: fn('fat'),
@@ -52,7 +52,7 @@ function dayTarget(target: PFC, log: DailyLog | undefined): PFC {
 export const CHEAT_DAY_STREAK = 6;
 
 /** 食事を1件以上記録した日を「記録した日」とする。 */
-function isRecorded(log: DailyLog | undefined): boolean {
+function isRecorded(log: DailyLog | undefined): log is DailyLog {
   return (log?.items.length ?? 0) > 0;
 }
 
@@ -87,6 +87,12 @@ interface CarryoverLot {
   amount: number;
 }
 
+/** date の時点で期限（CARRYOVER_DAYS 日）が切れていない繰越。 */
+function activeLots(lots: CarryoverLot[], date: string): CarryoverLot[] {
+  const oldest = shiftDate(date, -CARRYOVER_DAYS);
+  return lots.filter((lot) => lot.date >= oldest);
+}
+
 /**
  * 繰越の残りに新しい日の差分を加える。期限切れを捨ててから、
  * 符号が逆の繰越を古い順に相殺し、残った分を新しい繰越として積む。
@@ -96,8 +102,7 @@ function addCarryover(
   date: string,
   amount: number,
 ): CarryoverLot[] {
-  const oldest = shiftDate(date, -CARRYOVER_DAYS);
-  const next = lots.filter((lot) => lot.date >= oldest);
+  const next = activeLots(lots, date);
   let rest = amount;
   let head = next[0];
   while (head && rest * head.amount < 0) {
@@ -118,10 +123,10 @@ function addCarryover(
 
 /** currentDate に効いている繰越の合計。 */
 function carryoverTotal(lots: CarryoverLot[], currentDate: string): number {
-  const oldest = shiftDate(currentDate, -CARRYOVER_DAYS);
-  return lots
-    .filter((lot) => lot.date >= oldest)
-    .reduce((total, lot) => total + lot.amount, 0);
+  return activeLots(lots, currentDate).reduce(
+    (total, lot) => total + lot.amount,
+    0,
+  );
 }
 
 /** 上限の計算に使う設定。 */
@@ -155,12 +160,7 @@ function walkPfcHistory(
 ): PfcHistory {
   const excluded = new Set(carryoverExcludedDates);
   const firstDate = Object.keys(logs).sort()[0];
-  const lots: Record<PfcKey, CarryoverLot[]> = {
-    protein: [],
-    fat: [],
-    carbs: [],
-    calories: [],
-  };
+  const lots = mapPFC<CarryoverLot[]>(() => []);
   let streak = 0;
   let overDays = 0;
   if (firstDate !== undefined) {
@@ -169,7 +169,7 @@ function walkPfcHistory(
       const isCheatDay = streak >= CHEAT_DAY_STREAK;
       const goal = dayTarget(target, log);
       const carries = !excluded.has(date);
-      if (log && isRecorded(log) && carries) {
+      if (isRecorded(log) && carries) {
         const cap = isCheatDay ? cheatDayCap(goal, overDays) : undefined;
         for (const key of PFC_KEYS) {
           const over = log.total[key] - goal[key];
