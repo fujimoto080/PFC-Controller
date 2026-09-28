@@ -1,4 +1,4 @@
-// Image Capture 仕様のカメラ制御（ピント・ズーム・ライト）のうち、TypeScript 標準の lib.dom に未収録のもの
+// Image Capture 仕様のカメラ制御（ピント・ズーム・ライト・静止画の撮影）のうち、TypeScript 標準の lib.dom に未収録のもの
 // https://w3c.github.io/mediacapture-image/#mediatrackcapabilities-section
 
 interface MediaTrackCapabilities {
@@ -17,4 +17,9 @@ interface MediaTrackConstraintSet {
 
 interface MediaTrackSettings {
   focusMode?: string;
+}
+
+declare class ImageCapture {
+  constructor(track: MediaStreamTrack);
+  takePhoto(): Promise<Blob>;
 }

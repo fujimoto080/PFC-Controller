@@ -5,6 +5,12 @@ export type BarcodeFood = Pick<
   'name' | 'protein' | 'fat' | 'carbs' | 'calories' | 'store'
 >;
 
+/** 写真の AI 読み取り結果。response は AI が返したテキストそのもの（確認用） */
+export interface ImageReading {
+  foods: BarcodeFood[];
+  response: string;
+}
+
 export interface BarcodeMappingRow {
   barcode: string;
   food: BarcodeFood;

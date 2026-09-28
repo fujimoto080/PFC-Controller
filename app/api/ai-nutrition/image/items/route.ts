@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { defineRoute } from '@/lib/api/handler';
 import { imageBodySchema } from '@/lib/api/schemas';
 import {
-  askNutritionList,
   IMAGE_READING_INSTRUCTIONS,
+  readNutritionImage,
 } from '@/lib/server/nutrition';
 import { callOpenAIWithImage } from '@/lib/server/openai';
 
@@ -11,14 +11,15 @@ import { callOpenAIWithImage } from '@/lib/server/openai';
 export const POST = defineRoute(
   { label: 'AI栄養読み取り（複数）', auth: true, body: imageBodySchema },
   async (_req, { body }) => {
-    const foods = await askNutritionList(
+    const reading = await readNutritionImage(
       [
         ...IMAGE_READING_INSTRUCTIONS,
         '画像に複数の商品や栄養成分表示が写っている場合は、それぞれを別の食品として読み取ってください。同じ商品の表と裏など、同一商品と分かるものは1件にまとめます。',
       ],
+      true,
       (prompt) =>
         callOpenAIWithImage({ prompt, imageDataUrl: body.imageDataUrl }),
     );
-    return NextResponse.json(foods);
+    return NextResponse.json(reading);
   },
 );

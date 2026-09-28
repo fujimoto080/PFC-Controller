@@ -6,7 +6,7 @@ import {
   estimateNutrition,
   estimateNutritionFromImage,
 } from '@/lib/client/api';
-import { fileToDataUrl } from '@/lib/client/image';
+import { imageToDataUrl } from '@/lib/client/image';
 import type { BarcodeFood } from '@/lib/barcode';
 
 /** 実行中の AI 入力の種類。 */
@@ -47,7 +47,7 @@ export function useAiNutrition(onEstimated: (food: BarcodeFood) => void) {
 
   const estimateFromImage = (file: File) =>
     run('image', async () =>
-      estimateNutritionFromImage(await fileToDataUrl(file)),
+      estimateNutritionFromImage(await imageToDataUrl(file)),
     );
 
   return { text, setText, pending, estimate, estimateFromImage };

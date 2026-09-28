@@ -1,4 +1,9 @@
-import type { BarcodeFood, BarcodeMappingRow } from '@/lib/barcode';
+import type {
+  BarcodeFood,
+  BarcodeMappingRow,
+  ImageReading,
+} from '@/lib/barcode';
+import { recordAiReading } from '@/lib/client/ai-readings';
 import type {
   MealNote,
   MealSuggestion,
@@ -95,18 +100,41 @@ export function estimateNutrition(text: string): Promise<BarcodeFood> {
   return api.post('/api/ai-nutrition', { text });
 }
 
+/** 画像(dataURL)を AI に読み取らせ、送った画像と応答を確認用に残す。 */
+async function readImage(
+  url: string,
+  imageDataUrl: string,
+): Promise<BarcodeFood[]> {
+  try {
+    const { foods, response } = await api.post<ImageReading>(url, {
+      imageDataUrl,
+    });
+    recordAiReading({ image: imageDataUrl, response, foods });
+    return foods;
+  } catch (error) {
+    recordAiReading({
+      image: imageDataUrl,
+      foods: [],
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
 /** 画像(dataURL)の栄養成分表示を AI で読み取る。表示が無ければ写っている料理から推定する。 */
-export function estimateNutritionFromImage(
+export async function estimateNutritionFromImage(
   imageDataUrl: string,
 ): Promise<BarcodeFood> {
-  return api.post('/api/ai-nutrition/image', { imageDataUrl });
+  const [food] = await readImage('/api/ai-nutrition/image', imageDataUrl);
+  if (!food) throw new Error('栄養値を読み取れませんでした');
+  return food;
 }
 
 /** 画像(dataURL)に写った複数の商品の栄養成分表示をまとめて読み取る。 */
 export function readFoodsFromImage(
   imageDataUrl: string,
 ): Promise<BarcodeFood[]> {
-  return api.post('/api/ai-nutrition/image/items', { imageDataUrl });
+  return readImage('/api/ai-nutrition/image/items', imageDataUrl);
 }
 
 /** 今日の予定・気分（食事提案に使う）。 */

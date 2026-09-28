@@ -1,6 +1,6 @@
 import 'server-only';
 import { ApiError } from '@/lib/api/handler';
-import type { BarcodeFood } from '@/lib/barcode';
+import type { BarcodeFood, ImageReading } from '@/lib/barcode';
 import { hasNutrition } from '@/lib/pfc';
 import { roundPFC } from '@/lib/utils';
 
@@ -52,25 +52,28 @@ function normalizeNutrition(data: Partial<BarcodeFood>): BarcodeFood {
   };
 }
 
+/** 指示文に食品 1 件分の JSON 形式の指定を付け足したプロンプト。 */
+function nutritionPrompt(instructions: string[]): string {
+  return [
+    ...instructions,
+    '次のJSONのみを返してください。',
+    FOOD_JSON,
+    ...VALUE_INSTRUCTIONS,
+  ].join('\n');
+}
+
 /**
- * 指示文に JSON 形式の指定を付け足して AI に栄養値を答えさせ、食品として整形する。
+ * 指示文を AI に渡して栄養値を答えさせ、食品として整形する。
  * 栄養値が全部 0 なら読み取れなかったものとしてエラーにする。
  */
 export async function askNutrition(
   instructions: string[],
   generate: (prompt: string) => Promise<string>,
 ): Promise<BarcodeFood> {
-  const generatedText = await generate(
-    [
-      ...instructions,
-      '次のJSONのみを返してください。',
-      FOOD_JSON,
-      ...VALUE_INSTRUCTIONS,
-    ].join('\n'),
-  );
-
   const food = normalizeNutrition(
-    JSON.parse(extractJsonObject(generatedText)) as Partial<BarcodeFood>,
+    JSON.parse(
+      extractJsonObject(await generate(nutritionPrompt(instructions))),
+    ) as Partial<BarcodeFood>,
   );
   if (!hasNutrition(food)) {
     throw new ApiError('栄養値を読み取れませんでした', 422);
@@ -78,22 +81,50 @@ export async function askNutrition(
   return food;
 }
 
-/** askNutrition の複数件版。写っている商品ごとに 1 件ずつ返させる（0 件もあり得る）。栄養値が全部 0 の商品は除く。 */
-export async function askNutritionList(
-  instructions: string[],
-  generate: (prompt: string) => Promise<string>,
-): Promise<BarcodeFood[]> {
-  const generatedText = await generate(
-    [
-      ...instructions,
-      '次のJSONのみを返してください。foods は商品ごとに1件ずつ並べ、食品が写っていなければ空配列にします。',
-      `{"foods":[${FOOD_JSON}]}`,
-      ...VALUE_INSTRUCTIONS,
-    ].join('\n'),
-  );
+/** AI の出力から JSON を取り出して解釈する。JSON が無い・壊れている場合は undefined。 */
+function parseJsonOutput(text: string): unknown {
+  try {
+    return JSON.parse(extractJsonObject(text));
+  } catch {
+    return undefined;
+  }
+}
 
-  const parsed = JSON.parse(extractJsonObject(generatedText)) as {
-    foods?: Partial<BarcodeFood>[];
+/**
+ * 写真を AI に読み取らせる。確認できるよう AI の応答テキストもそのまま返す。
+ * 応答を解釈できない・栄養値が全部 0 のものは foods に含めない（読み取れなければ空配列）。
+ * multiple なら写っている商品ごとに 1 件ずつ答えさせる。
+ */
+export async function readNutritionImage(
+  instructions: string[],
+  multiple: boolean,
+  generate: (prompt: string) => Promise<string>,
+): Promise<ImageReading> {
+  const response = await generate(
+    multiple
+      ? [
+          ...instructions,
+          '次のJSONのみを返してください。foods は商品ごとに1件ずつ並べ、食品が写っていなければ空配列にします。',
+          `{"foods":[${FOOD_JSON}]}`,
+          ...VALUE_INSTRUCTIONS,
+        ].join('\n')
+      : nutritionPrompt(instructions),
+  );
+  const parsed = parseJsonOutput(response);
+  const candidates: unknown = multiple
+    ? (parsed as { foods?: unknown } | undefined)?.foods
+    : [parsed];
+  const foods = Array.isArray(candidates)
+    ? candidates
+        .filter(
+          (value): value is Partial<BarcodeFood> =>
+            typeof value === 'object' && value !== null,
+        )
+        .map(normalizeNutrition)
+        .filter(hasNutrition)
+    : [];
+  return {
+    foods,
+    response,
   };
-  return (parsed.foods ?? []).map(normalizeNutrition).filter(hasNutrition);
 }

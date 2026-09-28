@@ -20,7 +20,7 @@ function drawToDataUrl(
   return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 }
 
-function readAsDataUrl(file: File): Promise<string> {
+function readAsDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -35,7 +35,7 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 /** 写真ファイルを縮小した JPEG の dataURL にする。縮小できない形式はそのまま読む。 */
-export async function fileToDataUrl(file: File): Promise<string> {
+export async function imageToDataUrl(file: Blob): Promise<string> {
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file);
@@ -52,4 +52,16 @@ export async function fileToDataUrl(file: File): Promise<string> {
 /** 再生中のカメラ映像の今のフレームを dataURL にする。 */
 export function captureVideoFrame(video: HTMLVideoElement): string {
   return drawToDataUrl(video, video.videoWidth, video.videoHeight);
+}
+
+/** 映像のフレームではなく、カメラで静止画を撮れる（ImageCapture に対応している）か。 */
+export function supportsTakePhoto(): boolean {
+  return typeof ImageCapture !== 'undefined';
+}
+
+/**
+ * カメラで静止画を撮って dataURL にする。映像のフレームより高解像度で、撮影用のピント合わせも効く。
+ */
+export async function takePhoto(track: MediaStreamTrack): Promise<string> {
+  return imageToDataUrl(await new ImageCapture(track).takePhoto());
 }

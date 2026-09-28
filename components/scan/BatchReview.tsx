@@ -14,6 +14,7 @@ import {
   ScanBarcode,
   X,
 } from 'lucide-react';
+import { AiReadingLog } from '@/components/input/AiReadingLog';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { FoodNameField } from '@/components/input/FoodNameField';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
@@ -26,7 +27,7 @@ import { Label } from '@/components/ui/label';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import type { ScanBatch } from '@/hooks/use-scan-batch';
 import { toBarcodeFood } from '@/lib/barcode';
-import { fileToDataUrl } from '@/lib/client/image';
+import { imageToDataUrl } from '@/lib/client/image';
 import { useAppState } from '@/lib/client/store';
 import {
   EMPTY_FORM_VALUES,
@@ -77,6 +78,7 @@ export function BatchReview({
           商品がありません。バーコードを読み取るか写真から追加してください。
         </p>
         <AddMoreButtons batch={batch} onScanMore={onScanMore} />
+        <AiReadingLog className="text-left" />
       </div>
     );
   }
@@ -128,6 +130,7 @@ export function BatchReview({
       </ul>
 
       <AddMoreButtons batch={batch} onScanMore={onScanMore} />
+      <AiReadingLog />
 
       <div className="bg-muted/50 space-y-3 rounded-lg p-3">
         <div className="flex items-center gap-2">
@@ -202,7 +205,7 @@ function AddMoreButtons({
   const addFiles = async (files: File[]) => {
     for (const file of files) {
       try {
-        void batch.addPhoto(await fileToDataUrl(file));
+        void batch.addPhoto(await imageToDataUrl(file));
       } catch (error) {
         toast.fromError('画像の読み込みに失敗しました', error);
       }

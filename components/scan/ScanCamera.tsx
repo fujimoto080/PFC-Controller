@@ -20,7 +20,11 @@ import {
 } from '@/hooks/use-barcode-camera';
 import type { ScanBatch } from '@/hooks/use-scan-batch';
 import { vibrate } from '@/lib/client/device';
-import { captureVideoFrame } from '@/lib/client/image';
+import {
+  captureVideoFrame,
+  supportsTakePhoto,
+  takePhoto,
+} from '@/lib/client/image';
 import type { BatchItem } from '@/lib/scan-batch';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
@@ -139,6 +143,19 @@ export function PhotoCamera({
   );
 }
 
+/** photo: カメラで静止画を撮る / frame: 映っている映像のフレームを切り出す */
+type CaptureMode = 'photo' | 'frame';
+
+const CAPTURE_MODE_KEY = 'pfc_capture_mode';
+const CAPTURE_MODE_LABEL: Record<CaptureMode, string> = {
+  photo: '写真',
+  frame: '映像',
+};
+
+function readCaptureMode(): CaptureMode {
+  return localStorage.getItem(CAPTURE_MODE_KEY) === 'frame' ? 'frame' : 'photo';
+}
+
 function CameraShell({
   title,
   hint,
@@ -194,19 +211,29 @@ function Viewfinder({
 }) {
   // 撮影したことが分かるよう画面を一瞬白くする。key を変えてアニメーションを再生する
   const [flashKey, setFlashKey] = useState(0);
+  const [mode, setMode] = useState(readCaptureMode);
+  const [taking, setTaking] = useState(false);
+  const canTakePhoto = track !== null && supportsTakePhoto();
 
-  const capture = () => {
+  const capture = async () => {
     const video = videoRef.current;
     if (!video || video.videoWidth === 0) {
       toast.info('カメラの準備中です');
       return;
     }
+    setFlashKey((key) => key + 1);
+    vibrate(20);
     try {
-      onCapture(captureVideoFrame(video));
-      setFlashKey((key) => key + 1);
-      vibrate(20);
+      if (canTakePhoto && mode === 'photo') {
+        setTaking(true);
+        onCapture(await takePhoto(track));
+      } else {
+        onCapture(captureVideoFrame(video));
+      }
     } catch (error) {
       toast.fromError('撮影に失敗しました', error);
+    } finally {
+      setTaking(false);
     }
   };
 
@@ -238,14 +265,43 @@ function Viewfinder({
           className="animate-out fade-out pointer-events-none absolute inset-0 bg-white opacity-0 duration-300"
         />
       )}
-      <div className="absolute inset-x-0 bottom-3 flex flex-col items-center gap-1">
+      {canTakePhoto && (
+        <fieldset className="absolute bottom-7 left-3 flex rounded-full bg-black/50 p-0.5 text-[11px]">
+          <legend className="sr-only">撮影方法</legend>
+          {(['photo', 'frame'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={mode === value}
+              className={cn(
+                'rounded-full px-2.5 py-1',
+                mode === value && 'bg-white text-black',
+              )}
+              onClick={() => {
+                setMode(value);
+                localStorage.setItem(CAPTURE_MODE_KEY, value);
+              }}
+            >
+              {CAPTURE_MODE_LABEL[value]}
+            </button>
+          ))}
+        </fieldset>
+      )}
+      <div className="pointer-events-none absolute inset-x-0 bottom-3 flex flex-col items-center gap-1">
         <button
           type="button"
-          onClick={capture}
+          onClick={() => {
+            void capture();
+          }}
+          disabled={taking}
           aria-label={shutterLabel}
-          className="flex size-16 items-center justify-center rounded-full border-4 border-white/60 bg-white text-black shadow-lg transition-transform active:scale-90"
+          className="pointer-events-auto flex size-16 items-center justify-center rounded-full border-4 border-white/60 bg-white text-black shadow-lg transition-transform active:scale-90 disabled:opacity-60"
         >
-          <Camera className="size-7" />
+          {taking ? (
+            <Loader2 className="size-7 animate-spin" />
+          ) : (
+            <Camera className="size-7" />
+          )}
         </button>
         <span className="rounded-full bg-black/50 px-2 py-0.5 text-[11px]">
           {shutterLabel}

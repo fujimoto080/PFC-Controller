@@ -104,7 +104,10 @@ export function useScanBatch() {
       const foods = await readFoodsFromImage(imageDataUrl);
       if (foods.length === 0) {
         remove(id);
-        toast.info('写真から商品を読み取れませんでした');
+        toast.info('写真から商品を読み取れませんでした', {
+          description:
+            '確認画面の「写真の読み取り結果を確認」から AI の応答を見られます',
+        });
         return;
       }
       update((current) => replaceWithFoods(current, id, foods, newId));

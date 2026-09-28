@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { Camera, Loader2Icon } from 'lucide-react';
+import { AiReadingLog } from '@/components/input/AiReadingLog';
 import { Button } from '@/components/ui/button';
 
 interface NutritionPhotoButtonProps {
@@ -11,7 +12,7 @@ interface NutritionPhotoButtonProps {
   reading: boolean;
 }
 
-/** 栄養成分表示や料理を撮影し、その写真を渡すボタン。 */
+/** 栄養成分表示や料理を撮影し、その写真を渡すボタン。直近の読み取り結果も確認できる。 */
 export function NutritionPhotoButton({
   onCapture,
   disabled,
@@ -52,6 +53,7 @@ export function NutritionPhotoButton({
           if (file) onCapture(file);
         }}
       />
+      <AiReadingLog />
     </>
   );
 }
