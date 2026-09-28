@@ -1,13 +1,15 @@
 'use client';
 
 import { useId, useMemo, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { CHAIN_STORES } from '@/lib/chain-stores';
+import { DEFAULT_MEAL_INSTRUCTIONS } from '@/lib/meal-instructions';
 import { useAutoSave } from '@/hooks/use-auto-save';
 import { updateSettings } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
@@ -15,24 +17,12 @@ import { collectStores } from '@/lib/store-sections';
 import type { StorePreference } from '@/lib/types';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 
-/** 「、」「,」や改行で区切った入力を食材名の配列にする。 */
-function splitWords(text: string): string[] {
-  return [
-    ...new Set(
-      text
-        .split(/[、,，\n]/)
-        .map((word) => word.trim())
-        .filter(Boolean),
-    ),
-  ];
-}
-
-/** 食事提案で参考にする苦手な食材と、お店ごとの定番メニュー。 */
+/** 食事提案で AI に渡す指示と、お店ごとの定番メニュー。 */
 export function MealPreferenceSettingsPanel() {
   const { settings, foods, logs } = useAppState();
   const preferences = settings.mealPreferences;
-  const [dislikes, setDislikes] = useState(
-    preferences?.dislikes.join('、') ?? '',
+  const [instructions, setInstructions] = useState(
+    preferences?.instructions ?? DEFAULT_MEAL_INSTRUCTIONS,
   );
   const [stores, setStores] = useState<StorePreference[]>(
     preferences?.stores ?? [],
@@ -59,7 +49,7 @@ export function MealPreferenceSettingsPanel() {
   const status = useAutoSave(
     {
       mealPreferences: {
-        dislikes: splitWords(dislikes),
+        instructions: instructions.trim(),
         stores: stores
           .map((s) => ({ store: s.store.trim(), menu: s.menu.trim() }))
           .filter((s) => s.store !== '' && s.menu !== ''),
@@ -80,17 +70,31 @@ export function MealPreferenceSettingsPanel() {
         </p>
 
         <div className="space-y-1.5">
-          <Label htmlFor="dislikes">苦手な食材</Label>
-          <Input
-            id="dislikes"
-            value={dislikes}
+          <div className="flex items-center justify-between">
+            <Label htmlFor="meal-instructions">AI への指示</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={instructions === DEFAULT_MEAL_INSTRUCTIONS}
+              onClick={() => {
+                setInstructions(DEFAULT_MEAL_INSTRUCTIONS);
+              }}
+            >
+              <RotateCcw />
+              既定に戻す
+            </Button>
+          </div>
+          <Textarea
+            id="meal-instructions"
+            rows={8}
+            value={instructions}
             onChange={(e) => {
-              setDislikes(e.target.value);
+              setInstructions(e.target.value);
             }}
-            placeholder="例: パクチー、レバー、セロリ"
           />
           <p className="text-muted-foreground text-xs">
-            「、」で区切って複数入力できます。
+            メニュー選びのルールとして AI に渡します。苦手な食材（例:
+            「パクチー・レバーが入ったメニューは出さない」）もここに書きます。
           </p>
         </div>
 

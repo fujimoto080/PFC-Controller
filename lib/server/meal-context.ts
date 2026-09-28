@@ -74,7 +74,7 @@ export async function getNutritionStatus(userId: string, date: string) {
     meals: log ? toDay(log).meals : [],
     activities: log ? log.activities.map(toActivity) : [],
     profile: settings.profile,
-    /** 苦手な食材・お店ごとの定番メニュー */
+    /** 食事提案の指示・お店ごとの定番メニュー */
     mealPreferences: settings.mealPreferences,
   };
 }

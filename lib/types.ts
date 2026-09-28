@@ -85,8 +85,8 @@ export interface StorePreference {
 
 /** 食事提案で参考にする食の好み。 */
 export interface MealPreferences {
-  /** 苦手な食材（例: パクチー、レバー） */
-  dislikes: string[];
+  /** 食事提案で AI に渡す指示。苦手な食材などもここに書く */
+  instructions: string;
   stores: StorePreference[];
 }
 

@@ -3,6 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 import { ApiError } from '@/lib/api/handler';
 import { CHAIN_STORES } from '@/lib/chain-stores';
+import { DEFAULT_MEAL_INSTRUCTIONS } from '@/lib/meal-instructions';
 import {
   distanceMeters,
   mealSlotLabel,
@@ -177,10 +178,9 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     (store, index, all) => all.findIndex((s) => s.id === store.id) === index,
   );
 
-  const { dislikes, stores: storePreferences } = settings.mealPreferences ?? {
-    dislikes: [],
-    stores: [],
-  };
+  const instructions =
+    settings.mealPreferences?.instructions ?? DEFAULT_MEAL_INSTRUCTIONS;
+  const storePreferences = settings.mealPreferences?.stores ?? [];
   const mealsLeft = remainingMealCount(request.slot);
   const { avoid, welcome } = classifyRecentFoods(history, today);
   const slotLabel = mealSlotLabel(request.slot);
@@ -239,15 +239,7 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     '## メニュー選びのルール',
     `- 今日・昨日食べた物は避ける: ${avoid.join('、') || 'なし'}`,
     `- 2日以上前に食べた物はむしろ積極的に候補にしてよい: ${welcome.join('、') || 'なし'}`,
-    '- コンビニ（セブン-イレブン・ローソン・ファミリーマートなど）は毎週新商品が出るので、Web 検索で今週〜最近の新商品を調べ、条件に合えば積極的に入れる。',
-    '- 栄養値は Web 検索で公式サイトなどの公表値を確認して使う。見つからない場合だけ推定する。',
-    '- 実際にその店で買える・注文できるメニューにする。コンビニなら複数品の組み合わせでもよい。',
-    '- タンパク質を優先して確保し、脂質は残りを超えないようにする。',
-    ...(dislikes.length > 0
-      ? [
-          `- 苦手な食材: ${dislikes.join('、')}。これらが入ったメニューは出さない（抜き・別添えにできるならその旨を reason に書いてもよい）。`,
-        ]
-      : []),
+    ...(instructions ? [instructions] : []),
     '',
     '## 近くのお店',
     ...(stores.length > 0

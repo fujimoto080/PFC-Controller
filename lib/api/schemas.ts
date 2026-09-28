@@ -73,7 +73,7 @@ const mealScheduleSchema = z.object({
 }) satisfies z.ZodType<MealSchedule>;
 
 const mealPreferencesSchema = z.object({
-  dislikes: z.array(z.string().trim().min(1).max(50)).max(50),
+  instructions: z.string().trim().max(4000),
   stores: z
     .array(
       z.object({
