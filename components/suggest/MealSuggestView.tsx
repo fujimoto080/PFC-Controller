@@ -167,7 +167,7 @@ function MealNoteCard({
   );
 }
 
-/** 1 食分の提案。最新の提案と、その食事だけの提案し直し・前の提案を表示する。 */
+/** 1 食分の提案。最新の提案と、その食事だけの提案し直し・前の提案を表示する。見出しを押すと折り畳める。 */
 function SlotSection({
   slot,
   suggestions,
@@ -181,10 +181,12 @@ function SlotSection({
   onGenerate: (request: { stores?: NearbyStore[]; avoid?: string[] }) => void;
 }) {
   const [pickingStores, setPickingStores] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [current, ...previous] = suggestions;
 
   const generate = (request: { stores?: NearbyStore[]; avoid?: string[] }) => {
     setPickingStores(false);
+    setCollapsed(false);
     onGenerate(request);
   };
 
@@ -206,8 +208,33 @@ function SlotSection({
   return (
     <section className="space-y-3 border-t pt-4">
       <header className="flex items-center gap-2">
-        <h2 className="flex-1 font-semibold">{mealSlotLabel(slot)}</h2>
-        {current && current.stores.length > 0 && (
+        <h2 className="min-w-0 flex-1">
+          <button
+            type="button"
+            className="group flex w-full items-center gap-1.5 text-left"
+            aria-expanded={!collapsed}
+            onClick={() => {
+              setCollapsed((c) => !c);
+            }}
+          >
+            <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-aria-expanded:rotate-90" />
+            <span className="shrink-0 font-semibold">
+              {mealSlotLabel(slot)}
+            </span>
+            {/* 畳んでいる間も何が提案されたか・考え中かが分かるようにする */}
+            {collapsed &&
+              (loading ? (
+                <Loader2 className="text-muted-foreground size-4 animate-spin" />
+              ) : (
+                current && (
+                  <span className="text-muted-foreground min-w-0 truncate text-sm">
+                    {current.options.map((o) => o.store).join(' / ')}
+                  </span>
+                )
+              ))}
+          </button>
+        </h2>
+        {!collapsed && current && current.stores.length > 0 && (
           <Button
             variant="ghost"
             size="sm"
@@ -235,58 +262,62 @@ function SlotSection({
         </Button>
       </header>
 
-      {pickingStores && current && (
-        <StorePicker
-          stores={current.stores}
-          onSubmit={(stores) => {
-            generate({ stores });
-          }}
-        />
-      )}
+      {!collapsed && (
+        <>
+          {pickingStores && current && (
+            <StorePicker
+              stores={current.stores}
+              onSubmit={(stores) => {
+                generate({ stores });
+              }}
+            />
+          )}
 
-      {/* 考えている間も前の提案は見られるよう、読み込み表示は一覧の上に出す */}
-      {loading && (
-        <p className="bg-muted/50 flex items-center justify-center gap-2 rounded-xl py-6 text-sm">
-          <Loader2 className="size-4 animate-spin" />
-          近くのお店と新商品を調べて考えています…（30秒〜1分ほど）
-        </p>
-      )}
+          {/* 考えている間も前の提案は見られるよう、読み込み表示は一覧の上に出す */}
+          {loading && (
+            <p className="bg-muted/50 flex items-center justify-center gap-2 rounded-xl py-6 text-sm">
+              <Loader2 className="size-4 animate-spin" />
+              近くのお店と新商品を調べて考えています…（30秒〜1分ほど）
+            </p>
+          )}
 
-      {current ? (
-        <SuggestionSection suggestion={current} />
-      ) : (
-        !loading && (
-          <p className="text-muted-foreground py-4 text-center text-sm">
-            まだ提案はありません。
-          </p>
-        )
-      )}
+          {current ? (
+            <SuggestionSection suggestion={current} />
+          ) : (
+            !loading && (
+              <p className="text-muted-foreground py-4 text-center text-sm">
+                まだ提案はありません。
+              </p>
+            )
+          )}
 
-      {previous.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-muted-foreground text-xs font-medium">
-            前の提案（{previous.length}件）
-          </h3>
-          {previous.map((suggestion) => (
-            <details
-              key={suggestion.createdAt}
-              className="group rounded-xl border"
-            >
-              <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm">
-                <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-90" />
-                <span className="text-muted-foreground shrink-0 tabular-nums">
-                  {formatTime(suggestion.createdAt)}
-                </span>
-                <span className="min-w-0 flex-1 truncate">
-                  {suggestion.options.map((o) => o.store).join(' / ')}
-                </span>
-              </summary>
-              <div className="px-3 pb-3">
-                <SuggestionSection suggestion={suggestion} />
-              </div>
-            </details>
-          ))}
-        </div>
+          {previous.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-muted-foreground text-xs font-medium">
+                前の提案（{previous.length}件）
+              </h3>
+              {previous.map((suggestion) => (
+                <details
+                  key={suggestion.createdAt}
+                  className="group rounded-xl border"
+                >
+                  <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm">
+                    <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-90" />
+                    <span className="text-muted-foreground shrink-0 tabular-nums">
+                      {formatTime(suggestion.createdAt)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">
+                      {suggestion.options.map((o) => o.store).join(' / ')}
+                    </span>
+                  </summary>
+                  <div className="px-3 pb-3">
+                    <SuggestionSection suggestion={suggestion} />
+                  </div>
+                </details>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </section>
   );
