@@ -1,4 +1,5 @@
 import 'server-only';
+import { z } from 'zod';
 import { ApiError } from '@/lib/api/handler';
 import { assertAiResponseOk, requireAiText } from '@/lib/server/ai-response';
 
@@ -22,6 +23,15 @@ interface OpenAIResponse {
 export interface JsonSchemaFormat {
   name: string;
   schema: Record<string, unknown>;
+}
+
+/** Structured Outputs に渡す形。OpenAI は $schema を受け付けないので外す。 */
+export function toJsonSchemaFormat(
+  name: string,
+  schema: z.ZodType,
+): JsonSchemaFormat {
+  const { $schema: _, ...jsonSchema } = z.toJSONSchema(schema);
+  return { name, schema: jsonSchema };
 }
 
 export interface Citation {
@@ -102,8 +112,11 @@ export async function callOpenAIWithImage({
   return text;
 }
 
-/** Web 検索を使わせて OpenAI にテキストを生成させる。参照した URL も返す。 */
-export function callOpenAIWithWebSearch(prompt: string) {
+/** Web 検索を使わせて OpenAI に format の形の JSON を生成させる。参照した URL も返す。 */
+export function callOpenAIWithWebSearch(
+  prompt: string,
+  format: JsonSchemaFormat,
+) {
   return callOpenAI({
     model: 'gpt-5-mini',
     // 新商品・栄養値の検索と献立の組み立てにはある程度の推論が要る
@@ -119,5 +132,6 @@ export function callOpenAIWithWebSearch(prompt: string) {
         },
       },
     ],
+    text: { format: { type: 'json_schema', strict: true, ...format } },
   });
 }

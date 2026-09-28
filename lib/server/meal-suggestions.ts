@@ -18,8 +18,10 @@ import { getCalendarEventLines } from '@/lib/server/google-calendar';
 import { getMealHistory, getNutritionStatus } from '@/lib/server/meal-context';
 import { getMealNote } from '@/lib/server/meal-notes';
 import { findSurroundings } from '@/lib/server/nearby-stores';
-import { extractJsonObject } from '@/lib/server/nutrition';
-import { callOpenAIWithWebSearch } from '@/lib/server/openai';
+import {
+  callOpenAIWithWebSearch,
+  toJsonSchemaFormat,
+} from '@/lib/server/openai';
 import { getSettings } from '@/lib/server/settings';
 import type {
   GeoPoint,
@@ -315,8 +317,10 @@ async function buildPrompt(
   lines.push(
     '',
     '## 出力',
-    `食事ごとに異なるお店で3案出す。meals には ${slots.join(', ')} の順に1件ずつ入れる。次のJSONのみを返し、説明文やMarkdownは付けない。数値は半角、単位は g / kcal。`,
-    '{"meals":[{"slot":"breakfast | lunch | dinner","summary":"通知に出す30字以内の一言（1案目の要約）","options":[{"store":"店名","items":[{"name":"商品名","protein":0,"fat":0,"carbs":0,"calories":0}],"reason":"選んだ理由と残りとの関係を1〜2文","hasNewProduct":false}]}]}',
+    `食事ごとに異なるお店で3案出す。meals には ${slots.join(', ')} の順に1件ずつ入れる。`,
+    '- summary: 通知に出す30字以内の一言（1案目の要約）',
+    '- options: お店ごとの案。store は店名、items は注文する商品、reason は選んだ理由と残りとの関係を1〜2文、hasNewProduct は新商品を含むか',
+    '- items の protein / fat / carbs / calories は 1 商品あたりの g / kcal。公式の栄養成分を検索して使い、見つからなければ一般的な分量・栄養値から推定した値を入れる。0 にするのは本当に 0 の場合だけ。',
   );
 
   return { prompt: lines.join('\n'), today, stores };
@@ -324,35 +328,39 @@ async function buildPrompt(
 
 // ---- 生成 ----
 
-const number = z.coerce.number().catch(0);
-const outputMealSchema = z.object({
-  slot: mealSlotSchema,
-  summary: z.string().catch(''),
-  options: z
-    .array(
-      z.object({
-        store: z.string().catch(''),
-        items: z.array(
-          z.object({
-            name: z.string(),
-            protein: number,
-            fat: number,
-            carbs: number,
-            calories: number,
+/** AI に答えさせる形。Structured Outputs で固定し、栄養値が必ず数値で返るようにする。 */
+const outputSchema = z.strictObject({
+  meals: z.array(
+    z.strictObject({
+      slot: mealSlotSchema,
+      summary: z.string(),
+      options: z
+        .array(
+          z.strictObject({
+            store: z.string(),
+            items: z.array(
+              z.strictObject({
+                name: z.string(),
+                protein: z.number(),
+                fat: z.number(),
+                carbs: z.number(),
+                calories: z.number(),
+              }),
+            ),
+            reason: z.string(),
+            hasNewProduct: z.boolean(),
           }),
-        ),
-        reason: z.string().catch(''),
-        hasNewProduct: z.boolean().catch(false),
-      }),
-    )
-    .min(1),
+        )
+        .min(1),
+    }),
+  ),
 });
-const outputSchema = z.object({ meals: z.array(outputMealSchema) });
+const OUTPUT_FORMAT = toJsonSchemaFormat('meal_suggestions', outputSchema);
 
 /** AI の出力から、提案を頼んだ食事枠それぞれの提案を取り出す。 */
 function parseOutput(text: string, slots: MealSlot[]) {
   try {
-    const { meals } = outputSchema.parse(JSON.parse(extractJsonObject(text)));
+    const { meals } = outputSchema.parse(JSON.parse(text));
     return slots.map((slot) => {
       const meal = meals.find((m) => m.slot === slot);
       if (!meal) throw new Error(`${slot} の提案がありません`);
@@ -377,7 +385,10 @@ export async function generateMealSuggestions(
     : remainingSlots(slotForTime(Date.now()));
   if (request.location) await saveLastLocation(userId, request.location);
   const { prompt, today, stores } = await buildPrompt(userId, request, slots);
-  const { text, citations } = await callOpenAIWithWebSearch(prompt);
+  const { text, citations } = await callOpenAIWithWebSearch(
+    prompt,
+    OUTPUT_FORMAT,
+  );
   const createdAt = Date.now();
 
   const suggestions = parseOutput(text, slots).map((meal): MealSuggestion => {

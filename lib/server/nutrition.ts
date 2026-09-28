@@ -7,7 +7,7 @@ import {
   type ImageReading,
 } from '@/lib/barcode';
 import { hasNutrition } from '@/lib/pfc';
-import type { JsonSchemaFormat } from '@/lib/server/openai';
+import { type JsonSchemaFormat, toJsonSchemaFormat } from '@/lib/server/openai';
 import { roundPFC } from '@/lib/utils';
 
 const FOOD_JSON =
@@ -26,12 +26,6 @@ const imageFoodSchema = z.strictObject({
 });
 
 const imageFoodsSchema = z.strictObject({ foods: z.array(imageFoodSchema) });
-
-/** Structured Outputs に渡す形。OpenAI は $schema を受け付けないので外す。 */
-function toJsonSchemaFormat(name: string, schema: z.ZodType): JsonSchemaFormat {
-  const { $schema: _, ...jsonSchema } = z.toJSONSchema(schema);
-  return { name, schema: jsonSchema };
-}
 
 const VALUE_INSTRUCTIONS = [
   '数値は必ず半角数字で、単位はg/kcalです。',
@@ -59,7 +53,7 @@ export const IMAGE_READING_INSTRUCTIONS = [
   '商品名は画像に文字として写っていて読み取れた場合だけ設定し、推測で補わないでください。読み取れない場合、料理の写真なら料理名、それ以外は空文字にしてください。',
 ];
 
-export function extractJsonObject(rawText: string): string {
+function extractJsonObject(rawText: string): string {
   const fencedMatch = /```json\s*([\s\S]*?)\s*```/i.exec(rawText);
   if (fencedMatch?.[1]) return fencedMatch[1].trim();
 
