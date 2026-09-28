@@ -3,7 +3,7 @@ import {
   DEFAULT_MEAL_SCHEDULE,
   distanceMeters,
   planMeal,
-  remainingMealCount,
+  remainingSlots,
   slotForTime,
   weekdayOf,
 } from '@/lib/meal-schedule';
@@ -37,11 +37,15 @@ describe('slotForTime', () => {
   });
 });
 
-describe('remainingMealCount', () => {
-  it('この食事を含む残りの食事回数', () => {
-    expect(remainingMealCount('breakfast')).toBe(3);
-    expect(remainingMealCount('lunch')).toBe(2);
-    expect(remainingMealCount('dinner')).toBe(1);
+describe('remainingSlots', () => {
+  it('この食事を含む今日これからの食事枠', () => {
+    expect(remainingSlots('breakfast')).toEqual([
+      'breakfast',
+      'lunch',
+      'dinner',
+    ]);
+    expect(remainingSlots('lunch')).toEqual(['lunch', 'dinner']);
+    expect(remainingSlots('dinner')).toEqual(['dinner']);
   });
 });
 

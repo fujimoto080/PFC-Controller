@@ -16,11 +16,7 @@ import {
   unsubscribePush,
 } from '@/lib/client/device';
 import { useAppState } from '@/lib/client/store';
-import {
-  DEFAULT_MEAL_SCHEDULE,
-  MEAL_SLOTS,
-  WEEKDAY_LABELS,
-} from '@/lib/meal-schedule';
+import { DEFAULT_MEAL_SCHEDULE, WEEKDAY_LABELS } from '@/lib/meal-schedule';
 import { toast } from '@/lib/toast';
 import type { MealSchedule, NamedPlace } from '@/lib/types';
 import { cn, toggleItem } from '@/lib/utils';
@@ -153,13 +149,10 @@ function PushToggle() {
     }
   };
 
-  const times = MEAL_SLOTS.map((meta) => `${meta.short} ${meta.time}`).join(
-    ' / ',
-  );
   return (
     <div className="flex items-center gap-3">
       <p className="text-muted-foreground min-w-0 flex-1 text-sm">
-        毎日 {times} ごろに提案を通知します。
+        毎朝 7:00 ごろに今日の朝昼晩の提案を通知します。
       </p>
       <Button
         variant={subscribed ? 'outline' : 'default'}

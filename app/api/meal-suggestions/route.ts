@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { defineRoute } from '@/lib/api/handler';
 import { mealSuggestionRequestSchema } from '@/lib/api/schemas';
 import {
-  generateMealSuggestion,
+  generateMealSuggestions,
   listSuggestions,
 } from '@/lib/server/meal-suggestions';
 import { formatDate } from '@/lib/utils';
@@ -19,5 +19,5 @@ export const GET = defineRoute(
 export const POST = defineRoute(
   { label: '食事提案', auth: true, body: mealSuggestionRequestSchema },
   async (_req, { userId, body }) =>
-    NextResponse.json(await generateMealSuggestion(userId, body)),
+    NextResponse.json(await generateMealSuggestions(userId, body)),
 );

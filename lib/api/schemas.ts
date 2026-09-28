@@ -101,7 +101,7 @@ const nearbyStoreSchema = z.object({
 }) satisfies z.ZodType<NearbyStore>;
 
 export const mealSuggestionRequestSchema = z.object({
-  slot: mealSlotSchema,
+  slot: mealSlotSchema.optional(),
   location: geoPointSchema.optional(),
   stores: z.array(nearbyStoreSchema).max(30).optional(),
   avoid: z

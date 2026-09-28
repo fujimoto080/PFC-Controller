@@ -2,13 +2,15 @@ import 'server-only';
 
 import { z } from 'zod';
 import { ApiError } from '@/lib/api/handler';
+import { mealSlotSchema } from '@/lib/api/schemas';
 import { CHAIN_STORES } from '@/lib/chain-stores';
 import { DEFAULT_MEAL_INSTRUCTIONS } from '@/lib/meal-instructions';
 import {
   distanceMeters,
   mealSlotLabel,
   planMeal,
-  remainingMealCount,
+  remainingSlots,
+  slotForTime,
 } from '@/lib/meal-schedule';
 import { sumPFC } from '@/lib/pfc';
 import { getPool } from '@/lib/server/db';
@@ -20,6 +22,7 @@ import { callOpenAIWithWebSearch } from '@/lib/server/openai';
 import { getSettings } from '@/lib/server/settings';
 import type {
   GeoPoint,
+  MealSlot,
   MealSuggestion,
   MealSuggestionRequest,
   NearbyStore,
@@ -68,20 +71,24 @@ export async function getRecentLocation(
 
 // ---- 保存 ----
 
-async function saveSuggestion(
+/** 1 回の AI 呼び出しで作った提案（同じ日付・作成時刻）をまとめて保存する。 */
+async function saveSuggestions(
   userId: string,
-  suggestion: MealSuggestion,
+  date: string,
+  createdAt: number,
+  suggestions: MealSuggestion[],
 ): Promise<void> {
   await getPool().query(
     `INSERT INTO pfc_meal_suggestions
        (user_id, date, slot, suggestion_json, created_at)
-     VALUES ($1, $2, $3, $4::jsonb, to_timestamp($5 / 1000.0))`,
+     SELECT $1, $2, s.slot, s.json, to_timestamp($3 / 1000.0)
+     FROM unnest($4::text[], $5::jsonb[]) AS s(slot, json)`,
     [
       userId,
-      suggestion.date,
-      suggestion.slot,
-      JSON.stringify(suggestion),
-      suggestion.createdAt,
+      date,
+      createdAt,
+      suggestions.map((s) => s.slot),
+      suggestions.map((s) => JSON.stringify(s)),
     ],
   );
 }
@@ -144,7 +151,26 @@ function describeStores(stores: NearbyStore[]): string[] {
   );
 }
 
-async function buildPrompt(userId: string, request: MealSuggestionRequest) {
+/** 配分の説明。slots は提案する食事枠で、今日これからの食事の先頭から並ぶ。 */
+function describeAllocation(slots: MealSlot[]): string {
+  const [first] = slots;
+  if (!first) throw new Error('食事枠がありません');
+  const mealsLeft = remainingSlots(first).length;
+  if (slots.length > 1) {
+    return `今日はあと${mealsLeft}食（${slots.map(mealSlotLabel).join('・')}）。残りをこれらに配分し、全部食べると残りをちょうど使い切って1日を終えられる量にする（朝は軽め、夜の分を残しすぎない）。`;
+  }
+  return `この食事を含めて今日はあと${mealsLeft}食。${
+    mealsLeft === 1
+      ? '今日の最後の食事なので、残りをちょうど使い切って1日を終えられる量にする。'
+      : `残りを配分し、この食事は残りの約1/${mealsLeft}を目安にする（朝は軽め、夜の分を残しすぎない）。`
+  }`;
+}
+
+async function buildPrompt(
+  userId: string,
+  request: MealSuggestionRequest,
+  slots: MealSlot[],
+) {
   const now = Date.now();
   const today = formatDate(now);
   const [settings, status, history, calendar] = await Promise.all([
@@ -153,18 +179,23 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     getMealHistory(userId, HISTORY_DAYS),
     getCalendarEventLines(userId, today),
   ]);
-  const plan = planMeal(settings.mealSchedule, today, request.slot);
+  const plans = slots.map((slot) =>
+    planMeal(settings.mealSchedule, today, slot),
+  );
 
   // 現在地と、予定から見て行きそうな場所の周辺を調べる
   const places: { near: string; point: GeoPoint }[] = [];
   if (request.location)
     places.push({ near: '現在地', point: request.location });
-  for (const place of plan.places) {
+  for (const place of plans.flatMap((plan) => plan.places)) {
     const { point } = place;
     if (!point) continue;
     if (
-      request.location &&
-      distanceMeters(request.location, point) < SAME_PLACE_M
+      places.some(
+        (p) =>
+          p.near === place.label ||
+          distanceMeters(p.point, point) < SAME_PLACE_M,
+      )
     ) {
       continue;
     }
@@ -181,16 +212,16 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
   const instructions =
     settings.mealPreferences?.instructions ?? DEFAULT_MEAL_INSTRUCTIONS;
   const storePreferences = settings.mealPreferences?.stores ?? [];
-  const mealsLeft = remainingMealCount(request.slot);
   const { avoid, welcome } = classifyRecentFoods(history, today);
-  const slotLabel = mealSlotLabel(request.slot);
+  const slotLabels = slots.map((slot) => `「${mealSlotLabel(slot)}」`).join('');
 
   const lines = [
     'あなたは減量中のユーザーの食事を考える管理栄養士です。',
-    `今は ${today} ${formatTime(now)}（JST）。これから食べる「${slotLabel}」を提案してください。`,
+    `今は ${today} ${formatTime(now)}（JST）。これから食べる${slotLabels}を提案してください。`,
     '',
     '## 今日の予定と居場所',
-    ...plan.description,
+    // 食事枠ごとの説明は先頭の曜日・勤務の行が共通なので重複を除く
+    ...new Set(plans.flatMap((plan) => plan.description)),
     ...(calendar
       ? [
           'Google カレンダーの今日の予定（食事の時間帯に会議・移動・外出があれば、その場所で買える・食べられる物や、空き時間で済ませられる物にする）:',
@@ -215,11 +246,7 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
             : `今日はチートデー（毎日記録を続けたご褒美）。ただし最近超過した日が多いため、負債にならないのは上限から+${formatPfc(status.cheatDayCap)}まで。その範囲で食べたい物を楽しめる案も出してよい。`,
         ]
       : []),
-    `この食事を含めて今日はあと${mealsLeft}食。${
-      mealsLeft === 1
-        ? '今日の最後の食事なので、残りをちょうど使い切って1日を終えられる量にする。'
-        : `残りを配分し、この食事は残りの約1/${mealsLeft}を目安にする（朝は軽め、夜の分を残しすぎない）。`
-    }`,
+    describeAllocation(slots),
     '今日食べた物:',
     ...(status.meals.length > 0
       ? status.meals.map(
@@ -273,8 +300,8 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
   lines.push(
     '',
     '## 出力',
-    '異なるお店で3案出す。次のJSONのみを返し、説明文やMarkdownは付けない。数値は半角、単位は g / kcal。',
-    '{"summary":"通知に出す40字以内の一言（1案目の要約）","options":[{"store":"店名","items":[{"name":"商品名","protein":0,"fat":0,"carbs":0,"calories":0}],"reason":"選んだ理由と残りとの関係を1〜2文","hasNewProduct":false}]}',
+    `食事ごとに異なるお店で3案出す。meals には ${slots.join(', ')} の順に1件ずつ入れる。次のJSONのみを返し、説明文やMarkdownは付けない。数値は半角、単位は g / kcal。`,
+    '{"meals":[{"slot":"breakfast | lunch | dinner","summary":"通知に出す30字以内の一言（1案目の要約）","options":[{"store":"店名","items":[{"name":"商品名","protein":0,"fat":0,"carbs":0,"calories":0}],"reason":"選んだ理由と残りとの関係を1〜2文","hasNewProduct":false}]}]}',
   );
 
   return { prompt: lines.join('\n'), today, stores };
@@ -283,7 +310,8 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
 // ---- 生成 ----
 
 const number = z.coerce.number().catch(0);
-const outputSchema = z.object({
+const outputMealSchema = z.object({
+  slot: mealSlotSchema,
   summary: z.string().catch(''),
   options: z
     .array(
@@ -304,50 +332,65 @@ const outputSchema = z.object({
     )
     .min(1),
 });
+const outputSchema = z.object({ meals: z.array(outputMealSchema) });
 
-function parseOutput(text: string) {
+/** AI の出力から、提案を頼んだ食事枠それぞれの提案を取り出す。 */
+function parseOutput(text: string, slots: MealSlot[]) {
   try {
-    return outputSchema.parse(JSON.parse(extractJsonObject(text)));
+    const { meals } = outputSchema.parse(JSON.parse(extractJsonObject(text)));
+    return slots.map((slot) => {
+      const meal = meals.find((m) => m.slot === slot);
+      if (!meal) throw new Error(`${slot} の提案がありません`);
+      return meal;
+    });
   } catch (error) {
     console.error('meal suggestion parse error:', error, text);
     throw new ApiError('AI の提案を読み取れませんでした', 502);
   }
 }
 
-/** 今日の摂取状況・履歴・予定・周辺のお店をもとに AI に食事を提案させ、保存して返す。 */
-export async function generateMealSuggestion(
+/**
+ * 今日の摂取状況・履歴・予定・周辺のお店をもとに AI に食事を提案させ、保存して返す。
+ * slot 指定時はその食事だけ、省略時は今日これからの食事をまとめて 1 回の AI 呼び出しで提案する。
+ */
+export async function generateMealSuggestions(
   userId: string,
   request: MealSuggestionRequest,
-): Promise<MealSuggestion> {
+): Promise<MealSuggestion[]> {
+  const slots = request.slot
+    ? [request.slot]
+    : remainingSlots(slotForTime(Date.now()));
   if (request.location) await saveLastLocation(userId, request.location);
-  const { prompt, today, stores } = await buildPrompt(userId, request);
+  const { prompt, today, stores } = await buildPrompt(userId, request, slots);
   const { text, citations } = await callOpenAIWithWebSearch(prompt);
-  const output = parseOutput(text);
+  const createdAt = Date.now();
 
-  const options = output.options.map((option) => {
-    const items = option.items.map((item) => ({
-      ...item,
-      protein: roundPFC(Math.max(0, item.protein), 1),
-      fat: roundPFC(Math.max(0, item.fat), 1),
-      carbs: roundPFC(Math.max(0, item.carbs), 1),
-      calories: Math.round(Math.max(0, item.calories)),
-    }));
-    return { ...option, items, total: sumPFC(items) };
+  const suggestions = parseOutput(text, slots).map((meal): MealSuggestion => {
+    const options = meal.options.map((option) => {
+      const items = option.items.map((item) => ({
+        ...item,
+        protein: roundPFC(Math.max(0, item.protein), 1),
+        fat: roundPFC(Math.max(0, item.fat), 1),
+        carbs: roundPFC(Math.max(0, item.carbs), 1),
+        calories: Math.round(Math.max(0, item.calories)),
+      }));
+      return { ...option, items, total: sumPFC(items) };
+    });
+    return {
+      date: today,
+      slot: meal.slot,
+      createdAt,
+      summary:
+        meal.summary ||
+        options
+          .slice(0, 1)
+          .map((o) => `${o.store} ${o.items.map((i) => i.name).join('＋')}`)
+          .join(''),
+      options,
+      stores,
+      sources: citations.slice(0, 8),
+    };
   });
-  const suggestion: MealSuggestion = {
-    date: today,
-    slot: request.slot,
-    createdAt: Date.now(),
-    summary:
-      output.summary ||
-      options
-        .slice(0, 1)
-        .map((o) => `${o.store} ${o.items.map((i) => i.name).join('＋')}`)
-        .join(''),
-    options,
-    stores,
-    sources: citations.slice(0, 8),
-  };
-  await saveSuggestion(userId, suggestion);
-  return suggestion;
+  await saveSuggestions(userId, today, createdAt, suggestions);
+  return suggestions;
 }

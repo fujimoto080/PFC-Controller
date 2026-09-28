@@ -133,7 +133,7 @@ export interface MealSuggestion {
   date: string;
   slot: MealSlot;
   createdAt: number;
-  /** 提案全体の一言（通知本文にも使う） */
+  /** この食事の提案の一言（通知本文にも使う） */
   summary: string;
   options: MealSuggestionOption[];
   stores: NearbyStore[];
@@ -162,7 +162,8 @@ export function createEmptyDailyLog(date: string): DailyLog {
 }
 
 export interface MealSuggestionRequest {
-  slot: MealSlot;
+  /** 提案し直す食事枠。省略時は今日これからの食事（朝昼晩のうち残り）をまとめて提案する */
+  slot?: MealSlot;
   location?: GeoPoint;
   /** ユーザーが選んだお店。指定時はこの中からだけ提案する */
   stores?: NearbyStore[];

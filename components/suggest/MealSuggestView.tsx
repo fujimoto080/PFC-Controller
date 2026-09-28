@@ -8,15 +8,18 @@ import {
   Sparkles,
   Store,
 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageTitle } from '@/components/ui/page-title';
-import { mealSlotSchema } from '@/lib/api/schemas';
-import { fetchMealSuggestions, requestMealSuggestion } from '@/lib/client/api';
+import { fetchMealSuggestions, requestMealSuggestions } from '@/lib/client/api';
 import { getCurrentPosition } from '@/lib/client/device';
 import { useAppState } from '@/lib/client/store';
-import { MEAL_SLOTS, mealSlotLabel, slotForTime } from '@/lib/meal-schedule';
+import {
+  MEAL_SLOTS,
+  mealSlotLabel,
+  remainingSlots,
+  slotForTime,
+} from '@/lib/meal-schedule';
 import { computeDailyLimit, subtractPFC } from '@/lib/pfc';
 import { toast } from '@/lib/toast';
 import {
@@ -26,22 +29,17 @@ import {
   type MealSuggestion,
   type NearbyStore,
 } from '@/lib/types';
-import { cn, formatDate, formatTime } from '@/lib/utils';
+import { formatDate, formatTime } from '@/lib/utils';
 import { StorePicker } from './StorePicker';
 import { SuggestionOptionCard } from './SuggestionOptionCard';
 
-/** 今日の残りと予定・現在地から、AI に朝昼晩の食事を提案させる画面。 */
+/** 今日の残りと予定・現在地から、AI に朝昼晩の食事をまとめて提案させ、食事ごとに提案し直せる画面。 */
 export function MealSuggestView() {
-  // 通知からは ?slot=lunch のように食事枠を指定して開かれる
-  const slotParam = mealSlotSchema.safeParse(useSearchParams().get('slot'));
-  const [slot, setSlot] = useState<MealSlot>(() =>
-    slotParam.success ? slotParam.data : slotForTime(Date.now()),
-  );
   // 今日の提案すべて（新しい順）。やり直しても前の提案は残す
   const [suggestions, setSuggestions] = useState<MealSuggestion[]>([]);
-  const [loading, setLoading] = useState(false);
+  // 提案を考えている最中の食事枠
+  const [loadingSlots, setLoadingSlots] = useState<MealSlot[]>([]);
   const [note, setNote] = useState('');
-  const [pickingStores, setPickingStores] = useState(false);
 
   useEffect(() => {
     fetchMealSuggestions()
@@ -51,36 +49,98 @@ export function MealSuggestView() {
       });
   }, []);
 
-  const slotSuggestions = suggestions.filter((s) => s.slot === slot);
-  const [current, ...previous] = slotSuggestions;
-
-  const generate = async (options: {
+  /** slot 指定時はその食事だけ、省略時は今日これからの食事をまとめて提案させる。 */
+  const generate = async (request: {
+    slot?: MealSlot;
     stores?: NearbyStore[];
     avoid?: string[];
   }) => {
-    setLoading(true);
-    setPickingStores(false);
+    const slots = request.slot
+      ? [request.slot]
+      : remainingSlots(slotForTime(Date.now()));
+    setLoadingSlots((prev) => [...prev, ...slots]);
     try {
       const location = await getCurrentPosition();
       if (!location) toast.info('現在地を取得できないため、予定から考えます');
-      const suggestion = await requestMealSuggestion({
-        slot,
+      const created = await requestMealSuggestions({
         location,
         note: note.trim() || undefined,
-        ...options,
+        ...request,
       });
-      setSuggestions((prev) => [suggestion, ...prev]);
+      setSuggestions((prev) => [...created, ...prev]);
     } catch (error) {
       toast.fromError('提案に失敗しました', error);
     } finally {
-      setLoading(false);
+      setLoadingSlots((prev) => prev.filter((s) => !slots.includes(s)));
     }
+  };
+
+  return (
+    <div className="space-y-5">
+      <PageTitle className="mb-0">食事の提案</PageTitle>
+
+      <RemainingLine />
+
+      <div className="space-y-2">
+        <Input
+          value={note}
+          onChange={(e) => {
+            setNote(e.target.value);
+          }}
+          placeholder="今日の予定・気分（例: 13時から外出、麺が食べたい）"
+        />
+        <Button
+          className="w-full"
+          disabled={loadingSlots.length > 0}
+          onClick={() => {
+            void generate({});
+          }}
+        >
+          <Sparkles />
+          今日の食事をまとめて提案してもらう
+        </Button>
+      </div>
+
+      {MEAL_SLOTS.map(({ slot }) => (
+        <SlotSection
+          key={slot}
+          slot={slot}
+          suggestions={suggestions.filter((s) => s.slot === slot)}
+          loading={loadingSlots.includes(slot)}
+          onGenerate={(request) => {
+            void generate({ slot, ...request });
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** 1 食分の提案。最新の提案と、その食事だけの提案し直し・前の提案を表示する。 */
+function SlotSection({
+  slot,
+  suggestions,
+  loading,
+  onGenerate,
+}: {
+  slot: MealSlot;
+  /** この食事枠の今日の提案（新しい順） */
+  suggestions: MealSuggestion[];
+  loading: boolean;
+  onGenerate: (request: { stores?: NearbyStore[]; avoid?: string[] }) => void;
+}) {
+  const [pickingStores, setPickingStores] = useState(false);
+  const [current, ...previous] = suggestions;
+
+  const generate = (request: { stores?: NearbyStore[]; avoid?: string[] }) => {
+    setPickingStores(false);
+    onGenerate(request);
   };
 
   // 今日この食事枠で出した案すべてを避けさせ、同じ案に戻らないようにする
   const retry = () => {
-    void generate({
-      avoid: slotSuggestions
+    generate({
+      avoid: suggestions
         .flatMap((s) => s.options)
         .map((o) =>
           `${o.store} ${o.items.map((i) => i.name).join('＋')}`.slice(
@@ -93,82 +153,42 @@ export function MealSuggestView() {
   };
 
   return (
-    <div className="space-y-5">
-      <PageTitle className="mb-0">食事の提案</PageTitle>
-
-      <RemainingLine />
-
-      <div className="flex gap-1 rounded-lg border p-1">
-        {MEAL_SLOTS.map((meta) => (
-          <button
-            key={meta.slot}
-            type="button"
-            aria-pressed={slot === meta.slot}
-            className={cn(
-              'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
-              slot === meta.slot
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted',
-            )}
-            onClick={() => {
-              setSlot(meta.slot);
-              setPickingStores(false);
-            }}
-          >
-            {meta.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        <Input
-          value={note}
-          onChange={(e) => {
-            setNote(e.target.value);
-          }}
-          placeholder="今日の予定・気分（例: 13時から外出、麺が食べたい）"
-        />
-        <div className="flex gap-2">
-          <Button
-            className="flex-1"
-            disabled={loading}
-            onClick={() => {
-              void generate({});
-            }}
-          >
-            <Sparkles />
-            {current
-              ? '改めて提案してもらう'
-              : `${mealSlotLabel(slot)}を提案してもらう`}
-          </Button>
-          {current && (
-            <Button variant="outline" disabled={loading} onClick={retry}>
-              <RefreshCw />
-              別の案
-            </Button>
-          )}
-        </div>
+    <section className="space-y-3 border-t pt-4">
+      <header className="flex items-center gap-2">
+        <h2 className="flex-1 font-semibold">{mealSlotLabel(slot)}</h2>
         {current && current.stores.length > 0 && (
           <Button
             variant="ghost"
             size="sm"
-            className="w-full"
             disabled={loading}
+            aria-pressed={pickingStores}
             onClick={() => {
               setPickingStores((open) => !open);
             }}
           >
             <Store />
-            近くのお店から選んで提案
+            お店を選ぶ
           </Button>
         )}
-      </div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={loading}
+          onClick={() => {
+            if (current) retry();
+            else generate({});
+          }}
+        >
+          {current ? <RefreshCw /> : <Sparkles />}
+          {current ? '別の案' : '提案してもらう'}
+        </Button>
+      </header>
 
       {pickingStores && current && (
         <StorePicker
           stores={current.stores}
           onSubmit={(stores) => {
-            void generate({ stores });
+            generate({ stores });
           }}
         />
       )}
@@ -185,17 +205,17 @@ export function MealSuggestView() {
         <SuggestionSection suggestion={current} />
       ) : (
         !loading && (
-          <p className="text-muted-foreground py-10 text-center text-sm">
+          <p className="text-muted-foreground py-4 text-center text-sm">
             まだ提案はありません。
           </p>
         )
       )}
 
       {previous.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-muted-foreground text-xs font-medium">
+        <div className="space-y-2">
+          <h3 className="text-muted-foreground text-xs font-medium">
             前の提案（{previous.length}件）
-          </h2>
+          </h3>
           {previous.map((suggestion) => (
             <details
               key={suggestion.createdAt}
@@ -215,9 +235,9 @@ export function MealSuggestView() {
               </div>
             </details>
           ))}
-        </section>
+        </div>
       )}
-    </div>
+    </section>
   );
 }
 

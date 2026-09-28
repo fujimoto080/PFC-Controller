@@ -110,9 +110,9 @@ export function fetchMealSuggestions(): Promise<MealSuggestion[]> {
   return api.get('/api/meal-suggestions');
 }
 
-/** AI に食事を提案させる。Web 検索を伴うため数十秒かかる。 */
-export function requestMealSuggestion(
+/** AI に食事を提案させる（食事枠ごとに 1 件）。Web 検索を伴うため数十秒かかる。 */
+export function requestMealSuggestions(
   request: MealSuggestionRequest,
-): Promise<MealSuggestion> {
+): Promise<MealSuggestion[]> {
   return api.post('/api/meal-suggestions', request);
 }

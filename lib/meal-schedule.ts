@@ -1,17 +1,11 @@
 import type { GeoPoint, MealSchedule, MealSlot, NamedPlace } from '@/lib/types';
 import { formatTime, toJstTimestamp } from '@/lib/utils';
 
-/** 食事枠。time は提案通知を出す時刻（JST）。 */
 export const MEAL_SLOTS = [
-  { slot: 'breakfast', label: '朝ごはん', short: '朝', time: '07:00' },
-  { slot: 'lunch', label: '昼ごはん', short: '昼', time: '11:00' },
-  { slot: 'dinner', label: '晩ごはん', short: '夜', time: '17:00' },
-] as const satisfies readonly {
-  slot: MealSlot;
-  label: string;
-  short: string;
-  time: string;
-}[];
+  { slot: 'breakfast', label: '朝ごはん' },
+  { slot: 'lunch', label: '昼ごはん' },
+  { slot: 'dinner', label: '晩ごはん' },
+] as const satisfies readonly { slot: MealSlot; label: string }[];
 
 export function mealSlotLabel(slot: MealSlot): string {
   return MEAL_SLOTS.find((meta) => meta.slot === slot)?.label ?? slot;
@@ -25,9 +19,11 @@ export function slotForTime(timestamp: number): MealSlot {
   return 'dinner';
 }
 
-/** この食事を含め、今日あと何回食事があるか。 */
-export function remainingMealCount(slot: MealSlot): number {
-  return MEAL_SLOTS.length - MEAL_SLOTS.findIndex((meta) => meta.slot === slot);
+/** この食事を含め、今日これからの食事枠。 */
+export function remainingSlots(slot: MealSlot): MealSlot[] {
+  return MEAL_SLOTS.slice(
+    MEAL_SLOTS.findIndex((meta) => meta.slot === slot),
+  ).map((meta) => meta.slot);
 }
 
 export const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];

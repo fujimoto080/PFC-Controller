@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { ApiError, defineRoute } from '@/lib/api/handler';
-import { mealSlotSchema } from '@/lib/api/schemas';
 import { mealSlotLabel } from '@/lib/meal-schedule';
 import {
-  generateMealSuggestion,
+  generateMealSuggestions,
   getRecentLocation,
 } from '@/lib/server/meal-suggestions';
 import { listSubscribedUserIds, sendPush } from '@/lib/server/push';
@@ -11,7 +10,7 @@ import { listSubscribedUserIds, sendPush } from '@/lib/server/push';
 export const maxDuration = 300;
 
 /**
- * Vercel Cron から朝・昼・夜に呼ばれ、通知を購読しているユーザーごとに提案を作って通知する。
+ * Vercel Cron から毎朝呼ばれ、通知を購読しているユーザーごとに今日の朝昼晩の提案を作って通知する。
  * Vercel は CRON_SECRET を Bearer トークンとして付けて呼び出す。
  */
 export const GET = defineRoute(
@@ -24,23 +23,19 @@ export const GET = defineRoute(
     ) {
       throw new ApiError('認証が必要です', 401);
     }
-    const parsed = mealSlotSchema.safeParse(
-      request.nextUrl.searchParams.get('slot'),
-    );
-    if (!parsed.success) throw new ApiError('slot が不正です', 400);
-    const slot = parsed.data;
 
     const userIds = await listSubscribedUserIds();
     const results = await Promise.allSettled(
       userIds.map(async (userId) => {
-        const suggestion = await generateMealSuggestion(userId, {
-          slot,
+        const suggestions = await generateMealSuggestions(userId, {
           location: await getRecentLocation(userId),
         });
         await sendPush(userId, {
-          title: `${mealSlotLabel(slot)}の提案`,
-          body: suggestion.summary,
-          url: `/suggest?slot=${slot}`,
+          title: '今日の食事の提案',
+          body: suggestions
+            .map((s) => `${mealSlotLabel(s.slot)}: ${s.summary}`)
+            .join('\n'),
+          url: '/suggest',
         });
       }),
     );
