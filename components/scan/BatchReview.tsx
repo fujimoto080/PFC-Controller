@@ -51,22 +51,31 @@ interface BatchReviewProps {
   batch: ScanBatch;
   /** カメラに戻って続けて読み取る */
   onScanMore: () => void;
-  /** 未登録の商品の成分表示をカメラで撮る */
-  onTakePhoto: (id: string) => void;
   onDone: () => void;
 }
 
 /** まとめて読み取った商品を確認・修正し、一括で記録（または食品リストに登録）する。 */
-export function BatchReview({
-  batch,
-  onScanMore,
-  onTakePhoto,
-  onDone,
-}: BatchReviewProps) {
+export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
   const { foods, logs } = useAppState();
   const stores = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const eatAt = useEatDateTime();
   const [editingId, setEditingId] = useState<string | null>(null);
+  // 未登録の商品の成分表示は端末のカメラで撮る。撮った写真をどの商品に使うかを覚えておく
+  const photoTargetRef = useRef<string | null>(null);
+  const cameraRef = useRef<HTMLInputElement | null>(null);
+  const takePhoto = (id: string) => {
+    photoTargetRef.current = id;
+    cameraRef.current?.click();
+  };
+  const fillFromPhoto = async ([file]: File[]) => {
+    const id = photoTargetRef.current;
+    if (!file || !id) return;
+    try {
+      void batch.fillFromPhoto(id, await imageToDataUrl(file));
+    } catch (error) {
+      toast.fromError('画像の読み込みに失敗しました', error);
+    }
+  };
   const { items, record } = batch;
 
   const readyCount = readyFoods(items).length;
@@ -105,7 +114,7 @@ export function BatchReview({
                 }}
                 onRetakePhoto={() => {
                   setEditingId(null);
-                  onTakePhoto(item.id);
+                  takePhoto(item.id);
                 }}
               />
             </li>
@@ -118,7 +127,7 @@ export function BatchReview({
                 setEditingId(item.id);
               }}
               onTakePhoto={() => {
-                onTakePhoto(item.id);
+                takePhoto(item.id);
               }}
               onQuantityChange={(quantity) => {
                 batch.setQuantity(item.id, quantity);
@@ -133,6 +142,13 @@ export function BatchReview({
 
       <AddMoreButtons batch={batch} onScanMore={onScanMore} />
       <AiReadingLog />
+      <ImageFileInput
+        ref={cameraRef}
+        capture
+        onSelect={(files) => {
+          void fillFromPhoto(files);
+        }}
+      />
 
       <div className="bg-muted/50 space-y-3 rounded-lg p-3">
         <div className="flex items-center gap-2">

@@ -71,7 +71,6 @@ export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
         videoRef={videoRef}
         track={track}
         className={cn(feedback && SCAN_FEEDBACK_CLASS[feedback])}
-        guide="barcode"
         shutterLabel="成分表示を撮影"
         onCapture={(dataUrl) => {
           setLastId(null);
@@ -111,37 +110,6 @@ export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
         {count === 0 ? 'まだ商品がありません' : `${count}品を確認`}
         {count > 0 && <ArrowRight />}
       </Button>
-    </CameraShell>
-  );
-}
-
-/** 未登録の商品の成分表示を 1 枚撮る。 */
-export function PhotoCamera({
-  onCapture,
-  onClose,
-}: {
-  onCapture: (dataUrl: string) => void;
-  onClose: () => void;
-}) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const { track } = useBarcodeCamera(videoRef, {
-    detect: false,
-    onError: onClose,
-  });
-
-  return (
-    <CameraShell
-      title="成分表示を撮影"
-      hint="栄養成分表示が枠に収まるように撮るか、右下から画像を選んでください"
-      onClose={onClose}
-    >
-      <Viewfinder
-        videoRef={videoRef}
-        track={track}
-        guide="label"
-        shutterLabel="撮影"
-        onCapture={onCapture}
-      />
     </CameraShell>
   );
 }
@@ -199,15 +167,12 @@ function CameraShell({
 function Viewfinder({
   videoRef,
   track,
-  guide,
   shutterLabel,
   onCapture,
   className,
 }: {
   videoRef: RefObject<HTMLVideoElement | null>;
   track: MediaStreamTrack | null;
-  /** 狙いやすいよう出す目安の枠。検出は画面全体から行う */
-  guide: 'barcode' | 'label';
   shutterLabel: string;
   onCapture: (dataUrl: string) => void;
   className?: string;
@@ -263,14 +228,8 @@ function Viewfinder({
         muted
         playsInline
       />
-      <div
-        className={cn(
-          'pointer-events-none absolute left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 border-white/80',
-          guide === 'barcode'
-            ? 'top-[42%] h-[22%] w-4/5'
-            : 'top-[45%] h-3/5 w-4/5 border-dashed',
-        )}
-      />
+      {/* バーコードを狙いやすいよう出す目安の枠。検出は画面全体から行う */}
+      <div className="pointer-events-none absolute top-[42%] left-1/2 h-[22%] w-4/5 -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 border-white/80" />
       <CameraControls track={track} videoRef={videoRef} />
       {flashKey > 0 && (
         <div

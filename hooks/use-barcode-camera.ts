@@ -36,14 +36,12 @@ export const SCAN_FEEDBACK_CLASS = {
 } as const;
 
 interface BarcodeCameraOptions {
-  /** 確定したバーコード。detect が false なら呼ばれない */
-  onScan?: (code: string) => void;
+  /** 確定したバーコード */
+  onScan: (code: string) => void;
   /** カメラを起動できなかったとき */
   onError: () => void;
   /** true なら読み取り後もカメラを止めずに次を待つ */
   continuous?: boolean;
-  /** false ならバーコード検出をせず映像だけ映す（撮影用） */
-  detect?: boolean;
 }
 
 function nextVideoFrame(video: HTMLVideoElement) {
@@ -76,7 +74,7 @@ export function useBarcodeCamera(
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const { continuous = false, detect = true } = optionsRef.current;
+    const { continuous = false } = optionsRef.current;
     const scanCounts = new Map<string, number>();
     const lastScannedAt = new Map<string, number>();
     // スキャン完了・失敗・アンマウントのいずれかで abort し、検出ループを止める
@@ -120,12 +118,12 @@ export function useBarcodeCamera(
       }
       showFeedback('success');
       vibrate(40);
-      optionsRef.current.onScan?.(rawValue);
+      optionsRef.current.onScan(rawValue);
     };
 
     const start = async () => {
-      const canDetect = detect && typeof BarcodeDetector !== 'undefined';
-      if (detect && !canDetect) setDetectorSupported(false);
+      const canDetect = typeof BarcodeDetector !== 'undefined';
+      if (!canDetect) setDetectorSupported(false);
       // 小さなバーコードや成分表示の文字も読めるよう高解像度を要求する
       stream = await navigator.mediaDevices.getUserMedia({
         video: {

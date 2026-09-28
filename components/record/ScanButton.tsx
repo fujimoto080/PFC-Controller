@@ -3,16 +3,12 @@
 import { useState } from 'react';
 import { ScanBarcode } from 'lucide-react';
 import { BatchReview } from '@/components/scan/BatchReview';
-import { BatchCamera, PhotoCamera } from '@/components/scan/ScanCamera';
+import { BatchCamera } from '@/components/scan/ScanCamera';
 import { useScanBatch } from '@/hooks/use-scan-batch';
 import { RecordDrawer } from './RecordDrawer';
 
-/** 表示中の画面。photo は未登録の商品（id）の成分表示を撮るカメラ。 */
-type View =
-  | { kind: 'camera' }
-  | { kind: 'review' }
-  | { kind: 'photo'; id: string }
-  | null;
+/** 表示中の画面。 */
+type View = { kind: 'camera' } | { kind: 'review' } | null;
 
 /**
  * 押すとカメラを開き、バーコードや成分表示の写真で商品を次々に溜める。
@@ -58,15 +54,6 @@ export function ScanButton() {
       {view?.kind === 'camera' && (
         <BatchCamera batch={batch} onDone={openReview} onClose={close} />
       )}
-      {view?.kind === 'photo' && (
-        <PhotoCamera
-          onCapture={(dataUrl) => {
-            void batch.fillFromPhoto(view.id, dataUrl);
-            openReview();
-          }}
-          onClose={openReview}
-        />
-      )}
 
       <RecordDrawer
         open={view?.kind === 'review'}
@@ -77,9 +64,6 @@ export function ScanButton() {
           batch={batch}
           onScanMore={() => {
             setView({ kind: 'camera' });
-          }}
-          onTakePhoto={(id) => {
-            setView({ kind: 'photo', id });
           }}
           onDone={close}
         />
