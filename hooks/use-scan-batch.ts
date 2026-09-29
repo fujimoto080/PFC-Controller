@@ -5,7 +5,7 @@ import { useFormDraft } from '@/hooks/use-form-draft';
 import type { BarcodeFood } from '@/lib/barcode';
 import { addFoodItem, rememberFood } from '@/lib/client/actions';
 import {
-  estimateNutritionFromImage,
+  estimateNutritionFromImages,
   fetchBarcodeFood,
   readFoodsFromImage,
 } from '@/lib/client/api';
@@ -120,7 +120,7 @@ export function useScanBatch() {
   const fillFromPhoto = async (id: string, imageDataUrl: string) => {
     patch(id, { status: 'loading', loadingLabel: '成分表示を読み取り中' });
     try {
-      const food = await estimateNutritionFromImage(imageDataUrl);
+      const food = await estimateNutritionFromImages([imageDataUrl]);
       finish(id, { food, linkBarcode: true });
     } catch (error) {
       // 撮り直しに失敗したら元の内容に戻す

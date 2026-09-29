@@ -5,6 +5,9 @@ export type BarcodeFood = Pick<
   'name' | 'protein' | 'fat' | 'carbs' | 'calories' | 'store'
 >;
 
+/** 1 回の読み取りで AI に送れる画像の枚数の上限 */
+export const MAX_READING_IMAGES = 3;
+
 /** 写真から読み取った値の確かさ。AI 自身の判断 */
 export const READING_CONFIDENCES = ['high', 'medium', 'low'] as const;
 export type ReadingConfidence = (typeof READING_CONFIDENCES)[number];

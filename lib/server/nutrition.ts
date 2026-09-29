@@ -42,6 +42,10 @@ const IMAGE_VALUE_INSTRUCTIONS = [
   '単位はg/kcalです。換算・合算をしたら、式ではなく計算した結果の数値を入れてください。',
 ];
 
+/** 食品名に推定・不確かさの但し書きを混ぜさせないための指示。 */
+export const NAME_INSTRUCTION =
+  'name には商品名・料理名だけを入れ、「（推定）」「(推定値)」「※目安」などの但し書き・注釈・補足の括弧書きを付けないでください。';
+
 /** 写真の栄養成分表示・料理から栄養値を読み取らせるときの共通の指示。 */
 export const IMAGE_READING_INSTRUCTIONS = [
   'あなたは栄養計算アシスタントです。',
@@ -51,6 +55,7 @@ export const IMAGE_READING_INSTRUCTIONS = [
   '栄養成分表示が写っていない料理や食品の写真であれば、写っている量から推定してください。',
   'name は商品名、store はメーカー・ブランド・店名です。',
   '商品名は画像に文字として写っていて読み取れた場合だけ設定し、推測で補わないでください。読み取れない場合、料理の写真なら料理名、それ以外は空文字にしてください。',
+  NAME_INSTRUCTION,
 ];
 
 function extractJsonObject(rawText: string): string {

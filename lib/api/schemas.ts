@@ -16,7 +16,7 @@ import type {
   UserSettings,
 } from '@/lib/types';
 import { MEAL_SUGGESTION_AVOID_LIMIT } from '@/lib/types';
-import type { BarcodeFood } from '@/lib/barcode';
+import { MAX_READING_IMAGES, type BarcodeFood } from '@/lib/barcode';
 
 const nonNegative = z.number().nonnegative();
 
@@ -126,15 +126,20 @@ export const usageEventsSchema = z.object({
   events: z.array(usageEventSchema).min(1).max(100),
 });
 
-/** 栄養成分表示・料理の写真の読み取りリクエスト。 */
+/** 栄養成分表示・料理の写真の読み取りリクエスト。複数枚は同じ商品を別の面から撮ったもの。 */
 export const imageBodySchema = z.object({
-  imageDataUrl: z
-    .string()
-    .trim()
-    .regex(
-      /^data:image\/[a-zA-Z0-9.+-]+;base64,.+$/,
-      '画像データの形式が不正です',
-    ),
+  imageDataUrls: z
+    .array(
+      z
+        .string()
+        .trim()
+        .regex(
+          /^data:image\/[a-zA-Z0-9.+-]+;base64,.+$/,
+          '画像データの形式が不正です',
+        ),
+    )
+    .min(1, '画像を1枚以上送ってください')
+    .max(MAX_READING_IMAGES, `画像は${MAX_READING_IMAGES}枚まで送れます`),
 });
 
 export const pushSubscriptionSchema = z.object({

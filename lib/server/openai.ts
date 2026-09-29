@@ -84,15 +84,15 @@ async function callOpenAI(body: {
   };
 }
 
-/** 指示文と画像（data URL）を渡して OpenAI に format の形の JSON を生成させる。 */
+/** 指示文と画像（data URL、複数可）を渡して OpenAI に format の形の JSON を生成させる。 */
 export async function callOpenAIWithImage({
   prompt,
   format,
-  imageDataUrl,
+  imageDataUrls,
 }: {
   prompt: string;
   format: JsonSchemaFormat;
-  imageDataUrl: string;
+  imageDataUrls: string[];
 }): Promise<string> {
   const { text } = await callOpenAI({
     model: 'gpt-5-nano',
@@ -103,7 +103,10 @@ export async function callOpenAIWithImage({
         role: 'user',
         content: [
           { type: 'input_text', text: prompt },
-          { type: 'input_image', image_url: imageDataUrl },
+          ...imageDataUrls.map((imageDataUrl) => ({
+            type: 'input_image' as const,
+            image_url: imageDataUrl,
+          })),
         ],
       },
     ],

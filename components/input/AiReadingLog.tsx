@@ -33,23 +33,22 @@ const CONFIDENCE_LABELS: Record<ReadingConfidence, string> = {
   low: '不確か',
 };
 
-function ReadingEntry({ reading }: { reading: AiReading }) {
+/** base64 の dataURL の大きさ（KB）。base64 の 4 文字が 3 バイトにあたる。 */
+function dataUrlKilobytes(dataUrl: string): number {
+  return Math.round(
+    ((dataUrl.length - dataUrl.indexOf(',') - 1) * 3) / 4 / 1024,
+  );
+}
+
+function SentImage({ image, kilobytes }: { image: string; kilobytes: number }) {
   const [size, setSize] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const { response } = reading;
-  // base64 の 4 文字が 3 バイトにあたる
-  const kilobytes = Math.round(
-    ((reading.image.length - reading.image.indexOf(',') - 1) * 3) / 4 / 1024,
-  );
 
   return (
-    <li className="space-y-2 p-3">
-      <p className="text-muted-foreground flex justify-between text-xs tabular-nums">
-        <span>{format(reading.at, 'HH:mm:ss')}</span>
-        <span>
-          {size && `${size} · `}
-          {kilobytes}KB
-        </span>
+    <div className="space-y-1">
+      <p className="text-muted-foreground text-right text-xs tabular-nums">
+        {size && `${size} · `}
+        {kilobytes}KB
       </p>
       <button
         type="button"
@@ -61,7 +60,7 @@ function ReadingEntry({ reading }: { reading: AiReading }) {
       >
         {/* oxlint-disable-next-line nextjs/no-img-element -- dataURL の画像は next/image で最適化できない */}
         <img
-          src={reading.image}
+          src={image}
           alt="送った画像"
           className={cn(
             'bg-muted w-full rounded object-contain',
@@ -73,6 +72,26 @@ function ReadingEntry({ reading }: { reading: AiReading }) {
           }}
         />
       </button>
+    </div>
+  );
+}
+
+function ReadingEntry({ reading }: { reading: AiReading }) {
+  const { response } = reading;
+
+  return (
+    <li className="space-y-2 p-3">
+      <p className="text-muted-foreground flex justify-between text-xs tabular-nums">
+        <span>{format(reading.at, 'HH:mm:ss')}</span>
+        <span>{reading.images.length}枚</span>
+      </p>
+      {reading.images.map((image, index) => (
+        <SentImage
+          key={index}
+          image={image}
+          kilobytes={dataUrlKilobytes(image)}
+        />
+      ))}
       {reading.error ? (
         <p className="text-destructive text-xs">{reading.error}</p>
       ) : (

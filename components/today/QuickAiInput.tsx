@@ -6,6 +6,7 @@ import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
+import { MAX_READING_IMAGES } from '@/lib/barcode';
 import type { FoodTemplate } from '@/lib/food-form';
 
 /** 食べた物を文章で書くか画像を送るだけで AI が栄養値を推定する入力欄。推定結果は onEstimated に渡す。 */
@@ -61,8 +62,9 @@ export function QuickAiInput({
       </Button>
       <ImageFileInput
         ref={pickerRef}
-        onSelect={([file]) => {
-          if (file) void ai.estimateFromImage(file);
+        multiple
+        onSelect={(files) => {
+          void ai.estimateFromImages(files.slice(0, MAX_READING_IMAGES));
         }}
       />
     </form>

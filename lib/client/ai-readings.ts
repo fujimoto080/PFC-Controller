@@ -12,7 +12,7 @@ export interface AiReading {
   id: string;
   at: number;
   /** 送った画像（dataURL） */
-  image: string;
+  images: string[];
   /** AI の応答テキスト。通信・AI の呼び出しに失敗した場合は無い */
   response?: string;
   /** 応答から読み取れた食品と確かさ */

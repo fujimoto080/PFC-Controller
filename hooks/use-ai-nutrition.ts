@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { toast } from '@/lib/toast';
 import {
   estimateNutrition,
-  estimateNutritionFromImage,
+  estimateNutritionFromImages,
 } from '@/lib/client/api';
 import { imageToDataUrl } from '@/lib/client/image';
 import type { BarcodeFood } from '@/lib/barcode';
@@ -45,10 +45,11 @@ export function useAiNutrition(onEstimated: (food: BarcodeFood) => void) {
     return run('text', () => estimateNutrition(input));
   };
 
-  const estimateFromImage = (file: File) =>
+  /** 同じ商品を撮った写真（複数可）から推定する。 */
+  const estimateFromImages = (files: File[]) =>
     run('image', async () =>
-      estimateNutritionFromImage(await imageToDataUrl(file)),
+      estimateNutritionFromImages(await Promise.all(files.map(imageToDataUrl))),
     );
 
-  return { text, setText, pending, estimate, estimateFromImage };
+  return { text, setText, pending, estimate, estimateFromImages };
 }

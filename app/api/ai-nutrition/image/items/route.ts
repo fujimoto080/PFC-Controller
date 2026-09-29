@@ -21,7 +21,7 @@ export const POST = defineRoute(
         callOpenAIWithImage({
           prompt,
           format,
-          imageDataUrl: body.imageDataUrl,
+          imageDataUrls: body.imageDataUrls,
         }),
     );
     return NextResponse.json(reading);
