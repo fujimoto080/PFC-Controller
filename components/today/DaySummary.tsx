@@ -72,7 +72,13 @@ export function DaySummary({ date }: { date: string }) {
           href="/settings"
           className="text-muted-foreground text-right text-xs underline-offset-2 hover:underline"
         >
-          上限 {roundPFC(limit.calories, 0).toLocaleString()} kcal
+          <span className="block">上限</span>
+          <span className="text-foreground block text-3xl font-bold tracking-tight tabular-nums">
+            {roundPFC(limit.calories, 0).toLocaleString()}
+            <span className="text-muted-foreground ml-1 text-sm font-medium">
+              kcal
+            </span>
+          </span>
           {burnedCalories > 0 && (
             <span className="block">運動 +{roundPFC(burnedCalories, 0)}</span>
           )}
