@@ -351,14 +351,14 @@ function BatchTray({
 }) {
   if (items.length === 0) return null;
   return (
-    <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+    <ul className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1">
       {[...items].reverse().map((item) => (
         <li
           key={item.id}
           className={cn(
-            'flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs',
-            item.id === highlightId && 'ring-2 ring-green-400',
-            item.status === 'missing' && 'bg-amber-500/20 text-amber-200',
+            'pointer-events-none flex max-w-[11rem] shrink-0 items-center gap-1.5 rounded-sm bg-white/5 px-2 py-1 text-xs text-white/80 select-none',
+            item.id === highlightId && 'ring-1 ring-green-400',
+            item.status === 'missing' && 'bg-amber-500/10 text-amber-200',
           )}
         >
           {item.status === 'loading' && (
