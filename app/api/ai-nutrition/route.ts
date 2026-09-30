@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { defineRoute } from '@/lib/api/handler';
-import { callGemini } from '@/lib/server/gemini';
 import { askNutrition, NAME_INSTRUCTION } from '@/lib/server/nutrition';
+import { callOpenAIWithWebSearch } from '@/lib/server/openai';
 
 const bodySchema = z.object({
   text: z.string().trim().min(1, '食べた内容のテキストを入力してください'),
@@ -18,12 +18,8 @@ export const POST = defineRoute(
         NAME_INSTRUCTION,
         `入力: ${body.text}`,
       ],
-      (prompt) =>
-        callGemini({
-          prompt,
-          temperature: 0.2,
-          tools: [{ google_search: {} }],
-        }),
+      async (prompt, format) =>
+        (await callOpenAIWithWebSearch(prompt, format)).text,
     );
     return NextResponse.json(food);
   },

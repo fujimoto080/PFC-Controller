@@ -10,13 +10,8 @@ import { hasNutrition } from '@/lib/pfc';
 import { type JsonSchemaFormat, toJsonSchemaFormat } from '@/lib/server/openai';
 import { roundPFC } from '@/lib/utils';
 
-const FOOD_JSON =
-  '{"name":"食品名","protein":0,"fat":0,"carbs":0,"calories":0,"store":"店名または空文字"}';
-
-/** 写真の読み取りで答えさせる 1 件分の形。evidence は確認用で、食品の値には使わない。 */
-const imageFoodSchema = z.strictObject({
-  evidence: z.string(),
-  confidence: z.enum(READING_CONFIDENCES),
+/** テキストからの推定で答えさせる食品 1 件分の形。 */
+const foodSchema = z.strictObject({
   name: z.string(),
   protein: z.number(),
   fat: z.number(),
@@ -25,11 +20,18 @@ const imageFoodSchema = z.strictObject({
   store: z.string(),
 });
 
+/** 写真の読み取りで答えさせる 1 件分の形。evidence は確認用で、食品の値には使わない。 */
+const imageFoodSchema = z.strictObject({
+  evidence: z.string(),
+  confidence: z.enum(READING_CONFIDENCES),
+  ...foodSchema.shape,
+});
+
 const imageFoodsSchema = z.strictObject({ foods: z.array(imageFoodSchema) });
 
 const VALUE_INSTRUCTIONS = [
-  '数値は必ず半角数字で、単位はg/kcalです。',
-  '不明な値は0を設定してください。説明文やMarkdownは不要です。',
+  'store は店名・メーカー名で、不明なら空文字にしてください。',
+  '単位はg/kcalです。不明な値は0を設定してください。',
 ];
 
 /** 写真の読み取りで、値の確かさを答えさせて不鮮明さを理由に 0 にさせないための指示。 */
@@ -58,16 +60,6 @@ export const IMAGE_READING_INSTRUCTIONS = [
   NAME_INSTRUCTION,
 ];
 
-function extractJsonObject(rawText: string): string {
-  const fencedMatch = /```json\s*([\s\S]*?)\s*```/i.exec(rawText);
-  if (fencedMatch?.[1]) return fencedMatch[1].trim();
-
-  const plainMatch = /\{[\s\S]*\}/.exec(rawText);
-  if (plainMatch) return plainMatch[0].trim();
-
-  throw new ApiError('JSON形式の結果を取得できませんでした', 502);
-}
-
 function normalizeNutrition(data: Partial<BarcodeFood>): BarcodeFood {
   const toNumber = (value: unknown) => {
     const numeric = Number(value);
@@ -87,29 +79,26 @@ function normalizeNutrition(data: Partial<BarcodeFood>): BarcodeFood {
   };
 }
 
-/** 指示文に食品 1 件分の JSON 形式の指定を付け足したプロンプト。 */
-function nutritionPrompt(instructions: string[]): string {
-  return [
-    ...instructions,
-    '次のJSONのみを返してください。',
-    FOOD_JSON,
-    ...VALUE_INSTRUCTIONS,
-  ].join('\n');
-}
-
 /**
  * 指示文を AI に渡して栄養値を答えさせ、食品として整形する。
  * 栄養値が全部 0 なら読み取れなかったものとしてエラーにする。
  */
 export async function askNutrition(
   instructions: string[],
-  generate: (prompt: string) => Promise<string>,
+  generate: (prompt: string, format: JsonSchemaFormat) => Promise<string>,
 ): Promise<BarcodeFood> {
-  const food = normalizeNutrition(
-    JSON.parse(
-      extractJsonObject(await generate(nutritionPrompt(instructions))),
-    ) as Partial<BarcodeFood>,
-  );
+  const answer = foodSchema.safeParse(
+    parseJson(
+      await generate(
+        [...instructions, ...VALUE_INSTRUCTIONS].join('\n'),
+        toJsonSchemaFormat('food', foodSchema),
+      ),
+    ),
+  ).data;
+  if (!answer) {
+    throw new ApiError('AI の推定結果を読み取れませんでした', 502);
+  }
+  const food = normalizeNutrition(answer);
   if (!hasNutrition(food)) {
     throw new ApiError('栄養値を読み取れませんでした', 422);
   }
