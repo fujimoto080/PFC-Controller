@@ -95,9 +95,7 @@ export function FoodEditor({
           className="space-y-4"
         >
           <NutritionPhotoButton
-            onRead={(files) => {
-              void ai.estimateFromImages(files);
-            }}
+            onRead={ai.estimateFromImages}
             disabled={ai.pending !== null}
             reading={ai.pending === 'image'}
           />

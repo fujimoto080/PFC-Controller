@@ -18,6 +18,8 @@ export interface BatchItem {
   quantity: number;
   /** 保存時にバーコードへ食品情報を紐付けるか（未登録だった・内容を直した） */
   linkBarcode: boolean;
+  /** 栄養値を読み取った写真（dataURL）。写真を足したときに合わせて送る。大きいので一覧の保存には含めない */
+  photos?: string[];
 }
 
 export const QUANTITY_STEP = 0.5;

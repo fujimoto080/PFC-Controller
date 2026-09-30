@@ -9,8 +9,8 @@ import { IconButton } from '@/components/ui/icon-button';
 import { MAX_READING_IMAGES } from '@/lib/barcode';
 
 interface NutritionPhotoButtonProps {
-  /** 溜めた写真（同じ商品を別の面から撮ったもの）をまとめて渡す。 */
-  onRead: (files: File[]) => void;
+  /** 溜めた写真（同じ商品を別の面から撮ったもの）をまとめて渡す。読み取れたら true を返す。 */
+  onRead: (files: File[]) => Promise<boolean>;
   disabled: boolean;
   /** 写真を読み取り中か。 */
   reading: boolean;
@@ -19,6 +19,7 @@ interface NutritionPhotoButtonProps {
 /**
  * 栄養成分表示や料理を撮影する（または保存済みの画像を選ぶ）ボタン。
  * 成分表示と商品名が別の面にある場合のため、写真を複数枚溜めてからまとめて読み取らせる。
+ * 読み取った後も写真は残し、写真を足すと前の写真と合わせて読み取り直す（後から撮った面だけで値を上書きしない）。
  * 直近の読み取り結果も確認できる。
  */
 export function NutritionPhotoButton({
@@ -29,6 +30,8 @@ export function NutritionPhotoButton({
   const cameraRef = useRef<HTMLInputElement | null>(null);
   const pickerRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  // 最後に読み取れた写真の組。写真を足す・外すまでは同じ組を読み取り直させない
+  const [readFiles, setReadFiles] = useState<File[] | null>(null);
   const previews = useMemo(
     () => files.map((file) => URL.createObjectURL(file)),
     [files],
@@ -45,9 +48,9 @@ export function NutritionPhotoButton({
   const add = (added: File[]) => {
     setFiles((current) => [...current, ...added].slice(0, MAX_READING_IMAGES));
   };
-  const read = () => {
-    onRead(files);
-    setFiles([]);
+  const alreadyRead = readFiles === files;
+  const read = async () => {
+    if (await onRead(files)) setReadFiles(files);
   };
 
   return (
@@ -101,23 +104,27 @@ export function NutritionPhotoButton({
           <Button
             type="button"
             className="w-full"
-            onClick={read}
-            disabled={disabled}
+            onClick={() => {
+              void read();
+            }}
+            disabled={disabled || alreadyRead}
           >
             {reading ? (
               <>
                 <Loader2Icon className="animate-spin" /> 写真から読み取り中...
               </>
+            ) : alreadyRead ? (
+              '読み取り済み'
             ) : (
               `${files.length}枚の写真から自動入力`
             )}
           </Button>
+          {alreadyRead && !full && (
+            <p className="text-muted-foreground text-xs">
+              写真を足すと、この写真と合わせて読み取り直します
+            </p>
+          )}
         </div>
-      )}
-      {files.length === 0 && reading && (
-        <p className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Loader2Icon className="size-4 animate-spin" /> 写真から読み取り中...
-        </p>
       )}
       <ImageFileInput ref={cameraRef} capture onSelect={add} />
       <ImageFileInput ref={pickerRef} multiple onSelect={add} />

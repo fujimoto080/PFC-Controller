@@ -44,7 +44,7 @@ export function useScanBatch() {
   }, []);
 
   const draft = useMemo<ScanBatchDraft>(
-    () => ({ items, record }),
+    () => ({ items: items.map(({ photos: _, ...item }) => item), record }),
     [items, record],
   );
   const applyDraft = useCallback(
@@ -116,12 +116,23 @@ export function useScanBatch() {
     }
   };
 
-  /** 成分表示を撮った写真から栄養値を入れる（未登録の商品の入力・登録済みの商品の撮り直し）。 */
-  const fillFromPhoto = async (id: string, imageDataUrl: string) => {
+  /**
+   * 成分表示を撮った写真から栄養値を入れる（未登録の商品の入力・登録済みの商品の撮り直し）。
+   * append なら前に読み取った写真と合わせて読み取り直す（成分表示と商品名が別の面にある商品のため）。
+   */
+  const fillFromPhoto = async (
+    id: string,
+    imageDataUrl: string,
+    append: boolean,
+  ) => {
+    const previous = append
+      ? (itemsRef.current.find((item) => item.id === id)?.photos ?? [])
+      : [];
+    const photos = [...previous, imageDataUrl];
     patch(id, { status: 'loading', loadingLabel: '成分表示を読み取り中' });
     try {
-      const food = await estimateNutritionFromImages([imageDataUrl]);
-      finish(id, { food, linkBarcode: true });
+      const food = await estimateNutritionFromImages(photos);
+      finish(id, { food, photos, linkBarcode: true });
     } catch (error) {
       // 撮り直しに失敗したら元の内容に戻す
       finish(id);

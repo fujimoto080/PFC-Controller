@@ -167,9 +167,7 @@ function AiAssist({ ai }: { ai: ReturnType<typeof useAiNutrition> }) {
   return (
     <div className="bg-muted/50 space-y-2 rounded-lg p-3">
       <NutritionPhotoButton
-        onRead={(files) => {
-          void ai.estimateFromImages(files);
-        }}
+        onRead={ai.estimateFromImages}
         disabled={busy}
         reading={ai.pending === 'image'}
       />
