@@ -13,6 +13,7 @@ import { AutoSaveIndicator } from '@/components/settings/AutoSaveIndicator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useAutoSave } from '@/hooks/use-auto-save';
+import { useCollapsedKeys } from '@/hooks/use-collapsed-keys';
 import { PageTitle } from '@/components/ui/page-title';
 import {
   requestMealSuggestions,
@@ -40,6 +41,9 @@ import { formatDate, formatTime } from '@/lib/utils';
 import { StorePicker } from './StorePicker';
 import { SuggestionOptionCard } from './SuggestionOptionCard';
 
+// 畳んでいる食事枠を「日付:食事枠」のキーで保存し、その日のあいだ畳んだままにする
+const COLLAPSED_STORAGE_KEY = 'pfc_meal_suggest_collapsed';
+
 /** 今日の残りと予定・現在地から、AI に朝昼晩の食事をまとめて提案させ、食事ごとに提案し直せる画面。 */
 export function MealSuggestView() {
   const meal = todayMeal(useAppState().meal);
@@ -47,6 +51,11 @@ export function MealSuggestView() {
   const [loadingSlots, setLoadingSlots] = useState<MealSlot[]>([]);
   // 入力中の今日の予定・気分。入力が止まると自動保存する
   const [note, setNote] = useState(meal.note);
+  const collapsedKey = (slot: MealSlot) => `${meal.date}:${slot}`;
+  // 前日までに畳んだ分は読み込み時に捨てる
+  const collapsed = useCollapsedKeys(COLLAPSED_STORAGE_KEY, (key) =>
+    key.startsWith(`${meal.date}:`),
+  );
 
   /** slot 指定時はその食事だけ、省略時は今日これからの食事をまとめて提案させる。 */
   const generate = async (request: {
@@ -99,6 +108,10 @@ export function MealSuggestView() {
           slot={slot}
           suggestions={meal.suggestions.filter((s) => s.slot === slot)}
           loading={loadingSlots.includes(slot)}
+          collapsed={collapsed.isCollapsed(collapsedKey(slot))}
+          onToggleCollapsed={() => {
+            collapsed.toggle(collapsedKey(slot));
+          }}
           onGenerate={(request) => {
             void generate({ slot, ...request });
           }}
@@ -146,21 +159,24 @@ function SlotSection({
   slot,
   suggestions,
   loading,
+  collapsed,
+  onToggleCollapsed,
   onGenerate,
 }: {
   slot: MealSlot;
   /** この食事枠の今日の提案（新しい順） */
   suggestions: MealSuggestion[];
   loading: boolean;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
   onGenerate: (request: { stores?: NearbyStore[]; avoid?: string[] }) => void;
 }) {
   const [pickingStores, setPickingStores] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [current, ...previous] = suggestions;
 
   const generate = (request: { stores?: NearbyStore[]; avoid?: string[] }) => {
     setPickingStores(false);
-    setCollapsed(false);
+    if (collapsed) onToggleCollapsed();
     onGenerate(request);
   };
 
@@ -187,9 +203,7 @@ function SlotSection({
             type="button"
             className="group flex w-full items-center gap-1.5 text-left"
             aria-expanded={!collapsed}
-            onClick={() => {
-              setCollapsed((c) => !c);
-            }}
+            onClick={onToggleCollapsed}
           >
             <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-aria-expanded:rotate-90" />
             <span className="shrink-0 font-semibold">

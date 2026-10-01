@@ -14,9 +14,17 @@ function readKeys(storageKey: string): string[] {
   }
 }
 
-/** 折りたたみ中のセクションのキー一覧を localStorage に保持する。 */
-export function useCollapsedKeys(storageKey: string) {
-  const [collapsed, setCollapsed] = useState(() => readKeys(storageKey));
+/**
+ * 折りたたみ中のセクションのキー一覧を localStorage に保持する。
+ * keep を渡すと、読み込み時に keep を満たさないキーを捨てる。
+ */
+export function useCollapsedKeys(
+  storageKey: string,
+  keep: (key: string) => boolean = () => true,
+) {
+  const [collapsed, setCollapsed] = useState(() =>
+    readKeys(storageKey).filter(keep),
+  );
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(collapsed));
