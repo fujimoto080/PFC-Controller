@@ -1,4 +1,5 @@
 import basefood from '@/data/basefood.json';
+import danone from '@/data/danone.json';
 import familyMart from '@/data/familymart.json';
 import itoham from '@/data/itoham.json';
 import lawson from '@/data/lawson.json';
@@ -14,6 +15,7 @@ import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
 import yoshinoya from '@/data/yoshinoya.json';
 import { BASEFOOD_CATEGORIES } from '@/lib/catalog/basefood';
+import { DANONE_CATEGORIES } from '@/lib/catalog/danone';
 import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
 import { ITOHAM_CATEGORIES } from '@/lib/catalog/itoham';
 import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
@@ -138,5 +140,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: 'BASE FOOD',
     categories: BASEFOOD_CATEGORIES,
     items: basefood,
+  },
+  {
+    id: 'danone',
+    name: 'ダノン',
+    categories: DANONE_CATEGORIES,
+    items: danone,
   },
 ];

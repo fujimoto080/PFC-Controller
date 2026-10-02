@@ -7,6 +7,7 @@
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import { scrapeBasefood } from '../lib/catalog/basefood.ts';
+import { scrapeDanone } from '../lib/catalog/danone.ts';
 import { scrapeFamilyMart } from '../lib/catalog/familymart.ts';
 import { scrapeItoham } from '../lib/catalog/itoham.ts';
 import { scrapeLawson } from '../lib/catalog/lawson.ts';
@@ -40,6 +41,7 @@ const SCRAPERS: Record<string, () => Promise<CatalogItem[]>> = {
   primaham: scrapePrimaham,
   itoham: scrapeItoham,
   basefood: scrapeBasefood,
+  danone: scrapeDanone,
 };
 
 /**
