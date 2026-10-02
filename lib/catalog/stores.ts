@@ -28,6 +28,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'lawson',
     name: 'ローソン',
+    scope: '関東',
     categories: LAWSON_CATEGORIES,
     items: lawson,
   },
