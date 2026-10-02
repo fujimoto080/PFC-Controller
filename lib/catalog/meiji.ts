@@ -9,6 +9,7 @@ import type { CatalogCategory, CatalogItem } from './types';
 
 // 明治公式サイトの商品情報ページ（ザバスのスポーツ栄養、ヨーグルト）の HTML から栄養成分を機械的に読み取る。
 // カテゴリページ（/products/<カテゴリ>/）に小見出しごとの商品の一覧があり、栄養成分は商品ページにある。
+// 商品ページの名前（/products/sports/4902777351810.html の数字）がその商品の JAN コードなので、jans に入れる。
 // 商品ページには価格が載っていない（メーカー希望小売価格を公開していない）ので、価格は付けない。
 // robots.txt は /takuhaimeiji/mailmagazine/ だけを禁止している。商品ページは同時 4 件で取得する。
 
@@ -60,7 +61,7 @@ const SOURCES = [
 /** プロテインバーの小見出し。 */
 const PROTEIN_BAR_SECTION = 'ザバス プロテインバー';
 
-/** 商品一覧ページの商品。 */
+/** 商品一覧ページの商品。id は商品ページの名前で、その商品の JAN コード（8 桁か 13 桁の数字）。 */
 interface ListedProduct {
   id: string;
   path: string;
@@ -106,6 +107,9 @@ export function parseProductList(
       !products.has(id) &&
       !exclude.includes(section)
     ) {
+      if (!/^(?:\d{8}|\d{13})$/.test(id)) {
+        throw new Error(`商品ページの名前が JAN コードではありません: ${path}`);
+      }
       products.set(id, { id, path, section });
     }
   }
@@ -227,6 +231,7 @@ export async function scrapeMeiji(): Promise<CatalogItem[]> {
     const id = portion ? detail.name : product.id;
     const merged = items.get(id);
     if (merged) {
+      merged.jans?.push(product.id);
       if (
         (['calories', 'protein', 'fat', 'carbs'] as const).some(
           (key) => merged[key] !== nutrition[key],
@@ -240,8 +245,14 @@ export async function scrapeMeiji(): Promise<CatalogItem[]> {
       id,
       category: categoryOf(product.source, product.section, portion),
       url: `${BASE_URL}${product.path}`,
+      jans: [product.id],
       ...nutrition,
     });
   });
-  return [...items.values()];
+  const result = [...items.values()];
+  const jans = result.flatMap((item) => item.jans ?? []);
+  if (new Set(jans).size !== jans.length) {
+    throw new Error('同じ JAN コードが複数の商品にあります');
+  }
+  return result;
 }
