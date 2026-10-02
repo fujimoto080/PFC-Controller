@@ -1,6 +1,8 @@
+import familyMart from '@/data/familymart.json';
 import lawson from '@/data/lawson.json';
 import origin from '@/data/origin.json';
 import sevenEleven from '@/data/seven-eleven.json';
+import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
 import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { ORIGIN_CATEGORIES } from '@/lib/catalog/origin';
 import { SEVEN_ELEVEN_CATEGORIES } from '@/lib/catalog/seven-eleven';
@@ -30,6 +32,13 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: 'ローソン',
     categories: LAWSON_CATEGORIES,
     items: lawson,
+  },
+  {
+    id: 'familymart',
+    name: 'ファミリーマート',
+    scope: '関東',
+    categories: FAMILYMART_CATEGORIES,
+    items: familyMart,
   },
   {
     id: 'origin',
