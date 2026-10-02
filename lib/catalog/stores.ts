@@ -1,3 +1,4 @@
+import amatake from '@/data/amatake.json';
 import basefood from '@/data/basefood.json';
 import danone from '@/data/danone.json';
 import familyMart from '@/data/familymart.json';
@@ -16,6 +17,7 @@ import primaham from '@/data/primaham.json';
 import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
 import yoshinoya from '@/data/yoshinoya.json';
+import { AMATAKE_CATEGORIES } from '@/lib/catalog/amatake';
 import { BASEFOOD_CATEGORIES } from '@/lib/catalog/basefood';
 import { DANONE_CATEGORIES } from '@/lib/catalog/danone';
 import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
@@ -162,5 +164,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: '明治',
     categories: MEIJI_CATEGORIES,
     items: meiji,
+  },
+  {
+    id: 'amatake',
+    name: 'アマタケ',
+    categories: AMATAKE_CATEGORIES,
+    items: amatake,
   },
 ];
