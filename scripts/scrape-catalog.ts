@@ -6,6 +6,7 @@
  * 使い方: pnpm scrape:catalog [店舗 ID ...]（省略時は全店）
  */
 import { readFile, writeFile } from 'node:fs/promises';
+import { scrapeLawson } from '../lib/catalog/lawson.ts';
 import { scrapeOrigin } from '../lib/catalog/origin.ts';
 import { scrapeSevenEleven } from '../lib/catalog/seven-eleven.ts';
 import type { CatalogItem } from '../lib/catalog/types.ts';
@@ -13,6 +14,7 @@ import type { CatalogItem } from '../lib/catalog/types.ts';
 /** 店舗 ID → 商品を集める関数。ID は data/<ID>.json と lib/catalog/stores.ts の id に揃える。 */
 const SCRAPERS: Record<string, () => Promise<CatalogItem[]>> = {
   'seven-eleven': scrapeSevenEleven,
+  lawson: scrapeLawson,
   origin: scrapeOrigin,
 };
 
