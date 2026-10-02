@@ -6,6 +6,7 @@ PFC Balance は、日々の食事を記録して P（タンパク質）/ F（脂
 
 - 全機能ドキュメント: [`docs/features.md`](docs/features.md)
 - Android リリース手順: [`docs/android-release-guide.md`](docs/android-release-guide.md)
+- 商品カタログへの店舗の追加手順: [`docs/catalog-stores.md`](docs/catalog-stores.md)
 
 ## 開発環境の起動
 
