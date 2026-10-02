@@ -225,7 +225,17 @@ export async function scrapeMeiji(): Promise<CatalogItem[]> {
     if (detail === undefined) return;
     const { portion, ...nutrition } = detail;
     const id = portion ? detail.name : product.id;
-    if (items.has(id)) return;
+    const merged = items.get(id);
+    if (merged) {
+      if (
+        (['calories', 'protein', 'fat', 'carbs'] as const).some(
+          (key) => merged[key] !== nutrition[key],
+        )
+      ) {
+        throw new Error(`${id} のサイズ違いで栄養成分が異なります`);
+      }
+      return;
+    }
     items.set(id, {
       id,
       category: categoryOf(product.source, product.section, portion),
