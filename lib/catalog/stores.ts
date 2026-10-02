@@ -3,6 +3,7 @@ import lawson from '@/data/lawson.json';
 import maruchan from '@/data/maruchan.json';
 import matsuya from '@/data/matsuya.json';
 import mcdonalds from '@/data/mcdonalds.json';
+import meiji from '@/data/meiji.json';
 import mos from '@/data/mos.json';
 import nissin from '@/data/nissin.json';
 import origin from '@/data/origin.json';
@@ -14,6 +15,7 @@ import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { MARUCHAN_CATEGORIES } from '@/lib/catalog/maruchan';
 import { MATSUYA_CATEGORIES } from '@/lib/catalog/matsuya';
 import { MCDONALDS_CATEGORIES } from '@/lib/catalog/mcdonalds';
+import { MEIJI_CATEGORIES } from '@/lib/catalog/meiji';
 import { MOS_CATEGORIES } from '@/lib/catalog/mos';
 import { NISSIN_CATEGORIES } from '@/lib/catalog/nissin';
 import { ORIGIN_CATEGORIES } from '@/lib/catalog/origin';
@@ -105,5 +107,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: '吉野家',
     categories: YOSHINOYA_CATEGORIES,
     items: yoshinoya,
+  },
+  {
+    id: 'meiji',
+    name: '明治',
+    categories: MEIJI_CATEGORIES,
+    items: meiji,
   },
 ];
