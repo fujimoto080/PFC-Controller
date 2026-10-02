@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { FoodNameField } from '@/components/input/FoodNameField';
-import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
+import { PfcMacroInputs } from '@/components/input/FormFields';
 import { NutritionPhotoButton } from '@/components/input/NutritionPhotoButton';
+import { StoreField } from '@/components/input/StoreField';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { useFormDraft } from '@/hooks/use-form-draft';
@@ -56,9 +57,10 @@ export function FoodLogForm({
   const isBlank = initial === undefined && barcode === undefined;
   const eatAt = useEatDateTime(initialTimestamp);
 
-  const { register, handleSubmit, reset, control } = useForm<PfcFormValues>({
-    defaultValues: initial ? toFormValues(initial) : EMPTY_FORM_VALUES,
-  });
+  const { register, handleSubmit, reset, control, setValue } =
+    useForm<PfcFormValues>({
+      defaultValues: initial ? toFormValues(initial) : EMPTY_FORM_VALUES,
+    });
   const formValues = useWatch({ control }) as PfcFormValues;
 
   const applyFood = (food: FoodTemplate) => {
@@ -133,11 +135,11 @@ export function FoodLogForm({
         onSelect={applyFood}
       />
       <PfcMacroInputs register={register} />
-      <LabeledInput
-        label="店名 / ブランド (任意)"
-        {...register('store')}
+      <StoreField
+        register={register}
+        control={control}
+        setValue={setValue}
         options={stores}
-        placeholder="例: セブンイレブン"
       />
       <EatDateTimeFields value={eatAt.value} onChange={eatAt.onChange} />
       <div className="flex gap-2">

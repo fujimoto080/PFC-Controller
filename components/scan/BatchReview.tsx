@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { FoodNameField } from '@/components/input/FoodNameField';
-import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
+import { PfcMacroInputs } from '@/components/input/FormFields';
+import { StoreField } from '@/components/input/StoreField';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { NutrientTiles } from '@/components/record/ConfirmFood';
 import { Button } from '@/components/ui/button';
@@ -331,9 +332,10 @@ function ItemEditor({
   onSave: (values: PfcFormValues) => void;
   onCancel: () => void;
 }) {
-  const { register, handleSubmit, reset, control } = useForm<PfcFormValues>({
-    defaultValues: item.food ? toFormValues(item.food) : EMPTY_FORM_VALUES,
-  });
+  const { register, handleSubmit, reset, control, setValue } =
+    useForm<PfcFormValues>({
+      defaultValues: item.food ? toFormValues(item.food) : EMPTY_FORM_VALUES,
+    });
 
   return (
     <form
@@ -351,11 +353,11 @@ function ItemEditor({
         }}
       />
       <PfcMacroInputs register={register} />
-      <LabeledInput
-        label="店名 / ブランド (任意)"
-        {...register('store')}
+      <StoreField
+        register={register}
+        control={control}
+        setValue={setValue}
         options={stores}
-        placeholder="例: セブンイレブン"
       />
       <div className="flex gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>

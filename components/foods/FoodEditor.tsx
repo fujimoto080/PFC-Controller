@@ -6,6 +6,7 @@ import { Save, ScanBarcode, X } from 'lucide-react';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { NutritionPhotoButton } from '@/components/input/NutritionPhotoButton';
+import { StoreField } from '@/components/input/StoreField';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,9 +48,10 @@ export function FoodEditor({
 }: FoodEditorProps) {
   const [barcodeInput, setBarcodeInput] = useState(initialBarcodes.join(', '));
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const { register, handleSubmit, reset, getValues } = useForm<PfcFormValues>({
-    defaultValues: food ? toFormValues(food) : EMPTY_FORM_VALUES,
-  });
+  const { register, handleSubmit, reset, getValues, control, setValue } =
+    useForm<PfcFormValues>({
+      defaultValues: food ? toFormValues(food) : EMPTY_FORM_VALUES,
+    });
   // 読み取れなかった店名と、写真からは分からない店内グループは入力済みの値を残す
   const ai = useAiNutrition((estimated) => {
     const current = getValues();
@@ -105,11 +107,11 @@ export function FoodEditor({
             placeholder="例: ハンバーグ"
           />
           <PfcMacroInputs register={register} />
-          <LabeledInput
-            label="店名 / ブランド (任意)"
-            {...register('store')}
+          <StoreField
+            register={register}
+            control={control}
+            setValue={setValue}
             options={storeOptions}
-            placeholder="例: セブンイレブン"
           />
           <LabeledInput
             label="店内グループ (任意)"

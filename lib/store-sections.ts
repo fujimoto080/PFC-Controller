@@ -39,6 +39,25 @@ export function collectStores(foods: FoodItem[], logs: Logs): string[] {
   );
 }
 
+/** 食品辞書と食事記録での登場回数が多い順に、店名を最大 limit 件返す。 */
+export function collectFrequentStores(
+  foods: FoodItem[],
+  logs: Logs,
+  limit: number,
+): string[] {
+  const counts = new Map<string, number>();
+  for (const { store } of [
+    ...foods,
+    ...Object.values(logs).flatMap((log) => log.items),
+  ]) {
+    if (store) counts.set(store, (counts.get(store) ?? 0) + 1);
+  }
+  return Array.from(counts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, limit)
+    .map(([store]) => store);
+}
+
 /** 食品辞書に登場する店内グループ名を重複なしで昇順に返す。 */
 export function collectStoreGroups(foods: FoodItem[]): string[] {
   return uniqueSorted(foods.map((food) => food.storeGroup));

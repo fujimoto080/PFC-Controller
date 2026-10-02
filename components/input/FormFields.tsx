@@ -40,27 +40,42 @@ export function LabeledInput({
 }
 
 const MACRO_FIELDS = [
-  ...MACROS.map(({ key, label }) => ({ key, label: `${label} (g)` })),
-  { key: 'calories', label: 'カロリー (kcal)' },
+  ...MACROS.map(({ key, label }) => ({ key, label, unit: 'g' })),
+  { key: 'calories', label: 'カロリー', unit: 'kcal' },
 ] as const;
 
-/** P/F/C/カロリーの数値入力 2 列グリッド。値は number として登録する。 */
+/**
+ * P/F/C/カロリーの数値入力。値は 3〜4 桁に収まる前提で 4 列 1 行に並べ、数字キーボードで入力する。
+ * 単位は桁数の狭い欄に収まるようラベルの下に小さく添える。
+ */
 export function PfcMacroInputs<T extends FieldValues>({
   register,
 }: {
   register: UseFormRegister<T>;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {MACRO_FIELDS.map(({ key, label }) => (
-        <LabeledInput
-          key={key}
-          label={label}
-          type="number"
-          step="any"
-          placeholder="0"
-          {...register(key as Path<T>, { valueAsNumber: true })}
-        />
+    <div className="grid grid-cols-4 gap-2">
+      {MACRO_FIELDS.map(({ key, label, unit }) => (
+        <div key={key} className="space-y-1.5">
+          <Label
+            htmlFor={`macro-${key}`}
+            className="flex-col items-start gap-0"
+          >
+            <span>{label}</span>
+            <span className="text-muted-foreground text-xs font-normal">
+              {unit}
+            </span>
+          </Label>
+          <Input
+            id={`macro-${key}`}
+            type="number"
+            inputMode="decimal"
+            step="any"
+            placeholder="0"
+            className="px-2 text-center"
+            {...register(key as Path<T>, { valueAsNumber: true })}
+          />
+        </div>
       ))}
     </div>
   );

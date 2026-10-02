@@ -6,10 +6,10 @@ test('食品リストに登録したお気に入りをホームからワンタ�
   await page.goto('/foods');
   await page.getByRole('button', { name: '新規' }).click();
   await page.getByLabel('食品名', { exact: true }).fill('プロテインバー');
-  await page.getByLabel('タンパク質 (g)').fill('15');
-  await page.getByLabel('脂質 (g)').fill('7');
-  await page.getByLabel('炭水化物 (g)').fill('12');
-  await page.getByLabel('カロリー (kcal)').fill('180');
+  await page.getByLabel('タンパク質').fill('15');
+  await page.getByLabel('脂質').fill('7');
+  await page.getByLabel('炭水化物').fill('12');
+  await page.getByLabel('カロリー').fill('180');
   await page.getByLabel('店名 / ブランド (任意)').fill('コンビニ');
   const foodSaved = page.waitForResponse(
     (res) => res.url().includes('/api/foods') && res.ok(),
