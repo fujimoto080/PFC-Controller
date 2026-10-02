@@ -3,6 +3,7 @@ import lawson from '@/data/lawson.json';
 import matsuya from '@/data/matsuya.json';
 import mcdonalds from '@/data/mcdonalds.json';
 import mos from '@/data/mos.json';
+import nissin from '@/data/nissin.json';
 import origin from '@/data/origin.json';
 import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
@@ -11,6 +12,7 @@ import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { MATSUYA_CATEGORIES } from '@/lib/catalog/matsuya';
 import { MCDONALDS_CATEGORIES } from '@/lib/catalog/mcdonalds';
 import { MOS_CATEGORIES } from '@/lib/catalog/mos';
+import { NISSIN_CATEGORIES } from '@/lib/catalog/nissin';
 import { ORIGIN_CATEGORIES } from '@/lib/catalog/origin';
 import { SEVEN_ELEVEN_CATEGORIES } from '@/lib/catalog/seven-eleven';
 import { SUKIYA_CATEGORIES } from '@/lib/catalog/sukiya';
@@ -79,5 +81,12 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: '松屋',
     categories: MATSUYA_CATEGORIES,
     items: matsuya,
+  },
+  {
+    id: 'nissin',
+    name: '日清食品',
+    scope: '関東',
+    categories: NISSIN_CATEGORIES,
+    items: nissin,
   },
 ];
