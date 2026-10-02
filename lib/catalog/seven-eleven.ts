@@ -111,7 +111,6 @@ async function collectItemIds(category: string): Promise<string[]> {
     for (const id of page.itemIds) itemIds.add(id);
     queue.push(...page.listUrls);
   }
-  if (itemIds.size === 0) throw new Error(`${category} の商品が見つかりません`);
   return [...itemIds];
 }
 

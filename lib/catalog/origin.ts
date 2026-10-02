@@ -105,7 +105,6 @@ export function parseMenuPage(html: string): CatalogItem[] {
 
   return ORIGIN_CATEGORIES.flatMap(({ slug }) => {
     const menus = categories.find((c) => c.key === slug)?.menus ?? [];
-    if (menus.length === 0) throw new Error(`${slug} の商品が見つかりません`);
     return menus.flatMap((menu): CatalogItem[] => {
       const ja = menu.translations.find((t) => t.lang === 'ja');
       if (ja === undefined) throw new Error('商品名が読み取れません');

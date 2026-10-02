@@ -162,9 +162,9 @@ export async function scrapeLawson(): Promise<CatalogItem[]> {
   // 複数カテゴリに載る商品は最初のカテゴリに入れる
   const listed = new Map<string, { category: string; area?: string }>();
   for (const { slug } of LAWSON_CATEGORIES) {
-    const items = parseListPage(await fetchText(categoryUrl(slug)));
-    if (items.length === 0) throw new Error(`${slug} の商品が見つかりません`);
-    for (const { id, area } of items) {
+    for (const { id, area } of parseListPage(
+      await fetchText(categoryUrl(slug)),
+    )) {
       if (!listed.has(id)) listed.set(id, { category: slug, area });
     }
   }

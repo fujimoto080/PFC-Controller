@@ -22,7 +22,10 @@ const SCRAPERS: Record<string, () => Promise<CatalogItem[]>> = {
   sukiya: scrapeSukiya,
 };
 
-/** 前回よりこの割合を下回る件数しか取れなければ、サイトの形が変わったとみなして書き出さない。 */
+/**
+ * 前回よりこの割合を下回る件数しか取れなければ、サイトの形が変わったとみなして書き出さない。
+ * おでん・中華まんなど季節で空になるカテゴリがあるので、カテゴリごとの件数は確かめない。
+ */
 const MIN_RATIO_TO_PREVIOUS = 0.8;
 
 const outputOf = (storeId: string) =>

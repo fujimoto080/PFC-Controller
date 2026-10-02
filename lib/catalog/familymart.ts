@@ -215,7 +215,6 @@ export async function scrapeFamilyMart(): Promise<CatalogItem[]> {
       parseListPage(listHtml),
       parseNutritionPage(nutritionHtml),
     );
-    if (found.length === 0) throw new Error(`${page} の商品が見つかりません`);
     // 複数の一覧ページに載る商品は最初のカテゴリに入れる
     items.push(
       ...found.filter(({ id }) => !items.some((item) => item.id === id)),

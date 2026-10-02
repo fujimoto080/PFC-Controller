@@ -125,12 +125,6 @@ describe('parseMenuPage', () => {
     ).toEqual(['107382']);
   });
 
-  it('対象のカテゴリが無ければ例外にする', () => {
-    expect(() => parseMenuPage(menuPage({ salads: [] }))).toThrow(
-      'salads の商品が見つかりません',
-    );
-  });
-
   it('栄養成分が載っているのに読めなければ例外にする', () => {
     expect(() =>
       parseMenuPage(menuPage({ salads: [menu({ protein: null })] })),
