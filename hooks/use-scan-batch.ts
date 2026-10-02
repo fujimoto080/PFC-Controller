@@ -4,17 +4,12 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFormDraft } from '@/hooks/use-form-draft';
 import type { BarcodeFood } from '@/lib/barcode';
 import { addFoodItem, rememberFood } from '@/lib/client/actions';
-import {
-  estimateNutritionFromImages,
-  fetchBarcodeFood,
-  readFoodsFromImage,
-} from '@/lib/client/api';
+import { fetchBarcodeFood } from '@/lib/client/api';
 import { toLogInput } from '@/lib/food-form';
 import {
   addBarcodeItem,
   finishLoading,
   readyFoods,
-  replaceWithFoods,
   restoreItems,
   updateItem,
   type BatchItem,
@@ -31,7 +26,7 @@ interface ScanBatchDraft {
 
 const newId = () => crypto.randomUUID();
 
-/** まとめてスキャンした商品の一覧と、照会・写真読み取り・一括保存の操作。 */
+/** まとめてスキャンした商品の一覧と、照会・一括保存の操作。 */
 export function useScanBatch() {
   const [items, setItems] = useState<BatchItem[]>([]);
   /** true なら食べた記録にも追加する。false なら食品リストへの登録だけ */
@@ -44,7 +39,7 @@ export function useScanBatch() {
   }, []);
 
   const draft = useMemo<ScanBatchDraft>(
-    () => ({ items: items.map(({ photos: _, ...item }) => item), record }),
+    () => ({ items, record }),
     [items, record],
   );
   const applyDraft = useCallback(
@@ -86,68 +81,9 @@ export function useScanBatch() {
     return { id, duplicate: false };
   };
 
-  /** 写真に写った商品（複数可）を読み取って加える。 */
-  const addPhoto = async (imageDataUrl: string) => {
-    const id = newId();
-    update((current) => [
-      ...current,
-      {
-        id,
-        status: 'loading',
-        loadingLabel: '写真を読み取り中',
-        quantity: 1,
-        linkBarcode: false,
-      },
-    ]);
-    try {
-      const foods = await readFoodsFromImage(imageDataUrl);
-      if (foods.length === 0) {
-        remove(id);
-        toast.info('写真から商品を読み取れませんでした', {
-          description:
-            '確認画面の「写真の読み取り結果を確認」から AI の応答を見られます',
-        });
-        return;
-      }
-      update((current) => replaceWithFoods(current, id, foods, newId));
-    } catch (error) {
-      remove(id);
-      toast.fromError('写真の読み取りに失敗しました', error);
-    }
-  };
-
-  /**
-   * 成分表示を撮った写真から栄養値を入れる（未登録の商品の入力・登録済みの商品の撮り直し）。
-   * append なら前に読み取った写真と合わせて読み取り直す（成分表示と商品名が別の面にある商品のため）。
-   */
-  const fillFromPhoto = async (
-    id: string,
-    imageDataUrl: string,
-    append: boolean,
-  ) => {
-    const previous = append
-      ? (itemsRef.current.find((item) => item.id === id)?.photos ?? [])
-      : [];
-    const photos = [...previous, imageDataUrl];
-    patch(id, { status: 'loading', loadingLabel: '成分表示を読み取り中' });
-    try {
-      const food = await estimateNutritionFromImages(photos);
-      finish(id, { food, photos, linkBarcode: true });
-    } catch (error) {
-      // 撮り直しに失敗したら元の内容に戻す
-      finish(id);
-      toast.fromError('写真の読み取りに失敗しました', error);
-    }
-  };
-
-  /** 手で入力・修正した栄養値にする。バーコード付きなら保存時に紐付けも直す。 */
+  /** 手で入力・修正した栄養値にする。保存時にバーコードへの紐付けも直す。 */
   const setFood = (id: string, food: BarcodeFood) => {
-    const item = itemsRef.current.find((i) => i.id === id);
-    patch(id, {
-      status: 'ready',
-      food,
-      linkBarcode: item?.barcode !== undefined,
-    });
+    patch(id, { status: 'ready', food, linkBarcode: true });
   };
 
   const setQuantity = (id: string, quantity: number) => {
@@ -200,8 +136,6 @@ export function useScanBatch() {
     record,
     setRecord,
     addBarcode,
-    addPhoto,
-    fillFromPhoto,
     setFood,
     setQuantity,
     remove,

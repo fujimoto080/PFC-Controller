@@ -1,12 +1,10 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  Camera,
   Check,
   CircleAlert,
-  ImagePlus,
   Loader2,
   Minus,
   PenLine,
@@ -14,10 +12,8 @@ import {
   ScanBarcode,
   X,
 } from 'lucide-react';
-import { AiReadingLog } from '@/components/input/AiReadingLog';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { FoodNameField } from '@/components/input/FoodNameField';
-import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { NutrientTiles } from '@/components/record/ConfirmFood';
@@ -27,8 +23,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Label } from '@/components/ui/label';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import type { ScanBatch } from '@/hooks/use-scan-batch';
-import { MAX_READING_IMAGES, toBarcodeFood } from '@/lib/barcode';
-import { imageToDataUrl } from '@/lib/client/image';
+import { toBarcodeFood } from '@/lib/barcode';
 import { useAppState } from '@/lib/client/store';
 import {
   EMPTY_FORM_VALUES,
@@ -44,7 +39,6 @@ import {
   type BatchItem,
 } from '@/lib/scan-batch';
 import { collectStores } from '@/lib/store-sections';
-import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 interface BatchReviewProps {
@@ -60,26 +54,6 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
   const stores = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const eatAt = useEatDateTime();
   const [editingId, setEditingId] = useState<string | null>(null);
-  // 未登録の商品の成分表示は端末のカメラで撮る。撮った写真をどの商品に使い、前の写真に足すかを覚えておく
-  const photoTargetRef = useRef<{ id: string; append: boolean } | null>(null);
-  const cameraRef = useRef<HTMLInputElement | null>(null);
-  const takePhoto = (id: string, append: boolean) => {
-    photoTargetRef.current = { id, append };
-    cameraRef.current?.click();
-  };
-  const fillFromPhoto = async ([file]: File[]) => {
-    const target = photoTargetRef.current;
-    if (!file || !target) return;
-    try {
-      void batch.fillFromPhoto(
-        target.id,
-        await imageToDataUrl(file),
-        target.append,
-      );
-    } catch (error) {
-      toast.fromError('画像の読み込みに失敗しました', error);
-    }
-  };
   const { items, record } = batch;
 
   const readyCount = readyFoods(items).length;
@@ -90,10 +64,9 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
     return (
       <div className="space-y-4 py-6 text-center">
         <p className="text-muted-foreground text-sm">
-          商品がありません。バーコードを読み取るか写真から追加してください。
+          商品がありません。バーコードを読み取ってください。
         </p>
-        <AddMoreButtons batch={batch} onScanMore={onScanMore} />
-        <AiReadingLog className="text-left" />
+        <ScanMoreButton onScanMore={onScanMore} />
       </div>
     );
   }
@@ -116,10 +89,6 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
                 onCancel={() => {
                   setEditingId(null);
                 }}
-                onTakePhoto={(append) => {
-                  setEditingId(null);
-                  takePhoto(item.id, append);
-                }}
               />
             </li>
           ) : (
@@ -129,9 +98,6 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
               showQuantity={record}
               onEdit={() => {
                 setEditingId(item.id);
-              }}
-              onTakePhoto={() => {
-                takePhoto(item.id, false);
               }}
               onQuantityChange={(quantity) => {
                 batch.setQuantity(item.id, quantity);
@@ -144,15 +110,7 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
         )}
       </ul>
 
-      <AddMoreButtons batch={batch} onScanMore={onScanMore} />
-      <AiReadingLog />
-      <ImageFileInput
-        ref={cameraRef}
-        capture
-        onSelect={(files) => {
-          void fillFromPhoto(files);
-        }}
-      />
+      <ScanMoreButton onScanMore={onScanMore} />
 
       <div className="bg-muted/50 space-y-3 rounded-lg p-3">
         <div className="flex items-center gap-2">
@@ -221,41 +179,11 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
   );
 }
 
-function AddMoreButtons({
-  batch,
-  onScanMore,
-}: {
-  batch: ScanBatch;
-  onScanMore: () => void;
-}) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const addFiles = async (files: File[]) => {
-    for (const file of files) {
-      try {
-        void batch.addPhoto(await imageToDataUrl(file));
-      } catch (error) {
-        toast.fromError('画像の読み込みに失敗しました', error);
-      }
-    }
-  };
-
+function ScanMoreButton({ onScanMore }: { onScanMore: () => void }) {
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <Button variant="outline" onClick={onScanMore}>
-        <ScanBarcode /> 続けてスキャン
-      </Button>
-      <Button variant="outline" onClick={() => inputRef.current?.click()}>
-        <ImagePlus /> 写真から追加
-      </Button>
-      <ImageFileInput
-        ref={inputRef}
-        multiple
-        onSelect={(files) => {
-          void addFiles(files);
-        }}
-      />
-    </div>
+    <Button variant="outline" className="w-full" onClick={onScanMore}>
+      <ScanBarcode /> 続けてスキャン
+    </Button>
   );
 }
 
@@ -263,14 +191,12 @@ function ItemCard({
   item,
   showQuantity,
   onEdit,
-  onTakePhoto,
   onQuantityChange,
   onRemove,
 }: {
   item: BatchItem;
   showQuantity: boolean;
   onEdit: () => void;
-  onTakePhoto: () => void;
   onQuantityChange: (quantity: number) => void;
   onRemove: () => void;
 }) {
@@ -308,14 +234,9 @@ function ItemCard({
           </div>
           {removeButton}
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button size="sm" onClick={onTakePhoto}>
-            <Camera /> 成分表示を撮影
-          </Button>
-          <Button size="sm" variant="outline" onClick={onEdit}>
-            <PenLine /> 手で入力
-          </Button>
-        </div>
+        <Button size="sm" className="w-full" onClick={onEdit}>
+          <PenLine /> 栄養値を入力
+        </Button>
       </li>
     );
   }
@@ -391,8 +312,7 @@ function QuantityStepper({
   );
 }
 
-function BarcodeLabel({ barcode }: { barcode?: string }) {
-  if (!barcode) return null;
+function BarcodeLabel({ barcode }: { barcode: string }) {
   return (
     <p className="text-muted-foreground flex items-center gap-1 font-mono text-xs">
       <ScanBarcode className="size-3" /> {barcode}
@@ -406,16 +326,12 @@ function ItemEditor({
   stores,
   onSave,
   onCancel,
-  onTakePhoto,
 }: {
   item: BatchItem;
   stores: string[];
   onSave: (values: PfcFormValues) => void;
   onCancel: () => void;
-  /** 写真を撮って読み取り直す。append なら前の写真と合わせて読み取る（編集中の内容は破棄する） */
-  onTakePhoto: (append: boolean) => void;
 }) {
-  const photoCount = item.photos?.length ?? 0;
   const { register, handleSubmit, reset, control } = useForm<PfcFormValues>({
     defaultValues: item.food ? toFormValues(item.food) : EMPTY_FORM_VALUES,
   });
@@ -428,43 +344,6 @@ function ItemEditor({
       }}
     >
       <BarcodeLabel barcode={item.barcode} />
-      {photoCount > 0 ? (
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={photoCount >= MAX_READING_IMAGES}
-            onClick={() => {
-              onTakePhoto(true);
-            }}
-          >
-            <ImagePlus /> 写真を足す（{photoCount}枚読み取り済み）
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              onTakePhoto(false);
-            }}
-          >
-            <Camera /> 撮り直す
-          </Button>
-        </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => {
-            onTakePhoto(false);
-          }}
-        >
-          <Camera /> 成分表示を{item.food ? '撮り直す' : '撮影'}
-        </Button>
-      )}
       <FoodNameField
         register={register}
         control={control}

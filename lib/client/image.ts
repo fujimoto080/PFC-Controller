@@ -48,20 +48,3 @@ export async function imageToDataUrl(file: Blob): Promise<string> {
     bitmap.close();
   }
 }
-
-/** 再生中のカメラ映像の今のフレームを dataURL にする。 */
-export function captureVideoFrame(video: HTMLVideoElement): string {
-  return drawToDataUrl(video, video.videoWidth, video.videoHeight);
-}
-
-/** 映像のフレームではなく、カメラで静止画を撮れる（ImageCapture に対応している）か。 */
-export function supportsTakePhoto(): boolean {
-  return typeof ImageCapture !== 'undefined';
-}
-
-/**
- * カメラで静止画を撮って dataURL にする。映像のフレームより高解像度で、撮影用のピント合わせも効く。
- */
-export async function takePhoto(track: MediaStreamTrack): Promise<string> {
-  return imageToDataUrl(await new ImageCapture(track).takePhoto());
-}

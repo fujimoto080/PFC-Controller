@@ -1,19 +1,16 @@
 'use client';
 
-import { useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowRight,
-  Camera,
   Check,
   CircleAlert,
-  ImagePlus,
   Keyboard,
   Loader2,
   X,
 } from 'lucide-react';
 import { ManualBarcodeForm } from '@/components/BarcodeScanner';
-import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { CameraControls } from '@/components/scan/CameraControls';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,15 +18,7 @@ import {
   useBarcodeCamera,
 } from '@/hooks/use-barcode-camera';
 import type { ScanBatch } from '@/hooks/use-scan-batch';
-import { vibrate } from '@/lib/client/device';
-import {
-  captureVideoFrame,
-  imageToDataUrl,
-  supportsTakePhoto,
-  takePhoto,
-} from '@/lib/client/image';
 import type { BatchItem } from '@/lib/scan-batch';
-import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 interface BatchCameraProps {
@@ -39,10 +28,7 @@ interface BatchCameraProps {
   onClose: () => void;
 }
 
-/**
- * カメラを開いたまま商品のバーコードを次々に読み取る。
- * シャッターでその場の映像から成分表示を撮ると、写っている商品をまとめて読み取って加える。
- */
+/** カメラを開いたまま商品のバーコードを次々に読み取る。 */
 export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [lastId, setLastId] = useState<string | null>(null);
@@ -62,21 +48,27 @@ export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
       title="まとめてスキャン"
       hint={
         detectorSupported
-          ? 'バーコードを次々かざす／成分表示はシャッターで撮影か画像を選択'
-          : 'このブラウザはバーコード検出に非対応です。番号入力か撮影を使ってください'
+          ? 'バーコードを次々かざしてください'
+          : 'このブラウザはバーコード検出に非対応です。番号を入力してください'
       }
       onClose={onClose}
     >
-      <Viewfinder
-        videoRef={videoRef}
-        track={track}
-        className={cn(feedback && SCAN_FEEDBACK_CLASS[feedback])}
-        shutterLabel="成分表示を撮影"
-        onCapture={(dataUrl) => {
-          setLastId(null);
-          void batch.addPhoto(dataUrl);
-        }}
-      />
+      <div
+        className={cn(
+          'relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-neutral-900 transition-shadow',
+          feedback && SCAN_FEEDBACK_CLASS[feedback],
+        )}
+      >
+        <video
+          ref={videoRef}
+          className="h-full w-full object-cover"
+          muted
+          playsInline
+        />
+        {/* バーコードを狙いやすいよう出す目安の枠。検出は画面全体から行う */}
+        <div className="pointer-events-none absolute top-1/2 left-1/2 h-[22%] w-4/5 -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 border-white/80" />
+        <CameraControls track={track} videoRef={videoRef} />
+      </div>
 
       <LastScanLine item={lastItem} count={count} />
       <BatchTray items={batch.items} highlightId={lastId} />
@@ -112,19 +104,6 @@ export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
       </Button>
     </CameraShell>
   );
-}
-
-/** photo: カメラで静止画を撮る / frame: 映っている映像のフレームを切り出す */
-type CaptureMode = 'photo' | 'frame';
-
-const CAPTURE_MODE_KEY = 'pfc_capture_mode';
-const CAPTURE_MODE_LABEL: Record<CaptureMode, string> = {
-  photo: '写真',
-  frame: '映像',
-};
-
-function readCaptureMode(): CaptureMode {
-  return localStorage.getItem(CAPTURE_MODE_KEY) === 'frame' ? 'frame' : 'photo';
 }
 
 function CameraShell({
@@ -164,139 +143,6 @@ function CameraShell({
   );
 }
 
-function Viewfinder({
-  videoRef,
-  track,
-  shutterLabel,
-  onCapture,
-  className,
-}: {
-  videoRef: RefObject<HTMLVideoElement | null>;
-  track: MediaStreamTrack | null;
-  shutterLabel: string;
-  onCapture: (dataUrl: string) => void;
-  className?: string;
-}) {
-  // 撮影したことが分かるよう画面を一瞬白くする。key を変えてアニメーションを再生する
-  const [flashKey, setFlashKey] = useState(0);
-  const [mode, setMode] = useState(readCaptureMode);
-  const [taking, setTaking] = useState(false);
-  const canTakePhoto = track !== null && supportsTakePhoto();
-  const pickerRef = useRef<HTMLInputElement | null>(null);
-
-  const pick = async ([file]: File[]) => {
-    if (!file) return;
-    try {
-      onCapture(await imageToDataUrl(file));
-    } catch (error) {
-      toast.fromError('画像の読み込みに失敗しました', error);
-    }
-  };
-
-  const capture = async () => {
-    const video = videoRef.current;
-    if (!video || video.videoWidth === 0) {
-      toast.info('カメラの準備中です');
-      return;
-    }
-    setFlashKey((key) => key + 1);
-    vibrate(20);
-    try {
-      if (canTakePhoto && mode === 'photo') {
-        setTaking(true);
-        onCapture(await takePhoto(track));
-      } else {
-        onCapture(captureVideoFrame(video));
-      }
-    } catch (error) {
-      toast.fromError('撮影に失敗しました', error);
-    } finally {
-      setTaking(false);
-    }
-  };
-
-  return (
-    <div
-      className={cn(
-        'relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-neutral-900 transition-shadow',
-        className,
-      )}
-    >
-      <video
-        ref={videoRef}
-        className="h-full w-full object-cover"
-        muted
-        playsInline
-      />
-      {/* バーコードを狙いやすいよう出す目安の枠。検出は画面全体から行う */}
-      <div className="pointer-events-none absolute top-[42%] left-1/2 h-[22%] w-4/5 -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 border-white/80" />
-      <CameraControls track={track} videoRef={videoRef} />
-      {flashKey > 0 && (
-        <div
-          key={flashKey}
-          className="animate-out fade-out pointer-events-none absolute inset-0 bg-white opacity-0 duration-300"
-        />
-      )}
-      {canTakePhoto && (
-        <fieldset className="absolute bottom-7 left-3 flex rounded-full bg-black/50 p-0.5 text-[11px]">
-          <legend className="sr-only">撮影方法</legend>
-          {(['photo', 'frame'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={mode === value}
-              className={cn(
-                'rounded-full px-2.5 py-1',
-                mode === value && 'bg-white text-black',
-              )}
-              onClick={() => {
-                setMode(value);
-                localStorage.setItem(CAPTURE_MODE_KEY, value);
-              }}
-            >
-              {CAPTURE_MODE_LABEL[value]}
-            </button>
-          ))}
-        </fieldset>
-      )}
-      <button
-        type="button"
-        className="absolute right-3 bottom-7 flex size-10 items-center justify-center rounded-full bg-black/50"
-        aria-label="保存済みの画像を選ぶ"
-        onClick={() => pickerRef.current?.click()}
-      >
-        <ImagePlus className="size-5" />
-      </button>
-      <ImageFileInput
-        ref={pickerRef}
-        onSelect={(files) => {
-          void pick(files);
-        }}
-      />
-      <div className="pointer-events-none absolute inset-x-0 bottom-3 flex flex-col items-center gap-1">
-        <button
-          type="button"
-          onClick={() => {
-            void capture();
-          }}
-          disabled={taking}
-          aria-label={shutterLabel}
-          className="pointer-events-auto flex size-16 items-center justify-center rounded-full border-4 border-white/60 bg-white text-black shadow-lg transition-transform active:scale-90 disabled:opacity-60"
-        >
-          {taking ? (
-            <Loader2 className="size-7 animate-spin" />
-          ) : (
-            <Camera className="size-7" />
-          )}
-        </button>
-        <span className="rounded-full bg-black/50 px-2 py-0.5 text-[11px]">
-          {shutterLabel}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 /** 直前に読み取った商品の状態を 1 行で伝える。 */
 function LastScanLine({
   item,
@@ -320,7 +166,7 @@ function LastScanLine({
     content = (
       <>
         <CircleAlert className="size-4 text-amber-400" />
-        未登録の商品です。確認画面で撮影・入力できます
+        未登録の商品です。確認画面で入力できます
       </>
     );
   } else if (item?.food) {

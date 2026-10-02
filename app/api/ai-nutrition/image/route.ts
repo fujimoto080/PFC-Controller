@@ -16,7 +16,6 @@ export const POST = defineRoute(
         ...IMAGE_READING_INSTRUCTIONS,
         '複数枚の画像は同じ1つの商品を別の面から撮ったものです。栄養成分表示は成分表示の写った画像から、商品名・メーカーは商品名の写った画像から読み取り、全体を1件にまとめてください。',
       ],
-      false,
       (prompt, format) =>
         callOpenAIWithImage({
           prompt,

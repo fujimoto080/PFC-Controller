@@ -11,7 +11,7 @@ import { RecordDrawer } from './RecordDrawer';
 type View = { kind: 'camera' } | { kind: 'review' } | null;
 
 /**
- * 押すとカメラを開き、バーコードや成分表示の写真で商品を次々に溜める。
+ * 押すとカメラを開き、バーコードで商品を次々に溜める。
  * 確認画面でまとめて記録（または食品リストに登録）する。溜めた商品は閉じても残り、件数をバッジで示す。
  */
 export function ScanButton() {

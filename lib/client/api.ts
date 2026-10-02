@@ -96,20 +96,18 @@ export function estimateNutrition(text: string): Promise<BarcodeFood> {
   return api.post('/api/ai-nutrition', { text });
 }
 
-/** 画像(dataURL)を AI に読み取らせ、送った画像と応答を確認用に残す。 */
-async function readImages(
-  url: string,
+/**
+ * 同じ商品を撮った画像(dataURL)の栄養成分表示・商品名を AI で読み取る。
+ * 表示が無ければ写っている料理から推定する。送った画像と応答は確認用に残す。
+ */
+export async function estimateNutritionFromImages(
   imageDataUrls: string[],
-): Promise<BarcodeFood[]> {
+): Promise<BarcodeFood> {
+  let reading: ImageReading;
   try {
-    const { foods, response } = await api.post<ImageReading>(url, {
+    reading = await api.post<ImageReading>('/api/ai-nutrition/image', {
       imageDataUrls,
     });
-    recordAiReading({ images: imageDataUrls, response, foods });
-    if (foods.some(({ confidence }) => confidence !== 'high')) {
-      toast.info('読み取りに自信のない値があります。数値を確認してください');
-    }
-    return foods.map(({ food }) => food);
   } catch (error) {
     recordAiReading({
       images: imageDataUrls,
@@ -118,23 +116,12 @@ async function readImages(
     });
     throw error;
   }
-}
-
-/**
- * 同じ商品を撮った画像(dataURL)の栄養成分表示・商品名を AI で読み取る。
- * 表示が無ければ写っている料理から推定する。
- */
-export async function estimateNutritionFromImages(
-  imageDataUrls: string[],
-): Promise<BarcodeFood> {
-  const [food] = await readImages('/api/ai-nutrition/image', imageDataUrls);
-  if (!food) throw new Error('栄養値を読み取れませんでした');
-  return food;
-}
-
-/** 画像(dataURL)に写った複数の商品の栄養成分表示をまとめて読み取る。 */
-export function readFoodsFromImage(
-  imageDataUrl: string,
-): Promise<BarcodeFood[]> {
-  return readImages('/api/ai-nutrition/image/items', [imageDataUrl]);
+  const { foods, response } = reading;
+  recordAiReading({ images: imageDataUrls, response, foods });
+  const [first] = foods;
+  if (!first) throw new Error('栄養値を読み取れませんでした');
+  if (first.confidence !== 'high') {
+    toast.info('読み取りに自信のない値があります。数値を確認してください');
+  }
+  return first.food;
 }

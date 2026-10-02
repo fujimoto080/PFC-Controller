@@ -3,7 +3,6 @@ import {
   addBarcodeItem,
   batchTotal,
   finishLoading,
-  replaceWithFoods,
   restoreItems,
   type BatchItem,
 } from '@/lib/scan-batch';
@@ -26,6 +25,7 @@ const chicken: BarcodeFood = {
 const ready = (id: string, food: BarcodeFood, quantity = 1): BatchItem => ({
   id,
   status: 'ready',
+  barcode: `490000000000${id}`,
   food,
   quantity,
   linkBarcode: false,
@@ -54,32 +54,12 @@ describe('addBarcodeItem', () => {
   });
 });
 
-describe('replaceWithFoods', () => {
-  it('読み取り中の仮の行を、読み取った商品に置き換える', () => {
-    const items: BatchItem[] = [
-      ready('a', onigiri),
-      { id: 'p', status: 'loading', quantity: 1, linkBarcode: false },
-    ];
-    let seq = 0;
-    const result = replaceWithFoods(items, 'p', [chicken, onigiri], () => {
-      seq++;
-      return `n${seq}`;
-    });
-    expect(result.map((item) => [item.id, item.food?.name])).toEqual([
-      ['a', 'おにぎり'],
-      ['n1', 'サラダチキン'],
-      ['n2', 'おにぎり'],
-    ]);
-  });
-});
-
 describe('finishLoading', () => {
-  const loading = (food?: BarcodeFood): BatchItem => ({
+  const loading = (): BatchItem => ({
     id: 'a',
     status: 'loading',
-    loadingLabel: '成分表示を読み取り中',
+    loadingLabel: '商品を照会中',
     barcode: '4901234567894',
-    food,
     quantity: 1,
     linkBarcode: false,
   });
@@ -97,17 +77,13 @@ describe('finishLoading', () => {
     ]);
   });
 
-  it('失敗したら元の栄養値があれば ready、なければ未登録に戻す', () => {
-    expect(finishLoading([loading(onigiri)], 'a')[0]).toMatchObject({
-      status: 'ready',
-      food: onigiri,
-    });
+  it('照会できなければ未登録にする', () => {
     expect(finishLoading([loading()], 'a')[0]?.status).toBe('missing');
   });
 });
 
 describe('restoreItems', () => {
-  it('中断したバーコード照会は未登録に、写真の読み取りは取り消す', () => {
+  it('中断したバーコード照会は未登録にする', () => {
     const items: BatchItem[] = [
       ready('a', onigiri),
       {
@@ -117,20 +93,10 @@ describe('restoreItems', () => {
         quantity: 1,
         linkBarcode: false,
       },
-      {
-        id: 'c',
-        status: 'loading',
-        barcode: '4909876543218',
-        food: chicken,
-        quantity: 1,
-        linkBarcode: true,
-      },
-      { id: 'p', status: 'loading', quantity: 1, linkBarcode: false },
     ];
     expect(restoreItems(items).map((item) => [item.id, item.status])).toEqual([
       ['a', 'ready'],
       ['b', 'missing'],
-      ['c', 'ready'],
     ]);
   });
 });
@@ -140,7 +106,13 @@ describe('batchTotal', () => {
     const items: BatchItem[] = [
       ready('a', onigiri, 2),
       ready('b', chicken, 0.5),
-      { id: 'c', status: 'missing', quantity: 1, linkBarcode: false },
+      {
+        id: 'c',
+        status: 'missing',
+        barcode: '4909876543218',
+        quantity: 1,
+        linkBarcode: false,
+      },
     ];
     expect(batchTotal(items)).toEqual({
       protein: 20,

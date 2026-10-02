@@ -27,8 +27,6 @@ const imageFoodSchema = z.strictObject({
   ...foodSchema.shape,
 });
 
-const imageFoodsSchema = z.strictObject({ foods: z.array(imageFoodSchema) });
-
 const VALUE_INSTRUCTIONS = [
   'store は店名・メーカー名で、不明なら空文字にしてください。',
   '単位はg/kcalです。不明な値は0を設定してください。',
@@ -115,33 +113,23 @@ function parseJson(text: string): unknown {
 }
 
 /**
- * 写真を AI に読み取らせる。確認できるよう AI の応答テキストもそのまま返す。
- * 応答を解釈できない・栄養値が全部 0 のものは foods に含めない（読み取れなければ空配列）。
- * multiple なら写っている商品ごとに 1 件ずつ答えさせる。
+ * 写真を AI に読み取らせて食品 1 件分を答えさせる。確認できるよう AI の応答テキストもそのまま返す。
+ * 応答を解釈できない・栄養値が全部 0 のときは foods を空配列にする。
  */
 export async function readNutritionImage(
   instructions: string[],
-  multiple: boolean,
   generate: (prompt: string, format: JsonSchemaFormat) => Promise<string>,
 ): Promise<ImageReading> {
   const response = await generate(
     [
       ...instructions,
-      multiple
-        ? 'foods には商品ごとに1件ずつ並べ、食品が写っていなければ空配列にしてください。'
-        : '食品1件分を答えてください。',
+      '食品1件分を答えてください。',
       ...IMAGE_VALUE_INSTRUCTIONS,
     ].join('\n'),
-    multiple
-      ? toJsonSchemaFormat('foods', imageFoodsSchema)
-      : toJsonSchemaFormat('food', imageFoodSchema),
+    toJsonSchemaFormat('food', imageFoodSchema),
   );
-  const parsed = parseJson(response);
-  const candidates = multiple
-    ? imageFoodsSchema.safeParse(parsed).data?.foods
-    : [imageFoodSchema.safeParse(parsed).data];
-  const foods = (candidates ?? [])
-    .filter((value) => value !== undefined)
+  const answer = imageFoodSchema.safeParse(parseJson(response)).data;
+  const foods = (answer ? [answer] : [])
     .map(({ confidence, ...value }) => ({
       food: normalizeNutrition(value),
       confidence,
