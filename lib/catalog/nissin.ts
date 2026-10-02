@@ -58,6 +58,7 @@ interface ProductDetail {
   fat: number;
   carbs: number;
   price?: number;
+  jans?: string[];
 }
 
 /**
@@ -147,7 +148,18 @@ export function parseProductPage(html: string): ProductDetail | undefined {
     fat: grams('脂質'),
     carbs: grams('炭水化物'),
     ...priceOf(html, serving),
+    ...janCodes(html),
   };
+}
+
+/** 商品ページの「JANコード」の行。行が無ければ無し。数字以外や桁数が違う値は例外にする。 */
+function janCodes(html: string): { jans?: string[] } {
+  const text = /JANコード\s*<\/th>\s*<td>\s*([^<]*?)\s*<\/td>/.exec(html)?.[1];
+  if (text === undefined) return {};
+  if (!/^(?:\d{8}|\d{13})$/.test(text)) {
+    throw new Error(`JAN コードが読み取れません: ${text}`);
+  }
+  return { jans: [text] };
 }
 
 /** 1 食入りの商品の税込の希望小売価格。複数食入り・オープンプライス・価格の行が無い商品は空。 */
@@ -181,7 +193,7 @@ export async function scrapeNissin(): Promise<CatalogItem[]> {
       }
     }),
   );
-  return products.flatMap((product, index): CatalogItem[] => {
+  const items = products.flatMap((product, index): CatalogItem[] => {
     const detail = details[index];
     if (detail === undefined) return [];
     return [
@@ -194,4 +206,17 @@ export async function scrapeNissin(): Promise<CatalogItem[]> {
       },
     ];
   });
+  const owners = new Map<string, string>();
+  for (const { id, jans } of items) {
+    for (const jan of jans ?? []) {
+      const owner = owners.get(jan);
+      if (owner !== undefined) {
+        throw new Error(
+          `JAN コード ${jan} が複数の商品にあります: ${owner}, ${id}`,
+        );
+      }
+      owners.set(jan, id);
+    }
+  }
+  return items;
 }

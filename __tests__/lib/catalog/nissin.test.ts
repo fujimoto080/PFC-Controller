@@ -71,6 +71,32 @@ describe('parseProductPage', () => {
     });
   });
 
+  it('JANコードの行があれば jans に入れ、無ければ省く', () => {
+    expect(
+      parseProductPage(
+        infoTable({ ...info, JANコード: '4902105103340' }) + nutritionSplit,
+      ),
+    ).toMatchObject({ jans: ['4902105103340'] });
+    expect(
+      parseProductPage(
+        infoTable({ ...info, JANコード: '49698329' }) + nutritionSplit,
+      ),
+    ).toMatchObject({ jans: ['49698329'] });
+    expect(
+      parseProductPage(infoTable(info) + nutritionSplit),
+    ).not.toHaveProperty('jans');
+  });
+
+  it('JANコードが数字 8 桁か 13 桁でなければ例外にする', () => {
+    for (const jan of ['490210510334', '49021051033A0', '-']) {
+      expect(() =>
+        parseProductPage(
+          infoTable({ ...info, JANコード: jan }) + nutritionSplit,
+        ),
+      ).toThrow('JAN コードが読み取れません');
+    }
+  });
+
   it('値が改行で区切られた形の表も読み取る', () => {
     const html =
       infoTable({ ...info, '内容量 (麺量)': '23g' }) +
