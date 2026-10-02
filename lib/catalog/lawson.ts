@@ -8,7 +8,7 @@ import {
 import type { CatalogCategory, CatalogItem } from './types';
 
 // ローソン公式サイトのオリジナル商品ページから栄養成分を機械的に読み取る。
-// 一覧は全国共通で、栄養成分は関東地域の物が載っている。
+// 一覧は全国共通で、栄養成分は関東地域の物が載っている。取り扱い地域の注記から関東で買えない商品は除く。
 
 const BASE_URL = 'https://www.lawson.co.jp';
 
@@ -46,8 +46,48 @@ const itemUrl = (id: string) =>
 /** 取り扱い地域についての注記（「〜ではお取り扱いしておりません」など）。それ以外の注記は販売地域ではないので捨てる。 */
 const AREA_NOTE = /お取り扱い|販売終了|限定/;
 
+/** 関東の都県。地域リストに都県名で書かれることがある。 */
+const KANTO_PREFECTURES = [
+  '東京',
+  '神奈川',
+  '埼玉',
+  '千葉',
+  '茨城',
+  '栃木',
+  '群馬',
+];
+
+const ONLY_NOTE =
+  /^(.+)地域のローソン(?:、ナチュラルローソン)?のみのお取り扱いとなります。$/;
+const EXCLUDED_NOTE =
+  /^(.+)地域のローソン(?:、ナチュラルローソン)?ではお取り扱いしておりません。$/;
+
 /**
- * 一覧ページの商品番号と、商品ごとの取り扱い地域の注記（無ければ undefined）。
+ * 注記の 1 文から、関東のローソンで買える商品かどうか。地域に触れない注記は true。
+ * 「〜のみ」は地域リストに関東（「関東(一部)」なども含む）か関東の都県があれば買える。
+ * 「〜ではお取り扱いしておりません」は地域リストに括弧の付かない「関東」があれば買えない。
+ * どちらの型にも当てはまらない「〜のみ」「〜ではお取り扱いしておりません」はページの形が変わったとみなして例外にする。
+ */
+export function isSoldInKanto(note: string): boolean {
+  const only = ONLY_NOTE.exec(note)?.[1];
+  if (only !== undefined) {
+    return only
+      .split('・')
+      .some((region) =>
+        ['関東', ...KANTO_PREFECTURES].some((name) => region.startsWith(name)),
+      );
+  }
+  const excluded = EXCLUDED_NOTE.exec(note)?.[1];
+  if (excluded !== undefined) return !excluded.split('・').includes('関東');
+  if (note === 'ナチュラルローソンではお取り扱いしておりません。') return true;
+  if (/のみ|お取り扱いしておりません/.test(note)) {
+    throw new Error(`取り扱い地域の注記が読み取れません: ${note}`);
+  }
+  return true;
+}
+
+/**
+ * 一覧ページのうち関東で買える商品の商品番号と、取り扱い地域の注記（無ければ undefined）。
  * 一覧ページは 1 ページに全商品が載っていて、ページ送りは無い。
  */
 export function parseListPage(
@@ -57,10 +97,15 @@ export function parseListPage(
   for (const m of html.matchAll(
     /<p class="img"><a href="\/recommend\/original\/detail\/(\d+_\d+)\.html">[\s\S]*?<p class="price">[\s\S]*?<\/p>\s*(?:<div class="smalltxt"[^>]*><ul>([\s\S]*?)<\/ul><\/div>)?/g,
   )) {
-    const notes = [...(m[2] ?? '').matchAll(/<li>※?([^<]+)<\/li>/g)]
-      .map((note) => normalizeText(note[1] ?? ''))
-      .filter((note) => AREA_NOTE.test(note));
-    items.set(m[1] ?? '', notes.length > 0 ? notes.join(' ') : undefined);
+    const notes = [...(m[2] ?? '').matchAll(/<li>※?([^<]+)<\/li>/g)].map(
+      (note) => normalizeText(note[1] ?? ''),
+    );
+    if (!notes.every(isSoldInKanto)) continue;
+    const areaNotes = notes.filter((note) => AREA_NOTE.test(note));
+    items.set(
+      m[1] ?? '',
+      areaNotes.length > 0 ? areaNotes.join(' ') : undefined,
+    );
   }
   return [...items].map(([id, area]) => ({ id, area }));
 }
