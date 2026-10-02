@@ -38,6 +38,7 @@ import {
   type NearbyStore,
 } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
+import { CatalogCombinations } from './CatalogCombinations';
 import { StorePicker } from './StorePicker';
 import { SuggestionOptionCard } from './SuggestionOptionCard';
 
@@ -45,7 +46,12 @@ import { SuggestionOptionCard } from './SuggestionOptionCard';
 const COLLAPSED_STORAGE_KEY = 'pfc_meal_suggest_collapsed';
 
 /** 今日の残りと予定・現在地から、AI に朝昼晩の食事をまとめて提案させ、食事ごとに提案し直せる画面。 */
-export function MealSuggestView() {
+export function MealSuggestView({
+  catalogSources,
+}: {
+  /** AI なしの組み合わせで選べるお店 */
+  catalogSources: { id: string; name: string }[];
+}) {
   const meal = todayMeal(useAppState().meal);
   // 提案を考えている最中の食事枠
   const [loadingSlots, setLoadingSlots] = useState<MealSlot[]>([]);
@@ -101,6 +107,8 @@ export function MealSuggestView() {
         <Sparkles />
         今日の食事をまとめて提案してもらう
       </Button>
+
+      <CatalogCombinations sources={catalogSources} />
 
       {MEAL_SLOTS.map(({ slot }) => (
         <SlotSection

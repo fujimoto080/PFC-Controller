@@ -14,6 +14,12 @@ import {
 } from '@/lib/meal-schedule';
 import { sumPFC } from '@/lib/pfc';
 import { getPool } from '@/lib/server/db';
+import {
+  combinationsNear,
+  targetFor,
+  totalPrice,
+} from '@/lib/server/combination-suggestions';
+import type { CombinationItem } from '@/lib/catalog/types';
 import { getCalendarEventLines } from '@/lib/server/google-calendar';
 import { getMealHistory, getNutritionStatus } from '@/lib/server/meal-context';
 import { getMealNote } from '@/lib/server/meal-notes';
@@ -35,6 +41,8 @@ import type {
 import { formatDate, formatTime, roundPFC, toJstTimestamp } from '@/lib/utils';
 
 const HISTORY_DAYS = 10;
+/** AI に渡す、お店ごとの公式の栄養成分での組み合わせ候補の数。 */
+const CATALOG_COMBINATIONS_PER_STORE = 3;
 /** 通知時の提案に使う現在地の有効期間。前夜に自宅で取った位置なら翌朝も使える。 */
 const LOCATION_TTL_MS = 18 * 60 * 60 * 1000;
 /** 現在地とこの距離以内の自宅・会社は同じ場所とみなして重ねて調べない。 */
@@ -160,6 +168,29 @@ function classifyRecentFoods(history: MealHistory, today: string) {
   return { avoid, welcome };
 }
 
+const describeCatalogItem = (item: CombinationItem) =>
+  `${item.name}（${formatPfc(item)}${item.maker ? `、${item.maker}` : ''}）`;
+
+/**
+ * 近くのお店の商品から、公式の栄養成分でこの食事の目安に近い組み合わせを機械的に選んだ候補。
+ * official は候補に出した商品名 → 商品で、AI が同じ名前の商品を返したら公式の値に揃えるのに使う。
+ */
+function describeCatalogCombinations(stores: NearbyStore[], target: PFC) {
+  const near = combinationsNear(stores, target, CATALOG_COMBINATIONS_PER_STORE);
+  const official = new Map<string, CombinationItem>();
+  const lines = near
+    .filter(({ combinations }) => combinations.length > 0)
+    .flatMap(({ store, combinations }) => [
+      `### ${store}`,
+      ...combinations.map(({ items, total }) => {
+        for (const item of items) official.set(item.name, item);
+        const price = totalPrice(items);
+        return `- ${items.map(describeCatalogItem).join(' ＋ ')} → 合計 ${formatPfc(total)}${price === undefined ? '' : ` 税込${price}円`}`;
+      }),
+    ]);
+  return { lines, official };
+}
+
 function describeStores(stores: NearbyStore[]): string[] {
   return stores.map(
     (store) =>
@@ -230,6 +261,14 @@ async function buildPrompt(
     settings.mealPreferences?.instructions ?? DEFAULT_MEAL_INSTRUCTIONS;
   const storePreferences = settings.mealPreferences?.stores ?? [];
   const { avoid, welcome } = classifyRecentFoods(history, today);
+  // ユーザーがお店を選んだらそのお店だけ、選んでいなければ近くのお店の候補を出す
+  const [firstSlot] = slots;
+  if (!firstSlot) throw new Error('食事枠がありません');
+  const mealTarget = targetFor(status.remaining, firstSlot);
+  const catalog = describeCatalogCombinations(
+    request.stores && request.stores.length > 0 ? request.stores : stores,
+    mealTarget,
+  );
   const slotLabels = slots.map((slot) => `「${mealSlotLabel(slot)}」`).join('');
 
   const lines = [
@@ -290,6 +329,14 @@ async function buildPrompt(
       ? describeStores(stores)
       : ['- 取得できなかった。居場所の説明から考える。']),
     `栄養を公開している主なチェーン: ${CHAIN_STORES.map((c) => c.name).join('、')}`,
+    ...(catalog.lines.length > 0
+      ? [
+          '',
+          '## 公式の栄養成分が分かる商品の組み合わせ候補',
+          `近くのお店の公式サイトの栄養成分から、1食の目安（残りを今日これからの食事の数で等分: ${formatPfc(mealTarget)}）に近い組み合わせを機械的に選んだもの。これらのお店を提案するときは、ここの商品を優先して使い、商品名は一字一句そのまま、栄養値も書かれた値を使う。食事ごとの配分に合わせて組み替えたり品数を変えたりしてよい。メーカー名の付いた商品はコンビニ・スーパーで買える既製品で、店によっては置いていない。`,
+          ...catalog.lines,
+        ]
+      : []),
   ];
 
   if (storePreferences.length > 0) {
@@ -323,7 +370,12 @@ async function buildPrompt(
     '- items の protein / fat / carbs / calories は 1 商品あたりの g / kcal。公式の栄養成分を検索して使い、見つからなければ一般的な分量・栄養値から推定した値を入れる。0 にするのは本当に 0 の場合だけ。',
   );
 
-  return { prompt: lines.join('\n'), today, stores };
+  return {
+    prompt: lines.join('\n'),
+    today,
+    stores,
+    official: catalog.official,
+  };
 }
 
 // ---- 生成 ----
@@ -384,7 +436,11 @@ export async function generateMealSuggestions(
     ? [request.slot]
     : remainingSlots(slotForTime(Date.now()));
   if (request.location) await saveLastLocation(userId, request.location);
-  const { prompt, today, stores } = await buildPrompt(userId, request, slots);
+  const { prompt, today, stores, official } = await buildPrompt(
+    userId,
+    request,
+    slots,
+  );
   const { text, citations } = await callOpenAIWithWebSearch(
     prompt,
     OUTPUT_FORMAT,
@@ -393,13 +449,26 @@ export async function generateMealSuggestions(
 
   const suggestions = parseOutput(text, slots).map((meal): MealSuggestion => {
     const options = meal.options.map((option) => {
-      const items = option.items.map((item) => ({
-        ...item,
-        protein: roundPFC(Math.max(0, item.protein), 1),
-        fat: roundPFC(Math.max(0, item.fat), 1),
-        carbs: roundPFC(Math.max(0, item.carbs), 1),
-        calories: Math.round(Math.max(0, item.calories)),
-      }));
+      // 候補に出した商品は、AI が書き写した値ではなく公式の栄養成分を使う
+      const items = option.items.map((suggested) => {
+        const catalogItem = official.get(suggested.name);
+        const item = catalogItem
+          ? {
+              name: suggested.name,
+              protein: catalogItem.protein,
+              fat: catalogItem.fat,
+              carbs: catalogItem.carbs,
+              calories: catalogItem.calories,
+            }
+          : suggested;
+        return {
+          ...item,
+          protein: roundPFC(Math.max(0, item.protein), 1),
+          fat: roundPFC(Math.max(0, item.fat), 1),
+          carbs: roundPFC(Math.max(0, item.carbs), 1),
+          calories: Math.round(Math.max(0, item.calories)),
+        };
+      });
       return { ...option, items, total: sumPFC(items) };
     });
     return {

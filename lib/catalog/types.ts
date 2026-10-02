@@ -1,4 +1,4 @@
-import type { PFC } from '../types';
+import type { MealSlot, PFC } from '../types';
 
 /** data/<店舗 ID>.json の 1 件。お店の公式サイトから機械的に読み取った商品。 */
 export interface CatalogItem extends PFC {
@@ -25,4 +25,23 @@ export interface CatalogCategory {
   slug: string;
   label: string;
   role: 'main' | 'side';
+}
+
+/** 組み合わせ提案の商品。メーカーの既製品なら maker にメーカー名。 */
+export interface CombinationItem extends CatalogItem {
+  maker?: string;
+}
+
+/** 組み合わせ提案 API（GET /api/combination-suggestions）の応答。 */
+export interface CombinationSuggestions {
+  store: string;
+  slot: MealSlot;
+  /** この食事の目安（今日の残りを今日これからの食事の数で等分） */
+  target: PFC;
+  combinations: {
+    items: CombinationItem[];
+    total: PFC;
+    /** 合計の税込価格。価格の分からない商品を含むなら無し */
+    price?: number;
+  }[];
 }

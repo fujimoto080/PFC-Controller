@@ -43,6 +43,8 @@ export interface CatalogStore {
   /** data/<id>.json と scripts/scrape-catalog.ts の店舗 ID */
   id: string;
   name: string;
+  /** コンビニ・飲食店はそのお店で買う。メーカーの商品はコンビニやスーパーで買う既製品 */
+  kind: 'コンビニ' | '飲食店' | 'メーカー';
   /** 商品を集めた地域などの範囲。全国共通なら無し */
   scope?: string;
   categories: readonly CatalogCategory[];
@@ -53,6 +55,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'seven-eleven',
     name: 'セブン-イレブン',
+    kind: 'コンビニ',
     scope: '関東',
     categories: SEVEN_ELEVEN_CATEGORIES,
     items: sevenEleven,
@@ -60,6 +63,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'lawson',
     name: 'ローソン',
+    kind: 'コンビニ',
     scope: '関東',
     categories: LAWSON_CATEGORIES,
     items: lawson,
@@ -67,6 +71,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'familymart',
     name: 'ファミリーマート',
+    kind: 'コンビニ',
     scope: '関東',
     categories: FAMILYMART_CATEGORIES,
     items: familyMart,
@@ -74,6 +79,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'origin',
     name: 'オリジン弁当',
+    kind: '飲食店',
     scope: '関東',
     categories: ORIGIN_CATEGORIES,
     items: origin,
@@ -81,30 +87,35 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'sukiya',
     name: 'すき家',
+    kind: '飲食店',
     categories: SUKIYA_CATEGORIES,
     items: sukiya,
   },
   {
     id: 'mos',
     name: 'モスバーガー',
+    kind: '飲食店',
     categories: MOS_CATEGORIES,
     items: mos,
   },
   {
     id: 'mcdonalds',
     name: 'マクドナルド',
+    kind: '飲食店',
     categories: MCDONALDS_CATEGORIES,
     items: mcdonalds,
   },
   {
     id: 'matsuya',
     name: '松屋',
+    kind: '飲食店',
     categories: MATSUYA_CATEGORIES,
     items: matsuya,
   },
   {
     id: 'nissin',
     name: '日清食品',
+    kind: 'メーカー',
     scope: '関東',
     categories: NISSIN_CATEGORIES,
     items: nissin,
@@ -112,6 +123,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'maruchan',
     name: 'マルちゃん（東洋水産）',
+    kind: 'メーカー',
     scope: '関東',
     categories: MARUCHAN_CATEGORIES,
     items: maruchan,
@@ -119,6 +131,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'myojo',
     name: '明星食品',
+    kind: 'メーカー',
     scope: '関東',
     categories: MYOJO_CATEGORIES,
     items: myojo,
@@ -126,48 +139,56 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'morinaga-milk',
     name: '森永乳業',
+    kind: 'メーカー',
     categories: MORINAGA_MILK_CATEGORIES,
     items: morinagaMilk,
   },
   {
     id: 'yoshinoya',
     name: '吉野家',
+    kind: '飲食店',
     categories: YOSHINOYA_CATEGORIES,
     items: yoshinoya,
   },
   {
     id: 'primaham',
     name: 'プリマハム',
+    kind: 'メーカー',
     categories: PRIMAHAM_CATEGORIES,
     items: primaham,
   },
   {
     id: 'itoham',
     name: '伊藤ハム',
+    kind: 'メーカー',
     categories: ITOHAM_CATEGORIES,
     items: itoham,
   },
   {
     id: 'basefood',
     name: 'BASE FOOD',
+    kind: 'メーカー',
     categories: BASEFOOD_CATEGORIES,
     items: basefood,
   },
   {
     id: 'danone',
     name: 'ダノン',
+    kind: 'メーカー',
     categories: DANONE_CATEGORIES,
     items: danone,
   },
   {
     id: 'meiji',
     name: '明治',
+    kind: 'メーカー',
     categories: MEIJI_CATEGORIES,
     items: meiji,
   },
   {
     id: 'amatake',
     name: 'アマタケ',
+    kind: 'メーカー',
     categories: AMATAKE_CATEGORIES,
     items: amatake,
   },

@@ -81,7 +81,7 @@
 
 1. `scripts/scrape-catalog.ts` の `SCRAPERS` に `'<店舗 ID>': scrape<店舗>` を足す
 2. `pnpm scrape:catalog <店舗 ID>` で `data/<店舗 ID>.json` を作る
-3. `lib/catalog/stores.ts` の `CATALOG_STORES` に `{ id, name, scope?, categories, items }` を足す。JSON は `@/data/<店舗 ID>.json` から import する
+3. `lib/catalog/stores.ts` の `CATALOG_STORES` に `{ id, name, kind, scope?, categories, items }` を足す。`kind` はコンビニ・飲食店・メーカーのどれか（メーカーの既製品はコンビニとスーパーの組み合わせに使われる）。JSON は `@/data/<店舗 ID>.json` から import する
 
 書き出し時に、次の場合はそのお店を失敗にして JSON を書き換えない。
 

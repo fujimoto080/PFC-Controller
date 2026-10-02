@@ -16,100 +16,133 @@ export interface MealCandidates<T extends PFC> {
 }
 
 /**
- * 目標とのずれ。P/F/C それぞれの差をカロリー（P・C は 4kcal/g、F は 9kcal/g）に直した二乗和。
- * 栄養素ごとの量の違いに引きずられず、カロリーへの影響の大きさで比べられる。
+ * 副菜 0〜2 品の組。P/F/C はカロリーに直した値（P・C は 4kcal/g、F は 9kcal/g）で持つ。
+ * weight はその合計で、目標とのずれの下限を見積もるのに使う。
  */
-function deviation(
-  protein: number,
-  fat: number,
-  carbs: number,
-  target: PFC,
-): number {
-  const p = (protein - target.protein) * 4;
-  const f = (fat - target.fat) * 9;
-  const c = (carbs - target.carbs) * 4;
-  return p * p + f * f + c * c;
+interface SidePack<T extends PFC> {
+  items: T[];
+  p: number;
+  f: number;
+  c: number;
+  weight: number;
+  calories: number;
+}
+
+function toPack<T extends PFC>(items: T[]): SidePack<T> {
+  let p = 0;
+  let f = 0;
+  let c = 0;
+  let calories = 0;
+  for (const item of items) {
+    p += item.protein * 4;
+    f += item.fat * 9;
+    c += item.carbs * 4;
+    calories += item.calories;
+  }
+  return { items, p, f, c, weight: p + f + c, calories };
+}
+
+/** 副菜の組すべて（無し・1 品・2 品）を weight の昇順で。組の中はカロリーの低い順。 */
+function sidePacks<T extends PFC>(sides: readonly T[]): SidePack<T>[] {
+  const sorted = [...sides].sort((a, b) => a.calories - b.calories);
+  const packs = [toPack<T>([])];
+  sorted.forEach((side, i) => {
+    packs.push(toPack([side]));
+    for (let j = i + 1; j < sorted.length; j += 1) {
+      const other = sorted[j];
+      if (other) packs.push(toPack([side, other]));
+    }
+  });
+  return packs.sort((a, b) => a.weight - b.weight);
+}
+
+/** weight が value 以上になる最初の添字。 */
+function lowerBound<T extends PFC>(packs: SidePack<T>[], value: number) {
+  let lo = 0;
+  let hi = packs.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if ((packs[mid]?.weight ?? Infinity) < value) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
 }
 
 /**
- * 目標に最も近い組み合わせ。mains・sides はカロリーの昇順に並んでいること。
- * 組み合わせの数が多いので、ループ中は配列を作らずに添字だけ覚えておく（副菜の -1 は無し）。
+ * 目標に最も近い組み合わせ。ずれは P/F/C それぞれの差をカロリーに直した二乗和で、
+ * 栄養素ごとの量の違いに引きずられず、カロリーへの影響の大きさで比べられる。
+ * 3 つの差の和を s とするとずれは s²/3 以上なので、主食ごとに副菜の組を「目標の残りとの weight の差」が
+ * 小さい順に調べ、その下限がそれまでの最良を超えたら打ち切る。used の商品は使わない。
  */
 function findBest<T extends PFC>(
-  { mains, sides }: MealCandidates<T>,
+  mains: readonly T[],
+  packs: SidePack<T>[],
+  used: Set<T>,
   target: PFC,
   calorieCap: number,
 ): T[] | undefined {
   let bestScore = Infinity;
-  let best = { main: -1, side: -1, other: -1 };
-  for (let m = 0; m < mains.length; m += 1) {
-    const main = mains[m];
-    if (!main || main.calories > calorieCap) break;
-    const score = deviation(main.protein, main.fat, main.carbs, target);
-    if (score < bestScore) {
-      bestScore = score;
-      best = { main: m, side: -1, other: -1 };
-    }
-    for (let i = 0; i < sides.length; i += 1) {
-      const side = sides[i];
-      if (!side) continue;
-      const calories = main.calories + side.calories;
-      // カロリーの昇順なので、以降の副菜はすべて上限を超える
-      if (calories > calorieCap) break;
-      const protein = main.protein + side.protein;
-      const fat = main.fat + side.fat;
-      const carbs = main.carbs + side.carbs;
-      const pairScore = deviation(protein, fat, carbs, target);
-      if (pairScore < bestScore) {
-        bestScore = pairScore;
-        best = { main: m, side: i, other: -1 };
+  let best: T[] | undefined;
+  for (const main of mains) {
+    if (used.has(main) || main.calories > calorieCap) continue;
+    const p = (target.protein - main.protein) * 4;
+    const f = (target.fat - main.fat) * 9;
+    const c = (target.carbs - main.carbs) * 4;
+    const rest = p + f + c;
+    let lo = lowerBound(packs, rest) - 1;
+    let hi = lo + 1;
+    for (;;) {
+      const below = packs[lo];
+      const above = packs[hi];
+      const takeBelow =
+        below !== undefined &&
+        (above === undefined || rest - below.weight <= above.weight - rest);
+      const pack = takeBelow ? below : above;
+      if (!pack) break;
+      const gap = pack.weight - rest;
+      if ((gap * gap) / 3 >= bestScore) break;
+      if (takeBelow) lo -= 1;
+      else hi += 1;
+      if (
+        main.calories + pack.calories > calorieCap ||
+        pack.items.some((item) => used.has(item))
+      ) {
+        continue;
       }
-      for (let j = i + 1; j < sides.length; j += 1) {
-        const other = sides[j];
-        if (!other || calories + other.calories > calorieCap) break;
-        const tripleScore = deviation(
-          protein + other.protein,
-          fat + other.fat,
-          carbs + other.carbs,
-          target,
-        );
-        if (tripleScore < bestScore) {
-          bestScore = tripleScore;
-          best = { main: m, side: i, other: j };
-        }
+      const dp = pack.p - p;
+      const df = pack.f - f;
+      const dc = pack.c - c;
+      const score = dp * dp + df * df + dc * dc;
+      if (score < bestScore) {
+        bestScore = score;
+        best = [main, ...pack.items];
       }
     }
   }
-  const main = mains[best.main];
-  if (!main) return undefined;
-  return [main, sides[best.side], sides[best.other]].filter(
-    (item): item is T => item !== undefined,
-  );
+  return best;
 }
 
-const byCalories = <T extends PFC>(items: readonly T[]) =>
-  [...items].sort((a, b) => a.calories - b.calories);
-
 /**
- * 目標の PFC に近い商品の組み合わせを、近い順に最大 count 件。
+ * 商品の組み合わせを探す関数を作る。副菜の組を前もって作るので、同じ商品で目標を変えて何度も探すときは使い回す。
+ * 返す関数は、目標の PFC に近い組み合わせを近い順に最大 count 件返す。
  * 似た案ばかりにならないよう、1 つの商品は 1 つの組み合わせにしか使わない。
  */
-export function findMealCombinations<T extends PFC>(
-  candidates: MealCandidates<T>,
-  target: PFC,
-  count: number,
-): MealCombination<T>[] {
-  if (target.calories <= 0) return [];
-  const calorieCap = target.calories * CALORIE_TOLERANCE;
-  let mains = byCalories(candidates.mains);
-  let sides = byCalories(candidates.sides);
-  const combinations: MealCombination<T>[] = [];
-  while (combinations.length < count) {
-    const best = findBest({ mains, sides }, target, calorieCap);
-    if (!best) break;
-    combinations.push({ items: best, total: sumPFC(best) });
-    mains = mains.filter((item) => !best.includes(item));
-    sides = sides.filter((item) => !best.includes(item));
-  }
-  return combinations;
+export function mealCombinationFinder<T extends PFC>({
+  mains,
+  sides,
+}: MealCandidates<T>) {
+  const packs = sidePacks(sides);
+  return (target: PFC, count: number): MealCombination<T>[] => {
+    if (target.calories <= 0) return [];
+    const calorieCap = target.calories * CALORIE_TOLERANCE;
+    const used = new Set<T>();
+    const combinations: MealCombination<T>[] = [];
+    while (combinations.length < count) {
+      const best = findBest(mains, packs, used, target, calorieCap);
+      if (!best) break;
+      combinations.push({ items: best, total: sumPFC(best) });
+      for (const item of best) used.add(item);
+    }
+    return combinations;
+  };
 }
