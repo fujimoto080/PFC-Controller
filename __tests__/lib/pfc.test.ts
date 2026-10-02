@@ -232,6 +232,18 @@ describe('運動を考慮した上限', () => {
     expect(carryoverOn('2026-09-25', logs).calories).toBe(0);
   });
 
+  it('運動の消費分は元の比率でタンパク質と炭水化物に振り分け、脂質は増えない', () => {
+    const logs: Logs = {
+      '2026-09-25': activityLog('2026-09-25', { ...target }, [400]),
+    };
+    expect(computeDailyLimit('2026-09-25', settings, logs).target).toEqual({
+      protein: 133.33,
+      fat: 50,
+      carbs: 266.67,
+      calories: 2400,
+    });
+  });
+
   it('当日の上限 = 目標 + 当日の運動 − 前日までの繰越', () => {
     const logs: Logs = {
       '2026-09-24': activityLog(
@@ -242,8 +254,8 @@ describe('運動を考慮した上限', () => {
       '2026-09-25': activityLog('2026-09-25', { ...target }, [400]),
     };
     expect(computeDailyLimit('2026-09-25', settings, logs)).toEqual({
-      limit: { protein: 80, fat: 50, carbs: 200, calories: 1900 },
-      target: { ...target, calories: 2400 },
+      limit: { protein: 113.33, fat: 50, carbs: 266.67, calories: 1900 },
+      target: { protein: 133.33, fat: 50, carbs: 266.67, calories: 2400 },
       carryover: { protein: 20, fat: 0, carbs: 0, calories: 500 },
       burnedCalories: 400,
       isCheatDay: false,

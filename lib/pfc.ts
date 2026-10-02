@@ -43,9 +43,24 @@ export function burnedCalories(log: DailyLog | undefined): number {
   );
 }
 
-/** その日の目標。カロリーは運動の消費分だけ増える。 */
+/** タンパク質・炭水化物 1g あたりのカロリー。 */
+const KCAL_PER_GRAM = 4;
+
+/**
+ * その日の目標。カロリーは運動の消費分だけ増え、
+ * 同じ分をタンパク質と炭水化物に（元の目標の比率で）振り分けて増やす。脂質は変わらない。
+ */
 function dayTarget(target: PFC, log: DailyLog | undefined): PFC {
-  return { ...target, calories: target.calories + burnedCalories(log) };
+  const burned = burnedCalories(log);
+  const extraGrams = burned / KCAL_PER_GRAM;
+  const base = target.protein + target.carbs;
+  const proteinRatio = base > 0 ? target.protein / base : 0.5;
+  return {
+    ...target,
+    protein: roundPFC(target.protein + extraGrams * proteinRatio),
+    carbs: roundPFC(target.carbs + extraGrams * (1 - proteinRatio)),
+    calories: target.calories + burned,
+  };
 }
 
 /** この日数だけ続けて食事を記録すると、翌日がチートデーになる。 */
