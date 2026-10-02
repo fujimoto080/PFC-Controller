@@ -95,9 +95,19 @@ const APP_SCHEMA_SQL = `
     sport_id TEXT NOT NULL,
     position INT NOT NULL,
     name TEXT NOT NULL,
-    calories_burned DOUBLE PRECISION NOT NULL,
+    mets DOUBLE PRECISION NOT NULL,
     PRIMARY KEY (user_id, sport_id)
   );
+
+  -- スポーツは1回あたりの消費カロリー固定から、消費の単位 METs だけを登録する形に変えた。
+  -- 旧形式の行は METs に換算できないため捨てる
+  ALTER TABLE pfc_sports
+    ADD COLUMN IF NOT EXISTS mets DOUBLE PRECISION;
+  DELETE FROM pfc_sports WHERE mets IS NULL;
+  ALTER TABLE pfc_sports
+    ALTER COLUMN mets SET NOT NULL;
+  ALTER TABLE pfc_sports
+    DROP COLUMN IF EXISTS calories_burned;
 
   CREATE TABLE IF NOT EXISTS pfc_log_activities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

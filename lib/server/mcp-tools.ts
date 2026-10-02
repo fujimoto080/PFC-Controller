@@ -4,6 +4,7 @@ import type { McpServer, ServerContext } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import { foodInputSchema } from '@/lib/api/schemas';
 import { rankFrequentFoods } from '@/lib/food-suggestions';
+import { DEFAULT_PROFILE } from '@/lib/nutrition-goals';
 import { CARRYOVER_DAYS } from '@/lib/pfc';
 import { listFoods } from '@/lib/server/foods';
 import {
@@ -18,6 +19,11 @@ import { createLogItem, listLogItemsBetween } from '@/lib/server/log-items';
 import { getSettings } from '@/lib/server/settings';
 import { listSports } from '@/lib/server/sports';
 import { recordUsageEvents } from '@/lib/server/usage-events';
+import {
+  DEFAULT_SPORT_INTENSITY,
+  SPORT_INTENSITIES,
+  buildSportActivity,
+} from '@/lib/sports';
 import {
   defaultTimestampFor,
   formatDate,
@@ -109,6 +115,13 @@ const logActivitySchema = z.object({
     .string()
     .min(1)
     .describe('登録スポーツの名前（list_sports の name）'),
+  intensity: z
+    .enum(SPORT_INTENSITIES.map(({ value }) => value))
+    .default(DEFAULT_SPORT_INTENSITY)
+    .describe(
+      `運動強度。${SPORT_INTENSITIES.map(({ value, label, factor }) => `${value}=${label}（METs×${factor}）`).join('、')}`,
+    ),
+  minutes: z.number().positive().describe('運動した時間（分）'),
   ...loggedAtSchema,
 });
 
@@ -126,21 +139,27 @@ async function logMeal(userId: string, input: z.infer<typeof logMealSchema>) {
 
 async function logActivity(
   userId: string,
-  { sport, date, time }: z.infer<typeof logActivitySchema>,
+  { sport, intensity, minutes, date, time }: z.infer<typeof logActivitySchema>,
 ) {
-  const sports = await listSports(userId);
+  const [sports, settings] = await Promise.all([
+    listSports(userId),
+    getSettings(userId),
+  ]);
   const definition = sports.find((s) => s.name === sport);
   if (!definition) {
     throw new Error(
       `スポーツ「${sport}」は登録されていません。登録済み: ${sports.map((s) => s.name).join(', ')}`,
     );
   }
-  const activity = await createLogActivity(userId, {
-    sportId: definition.id,
-    name: definition.name,
-    caloriesBurned: definition.caloriesBurned,
-    timestamp: timestampOf(date, time),
-  });
+  const activity = await createLogActivity(
+    userId,
+    buildSportActivity(definition, {
+      intensity,
+      minutes,
+      weight: (settings.profile ?? DEFAULT_PROFILE).weight,
+      timestamp: timestampOf(date, time),
+    }),
+  );
   return {
     logged: toActivity(activity),
     status: await getNutritionStatus(userId, formatDate(activity.timestamp)),
@@ -240,14 +259,12 @@ export function registerMealPlanningTools(server: McpServer) {
     {
       title: '登録スポーツの一覧',
       description:
-        'ユーザーが登録しているスポーツと1回あたりの消費カロリー (kcal) を返す。記録するとその日のカロリー上限が消費分だけ増える。運動の予定に合わせて献立の量を調整するときに使う。',
+        'ユーザーが登録しているスポーツと、その消費の単位 METs を返す。消費カロリーは METs × 強度係数 × 体重(kg) × 時間(h) × 1.05 で決まり、記録するとその日のカロリー上限が消費分だけ増える。運動の予定に合わせて献立の量を調整するときに使う。',
       annotations: { readOnlyHint: true },
     },
     async (ctx) => {
       const sports = await listSports(userIdOf(ctx));
-      return jsonResult(
-        sports.map(({ name, caloriesBurned }) => ({ name, caloriesBurned })),
-      );
+      return jsonResult(sports.map(({ name, mets }) => ({ name, mets })));
     },
   );
 
@@ -268,7 +285,7 @@ export function registerMealPlanningTools(server: McpServer) {
     {
       title: '運動の記録',
       description:
-        '登録スポーツを1回分、運動記録に追加する。消費カロリーは登録値が使われ、その日のカロリー上限が増える。記録した内容と、記録後のその日の摂取状況（get_nutrition_status と同じ形）を返す。',
+        '登録スポーツを、強度と運動時間(分)を指定して運動記録に追加する。消費カロリーは登録した METs とユーザーの体重から計算され、その日のカロリー上限が増える。記録した内容と、記録後のその日の摂取状況（get_nutrition_status と同じ形）を返す。',
       inputSchema: logActivitySchema,
       annotations: WRITE_ANNOTATIONS,
     },

@@ -1,23 +1,70 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
+import { Input } from '@/components/ui/input';
 import {
   addSportActivity,
   deleteSportActivity,
   isTempId,
 } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
+import { DEFAULT_PROFILE } from '@/lib/nutrition-goals';
+import {
+  DEFAULT_SPORT_INTENSITY,
+  DEFAULT_SPORT_MINUTES,
+  SPORT_INTENSITIES,
+  calculateSportCalories,
+  type SportIntensity,
+} from '@/lib/sports';
 import { toast } from '@/lib/toast';
-import { formatTime, roundPFC } from '@/lib/utils';
+import { cn, formatTime, roundPFC } from '@/lib/utils';
 
-/** 選択日の運動記録。登録済みスポーツをワンタップで記録でき、消費分だけその日の上限が増える。 */
+/** 選択日の運動記録。登録スポーツを選び、強度と時間を指定して記録すると、消費分だけその日の上限が増える。 */
 export function DayActivityList({ date }: { date: string }) {
-  const { logs, sports } = useAppState();
+  const { logs, sports, settings } = useAppState();
+  const [sportId, setSportId] = useState<string | null>(null);
+  const [intensity, setIntensity] = useState<SportIntensity>(
+    DEFAULT_SPORT_INTENSITY,
+  );
+  const [minutesInput, setMinutesInput] = useState(
+    String(DEFAULT_SPORT_MINUTES),
+  );
   const activities = [...(logs[date]?.activities ?? [])].sort(
     (a, b) => a.timestamp - b.timestamp,
   );
+
+  const sport = sports.find((s) => s.id === sportId);
+  const minutes = Math.round(Number(minutesInput));
+  const canRecord =
+    sport !== undefined && Number.isFinite(minutes) && minutes > 0;
+  const previewCalories = canRecord
+    ? calculateSportCalories({
+        mets: sport.mets,
+        intensity,
+        minutes,
+        weight: (settings.profile ?? DEFAULT_PROFILE).weight,
+      })
+    : 0;
+
+  const handleRecord = () => {
+    if (!canRecord) return;
+    const saving = addSportActivity(date, sport, { intensity, minutes });
+    toast.success(`${sport.name}を記録しました`, {
+      action: {
+        label: '取り消す',
+        // 保存完了を待ってから、確定した ID で削除する
+        onClick: () => {
+          void saving.then((id) => {
+            if (id) void deleteSportActivity(date, id);
+          });
+        },
+      },
+    });
+  };
 
   return (
     <section className="space-y-2">
@@ -31,35 +78,71 @@ export function DayActivityList({ date }: { date: string }) {
           でスポーツを登録すると、ここから記録できます。
         </p>
       ) : (
-        <div className="flex flex-col gap-2">
-          {sports.map((sport) => (
-            <button
-              key={sport.id}
-              type="button"
-              data-track="運動を記録"
-              className="bg-card hover:bg-muted/60 flex items-center gap-1.5 rounded-lg border px-3 py-2 text-left text-sm transition-transform active:scale-[0.98]"
-              onClick={() => {
-                const saving = addSportActivity(date, sport);
-                toast.success(`${sport.name}を記録しました`, {
-                  action: {
-                    label: '取り消す',
-                    // 保存完了を待ってから、確定した ID で削除する
-                    onClick: () => {
-                      void saving.then((id) => {
-                        if (id) void deleteSportActivity(date, id);
-                      });
-                    },
-                  },
-                });
-              }}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span className="min-w-0 flex-1 truncate">{sport.name}</span>
-              <span className="text-muted-foreground shrink-0 text-xs">
-                {sport.caloriesBurned}kcal
-              </span>
-            </button>
-          ))}
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {sports.map((s) => (
+              <Button
+                key={s.id}
+                type="button"
+                size="sm"
+                variant={s.id === sportId ? 'default' : 'outline'}
+                onClick={() => {
+                  setSportId(s.id);
+                }}
+              >
+                {s.name}
+              </Button>
+            ))}
+          </div>
+
+          {sport && (
+            <div className="bg-card space-y-3 rounded-lg border p-3">
+              <div className="flex gap-1.5">
+                {SPORT_INTENSITIES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={cn(
+                      'flex-1 rounded-md border px-2 py-1.5 text-sm transition-colors',
+                      value === intensity
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'hover:bg-muted/60',
+                    )}
+                    onClick={() => {
+                      setIntensity(value);
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  aria-label="運動時間（分）"
+                  className="w-24"
+                  value={minutesInput}
+                  onChange={(e) => {
+                    setMinutesInput(e.target.value);
+                  }}
+                />
+                <span className="text-sm">分</span>
+                <span className="text-muted-foreground ml-auto text-sm tabular-nums">
+                  +{previewCalories} kcal
+                </span>
+                <Button
+                  type="button"
+                  data-track="運動を記録"
+                  disabled={!canRecord}
+                  onClick={handleRecord}
+                >
+                  <Plus /> 記録
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

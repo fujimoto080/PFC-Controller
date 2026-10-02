@@ -8,7 +8,9 @@ import {
   setState,
   type AppState,
 } from '@/lib/client/store';
+import { DEFAULT_PROFILE } from '@/lib/nutrition-goals';
 import { sumPFC } from '@/lib/pfc';
+import { buildSportActivity, type SportIntensity } from '@/lib/sports';
 import {
   createEmptyDailyLog,
   type DailyLog,
@@ -18,7 +20,6 @@ import {
   type MealNote,
   type MealSuggestion,
   type MealSuggestionRequest,
-  type SportActivityInput,
   type SportActivityLog,
   type SportDefinition,
   type TodayMeal,
@@ -199,15 +200,15 @@ export const isTempId = (id: string) => id.startsWith('tmp-');
 export async function addSportActivity(
   date: string,
   sport: SportDefinition,
+  options: { intensity: SportIntensity; minutes: number },
 ): Promise<string | null> {
   const id = tempId();
   let savedId: string | null = null;
-  const input: SportActivityInput = {
-    sportId: sport.id,
-    name: sport.name,
-    caloriesBurned: sport.caloriesBurned,
+  const input = buildSportActivity(sport, {
+    ...options,
+    weight: (getState().settings.profile ?? DEFAULT_PROFILE).weight,
     timestamp: defaultTimestampFor(date),
-  };
+  });
   await optimistic({
     apply: withLogs((logs) =>
       updateDay(logs, date, (log) => ({

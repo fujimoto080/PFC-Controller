@@ -169,7 +169,7 @@ export const sportsSchema = z.array(
   z.object({
     id: z.string().min(1),
     name: z.string().trim().min(1),
-    caloriesBurned: nonNegative,
+    mets: z.number().positive(),
   }),
 ) satisfies z.ZodType<SportDefinition[]>;
 
@@ -179,6 +179,12 @@ export const activityInputSchema = z.object({
   caloriesBurned: nonNegative,
   timestamp: timestampSchema,
 }) satisfies z.ZodType<SportActivityInput>;
+
+export const healthSyncSchema = z.object({
+  email: z.email(),
+  date: dateSchema,
+  caloriesBurned: nonNegative,
+});
 
 export const uuidParamsSchema = z.object({ id: z.uuid() });
 

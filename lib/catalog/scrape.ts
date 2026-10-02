@@ -78,7 +78,7 @@ export function requireJan(value: string): string {
   if (!/^(?:\d{8}|\d{13})$/.test(value)) {
     throw new Error(`JAN コードが読み取れません: ${value}`);
   }
-  const digits = [...value].map(Number);
+  const digits = Array.from(value, Number);
   const check = digits.pop();
   // 右端（チェックディジットの左隣）から奇数番目を 3 倍して足す
   const sum = digits

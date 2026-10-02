@@ -27,8 +27,7 @@ export function GoalSettingsPanel() {
   const valid =
     [profile.age, profile.height, profile.weight, profile.targetWeight].every(
       (n) => n > 0,
-    ) &&
-    Object.values(targetPFC).every((n) => Number.isFinite(n) && n >= 0);
+    ) && Object.values(targetPFC).every((n) => Number.isFinite(n) && n >= 0);
   const status = useAutoSave({ targetPFC, profile }, updateSettings, valid);
 
   return (

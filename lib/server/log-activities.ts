@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { deleteUserRow, getPool } from '@/lib/server/db';
+import { deleteUserRow, getPool, transaction } from '@/lib/server/db';
 import type { SportActivityInput, SportActivityLog } from '@/lib/types';
-import { formatDate } from '@/lib/utils';
+import { defaultTimestampFor, formatDate } from '@/lib/utils';
 
 interface LogActivityRow {
   id: string;
@@ -78,6 +78,41 @@ export async function createLogActivity(
   const row = result.rows[0];
   if (!row) throw new Error('運動記録の登録に失敗しました');
   return toActivity(row);
+}
+
+/** スマホのヘルスケア連携で同期する、その日 1 件の運動記録の識別子。 */
+const HEALTH_SYNC_SPORT_ID = 'health-sync';
+
+/**
+ * 指定日のヘルスケア連携分（アクティブ消費カロリー）を置き換える。
+ * 同じ日に何度同期しても 1 件になり、0 kcal のときは記録を消す。
+ */
+export function replaceHealthActivity(
+  userId: string,
+  date: string,
+  caloriesBurned: number,
+): Promise<void> {
+  return transaction(async (client) => {
+    await client.query(
+      `DELETE FROM pfc_log_activities
+       WHERE user_id = $1 AND date = $2::date AND sport_id = $3`,
+      [userId, date, HEALTH_SYNC_SPORT_ID],
+    );
+    if (caloriesBurned <= 0) return;
+    await client.query(
+      `INSERT INTO pfc_log_activities
+         (user_id, date, sport_id, name, calories_burned, timestamp_ms)
+       VALUES ($1, $2::date, $3, $4, $5, $6)`,
+      [
+        userId,
+        date,
+        HEALTH_SYNC_SPORT_ID,
+        'ヘルスケア連携（活動消費）',
+        caloriesBurned,
+        defaultTimestampFor(date),
+      ],
+    );
+  });
 }
 
 export function deleteLogActivity(

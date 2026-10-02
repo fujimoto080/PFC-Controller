@@ -10,26 +10,25 @@ import { Label } from '@/components/ui/label';
 import { saveSports } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
 
-/** スポーツと1回あたりの消費カロリーの登録。今日画面から記録すると、その日の上限に加算される。 */
+/** スポーツと消費の単位 METs の登録。強度と時間は今日画面で記録のたびに指定し、消費分がその日の上限に加算される。 */
 export function SportSettingsPanel() {
   const { sports } = useAppState();
   const [name, setName] = useState('');
-  const [caloriesBurned, setCaloriesBurned] = useState('');
+  const [metsInput, setMetsInput] = useState('');
 
   const trimmedName = name.trim();
-  const calories = Math.round(Number(caloriesBurned));
-  const canAdd =
-    trimmedName !== '' && Number.isFinite(calories) && calories > 0;
+  const mets = Number(metsInput);
+  const canAdd = trimmedName !== '' && Number.isFinite(mets) && mets > 0;
 
   const handleAdd = async () => {
     if (!canAdd) return;
     const ok = await saveSports([
       ...sports,
-      { id: crypto.randomUUID(), name: trimmedName, caloriesBurned: calories },
+      { id: crypto.randomUUID(), name: trimmedName, mets },
     ]);
     if (ok) {
       setName('');
-      setCaloriesBurned('');
+      setMetsInput('');
     }
   };
 
@@ -54,27 +53,32 @@ export function SportSettingsPanel() {
               onChange={(e) => {
                 setName(e.target.value);
               }}
-              placeholder="例: 水泳 30分"
+              placeholder="例: 水泳"
             />
           </div>
           <div className="w-24 space-y-1.5">
-            <Label htmlFor="sport-calories">消費 kcal</Label>
+            <Label htmlFor="sport-mets">METs</Label>
             <Input
-              id="sport-calories"
+              id="sport-mets"
               type="number"
-              inputMode="numeric"
-              min={1}
-              value={caloriesBurned}
+              inputMode="decimal"
+              min={0.1}
+              step={0.1}
+              value={metsInput}
               onChange={(e) => {
-                setCaloriesBurned(e.target.value);
+                setMetsInput(e.target.value);
               }}
-              placeholder="300"
+              placeholder="8"
             />
           </div>
           <Button type="submit" disabled={!canAdd}>
             登録
           </Button>
         </form>
+        <p className="text-muted-foreground text-xs">
+          METs は運動の強さの単位です（例: ウォーキング 3.5、水泳 8、ジョギング
+          7）。消費カロリーは記録のたびに、強度・時間・体重から計算します。
+        </p>
 
         {sports.length > 0 && (
           <ul className="divide-y rounded-lg border">
@@ -87,7 +91,7 @@ export function SportSettingsPanel() {
                   {sport.name}
                 </span>
                 <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
-                  {sport.caloriesBurned} kcal
+                  {sport.mets} METs
                 </span>
                 <IconButton
                   aria-label={`${sport.name}を削除`}

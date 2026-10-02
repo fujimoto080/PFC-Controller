@@ -16,11 +16,11 @@ export interface FoodItem extends PFC {
 
 export type FoodItemInput = Omit<FoodItem, 'id'>;
 
-/** 登録済みのスポーツ（1回あたりの消費カロリー）。 */
+/** 登録済みのスポーツ（消費の単位 METs。強度と時間は記録のたびに指定する）。 */
 export interface SportDefinition {
   id: string;
   name: string;
-  caloriesBurned: number;
+  mets: number;
 }
 
 export interface SportActivityLog {

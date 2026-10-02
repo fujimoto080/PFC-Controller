@@ -1,20 +1,13 @@
-import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { ApiError, defineRoute } from '@/lib/api/handler';
 import { foodImportSchema } from '@/lib/api/schemas';
+import { requireBearerToken } from '@/lib/server/bearer-auth';
 import { getUserIdByEmail } from '@/lib/server/db';
 import { upsertFoodsBulk } from '@/lib/server/foods';
 
 // 大量件数をまとめて処理するため Node ランタイム固定・タイムアウト延長。
 export const runtime = 'nodejs';
 export const maxDuration = 60;
-
-function tokensMatch(a: string, b: string): boolean {
-  const ab = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ab.length !== bb.length) return false;
-  return timingSafeEqual(ab, bb);
-}
 
 /**
  * 食品辞書の一括インポート（seed）用エンドポイント。
@@ -27,20 +20,7 @@ function tokensMatch(a: string, b: string): boolean {
 export const POST = defineRoute(
   { label: '食品の一括インポート', auth: false, body: foodImportSchema },
   async (request, { body }) => {
-    const expected = process.env.SEED_API_TOKEN?.trim();
-    if (!expected) {
-      throw new ApiError(
-        'インポート API は無効です（SEED_API_TOKEN 未設定）',
-        503,
-      );
-    }
-    const header = request.headers.get('authorization') ?? '';
-    const token = header.startsWith('Bearer ')
-      ? header.slice('Bearer '.length).trim()
-      : '';
-    if (!token || !tokensMatch(token, expected)) {
-      throw new ApiError('認証に失敗しました', 401);
-    }
+    requireBearerToken(request, 'SEED_API_TOKEN', 'インポート API');
 
     const userId = await getUserIdByEmail(body.email);
     if (!userId) {

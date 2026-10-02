@@ -87,6 +87,15 @@ GitHub Actions で運用する場合は、リポジトリの **Settings > Secret
   - `CRON_SECRET`（Vercel が Cron 呼び出し時に Bearer トークンとして付与する）
 - 通知は Service Worker が必要なため本番ビルド（PWA / TWA）でのみ動作する
 
+## スマホの消費カロリー連携
+
+Android の Health Connect（Samsung Health などの活動消費）を、`PUT /api/health-sync` で 1 日 1 件の運動記録として同期できます。
+
+- 認証はセッションではなく共有トークン: `Authorization: Bearer <HEALTH_SYNC_TOKEN>`（環境変数 `HEALTH_SYNC_TOKEN` が未設定なら無効）
+- body: `{ "email": "<ログインメール>", "date": "YYYY-MM-DD", "caloriesBurned": 数値 }`。同じ日は上書きされ、0 kcal なら記録を消す
+- 送るのはアクティブ消費のみ（基礎代謝分は目標カロリーに含まれるため）
+- Android 側の送信は `twa/` のアプリが行う（`twa/app/src/main/java/app/vercel/pfc_controller/twa/`）
+
 ## ChatGPT 連携（MCP サーバー）
 
 `/api/mcp` がリモート MCP サーバーになっており、ChatGPT から今日の摂取状況・食事履歴・登録食品を読み取って献立を提案させたり、食べた物や運動を記録させたりできます。
@@ -117,9 +126,9 @@ PFC Balance で今日の摂取状況と直近の食事履歴を確認して、�
 | `get_meal_history`     | 直近 1〜31 日の食事・運動記録（日ごとの合計・運動消費付き）                                                  |
 | `list_foods`           | 登録食品（店舗メニュー等）と栄養値、お気に入りかどうか。キーワードで絞り込み可                               |
 | `get_frequent_foods`   | 直近 N 日（既定 60 日）によく食べた食品の回数・最後に食べた日と、お気に入り食品                              |
-| `list_sports`          | 登録スポーツと1回あたりの消費 kcal                                                                           |
+| `list_sports`          | 登録スポーツと消費の単位 METs                                                                                |
 | `log_meal`             | 食べた物（名前・PFC・kcal・店舗、日時は省略可）を食事記録に追加し、記録後の摂取状況を返す                    |
-| `log_activity`         | 登録スポーツを1回分運動記録に追加し、記録後の摂取状況を返す                                                  |
+| `log_activity`         | 登録スポーツを強度・時間(分)つきで運動記録に追加し、記録後の摂取状況を返す                                   |
 
 ### OAuth の構成
 
