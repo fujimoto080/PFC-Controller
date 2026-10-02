@@ -1,4 +1,6 @@
+import lawson from '@/data/lawson.json';
 import sevenEleven from '@/data/seven-eleven.json';
+import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { SEVEN_ELEVEN_CATEGORIES } from '@/lib/catalog/seven-eleven';
 import type { CatalogCategory, CatalogItem } from '@/lib/catalog/types';
 
@@ -20,5 +22,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     scope: '関東',
     categories: SEVEN_ELEVEN_CATEGORIES,
     items: sevenEleven,
+  },
+  {
+    id: 'lawson',
+    name: 'ローソン',
+    categories: LAWSON_CATEGORIES,
+    items: lawson,
   },
 ];
