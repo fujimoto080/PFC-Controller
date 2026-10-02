@@ -21,7 +21,7 @@ const FETCH_CONCURRENCY = 4;
  * 集める商品カテゴリ。1 本・1 個で飲み食べできる、たんぱく質を補う物に絞って副菜とする。
  * - savas: ザバスのプロテイン飲料・ゼリー・ヨーグルト・粉末の 1 袋入りトライアル
  * - protein-bar: ザバスのプロテインバー
- * - protein-powder: ザバスの粉末プロテイン。栄養成分が「1食分（○g）」で載っている物を 1 回分として集める
+ * - protein-powder: ザバスの粉末プロテイン。栄養成分が「1食分（○g）」で載っている物を 1 回分として、サイズ違いを 1 件にまとめて集める
  * - yogurt: 明治ブルガリアヨーグルト・プロビオヨーグルトなど、1 個・1 本で食べる個食ヨーグルト
  *
  * 集めない物と理由:
@@ -135,7 +135,8 @@ function nutrient(
  * たんぱく質などが「15.0～19.0g」のように幅で載っていて値が決まらない商品は undefined にする。
  * 栄養成分が載っているのに読めなければ、ページの形が変わったとみなして例外にする。
  *
- * 粉末プロテインは「1食分（28g）」の値なので、名前に「1食分(28g)」を付けて 1 回分だと分かるようにする。
+ * 粉末プロテインは「1食分（28g）」の値で、袋のサイズ（800g・450g など）が違っても同じなので、
+ * 名前から袋のサイズを除いて「1食分(28g)」を付ける（scrapeMeiji でサイズ違いを 1 件にまとめる）。
  */
 export function parseProductPage(html: string): ProductDetail | undefined {
   const headings = [
@@ -175,7 +176,9 @@ export function parseProductPage(html: string): ProductDetail | undefined {
   }
   const portion = unit[1] === '食分';
   return {
-    name: portion ? `${name} ${heading.replace('あたり', '')}` : name,
+    name: portion
+      ? `${name.replace(/\s*[\d,.]+g$/, '')} ${heading.replace('あたり', '')}`
+      : name,
     portion,
     calories,
     protein,
@@ -215,17 +218,20 @@ export async function scrapeMeiji(): Promise<CatalogItem[]> {
       }
     }),
   );
-  return products.flatMap((product, index): CatalogItem[] => {
+  // 粉末プロテインはサイズ違いを 1 件にまとめるので、ID はサイズを除いた名前にし、最初のサイズの商品ページを URL にする
+  const items = new Map<string, CatalogItem>();
+  products.forEach((product, index) => {
     const detail = details[index];
-    if (detail === undefined) return [];
+    if (detail === undefined) return;
     const { portion, ...nutrition } = detail;
-    return [
-      {
-        id: product.id,
-        category: categoryOf(product.source, product.section, portion),
-        url: `${BASE_URL}${product.path}`,
-        ...nutrition,
-      },
-    ];
+    const id = portion ? detail.name : product.id;
+    if (items.has(id)) return;
+    items.set(id, {
+      id,
+      category: categoryOf(product.source, product.section, portion),
+      url: `${BASE_URL}${product.path}`,
+      ...nutrition,
+    });
   });
+  return [...items.values()];
 }

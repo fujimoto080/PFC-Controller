@@ -90,9 +90,10 @@ describe('parseProductPage', () => {
     });
   });
 
-  it('1食分で載っている粉末は名前に 1 回分の量を付ける', () => {
-    expect(parseProductPage(page('1食分（28g）あたり'))).toMatchObject({
-      name: '(ザバス)MILK PROTEIN 脂肪0 ヨーグルト風味 430ml 1食分(28g)',
+  it('1食分で載っている粉末は名前から袋のサイズを除いて 1 回分の量を付ける', () => {
+    const html = page('1食分（28g）あたり').replace('430ml</h1>', '800g</h1>');
+    expect(parseProductPage(html)).toMatchObject({
+      name: '(ザバス)MILK PROTEIN 脂肪0 ヨーグルト風味 1食分(28g)',
       portion: true,
     });
   });
