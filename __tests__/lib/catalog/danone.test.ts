@@ -10,6 +10,7 @@ const oikosModal = (
   title: string,
   heading: string,
   content: string,
+  jan = '4901112800242',
 ) => `
 <div id="${id}" class="modal_box">
   <div class="modal_products__body">
@@ -26,6 +27,7 @@ const oikosModal = (
       </ul>
     </div>
     <p class="product_info">内容量：${content}　種類別名称：発酵乳</p>
+    <div class="store_modal"><a href="https://sm.rakuten.co.jp/item/${jan}">楽天マート</a></div>
   </div>
 </div>`;
 
@@ -34,7 +36,7 @@ describe('parseOikos', () => {
 <div id="movie" class="modal_box"><p>動画</p></div>
 <!-- ${oikosModal('old', '終売', '1カップ(100g)あたり', '100g')} -->
 ${oikosModal('plane', '高吸収タンパク質 プレーン・加糖', '1カップ(123g)あたり', '123g')}
-${oikosModal('drink-cacao', 'カカオ<br>高吸収タンパク質', '※1本（240ml）あたり', '240ml')}`;
+${oikosModal('drink-cacao', 'カカオ<br>高吸収タンパク質', '※1本（240ml）あたり', '240ml', '4901112800136')}`;
 
   it('ヨーグルトとドリンクを読み取り、栄養成分の無いモーダルとコメントアウトを除く', () => {
     expect(parseOikos(html)).toEqual([
@@ -46,6 +48,7 @@ ${oikosModal('drink-cacao', 'カカオ<br>高吸収タンパク質', '※1本（
         protein: 11,
         fat: 0,
         carbs: 12.4,
+        jans: ['4901112800242'],
       },
       {
         id: 'oikos-drink-cacao',
@@ -55,8 +58,17 @@ ${oikosModal('drink-cacao', 'カカオ<br>高吸収タンパク質', '※1本（
         protein: 11,
         fat: 0,
         carbs: 12.4,
+        jans: ['4901112800136'],
       },
     ]);
+  });
+
+  it('JAN コードが 8 桁か 13 桁の数字でなければ例外にする', () => {
+    expect(() =>
+      parseOikos(
+        oikosModal('plane', '名前', '1カップ(123g)あたり', '123g', '12345'),
+      ),
+    ).toThrow('JAN コードが読み取れません');
   });
 
   it('栄養成分の単位が読めなければ例外にする', () => {
