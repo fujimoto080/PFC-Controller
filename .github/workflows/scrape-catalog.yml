@@ -1,0 +1,39 @@
+name: Update catalog
+
+# セブン-イレブンの栄養成分一覧 (data/seven-eleven.json) を週 1 回取り直し、変わっていれば main にコミットする。
+# main への push で Vercel が再デプロイし、組み合わせ提案 API に反映される。
+on:
+  schedule:
+    # 毎週月曜 4:00 JST
+    - cron: '0 19 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+
+      - name: Scrape
+        run: pnpm scrape:seven-eleven
+
+      - name: Commit
+        run: |
+          git diff --quiet -- data && exit 0
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data
+          git commit -m 'Update the 7-Eleven nutrition catalog'
+          git push

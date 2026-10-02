@@ -332,6 +332,14 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 - Google カレンダー連携（設定画面「Google カレンダー」、`lib/server/google-calendar.ts`）: 連携すると今日の予定（時間・タイトル・場所、終わった予定には印）を「今日の予定と居場所」に加える。`calendar.readonly` を追加で同意させ、リフレッシュトークンを `accounts` に保存するので定期実行の通知でも使える。取得に失敗したら予定なしで提案を続ける。「連携を解除」で Google 側の許可も取り消す
 - 通知: 設定画面でオンにすると毎朝 7:00 ごろに今日の朝昼晩の提案をまとめて作って Web Push で通知し、タップで提案画面を開く
 
+### 11.4 商品の組み合わせ提案 API（AI なし）
+
+- `GET /api/combination-suggestions?slot=lunch`（要ログイン。`slot` は `breakfast` / `lunch` / `dinner`、省略時は今の時間帯）で、セブン-イレブン（関東）の商品から目標に近い組み合わせを最大5案返す。応答は `{ store, slot, target, combinations: [{ items, total, price }] }`。`items` は商品名・カテゴリ・税込価格・販売地域・PFC・商品ページの URL
+- 目標（`target`）は今日の残りを、この食事を含めた今日これからの食事の数で等分した量。残りカロリーが無ければ空の配列
+- 組み合わせは主食（おにぎり・寿司・弁当・サンドイッチ・麺・パスタ・グラタン）1品と副菜（惣菜・サラダ・ホットスナック・おでん・中華まん）0〜2品。合計カロリーが目標の1.1倍以下のものから、P/F/C の差をカロリーに直した二乗和が小さい順に選ぶ。似た案ばかりにならないよう、1つの商品は1案にしか使わない（`lib/meal-combinations.ts`）
+- 商品データ `data/seven-eleven.json` は公式サイトの関東の商品ページから正規表現で機械的に読み取る（`scripts/scrape-seven-eleven.ts`、`pnpm scrape:seven-eleven`）。栄養成分を載せていない商品は除き、載っているのに読めない場合や前回より大幅に件数が減った場合はページの形が変わったとみなして失敗させる。パンは複数個入りの袋パンや菓子パンが大半なので集めない
+- GitHub Actions（`.github/workflows/scrape-catalog.yml`）で毎週月曜 4:00 JST に取り直し、変わっていれば main にコミットする（Vercel が再デプロイして反映）。Actions 画面から手動でも実行できる
+
 ---
 
 ## 12. PWA / アプリ配布関連
