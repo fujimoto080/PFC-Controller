@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const LINKS = [
   { href: '/foods', label: '食品リスト' },
   { href: '/barcodes', label: 'バーコード一覧' },
+  { href: '/catalog', label: '商品カタログ' },
   { href: '/usage', label: '利用状況' },
 ] as const;
 

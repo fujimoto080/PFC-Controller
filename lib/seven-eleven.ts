@@ -8,21 +8,21 @@ const BASE_URL = 'https://www.sej.co.jp';
 /**
  * 集める商品カテゴリ（公式サイトの URL の slug）。店で買ってそのまま食べられる食事になる物に絞る。
  * パンは複数個入りの袋パンや菓子パンが大半で 1 食の単位にならないため含めない。
- * role は組み合わせ提案での役割で、主食 1 品に副菜を足して 1 食にする。
+ * label は画面に出す名前。role は組み合わせ提案での役割で、主食 1 品に副菜を足して 1 食にする。
  */
 export const SEVEN_ELEVEN_CATEGORIES = [
-  { slug: 'onigiri', role: 'main' },
-  { slug: 'sushi', role: 'main' },
-  { slug: 'bento', role: 'main' },
-  { slug: 'sandwich', role: 'main' },
-  { slug: 'men', role: 'main' },
-  { slug: 'pasta', role: 'main' },
-  { slug: 'gratin', role: 'main' },
-  { slug: 'dailydish', role: 'side' },
-  { slug: 'salad', role: 'side' },
-  { slug: 'hotsnack', role: 'side' },
-  { slug: 'oden', role: 'side' },
-  { slug: 'chukaman', role: 'side' },
+  { slug: 'onigiri', label: 'おにぎり', role: 'main' },
+  { slug: 'sushi', label: '寿司', role: 'main' },
+  { slug: 'bento', label: '弁当', role: 'main' },
+  { slug: 'sandwich', label: 'サンドイッチ', role: 'main' },
+  { slug: 'men', label: '麺', role: 'main' },
+  { slug: 'pasta', label: 'パスタ', role: 'main' },
+  { slug: 'gratin', label: 'グラタン・ドリア', role: 'main' },
+  { slug: 'dailydish', label: '惣菜', role: 'side' },
+  { slug: 'salad', label: 'サラダ', role: 'side' },
+  { slug: 'hotsnack', label: 'ホットスナック', role: 'side' },
+  { slug: 'oden', label: 'おでん', role: 'side' },
+  { slug: 'chukaman', label: '中華まん', role: 'side' },
 ] as const;
 
 /** data/seven-eleven.json の 1 件。 */
