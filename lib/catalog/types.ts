@@ -13,6 +13,8 @@ export interface CatalogItem extends PFC {
   area?: string;
   /** 公式サイトの商品ページ（無ければ栄養成分の一覧ページ） */
   url: string;
+  /** JAN コード（バーコードの数字）。公式サイトに載っていなければ無し */
+  jan?: string;
 }
 
 /**

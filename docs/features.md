@@ -253,7 +253,7 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 
 ### 9.1 API（要ログイン）
 
-- `GET /api/barcode?code=...` : バーコードから食品情報を取得（未登録は 404）
+- `GET /api/barcode?code=...` : バーコードから食品情報を取得。登録が無ければ商品カタログ（11.4）の JAN コードで探し、店名にはお店・メーカー名を入れる（どちらにも無ければ 404）
 - `POST /api/barcode` : `{ barcodes: string[], food }` でバーコードへ食品情報を保存
 - `GET /api/barcode/mappings` : 登録済みマッピング一覧
 - `POST /api/ai-nutrition/image` : `{ imageDataUrls }`（最大3枚、同じ商品の別の面）から栄養成分表示（または料理）を 1 件の食品として読み取る

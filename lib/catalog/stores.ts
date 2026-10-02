@@ -172,3 +172,17 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     items: amatake,
   },
 ];
+
+/** JAN コード → 商品と、その商品を載せているお店。 */
+const BY_JAN = new Map(
+  CATALOG_STORES.flatMap((store) =>
+    store.items.flatMap((item) =>
+      item.jan ? [[item.jan, { store, item }] as const] : [],
+    ),
+  ),
+);
+
+/** バーコードの数字からカタログの商品を探す。 */
+export function findCatalogItemByJan(jan: string) {
+  return BY_JAN.get(jan);
+}
