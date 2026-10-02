@@ -3,6 +3,7 @@ import lawson from '@/data/lawson.json';
 import maruchan from '@/data/maruchan.json';
 import matsuya from '@/data/matsuya.json';
 import mcdonalds from '@/data/mcdonalds.json';
+import morinagaMilk from '@/data/morinaga-milk.json';
 import mos from '@/data/mos.json';
 import nissin from '@/data/nissin.json';
 import origin from '@/data/origin.json';
@@ -14,6 +15,7 @@ import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { MARUCHAN_CATEGORIES } from '@/lib/catalog/maruchan';
 import { MATSUYA_CATEGORIES } from '@/lib/catalog/matsuya';
 import { MCDONALDS_CATEGORIES } from '@/lib/catalog/mcdonalds';
+import { MORINAGA_MILK_CATEGORIES } from '@/lib/catalog/morinaga-milk';
 import { MOS_CATEGORIES } from '@/lib/catalog/mos';
 import { NISSIN_CATEGORIES } from '@/lib/catalog/nissin';
 import { ORIGIN_CATEGORIES } from '@/lib/catalog/origin';
@@ -99,6 +101,12 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     scope: '関東',
     categories: MARUCHAN_CATEGORIES,
     items: maruchan,
+  },
+  {
+    id: 'morinaga-milk',
+    name: '森永乳業',
+    categories: MORINAGA_MILK_CATEGORIES,
+    items: morinagaMilk,
   },
   {
     id: 'yoshinoya',
