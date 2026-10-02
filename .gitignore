@@ -51,6 +51,9 @@ yarn-error.log*
 /twa/manifest-checksum.txt
 /twa/store_icon.png
 
+# Claude Code のサブエージェント用 worktree
+/.claude/worktrees/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

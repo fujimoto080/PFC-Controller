@@ -17,6 +17,9 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testMatch: ['**/__tests__/**/*.(test|spec).[jt]s?(x)'],
+  // Claude Code のサブエージェント用 worktree（別のチェックアウト）は対象にしない
+  modulePathIgnorePatterns: ['<rootDir>/.claude/worktrees/'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/.claude/worktrees/'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

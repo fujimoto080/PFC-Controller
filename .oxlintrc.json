@@ -12,7 +12,11 @@
     "node": true,
     "es2024": true
   },
-  "ignorePatterns": ["public/sw.js", "public/workbox-*.js"],
+  "ignorePatterns": [
+    "public/sw.js",
+    "public/workbox-*.js",
+    ".claude/worktrees"
+  ],
   "rules": {
     "no-array-constructor": "error",
     "no-unused-expressions": "error",
