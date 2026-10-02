@@ -1,0 +1,272 @@
+[
+  {
+    "id": "112",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=112",
+    "name": "ラ・ピッツァ マルゲリータ",
+    "calories": 544,
+    "protein": 21.9,
+    "fat": 15.5,
+    "carbs": 79.2
+  },
+  {
+    "id": "113",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=113",
+    "name": "ラ・ピッツァ アルトバイエルン",
+    "calories": 550,
+    "protein": 23.6,
+    "fat": 19.4,
+    "carbs": 70.3
+  },
+  {
+    "id": "1187",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1187",
+    "name": "至福のピッツァ 燻しベーコン",
+    "calories": 586,
+    "protein": 27.6,
+    "fat": 9.6,
+    "carbs": 97.2
+  },
+  {
+    "id": "1293",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1293",
+    "name": "じぶんプラス サラダチキン切り落としプレーン",
+    "calories": 85,
+    "protein": 17.4,
+    "fat": 1,
+    "carbs": 1.7
+  },
+  {
+    "id": "1294",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1294",
+    "name": "じぶんプラス サラダチキン切り落としハーブ",
+    "calories": 87,
+    "protein": 17.7,
+    "fat": 1,
+    "carbs": 1.7
+  },
+  {
+    "id": "1295",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1295",
+    "name": "じぶんプラス サラダチキン切り落としスモークタイプ",
+    "calories": 80,
+    "protein": 15.9,
+    "fat": 0.9,
+    "carbs": 2
+  },
+  {
+    "id": "1406",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1406",
+    "name": "ラピッツァ ベーコン&ジェノベーゼ",
+    "calories": 463,
+    "protein": 22.2,
+    "fat": 11.1,
+    "carbs": 68.6
+  },
+  {
+    "id": "1429",
+    "category": "aburiyaki-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1429",
+    "name": "元祖あぶり焼チキンステーキ ハーブ&レモン",
+    "calories": 108,
+    "protein": 13.5,
+    "fat": 4.8,
+    "carbs": 2.7
+  },
+  {
+    "id": "1430",
+    "category": "aburiyaki-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1430",
+    "name": "元祖あぶり焼チキンステーキ 和風てりやき",
+    "calories": 122,
+    "protein": 14.4,
+    "fat": 5.3,
+    "carbs": 4.2
+  },
+  {
+    "id": "1431",
+    "category": "gaburitsuki-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1431",
+    "name": "がぶりつきチキン スモーク",
+    "calories": 129,
+    "protein": 12.9,
+    "fat": 7.8,
+    "carbs": 1.7
+  },
+  {
+    "id": "1432",
+    "category": "gaburitsuki-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=1432",
+    "name": "がぶりつきチキン スモークペッパー",
+    "calories": 126,
+    "protein": 13.4,
+    "fat": 7.3,
+    "carbs": 1.8
+  },
+  {
+    "id": "374",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=374",
+    "name": "ラ・ピッツァ クアトロチーズ",
+    "calories": 550,
+    "protein": 22.6,
+    "fat": 17.6,
+    "carbs": 75.2
+  },
+  {
+    "id": "480",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=480",
+    "name": "じぶんプラス 糖質0サラダチキン(プレーン)",
+    "calories": 103,
+    "protein": 20.9,
+    "fat": 1.8,
+    "carbs": 1.4
+  },
+  {
+    "id": "481",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=481",
+    "name": "じぶんプラス 糖質0サラダチキン(ハーブ)",
+    "calories": 91,
+    "protein": 19,
+    "fat": 1.3,
+    "carbs": 1.5
+  },
+  {
+    "id": "482",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=482",
+    "name": "じぶんプラス 糖質0サラダチキン(瀬戸内レモン)",
+    "calories": 92,
+    "protein": 19.4,
+    "fat": 1.3,
+    "carbs": 1.4
+  },
+  {
+    "id": "508",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=508",
+    "name": "ピザガーデン マルゲリータ",
+    "calories": 349,
+    "protein": 15.7,
+    "fat": 11.8,
+    "carbs": 44.9
+  },
+  {
+    "id": "509",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=509",
+    "name": "ピザガーデン 濃厚チーズ",
+    "calories": 368,
+    "protein": 15.8,
+    "fat": 13.6,
+    "carbs": 45.6
+  },
+  {
+    "id": "510",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=510",
+    "name": "ピザガーデン ベーコンピザ",
+    "calories": 331,
+    "protein": 15.7,
+    "fat": 8.5,
+    "carbs": 47.8
+  },
+  {
+    "id": "580",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=580",
+    "name": "じぶんプラス サラダチキン ハーブ",
+    "calories": 74,
+    "protein": 10.4,
+    "fat": 3.1,
+    "carbs": 1.2
+  },
+  {
+    "id": "584",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=584",
+    "name": "じぶんプラス サラダチキン プレーン",
+    "calories": 74,
+    "protein": 10.3,
+    "fat": 3.1,
+    "carbs": 1.3
+  },
+  {
+    "id": "585",
+    "category": "salad-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=585",
+    "name": "じぶんプラス サラダチキン ペッパー",
+    "calories": 75,
+    "protein": 10.3,
+    "fat": 3.1,
+    "carbs": 1.4
+  },
+  {
+    "id": "621",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=621",
+    "name": "ピザガーデン 明太マヨ",
+    "calories": 361,
+    "protein": 13.3,
+    "fat": 12.1,
+    "carbs": 49.8
+  },
+  {
+    "id": "622",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=622",
+    "name": "ピザガーデン てりマヨチキン",
+    "calories": 345,
+    "protein": 17.5,
+    "fat": 7.3,
+    "carbs": 52.4
+  },
+  {
+    "id": "672",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=672",
+    "name": "至福のピッツァ 贅沢4種のチーズ",
+    "calories": 664,
+    "protein": 27,
+    "fat": 21.3,
+    "carbs": 91
+  },
+  {
+    "id": "673",
+    "category": "pizza",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=673",
+    "name": "至福のピッツァ マルゲリータ",
+    "calories": 631,
+    "protein": 27.3,
+    "fat": 15.1,
+    "carbs": 96.4
+  },
+  {
+    "id": "81",
+    "category": "aburiyaki-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=81",
+    "name": "元祖あぶり焼チキン ハーブ&レモン",
+    "calories": 103,
+    "protein": 11.9,
+    "fat": 5.7,
+    "carbs": 0.9
+  },
+  {
+    "id": "82",
+    "category": "aburiyaki-chicken",
+    "url": "https://www.itoham.co.jp/product/product/detail.html?pdid=82",
+    "name": "元祖あぶり焼チキン 和風てりやき",
+    "calories": 95,
+    "protein": 11.7,
+    "fat": 5.1,
+    "carbs": 0.6
+  }
+]

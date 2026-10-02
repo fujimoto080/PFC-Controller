@@ -1,4 +1,5 @@
 import familyMart from '@/data/familymart.json';
+import itoham from '@/data/itoham.json';
 import lawson from '@/data/lawson.json';
 import maruchan from '@/data/maruchan.json';
 import matsuya from '@/data/matsuya.json';
@@ -12,6 +13,7 @@ import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
 import yoshinoya from '@/data/yoshinoya.json';
 import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
+import { ITOHAM_CATEGORIES } from '@/lib/catalog/itoham';
 import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { MARUCHAN_CATEGORIES } from '@/lib/catalog/maruchan';
 import { MATSUYA_CATEGORIES } from '@/lib/catalog/matsuya';
@@ -122,5 +124,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: 'プリマハム',
     categories: PRIMAHAM_CATEGORIES,
     items: primaham,
+  },
+  {
+    id: 'itoham',
+    name: '伊藤ハム',
+    categories: ITOHAM_CATEGORIES,
+    items: itoham,
   },
 ];
