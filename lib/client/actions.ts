@@ -8,6 +8,7 @@ import {
   setState,
   type AppState,
 } from '@/lib/client/store';
+import { DEFAULT_MEAL_SPLIT } from '@/lib/meal-split';
 import { DEFAULT_PROFILE } from '@/lib/nutrition-goals';
 import { sumPFC } from '@/lib/pfc';
 import { buildSportActivity, type SportIntensity } from '@/lib/sports';
@@ -18,6 +19,7 @@ import {
   type FoodItemInput,
   type Logs,
   type MealNote,
+  type MealSplit,
   type MealSuggestion,
   type MealSuggestionRequest,
   type SportActivityLog,
@@ -251,7 +253,12 @@ export function todayMeal(meal: TodayMeal): TodayMeal {
   const today = formatDate(Date.now());
   return meal.date === today
     ? meal
-    : { date: today, note: '', suggestions: [] };
+    : {
+        date: today,
+        note: '',
+        split: { ...DEFAULT_MEAL_SPLIT },
+        suggestions: [],
+      };
 }
 
 function withTodayMeal(fn: (meal: TodayMeal) => TodayMeal) {
@@ -267,6 +274,15 @@ export function saveMealNote(note: string): Promise<boolean> {
     apply: withTodayMeal((meal) => ({ ...meal, note })),
     request: () => api.put('/api/meal-note', { note } satisfies MealNote),
     errorMessage: '今日の予定・気分の保存に失敗しました',
+  });
+}
+
+/** 今日の朝昼晩のカロリー配分（食事提案に使う）を保存する。 */
+export function saveMealSplit(split: MealSplit): Promise<boolean> {
+  return optimistic({
+    apply: withTodayMeal((meal) => ({ ...meal, split })),
+    request: () => api.put('/api/meal-split', split),
+    errorMessage: '朝昼晩の配分の保存に失敗しました',
   });
 }
 

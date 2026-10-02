@@ -181,6 +181,17 @@ const APP_SCHEMA_SQL = `
     PRIMARY KEY (user_id, date)
   );
 
+  -- 1日のカロリー上限を朝・昼・晩に分ける配分（その日の気分で変える）。値は朝/昼と昼/夜の境目の %
+  CREATE TABLE IF NOT EXISTS pfc_meal_splits (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    breakfast_end SMALLINT NOT NULL,
+    lunch_end SMALLINT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, date),
+    CHECK (0 <= breakfast_end AND breakfast_end <= lunch_end AND lunch_end <= 100)
+  );
+
   CREATE TABLE IF NOT EXISTS pfc_push_subscriptions (
     endpoint TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

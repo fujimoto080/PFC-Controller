@@ -5,14 +5,15 @@ import type {
   CombinationItem,
   CombinationSuggestions,
 } from '@/lib/catalog/types';
-import { remainingSlots } from '@/lib/meal-schedule';
+import { slotFraction } from '@/lib/meal-split';
 import {
   mealCombinationFinder,
   type MealCandidates,
   type MealCombination,
 } from '@/lib/meal-combinations';
 import { getNutritionStatus } from '@/lib/server/meal-context';
-import type { MealSlot, NearbyStore, PFC } from '@/lib/types';
+import { getMealSplit } from '@/lib/server/meal-splits';
+import type { MealSlot, MealSplit, NearbyStore, PFC } from '@/lib/types';
 import { formatDate, roundPFC } from '@/lib/utils';
 
 const COMBINATION_COUNT = 5;
@@ -99,15 +100,19 @@ function combinationsOf(
   return find(target, count);
 }
 
-/** 今日の残りを、slot を含めた今日これからの食事の数で等分した量。 */
-export function targetFor(remaining: PFC, slot: MealSlot): PFC {
-  const meals = remainingSlots(slot).length;
-  const share = (value: number) => roundPFC(Math.max(0, value) / meals, 1);
+/** 今日の残りを、朝昼晩の配分に応じて slot に割り当てた量（slot を含めた今日これからの食事で分ける）。 */
+export function targetFor(
+  remaining: PFC,
+  slot: MealSlot,
+  split: MealSplit,
+): PFC {
+  const fraction = slotFraction(split, slot);
+  const share = (value: number) => roundPFC(Math.max(0, value) * fraction, 1);
   return {
     protein: share(remaining.protein),
     fat: share(remaining.fat),
     carbs: share(remaining.carbs),
-    calories: Math.round(Math.max(0, remaining.calories) / meals),
+    calories: Math.round(Math.max(0, remaining.calories) * fraction),
   };
 }
 
@@ -125,8 +130,12 @@ export async function suggestCombinations(
 ): Promise<CombinationSuggestions | undefined> {
   const source = CATALOG_SOURCES.find((s) => s.id === sourceId);
   if (!source) return undefined;
-  const status = await getNutritionStatus(userId, formatDate(Date.now()));
-  const target = targetFor(status.remaining, slot);
+  const today = formatDate(Date.now());
+  const [status, split] = await Promise.all([
+    getNutritionStatus(userId, today),
+    getMealSplit(userId, today),
+  ]);
+  const target = targetFor(status.remaining, slot, split);
   return {
     store: source.name,
     slot,

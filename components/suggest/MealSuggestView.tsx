@@ -18,6 +18,7 @@ import { PageTitle } from '@/components/ui/page-title';
 import {
   requestMealSuggestions,
   saveMealNote,
+  saveMealSplit,
   todayMeal,
 } from '@/lib/client/actions';
 import { getCurrentPosition } from '@/lib/client/device';
@@ -34,11 +35,13 @@ import {
   EMPTY_PFC,
   MEAL_SUGGESTION_AVOID_LIMIT,
   type MealSlot,
+  type MealSplit,
   type MealSuggestion,
   type NearbyStore,
 } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
 import { CatalogCombinations } from './CatalogCombinations';
+import { MealSplitBar } from './MealSplitBar';
 import { StorePicker } from './StorePicker';
 import { SuggestionOptionCard } from './SuggestionOptionCard';
 
@@ -57,6 +60,8 @@ export function MealSuggestView({
   const [loadingSlots, setLoadingSlots] = useState<MealSlot[]>([]);
   // 入力中の今日の予定・気分。入力が止まると自動保存する
   const [note, setNote] = useState(meal.note);
+  // 調整中の朝昼晩の配分。動かすと自動保存する
+  const [split, setSplit] = useState(meal.split);
   const collapsedKey = (slot: MealSlot) => `${meal.date}:${slot}`;
   // 前日までに畳んだ分は読み込み時に捨てる
   const collapsed = useCollapsedKeys(COLLAPSED_STORAGE_KEY, (key) =>
@@ -75,11 +80,12 @@ export function MealSuggestView({
     setLoadingSlots((prev) => [...prev, ...slots]);
     try {
       // サーバーは保存済みの予定・気分を使うので、自動保存を待たずに保存しておく
-      const [location, noteSaved] = await Promise.all([
+      const [location, noteSaved, splitSaved] = await Promise.all([
         getCurrentPosition(),
         saveMealNote(note.trim()),
+        saveMealSplit(split),
       ]);
-      if (!noteSaved) return;
+      if (!noteSaved || !splitSaved) return;
       if (!location) toast.info('現在地を取得できないため、予定から考えます');
       await requestMealSuggestions({ location, ...request });
     } catch (error) {
@@ -90,12 +96,14 @@ export function MealSuggestView({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageTitle className="mb-0">食事の提案</PageTitle>
 
       <RemainingLine />
 
       <MealNoteCard note={note} onChange={setNote} />
+
+      <MealSplitCard split={split} onChange={setSplit} />
 
       <Button
         className="w-full"
@@ -139,14 +147,14 @@ function MealNoteCard({
 }) {
   const status = useAutoSave(note.trim(), saveMealNote);
   return (
-    <Card>
-      <CardHeader>
+    <Card className="gap-3 py-4">
+      <CardHeader className="px-4">
         <CardTitle>
           <label htmlFor="meal-note">今日の予定・気分</label>
         </CardTitle>
         <AutoSaveIndicator status={status} />
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4">
         <Textarea
           id="meal-note"
           rows={3}
@@ -157,6 +165,37 @@ function MealNoteCard({
           }}
           placeholder="例: 13時から外出、夜は飲み会。麺が食べたい"
         />
+      </CardContent>
+    </Card>
+  );
+}
+
+/** 朝昼晩のカロリー上限の配分。バーの2本の線を動かすと自動保存し、その日の提案すべてで AI に渡す。 */
+function MealSplitCard({
+  split,
+  onChange,
+}: {
+  split: MealSplit;
+  onChange: (split: MealSplit) => void;
+}) {
+  const status = useAutoSave(split, saveMealSplit);
+  const { limit } = useTodayLimit();
+  return (
+    <Card className="gap-3 py-4">
+      <CardHeader className="px-4">
+        <CardTitle>朝昼晩の上限カロリー</CardTitle>
+        <AutoSaveIndicator status={status} />
+      </CardHeader>
+      <CardContent className="space-y-2 px-4">
+        <MealSplitBar
+          split={split}
+          totalCalories={Math.round(limit.calories)}
+          onChange={onChange}
+        />
+        <p className="text-muted-foreground text-xs">
+          線を動かして配分を変えます（1日の上限 {Math.round(limit.calories)}
+          kcal）。 食べた分はあとの食事に反映されます。
+        </p>
       </CardContent>
     </Card>
   );
@@ -254,7 +293,7 @@ function SlotSection({
           }}
         >
           {current ? <RefreshCw /> : <Sparkles />}
-          {current ? '別の案' : '提案してもらう'}
+          {current ? '別の案' : '提案'}
         </Button>
       </header>
 
@@ -355,12 +394,18 @@ function SuggestionSection({ suggestion }: { suggestion: MealSuggestion }) {
   );
 }
 
-/** 今日の残り（上限 - 摂取済み）。記録すると即座に反映される。 */
-function RemainingLine() {
+/** 今日の上限と残り（上限 - 摂取済み）。記録すると即座に反映される。 */
+function useTodayLimit() {
   const { logs, settings } = useAppState();
   const [today] = useState(() => formatDate(Date.now()));
   const { limit } = computeDailyLimit(today, settings, logs);
   const remaining = subtractPFC(limit, logs[today]?.total ?? EMPTY_PFC);
+  return { limit, remaining };
+}
+
+/** 今日の残り。 */
+function RemainingLine() {
+  const { remaining } = useTodayLimit();
   return (
     <p className="text-muted-foreground text-sm">
       今日の残り{' '}

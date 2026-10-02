@@ -148,10 +148,19 @@ export interface UserData {
   sports: SportDefinition[];
 }
 
-/** その日の食事提案すべて（新しい順）と、提案に使う予定・気分。 */
+/** 1日のカロリー上限を朝・昼・晩に分ける配分。バーの2本の線の位置（%）で、0 <= breakfastEnd <= lunchEnd <= 100。 */
+export interface MealSplit {
+  /** 朝と昼の境目 */
+  breakfastEnd: number;
+  /** 昼と夜の境目 */
+  lunchEnd: number;
+}
+
+/** その日の食事提案すべて（新しい順）と、提案に使う予定・気分・朝昼晩の配分。 */
 export interface TodayMeal {
   date: string;
   note: string;
+  split: MealSplit;
   suggestions: MealSuggestion[];
 }
 

@@ -23,6 +23,7 @@ import type { CombinationItem } from '@/lib/catalog/types';
 import { getCalendarEventLines } from '@/lib/server/google-calendar';
 import { getMealHistory, getNutritionStatus } from '@/lib/server/meal-context';
 import { getMealNote } from '@/lib/server/meal-notes';
+import { getMealSplit } from '@/lib/server/meal-splits';
 import { findSurroundings } from '@/lib/server/nearby-stores';
 import {
   callOpenAIWithWebSearch,
@@ -32,6 +33,7 @@ import { getSettings } from '@/lib/server/settings';
 import type {
   GeoPoint,
   MealSlot,
+  MealSplit,
   MealSuggestion,
   MealSuggestionRequest,
   NearbyStore,
@@ -119,16 +121,17 @@ async function listSuggestions(
   return result.rows.map((row) => row.suggestion_json);
 }
 
-/** その日の提案すべてと予定・気分。 */
+/** その日の提案すべてと予定・気分・朝昼晩の配分。 */
 export async function getTodayMeal(
   userId: string,
   date: string,
 ): Promise<TodayMeal> {
-  const [note, suggestions] = await Promise.all([
+  const [note, split, suggestions] = await Promise.all([
     getMealNote(userId, date),
+    getMealSplit(userId, date),
     listSuggestions(userId, date),
   ]);
-  return { date, note, suggestions };
+  return { date, note, split, suggestions };
 }
 
 // ---- コンテキスト ----
@@ -199,17 +202,29 @@ function describeStores(stores: NearbyStore[]): string[] {
 }
 
 /** 配分の説明。slots は提案する食事枠で、今日これからの食事の先頭から並ぶ。 */
-function describeAllocation(slots: MealSlot[]): string {
+function describeAllocation(
+  slots: MealSlot[],
+  remaining: PFC,
+  split: MealSplit,
+): string {
   const [first] = slots;
   if (!first) throw new Error('食事枠がありません');
   const mealsLeft = remainingSlots(first).length;
+  const targets = slots
+    .map(
+      (slot) =>
+        `${mealSlotLabel(slot)} ${formatPfc(targetFor(remaining, slot, split))}`,
+    )
+    .join('、');
+  const rule =
+    'ユーザーが決めた朝昼晩の配分（今日の残りをこの比率で分けた量）を、それぞれの食事の上限にする。';
   if (slots.length > 1) {
-    return `今日はあと${mealsLeft}食（${slots.map(mealSlotLabel).join('・')}）。残りをこれらに配分し、全部食べると残りをちょうど使い切って1日を終えられる量にする（朝は軽め、夜の分を残しすぎない）。`;
+    return `今日はあと${mealsLeft}食（${slots.map(mealSlotLabel).join('・')}）。${rule}各食事の上限: ${targets}。全部食べると残りをちょうど使い切って1日を終えられる量にする。`;
   }
-  return `この食事を含めて今日はあと${mealsLeft}食。${
+  return `この食事を含めて今日はあと${mealsLeft}食。${rule}この食事の上限: ${targets}。${
     mealsLeft === 1
       ? '今日の最後の食事なので、残りをちょうど使い切って1日を終えられる量にする。'
-      : `残りを配分し、この食事は残りの約1/${mealsLeft}を目安にする（朝は軽め、夜の分を残しすぎない）。`
+      : ''
   }`;
 }
 
@@ -220,12 +235,13 @@ async function buildPrompt(
 ) {
   const now = Date.now();
   const today = formatDate(now);
-  const [settings, status, history, calendar, note] = await Promise.all([
+  const [settings, status, history, calendar, note, split] = await Promise.all([
     getSettings(userId),
     getNutritionStatus(userId, today),
     getMealHistory(userId, HISTORY_DAYS),
     getCalendarEventLines(userId, today),
     getMealNote(userId, today),
+    getMealSplit(userId, today),
   ]);
   const plans = slots.map((slot) =>
     planMeal(settings.mealSchedule, today, slot),
@@ -264,7 +280,7 @@ async function buildPrompt(
   // ユーザーがお店を選んだらそのお店だけ、選んでいなければ近くのお店の候補を出す
   const [firstSlot] = slots;
   if (!firstSlot) throw new Error('食事枠がありません');
-  const mealTarget = targetFor(status.remaining, firstSlot);
+  const mealTarget = targetFor(status.remaining, firstSlot, split);
   const catalog = describeCatalogCombinations(
     request.stores && request.stores.length > 0 ? request.stores : stores,
     mealTarget,
@@ -302,7 +318,7 @@ async function buildPrompt(
             : `今日はチートデー（毎日記録を続けたご褒美）。ただしこの数日の超過が不足と相殺しきれていないため、負債にならないのは上限から+${formatPfc(status.cheatDayCap)}まで。その範囲で食べたい物を楽しめる案も出してよい。`,
         ]
       : []),
-    describeAllocation(slots),
+    describeAllocation(slots, status.remaining, split),
     '今日食べた物:',
     ...(status.meals.length > 0
       ? status.meals.map(
@@ -333,7 +349,7 @@ async function buildPrompt(
       ? [
           '',
           '## 公式の栄養成分が分かる商品の組み合わせ候補',
-          `近くのお店の公式サイトの栄養成分から、1食の目安（残りを今日これからの食事の数で等分: ${formatPfc(mealTarget)}）に近い組み合わせを機械的に選んだもの。これらのお店を提案するときは、ここの商品を優先して使い、商品名は一字一句そのまま、栄養値も書かれた値を使う。食事ごとの配分に合わせて組み替えたり品数を変えたりしてよい。メーカー名の付いた商品はコンビニ・スーパーで買える既製品で、店によっては置いていない。`,
+          `近くのお店の公式サイトの栄養成分から、この食事の目安（残りをユーザーが決めた朝昼晩の配分で分けた量: ${formatPfc(mealTarget)}）に近い組み合わせを機械的に選んだもの。これらのお店を提案するときは、ここの商品を優先して使い、商品名は一字一句そのまま、栄養値も書かれた値を使う。食事ごとの配分に合わせて組み替えたり品数を変えたりしてよい。メーカー名の付いた商品はコンビニ・スーパーで買える既製品で、店によっては置いていない。`,
           ...catalog.lines,
         ]
       : []),

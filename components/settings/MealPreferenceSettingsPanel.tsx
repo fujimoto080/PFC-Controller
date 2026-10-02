@@ -87,6 +87,7 @@ export function MealPreferenceSettingsPanel() {
           <Textarea
             id="meal-instructions"
             rows={8}
+            className="text-xs md:text-xs"
             value={instructions}
             onChange={(e) => {
               setInstructions(e.target.value);

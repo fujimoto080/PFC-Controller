@@ -7,6 +7,7 @@ import type {
   MealSchedule,
   MealSlot,
   MealNote,
+  MealSplit,
   MealSuggestionRequest,
   NearbyStore,
   PFC,
@@ -115,6 +116,13 @@ export const mealSuggestionRequestSchema = z.object({
 export const mealNoteSchema = z.object({
   note: z.string().trim().max(500),
 }) satisfies z.ZodType<MealNote>;
+
+const percent = z.number().int().min(0).max(100);
+export const mealSplitSchema = z
+  .object({ breakfastEnd: percent, lunchEnd: percent })
+  .refine((split) => split.breakfastEnd <= split.lunchEnd, {
+    message: '朝と昼の境目は昼と夜の境目以下にしてください',
+  }) satisfies z.ZodType<MealSplit>;
 
 const usageEventSchema = z.object({
   kind: z.enum(['page', 'click', 'swipe']),
