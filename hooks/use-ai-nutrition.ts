@@ -12,19 +12,28 @@ import type { BarcodeFood } from '@/lib/barcode';
 /** 実行中の AI 入力の種類。 */
 type AiNutritionPending = 'text' | 'image' | null;
 
-/** テキストからの推定、または写真（栄養成分表示・料理）の読み取りで栄養値を得る。 */
-export function useAiNutrition(onEstimated: (food: BarcodeFood) => void) {
+/** 推定できた栄養値と、写真から読み取った場合はその写真（dataURL）。 */
+interface Estimation {
+  food: BarcodeFood;
+  photos?: string[];
+}
+
+/** テキストからの推定、または写真（栄養成分表示・料理）の読み取りで栄養値を得る。写真から読み取ったときは、見比べられるよう元の写真も渡す。 */
+export function useAiNutrition(
+  onEstimated: (food: BarcodeFood, photos?: string[]) => void,
+) {
   const [text, setText] = useState('');
   const [pending, setPending] = useState<AiNutritionPending>(null);
 
   /** 推定できたら true を返す。 */
   const run = async (
     kind: Exclude<AiNutritionPending, null>,
-    request: () => Promise<BarcodeFood>,
+    request: () => Promise<Estimation>,
   ): Promise<boolean> => {
     setPending(kind);
     try {
-      onEstimated(await request());
+      const { food, photos } = await request();
+      onEstimated(food, photos);
       toast.success('AIでPFCとカロリーを入力しました');
       return true;
     } catch (error) {
@@ -42,14 +51,15 @@ export function useAiNutrition(onEstimated: (food: BarcodeFood) => void) {
       toast.info('食べた内容を入力してください');
       return false;
     }
-    return run('text', () => estimateNutrition(input));
+    return run('text', async () => ({ food: await estimateNutrition(input) }));
   };
 
   /** 同じ商品を撮った写真（複数可）から推定する。 */
   const estimateFromImages = (files: File[]) =>
-    run('image', async () =>
-      estimateNutritionFromImages(await Promise.all(files.map(imageToDataUrl))),
-    );
+    run('image', async () => {
+      const photos = await Promise.all(files.map(imageToDataUrl));
+      return { food: await estimateNutritionFromImages(photos), photos };
+    });
 
   return { text, setText, pending, estimate, estimateFromImages };
 }

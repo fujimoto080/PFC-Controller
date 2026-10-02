@@ -140,7 +140,8 @@ export const CHAIN_STORES = [
   aliases: readonly string[];
 }[];
 
-const normalize = (value: string) =>
+/** 店名の表記ゆれ（全角半角・大文字小文字・空白・記号）をならして比較できる形にする。 */
+export const normalizeStoreName = (value: string) =>
   value
     .normalize('NFKC')
     .toLowerCase()
@@ -150,10 +151,12 @@ const normalize = (value: string) =>
 export function findChainStore(
   ...names: (string | undefined)[]
 ): string | undefined {
-  const targets = names.flatMap((name) => (name ? [normalize(name)] : []));
+  const targets = names.flatMap((name) =>
+    name ? [normalizeStoreName(name)] : [],
+  );
   return CHAIN_STORES.find((chain) =>
     chain.aliases.some((alias) =>
-      targets.some((target) => target.includes(normalize(alias))),
+      targets.some((target) => target.includes(normalizeStoreName(alias))),
     ),
   )?.name;
 }

@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Eraser, Plus, ScanBarcode, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
+import { EstimationPhotos } from '@/components/input/EstimationPhotos';
 import { FoodNameField } from '@/components/input/FoodNameField';
 import { PfcMacroInputs } from '@/components/input/FormFields';
 import { NutritionPhotoButton } from '@/components/input/NutritionPhotoButton';
@@ -36,6 +37,8 @@ interface FoodLogFormDraft {
 interface FoodLogFormProps {
   /** 入力済みにしておく食品。未指定なら空欄から入力する。 */
   initial?: FoodTemplate;
+  /** AI が読み取った元の写真。入力済みの数値と見比べられるよう上に出す。 */
+  photos?: string[];
   initialTimestamp: number;
   /** 読み取ったバーコード。指定すると記録時にマッピングも保存する。 */
   barcode?: string;
@@ -48,6 +51,7 @@ interface FoodLogFormProps {
  */
 export function FoodLogForm({
   initial,
+  photos: initialPhotos,
   initialTimestamp,
   barcode,
   onDone,
@@ -63,8 +67,11 @@ export function FoodLogForm({
     });
   const formValues = useWatch({ control }) as PfcFormValues;
 
-  const applyFood = (food: FoodTemplate) => {
+  const [photos, setPhotos] = useState(initialPhotos);
+
+  const applyFood = (food: FoodTemplate, estimatedPhotos?: string[]) => {
     reset(toFormValues(food));
+    if (estimatedPhotos) setPhotos(estimatedPhotos);
   };
   const ai = useAiNutrition(applyFood);
   const { setText: setAiText } = ai;
@@ -127,6 +134,7 @@ export function FoodLogForm({
         </p>
       )}
 
+      <EstimationPhotos photos={photos} />
       <AiAssist ai={ai} />
 
       <FoodNameField

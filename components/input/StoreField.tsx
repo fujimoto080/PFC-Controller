@@ -78,7 +78,7 @@ export function StoreField({
   );
 }
 
-/** チェーンならロゴ、そうでなければ（または読み込み失敗時）店名の頭文字を表示する。 */
+/** チェーン・ブランドならロゴ、そうでなければ（または読み込み失敗時）店名の頭文字を表示する。 */
 function StoreLogo({ store }: { store: string }) {
   const [failed, setFailed] = useState(false);
   const logoUrl = storeLogoUrl(store);
@@ -91,13 +91,13 @@ function StoreLogo({ store }: { store: string }) {
     );
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- 外部の小さな favicon のため最適化は不要
+    // oxlint-disable-next-line nextjs/no-img-element -- 小さなロゴ画像のため最適化は不要
     <img
       src={logoUrl}
       alt=""
       width={24}
       height={24}
-      className="h-6 w-6 rounded-sm"
+      className="h-6 w-6 rounded-sm object-contain"
       onError={() => {
         setFailed(true);
       }}

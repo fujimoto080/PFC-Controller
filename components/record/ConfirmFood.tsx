@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Check, PenLine } from 'lucide-react';
+import { EstimationPhotos } from '@/components/input/EstimationPhotos';
 import { Button } from '@/components/ui/button';
 import type { FoodTemplate } from '@/lib/food-form';
 import { MACROS } from '@/lib/macros';
@@ -13,17 +14,26 @@ const FACTORS = [0.5, 1, 1.5, 2] as const;
 
 interface ConfirmFoodProps {
   food: FoodTemplate;
+  /** AI が読み取った元の写真。 */
+  photos?: string[];
   onRecord: (food: FoodTemplate) => void;
   onEdit: () => void;
 }
 
 /** 選んだ食品の栄養値と数量を確認して 1 タップで記録する。 */
-export function ConfirmFood({ food, onRecord, onEdit }: ConfirmFoodProps) {
+export function ConfirmFood({
+  food,
+  photos,
+  onRecord,
+  onEdit,
+}: ConfirmFoodProps) {
   const [factor, setFactor] = useState<number>(1);
   const scaled = scalePFC(food, factor);
 
   return (
     <div className="space-y-5">
+      <EstimationPhotos photos={photos} />
+
       <div>
         {food.store && (
           <p className="text-muted-foreground text-xs">{food.store}</p>

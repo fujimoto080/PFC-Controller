@@ -14,7 +14,7 @@ export function QuickAiInput({
   onEstimated,
   onAdd,
 }: {
-  onEstimated: (food: FoodTemplate) => void;
+  onEstimated: (food: FoodTemplate, photos?: string[]) => void;
   onAdd: () => void;
 }) {
   const ai = useAiNutrition(onEstimated);

@@ -17,8 +17,8 @@ import { FoodLogForm } from './FoodLogForm';
 
 /** 記録シート内の画面。確認して 1 タップで記録するか、フォームで入力して記録する。 */
 export type RecordStep =
-  | { kind: 'confirm'; food: FoodTemplate }
-  | { kind: 'form'; food?: FoodTemplate };
+  | { kind: 'confirm'; food: FoodTemplate; photos?: string[] }
+  | { kind: 'form'; food?: FoodTemplate; photos?: string[] };
 
 interface RecordDrawerProps {
   open: boolean;
@@ -88,6 +88,7 @@ export function RecordStepView({
     return (
       <FoodLogForm
         initial={step.food}
+        photos={step.photos}
         initialTimestamp={timestamp}
         barcode={barcode}
         onDone={onDone}
@@ -98,6 +99,7 @@ export function RecordStepView({
   return (
     <ConfirmFood
       food={step.food}
+      photos={step.photos}
       onRecord={(food) => {
         // 楽観的に即時反映されるため応答を待たずに閉じる
         void addFoodItem(toLogInput(food, timestamp));
@@ -105,7 +107,7 @@ export function RecordStepView({
         onDone();
       }}
       onEdit={() => {
-        onStepChange({ kind: 'form', food: step.food });
+        onStepChange({ kind: 'form', food: step.food, photos: step.photos });
       }}
     />
   );
