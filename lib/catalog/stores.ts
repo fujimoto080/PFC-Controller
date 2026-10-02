@@ -177,7 +177,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
 const BY_JAN = new Map(
   CATALOG_STORES.flatMap((store) =>
     store.items.flatMap((item) =>
-      item.jan ? [[item.jan, { store, item }] as const] : [],
+      (item.jans ?? []).map((jan) => [jan, { store, item }] as const),
     ),
   ),
 );
