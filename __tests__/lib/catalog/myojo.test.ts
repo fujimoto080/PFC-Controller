@@ -10,6 +10,7 @@ function detail(overrides: Record<string, unknown> = {}) {
     id: 13947,
     name: '明星 チャルメラカップ しょうゆ',
     price: '252',
+    jan: '4902881435161',
     number_of_products: '',
     sales_area: '全国',
     nutrition_label: '栄養成分表示　[1食 (68g) 当たり]',
@@ -71,6 +72,7 @@ describe('parseProductDetail', () => {
       category: 'regular',
       price: 272,
       url: 'https://www.myojofoods.co.jp/products/items/13947/',
+      jans: ['4902881435161'],
       calories: 306,
       protein: 6.6,
       fat: 11.9,
@@ -85,6 +87,20 @@ describe('parseProductDetail', () => {
     );
     expect(item).toMatchObject({ calories: 306 });
     expect(item).not.toHaveProperty('price');
+  });
+
+  it('JAN コードが空なら jans を省く', () => {
+    expect(
+      parseProductDetail(detail({ jan: '' }), 'regular'),
+    ).not.toHaveProperty('jans');
+  });
+
+  it('JAN コードが 8 桁・13 桁の数字でなければ例外にする', () => {
+    for (const jan of ['49028814351', '490288143516a', '4902881435161 / 2']) {
+      expect(() => parseProductDetail(detail({ jan }), 'regular')).toThrow(
+        'JAN コードが読み取れません',
+      );
+    }
   });
 
   it('オープンプライスは価格を省く', () => {
