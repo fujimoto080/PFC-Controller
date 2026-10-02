@@ -8,12 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toggleCarryoverExcludedDate } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
 import { MACROS, type PfcKey } from '@/lib/macros';
-import {
-  CARRYOVER_DAYS,
-  CHEAT_DAY_FREE_OVER_DAYS,
-  CHEAT_DAY_STREAK,
-  computeDailyLimit,
-} from '@/lib/pfc';
+import { CARRYOVER_DAYS, CHEAT_DAY_STREAK, computeDailyLimit } from '@/lib/pfc';
 import { EMPTY_PFC } from '@/lib/types';
 import { cn, roundPFC } from '@/lib/utils';
 
@@ -32,7 +27,7 @@ export function DaySummary({ date }: { date: string }) {
     isCheatDay,
     cheatDayCap,
     streak,
-    overDays,
+    overCalories,
   } = useMemo(
     () => computeDailyLimit(date, settings, logs),
     [date, settings, logs],
@@ -150,7 +145,7 @@ export function DaySummary({ date }: { date: string }) {
         isCheatDay={isCheatDay}
         cheatDayCalorieCap={cheatDayCap?.calories ?? null}
         streak={streak}
-        overDays={overDays}
+        overCalories={overCalories}
       />
 
       <Label className="text-muted-foreground text-xs font-normal">
@@ -168,18 +163,18 @@ export function DaySummary({ date }: { date: string }) {
 
 /**
  * チートデーの案内。チートデーでなければ、あと何日記録すれば迎えられるかを示す。
- * 超過した日が多いとチートデーに上限が付くため、その旨も示す。
+ * 連続記録中の超過が不足と相殺しきれないとチートデーに上限が付くため、その旨も示す。
  */
 function CheatDayProgress({
   isCheatDay,
   cheatDayCalorieCap,
   streak,
-  overDays,
+  overCalories,
 }: {
   isCheatDay: boolean;
   cheatDayCalorieCap: number | null;
   streak: number;
-  overDays: number;
+  overCalories: number;
 }) {
   if (isCheatDay) {
     return (
@@ -187,7 +182,7 @@ function CheatDayProgress({
         {CHEAT_DAY_STREAK}日続けて記録できたのでチートデー。
         {cheatDayCalorieCap === null
           ? '上限を超えても負債になりません'
-          : `超過した日が${overDays}日あったため、負債にならないのは上限から+${roundPFC(cheatDayCalorieCap, 0)}kcalまで`}
+          : `この${CHEAT_DAY_STREAK}日で合計+${roundPFC(overCalories, 0)}kcal超過したため、負債にならないのは上限から+${roundPFC(cheatDayCalorieCap, 0)}kcalまで`}
       </p>
     );
   }
@@ -206,8 +201,8 @@ function CheatDayProgress({
       </div>
       <p className="text-muted-foreground text-xs">
         あと{CHEAT_DAY_STREAK - streak}日記録するとチートデー
-        {overDays > CHEAT_DAY_FREE_OVER_DAYS &&
-          `（超過${overDays}日のため上限付き）`}
+        {overCalories > 0 &&
+          `（合計+${roundPFC(overCalories, 0)}kcal超過のため上限付き）`}
       </p>
     </div>
   );

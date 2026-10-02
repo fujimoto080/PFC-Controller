@@ -143,12 +143,12 @@ describe('繰越', () => {
     ).toBe(500);
   });
 
-  it('繰り越さない日も記録の連続日数には数え、超過した日には数えない', () => {
+  it('繰り越さない日も記録の連続日数には数え、超過の合計には含めない', () => {
     const logs = recordedDays('2026-09-01', 2, { ...target, calories: 2500 });
     const excluding = { ...settings, carryoverExcludedDates: ['2026-09-02'] };
     expect(computeDailyLimit('2026-09-03', excluding, logs)).toMatchObject({
       streak: 2,
-      overDays: 1,
+      overCalories: 500,
     });
   });
 
@@ -249,7 +249,7 @@ describe('運動を考慮した上限', () => {
       isCheatDay: false,
       cheatDayCap: null,
       streak: 1,
-      overDays: 1,
+      overCalories: 500,
     });
   });
 
@@ -311,37 +311,50 @@ describe('チートデー', () => {
       isCheatDay: false,
       cheatDayCap: null,
       streak: 0,
-      overDays: 0,
+      overCalories: 0,
     });
   });
 
-  it('超過した日が少なければ免除は無制限', () => {
+  it('超過しても別の日の不足で相殺していれば免除は無制限', () => {
     const logs = {
       ...recordedDays(start, 1, { ...target, calories: 2500 }),
-      ...recordedDays(shiftDate(start, 1), CHEAT_DAY_STREAK - 1, target),
+      ...recordedDays(shiftDate(start, 1), 1, { ...target, calories: 1500 }),
+      ...recordedDays(shiftDate(start, 2), CHEAT_DAY_STREAK - 2, target),
     };
     expect(computeDailyLimit(cheatDate, settings, logs)).toMatchObject({
       isCheatDay: true,
       cheatDayCap: null,
-      overDays: 1,
+      overCalories: 0,
     });
   });
 
-  it('超過した日が多いと免除に上限が付き、上限を超えた分は繰り越す', () => {
+  it('相殺しきれない超過があると免除に上限が付き、上限を超えた分は繰り越す', () => {
     // 2日超過（+100kcal ずつ）、残り4日は目標どおり
     const logs = {
       ...recordedDays(start, 2, { ...target, calories: 2100 }),
       ...recordedDays(shiftDate(start, 2), CHEAT_DAY_STREAK - 2, target),
       ...recordedDays(cheatDate, 1, { ...target, calories: 3500 }),
     };
-    // 超過しなかった4日 × 10% = 目標の40%
+    // 目標の50% から超過の合計200kcal（目標の10%）を引いて目標の40%
     expect(computeDailyLimit(cheatDate, settings, logs)).toMatchObject({
       isCheatDay: true,
-      overDays: 2,
+      overCalories: 200,
       cheatDayCap: { protein: 40, fat: 20, carbs: 80, calories: 800 },
     });
     // 前日までの繰越200 + 超過1500 - 免除800
     expect(carryoverOn(shiftDate(cheatDate, 1), logs).calories).toBe(900);
+  });
+
+  it('超過の合計が目標の半分以上なら免除しない', () => {
+    const logs = recordedDays(start, CHEAT_DAY_STREAK, {
+      ...target,
+      calories: 2200,
+    });
+    expect(computeDailyLimit(cheatDate, settings, logs)).toMatchObject({
+      isCheatDay: true,
+      overCalories: 1200,
+      cheatDayCap: { protein: 0, fat: 0, carbs: 0, calories: 0 },
+    });
   });
 
   it('チートデーに目標を下回れば超過の繰越と相殺する', () => {

@@ -56,25 +56,19 @@ function isRecorded(log: DailyLog | undefined): log is DailyLog {
   return (log?.items.length ?? 0) > 0;
 }
 
-/** 連続記録中にカロリーを超過した日がこの日数までなら、チートデーの超過は無制限に免除する。 */
-export const CHEAT_DAY_FREE_OVER_DAYS = 1;
-
-/** 超過した日がそれより多いとき、超過しなかった日1日につき目標のこの割合まで免除する。 */
-const CHEAT_DAY_ALLOWANCE_PER_DAY = 0.1;
-
-/** カロリーが目標を超えた日。 */
-function isOverDay(log: DailyLog | undefined, goal: PFC): boolean {
-  return (log?.total.calories ?? 0) > goal.calories;
-}
+/** 連続記録中の超過がなければ、チートデーに免除する超過の上限は目標のこの割合。 */
+const CHEAT_DAY_ALLOWANCE_RATIO = 0.5;
 
 /**
- * チートデーに負債を免除する超過の上限。超過した日が少なければ null（無制限）。
- * 多ければ、連続記録のうち超過しなかった日数に応じて上限を付ける。
+ * チートデーに負債を免除する超過の上限。連続記録中のカロリーの超過が不足と相殺して残らなければ null（無制限）。
+ * 残っていれば、目標の CHEAT_DAY_ALLOWANCE_RATIO から残った超過の分だけ上限を下げる。
  */
-function cheatDayCap(goal: PFC, overDays: number): PFC | null {
-  if (overDays <= CHEAT_DAY_FREE_OVER_DAYS) return null;
-  const ratio =
-    CHEAT_DAY_ALLOWANCE_PER_DAY * Math.max(0, CHEAT_DAY_STREAK - overDays);
+function cheatDayCap(goal: PFC, overCalories: number): PFC | null {
+  if (overCalories <= 0) return null;
+  const ratio = Math.max(
+    0,
+    CHEAT_DAY_ALLOWANCE_RATIO - overCalories / goal.calories,
+  );
   return mapPFC((key) => roundPFC(goal[key] * ratio));
 }
 
@@ -140,8 +134,8 @@ interface PfcHistory {
   carryover: PFC;
   /** currentDate の前日まで続いている記録の連続日数（チートデーを過ぎると 0 に戻る） */
   streak: number;
-  /** streak のうちカロリーを超過した日数 */
-  overDays: number;
+  /** streak のあいだのカロリーの「摂取 - 目標」の合計（不足した日と相殺する） */
+  overCalories: number;
   isCheatDay: boolean;
 }
 
@@ -149,9 +143,9 @@ interface PfcHistory {
  * 最初の記録日から currentDate の前日までを1日ずつたどり、繰越とチートデーの状態を求める。
  * 記録した日の「その日の摂取 - その日の目標」を繰越とし、超過と不足は古い順に相殺する。
  * 各日の繰越は CARRYOVER_DAYS 日で消える。食事を記録していない日と、繰り越さない日に選んだ日は繰越に影響しない。
- * 繰り越さない日は記録の連続日数には数えるが、超過した日には数えない。
+ * 繰り越さない日は記録の連続日数には数えるが、超過の合計には含めない。
  * CHEAT_DAY_STREAK 日続けて記録した翌日はチートデーで、その日の超過は繰り越さない（下回った分は不足として繰り越す）。
- * ただし連続記録中に超過した日が多いと、免除する超過に上限が付く（cheatDayCap）。
+ * ただし連続記録中に不足と相殺しきれない超過があると、免除する超過に上限が付く（cheatDayCap）。
  */
 function walkPfcHistory(
   currentDate: string,
@@ -162,7 +156,7 @@ function walkPfcHistory(
   const firstDate = Object.keys(logs).sort()[0];
   const lots = mapPFC<CarryoverLot[]>(() => []);
   let streak = 0;
-  let overDays = 0;
+  let overCalories = 0;
   if (firstDate !== undefined) {
     for (let date = firstDate; date < currentDate; date = shiftDate(date, 1)) {
       const log = logs[date];
@@ -170,7 +164,7 @@ function walkPfcHistory(
       const goal = dayTarget(target, log);
       const carries = !excluded.has(date);
       if (isRecorded(log) && carries) {
-        const cap = isCheatDay ? cheatDayCap(goal, overDays) : undefined;
+        const cap = isCheatDay ? cheatDayCap(goal, overCalories) : undefined;
         for (const key of PFC_KEYS) {
           const over = log.total[key] - goal[key];
           // チートデーは上限（null なら無制限）までの超過を免除する
@@ -183,10 +177,10 @@ function walkPfcHistory(
       }
       if (!isCheatDay && isRecorded(log)) {
         streak += 1;
-        if (carries && isOverDay(log, goal)) overDays += 1;
+        if (carries) overCalories += log.total.calories - goal.calories;
       } else {
         streak = 0;
-        overDays = 0;
+        overCalories = 0;
       }
     }
   }
@@ -195,7 +189,7 @@ function walkPfcHistory(
       roundPFC(carryoverTotal(lots[key], currentDate)),
     ),
     streak,
-    overDays,
+    overCalories: roundPFC(overCalories),
     isCheatDay: streak >= CHEAT_DAY_STREAK,
   };
 }
@@ -214,8 +208,8 @@ export interface DailyLimit {
   cheatDayCap: PFC | null;
   /** 前日まで続いている記録の連続日数 */
   streak: number;
-  /** streak のうちカロリーを超過した日数 */
-  overDays: number;
+  /** streak のあいだのカロリーの「摂取 - 目標」の合計（不足した日と相殺する） */
+  overCalories: number;
 }
 
 export function computeDailyLimit(
@@ -225,7 +219,7 @@ export function computeDailyLimit(
 ): DailyLimit {
   const log = logs[date];
   const goal = dayTarget(settings.targetPFC, log);
-  const { carryover, streak, overDays, isCheatDay } = walkPfcHistory(
+  const { carryover, streak, overCalories, isCheatDay } = walkPfcHistory(
     date,
     settings,
     logs,
@@ -236,8 +230,8 @@ export function computeDailyLimit(
     carryover,
     burnedCalories: burnedCalories(log),
     isCheatDay,
-    cheatDayCap: isCheatDay ? cheatDayCap(goal, overDays) : null,
+    cheatDayCap: isCheatDay ? cheatDayCap(goal, overCalories) : null,
     streak,
-    overDays,
+    overCalories,
   };
 }
