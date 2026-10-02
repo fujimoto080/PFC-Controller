@@ -63,9 +63,9 @@ export function ProfileCalculator({
         : '維持';
 
   return (
-    <div className="space-y-4 py-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="min-w-0 space-y-2">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="min-w-0 space-y-1.5">
           <Label>性別</Label>
           <Select
             value={profile.gender}
@@ -87,7 +87,7 @@ export function ProfileCalculator({
         </div>
 
         {NUMBER_FIELDS.map(({ key, label }) => (
-          <div key={key} className="space-y-2">
+          <div key={key} className="space-y-1.5">
             <Label htmlFor={key}>{label}</Label>
             <Input
               id={key}
@@ -100,7 +100,7 @@ export function ProfileCalculator({
           </div>
         ))}
 
-        <div className="min-w-0 space-y-2">
+        <div className="min-w-0 space-y-1.5">
           <Label>活動レベル</Label>
           <Select
             value={String(profile.activityLevel)}
@@ -122,15 +122,15 @@ export function ProfileCalculator({
         </div>
       </div>
 
-      <Card className="mt-4 border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/30">
+      <Card className="gap-1 border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/30">
         <div className="flex items-center gap-2">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">
             ダイエット期間の目安
           </p>
         </div>
-        <div className="mt-1 space-y-1 pl-6 text-[10px] text-blue-700 dark:text-blue-400">
-          <p>専門家は、1ヶ月あたり現在の体重の5%以内の減量を推奨しています。</p>
+        <div className="space-y-0.5 pl-6 text-[10px] text-blue-700 dark:text-blue-400">
+          <p>減量は1ヶ月あたり現在の体重の5%以内が目安です。</p>
           <p>
             ・安全な月間減量ペース: {profile.weight}kg × 5% ={' '}
             <strong>{safeMonthlyLoss}kg</strong>
@@ -158,12 +158,12 @@ export function ProfileCalculator({
         </div>
       </Card>
 
-      <div className="flex items-center justify-between pt-4 text-sm">
+      <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">目標期間（自動計算）</span>
         <span className="font-semibold">{duration}ヶ月</span>
       </div>
 
-      <div className="bg-muted/50 space-y-2 rounded-lg p-4">
+      <div className="bg-muted/50 space-y-2 rounded-lg p-3">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">現在のBMI</span>
           <span className="font-semibold">
@@ -175,16 +175,16 @@ export function ProfileCalculator({
             <span>推奨カロリー</span>
             <span>{goals.calories} kcal</span>
           </div>
-          <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
+          <div className="grid grid-cols-3 gap-2 pt-1 text-center text-xs">
             {MACROS.map(({ key, label }) => (
-              <Card key={key} className="p-2">
+              <Card key={key} className="gap-0.5 p-2">
                 <div className="text-muted-foreground">{label}</div>
                 <div className="font-semibold">{goals[key]}g</div>
               </Card>
             ))}
           </div>
         </div>
-        <div className="text-muted-foreground bg-background/50 mt-4 space-y-3 rounded-md p-3 text-xs">
+        <div className="text-muted-foreground bg-background/50 mt-2 space-y-2 rounded-md p-3 text-xs">
           <p className="text-foreground/80 text-[11px] font-bold">計算の内訳</p>
           <BreakdownStep
             title="1. 基礎代謝量 (BMR)"
