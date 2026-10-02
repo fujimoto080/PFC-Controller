@@ -8,7 +8,6 @@ import {
 } from '@/lib/barcode';
 import { hasNutrition } from '@/lib/pfc';
 import { type JsonSchemaFormat, toJsonSchemaFormat } from '@/lib/server/openai';
-import { roundPFC } from '@/lib/utils';
 
 /** テキストからの推定で答えさせる食品 1 件分の形。 */
 const foodSchema = z.strictObject({
@@ -62,7 +61,7 @@ function normalizeNutrition(data: Partial<BarcodeFood>): BarcodeFood {
   const toNumber = (value: unknown) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric < 0) return 0;
-    return roundPFC(numeric, 1);
+    return numeric;
   };
 
   const trimmedStore = data.store?.trim();

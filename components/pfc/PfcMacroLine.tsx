@@ -5,8 +5,6 @@ interface PfcMacroLineProps {
   food: Pick<FoodItem, 'protein' | 'fat' | 'carbs' | 'calories'>;
   /** カロリーを ` | Nkcal` として表示するか（既定 true） */
   showCalories?: boolean;
-  /** 小数桁。未指定なら値をそのまま表示する */
-  precision?: number;
   className?: string;
 }
 
@@ -14,16 +12,12 @@ interface PfcMacroLineProps {
 export function PfcMacroLine({
   food,
   showCalories = true,
-  precision,
   className,
 }: PfcMacroLineProps) {
-  const fmt = (value: number) =>
-    precision === undefined ? String(value) : value.toFixed(precision);
-
   return (
     <div className={cn('text-muted-foreground text-xs', className)}>
-      P:{fmt(food.protein)} F:{fmt(food.fat)} C:{fmt(food.carbs)}
-      {showCalories && ` | ${fmt(food.calories)}kcal`}
+      P:{food.protein} F:{food.fat} C:{food.carbs}
+      {showCalories && ` | ${food.calories}kcal`}
     </div>
   );
 }

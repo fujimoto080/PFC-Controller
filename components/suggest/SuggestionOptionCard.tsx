@@ -50,7 +50,6 @@ export function SuggestionOptionCard({
       <div className="flex items-center gap-2 border-t pt-2">
         <PfcMacroLine
           food={option.total}
-          precision={0}
           className="text-foreground flex-1 text-sm font-medium"
         />
         <Button

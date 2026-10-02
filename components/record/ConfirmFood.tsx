@@ -7,7 +7,7 @@ import type { FoodTemplate } from '@/lib/food-form';
 import { MACROS } from '@/lib/macros';
 import { scalePFC } from '@/lib/pfc';
 import type { PFC } from '@/lib/types';
-import { cn, roundPFC } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 const FACTORS = [0.5, 1, 1.5, 2] as const;
 
@@ -75,14 +75,14 @@ export function NutrientTiles({ pfc }: { pfc: PFC }) {
     <div className="grid grid-cols-4 gap-2 text-center">
       <NutrientTile
         label="kcal"
-        value={roundPFC(pfc.calories, 0)}
+        value={pfc.calories}
         className="bg-primary text-primary-foreground"
       />
       {MACROS.map(({ key, short }) => (
         <NutrientTile
           key={key}
           label={`${short} (g)`}
-          value={roundPFC(pfc[key], 1)}
+          value={pfc[key]}
           className="bg-muted"
         />
       ))}

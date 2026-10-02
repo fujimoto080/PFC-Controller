@@ -6,7 +6,7 @@ import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
 import { useAppState } from '@/lib/client/store';
 import type { FoodItem } from '@/lib/types';
-import { formatTime, roundPFC } from '@/lib/utils';
+import { formatTime } from '@/lib/utils';
 import { EditLogItemDrawer } from './EditLogItemDrawer';
 
 interface DayLogListProps {
@@ -65,14 +65,10 @@ export function DayLogList({ date, onAdd }: DayLogListProps) {
                   <span className="block truncate text-sm font-medium">
                     {item.name}
                   </span>
-                  <PfcMacroLine
-                    food={item}
-                    showCalories={false}
-                    precision={1}
-                  />
+                  <PfcMacroLine food={item} showCalories={false} />
                 </span>
                 <span className="shrink-0 text-sm font-semibold tabular-nums">
-                  {roundPFC(item.calories, 0)}
+                  {item.calories}
                   <span className="text-muted-foreground ml-0.5 text-xs font-normal">
                     kcal
                   </span>

@@ -263,7 +263,6 @@ function ItemCard({
         </p>
         <PfcMacroLine
           food={showQuantity ? scalePFC(food, item.quantity) : food}
-          precision={0}
           className="mt-0.5"
         />
       </button>
