@@ -3,13 +3,16 @@
 
 const RETRIES = 3;
 
-/** URL の本文。失敗したら間を空けて取り直し、それでも駄目なら例外にする。 */
-export async function fetchText(url: string): Promise<string> {
+/** URL の応答を read で読む。失敗したら間を空けて取り直し、それでも駄目なら例外にする。 */
+async function fetchWithRetry<T>(
+  url: string,
+  read: (response: Response) => Promise<T>,
+): Promise<T> {
   for (let attempt = 1; ; attempt += 1) {
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await response.text();
+      return await read(response);
     } catch (error) {
       if (attempt >= RETRIES) {
         throw new Error(`${url} の取得に失敗しました`, { cause: error });
@@ -18,6 +21,17 @@ export async function fetchText(url: string): Promise<string> {
     }
   }
 }
+
+/** URL の本文（テキスト）。 */
+export const fetchText = (url: string) =>
+  fetchWithRetry(url, (response) => response.text());
+
+/** URL の本文（PDF などのバイナリ）。 */
+export const fetchBytes = (url: string) =>
+  fetchWithRetry(
+    url,
+    async (response) => new Uint8Array(await response.arrayBuffer()),
+  );
 
 /** サイトに負荷をかけすぎないよう、同時に concurrency 件ずつ fn を実行する。結果は values の順。 */
 export async function mapConcurrent<T, R>(

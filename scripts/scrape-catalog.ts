@@ -7,11 +7,13 @@
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import { scrapeSevenEleven } from '../lib/catalog/seven-eleven.ts';
+import { scrapeSukiya } from '../lib/catalog/sukiya.ts';
 import type { CatalogItem } from '../lib/catalog/types.ts';
 
 /** 店舗 ID → 商品を集める関数。ID は data/<ID>.json と lib/catalog/stores.ts の id に揃える。 */
 const SCRAPERS: Record<string, () => Promise<CatalogItem[]>> = {
   'seven-eleven': scrapeSevenEleven,
+  sukiya: scrapeSukiya,
 };
 
 /** 前回よりこの割合を下回る件数しか取れなければ、サイトの形が変わったとみなして書き出さない。 */

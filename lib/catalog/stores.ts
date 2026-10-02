@@ -1,5 +1,7 @@
 import sevenEleven from '@/data/seven-eleven.json';
+import sukiya from '@/data/sukiya.json';
 import { SEVEN_ELEVEN_CATEGORIES } from '@/lib/catalog/seven-eleven';
+import { SUKIYA_CATEGORIES } from '@/lib/catalog/sukiya';
 import type { CatalogCategory, CatalogItem } from '@/lib/catalog/types';
 
 /** 組み合わせ提案に使うお店。商品は scripts/scrape-catalog.ts が週 1 回 data/<id>.json に書き出す。 */
@@ -20,5 +22,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     scope: '関東',
     categories: SEVEN_ELEVEN_CATEGORIES,
     items: sevenEleven,
+  },
+  {
+    id: 'sukiya',
+    name: 'すき家',
+    categories: SUKIYA_CATEGORIES,
+    items: sukiya,
   },
 ];
