@@ -8,6 +8,7 @@ import nissin from '@/data/nissin.json';
 import origin from '@/data/origin.json';
 import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
+import yoshinoya from '@/data/yoshinoya.json';
 import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
 import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { MARUCHAN_CATEGORIES } from '@/lib/catalog/maruchan';
@@ -18,6 +19,7 @@ import { NISSIN_CATEGORIES } from '@/lib/catalog/nissin';
 import { ORIGIN_CATEGORIES } from '@/lib/catalog/origin';
 import { SEVEN_ELEVEN_CATEGORIES } from '@/lib/catalog/seven-eleven';
 import { SUKIYA_CATEGORIES } from '@/lib/catalog/sukiya';
+import { YOSHINOYA_CATEGORIES } from '@/lib/catalog/yoshinoya';
 import type { CatalogCategory, CatalogItem } from '@/lib/catalog/types';
 
 /** 組み合わせ提案に使うお店。商品は scripts/scrape-catalog.ts が週 1 回 data/<id>.json に書き出す。 */
@@ -97,5 +99,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     scope: '関東',
     categories: MARUCHAN_CATEGORIES,
     items: maruchan,
+  },
+  {
+    id: 'yoshinoya',
+    name: '吉野家',
+    categories: YOSHINOYA_CATEGORIES,
+    items: yoshinoya,
   },
 ];
