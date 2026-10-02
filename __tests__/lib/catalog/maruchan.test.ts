@@ -6,6 +6,7 @@ function product(overrides: Record<string, unknown> = {}) {
     product_code: '206158',
     product_name: '赤いきつねうどん　東',
     product_price: '248',
+    product_jancode: '4901990522731',
     product_amount: '96g(めん74g)',
     unit_quantity: '1食(96g)当たり',
     product_salesarea: '東北・信越・関東・静岡・中京',
@@ -45,8 +46,23 @@ describe('parseProductList', () => {
         protein: 9.9,
         fat: 18,
         carbs: 52.6,
+        jans: ['4901990522731'],
       },
     ]);
+  });
+
+  it('JAN コードが空の商品は jans を持たない', () => {
+    expect(parse([product({ product_jancode: '' })])[0]).not.toHaveProperty(
+      'jans',
+    );
+  });
+
+  it('JAN コードが数字 8 桁か 13 桁でなければ例外にする', () => {
+    for (const jan of ['490199052273', '49019905227AB', 4901990522731]) {
+      expect(() => parse([product({ product_jancode: jan })])).toThrow(
+        'JAN コードが読み取れません',
+      );
+    }
   });
 
   it('全国の商品は販売エリアを持たず、全角空白や単位前の空白がある栄養成分も読む', () => {

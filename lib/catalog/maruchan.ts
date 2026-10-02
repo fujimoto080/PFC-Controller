@@ -9,7 +9,7 @@ import type { CatalogCategory, CatalogItem } from './types';
 
 // 東洋水産（マルちゃん）公式サイトの商品検索 API から栄養成分を機械的に読み取る。
 // 商品情報ページ（/products/category/<カテゴリ>/）は Vue で描画されており、中身は
-// /products/api/searchproduct/?category=<カテゴリ> の JSON（商品ごとの栄養成分・希望小売価格・販売エリア）。
+// /products/api/searchproduct/?category=<カテゴリ> の JSON（商品ごとの栄養成分・希望小売価格・販売エリア・JAN コード）。
 // robots.txt はこの API と商品ページを禁止していない。
 
 const BASE_URL = 'https://www.maruchan.co.jp';
@@ -59,6 +59,18 @@ function nutrient(nutrition: string, label: string, unit: string): number {
 const firstGrams = (text: string, label: string) =>
   Number(matchRequired(text, /(\d+(?:\.\d+)?)g/, label));
 
+/** JAN コード（8 桁か 13 桁の数字）。空なら無し。数字以外や桁数が違う値は例外にする。 */
+function janCodes(product: unknown, name: string): { jans?: string[] } {
+  const value = (product as Record<string, unknown>).product_jancode;
+  if (value === null || value === '') return {};
+  if (typeof value !== 'string' || !/^(?:\d{8}|\d{13})$/.test(value)) {
+    throw new Error(
+      `${name} の JAN コードが読み取れません: ${JSON.stringify(value)}`,
+    );
+  }
+  return { jans: [value] };
+}
+
 /** 税込の希望小売価格（円）。オープン価格など数字でなければ無し。 */
 const taxIncludedPrice = (price: string) =>
   /^\d+$/.test(price) ? Math.round(Number(price) * TAX_RATE) : undefined;
@@ -104,6 +116,7 @@ export function parseProductList(
         ...(price !== undefined && { price }),
         ...(area !== NATIONWIDE_AREA && { area }),
         url: requireString(raw, 'link_pc'),
+        ...janCodes(raw, name),
         calories: nutrient(nutrition, 'エネルギー', 'kcal'),
         protein: nutrient(nutrition, 'たん白質', 'g'),
         fat: nutrient(nutrition, '脂質', 'g'),
@@ -122,5 +135,20 @@ export async function scrapeMaruchan(): Promise<CatalogItem[]> {
       slug,
     ),
   );
-  return items.flat();
+  return withoutSharedJans(items.flat());
+}
+
+/**
+ * 公式サイトが複数の商品に同じ JAN コードを載せている場合（焼そばとスープ付焼そばなど）、
+ * どの商品のバーコードか決まらないので、その JAN は全商品から外す。
+ */
+function withoutSharedJans(items: CatalogItem[]): CatalogItem[] {
+  const counts = new Map<string, number>();
+  for (const jan of items.flatMap((item) => item.jans ?? [])) {
+    counts.set(jan, (counts.get(jan) ?? 0) + 1);
+  }
+  return items.map(({ jans, ...item }) => {
+    const unique = (jans ?? []).filter((jan) => counts.get(jan) === 1);
+    return unique.length > 0 ? { ...item, jans: unique } : item;
+  });
 }
