@@ -6,6 +6,7 @@ import mcdonalds from '@/data/mcdonalds.json';
 import mos from '@/data/mos.json';
 import nissin from '@/data/nissin.json';
 import origin from '@/data/origin.json';
+import primaham from '@/data/primaham.json';
 import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
 import yoshinoya from '@/data/yoshinoya.json';
@@ -17,6 +18,7 @@ import { MCDONALDS_CATEGORIES } from '@/lib/catalog/mcdonalds';
 import { MOS_CATEGORIES } from '@/lib/catalog/mos';
 import { NISSIN_CATEGORIES } from '@/lib/catalog/nissin';
 import { ORIGIN_CATEGORIES } from '@/lib/catalog/origin';
+import { PRIMAHAM_CATEGORIES } from '@/lib/catalog/primaham';
 import { SEVEN_ELEVEN_CATEGORIES } from '@/lib/catalog/seven-eleven';
 import { SUKIYA_CATEGORIES } from '@/lib/catalog/sukiya';
 import { YOSHINOYA_CATEGORIES } from '@/lib/catalog/yoshinoya';
@@ -105,5 +107,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: '吉野家',
     categories: YOSHINOYA_CATEGORIES,
     items: yoshinoya,
+  },
+  {
+    id: 'primaham',
+    name: 'プリマハム',
+    categories: PRIMAHAM_CATEGORIES,
+    items: primaham,
   },
 ];
