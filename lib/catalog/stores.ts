@@ -4,6 +4,7 @@ import maruchan from '@/data/maruchan.json';
 import matsuya from '@/data/matsuya.json';
 import mcdonalds from '@/data/mcdonalds.json';
 import mos from '@/data/mos.json';
+import myojo from '@/data/myojo.json';
 import nissin from '@/data/nissin.json';
 import origin from '@/data/origin.json';
 import primaham from '@/data/primaham.json';
@@ -16,6 +17,7 @@ import { MARUCHAN_CATEGORIES } from '@/lib/catalog/maruchan';
 import { MATSUYA_CATEGORIES } from '@/lib/catalog/matsuya';
 import { MCDONALDS_CATEGORIES } from '@/lib/catalog/mcdonalds';
 import { MOS_CATEGORIES } from '@/lib/catalog/mos';
+import { MYOJO_CATEGORIES } from '@/lib/catalog/myojo';
 import { NISSIN_CATEGORIES } from '@/lib/catalog/nissin';
 import { ORIGIN_CATEGORIES } from '@/lib/catalog/origin';
 import { PRIMAHAM_CATEGORIES } from '@/lib/catalog/primaham';
@@ -101,6 +103,13 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     scope: '関東',
     categories: MARUCHAN_CATEGORIES,
     items: maruchan,
+  },
+  {
+    id: 'myojo',
+    name: '明星食品',
+    scope: '関東',
+    categories: MYOJO_CATEGORIES,
+    items: myojo,
   },
   {
     id: 'yoshinoya',
