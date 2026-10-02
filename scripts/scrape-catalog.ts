@@ -14,6 +14,7 @@ import { scrapeLawson } from '../lib/catalog/lawson.ts';
 import { scrapeMaruchan } from '../lib/catalog/maruchan.ts';
 import { scrapeMatsuya } from '../lib/catalog/matsuya.ts';
 import { scrapeMcdonalds } from '../lib/catalog/mcdonalds.ts';
+import { scrapeMorinagaMilk } from '../lib/catalog/morinaga-milk.ts';
 import { scrapeMos } from '../lib/catalog/mos.ts';
 import { scrapeMyojo } from '../lib/catalog/myojo.ts';
 import { scrapeNissin } from '../lib/catalog/nissin.ts';
@@ -37,6 +38,7 @@ const SCRAPERS: Record<string, () => Promise<CatalogItem[]>> = {
   nissin: scrapeNissin,
   maruchan: scrapeMaruchan,
   myojo: scrapeMyojo,
+  'morinaga-milk': scrapeMorinagaMilk,
   yoshinoya: scrapeYoshinoya,
   primaham: scrapePrimaham,
   itoham: scrapeItoham,

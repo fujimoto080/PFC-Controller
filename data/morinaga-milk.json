@@ -1,0 +1,322 @@
+[
+  {
+    "id": "1015",
+    "name": "ギリシャヨーグルト パルテノ プレーン砂糖不使用",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/partheno/1015.html",
+    "calories": 99,
+    "protein": 10.2,
+    "fat": 4.3,
+    "carbs": 4.9
+  },
+  {
+    "id": "1650",
+    "name": "カラダ強くするのむヨーグルト",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/lactferrin_bifidus_drink/1650.html",
+    "calories": 62,
+    "protein": 3.1,
+    "fat": 1,
+    "carbs": 10.1
+  },
+  {
+    "id": "1651",
+    "name": "カラダ強くするヨーグルト",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/lactferrin_bifidus/1651.html",
+    "calories": 93,
+    "protein": 3.5,
+    "fat": 3.6,
+    "carbs": 11.6
+  },
+  {
+    "id": "2328",
+    "name": "森永ラクトフェリン100 ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/lactoferrin100/2328.html",
+    "calories": 66,
+    "protein": 3.1,
+    "fat": 1.3,
+    "carbs": 10.5
+  },
+  {
+    "id": "2505",
+    "name": "森永アロエヨーグルト",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/aloe/2505.html",
+    "calories": 101,
+    "protein": 3.8,
+    "fat": 2.6,
+    "carbs": 15.6
+  },
+  {
+    "id": "511",
+    "name": "森永ラクトフェリン100",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/lactoferrin100/511.html",
+    "calories": 59,
+    "protein": 4,
+    "fat": 0.9,
+    "carbs": 8.6
+  },
+  {
+    "id": "5396",
+    "name": "トリプルヨーグルト ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/triple/5396.html",
+    "calories": 47,
+    "protein": 3.7,
+    "fat": 0,
+    "carbs": 11.9
+  },
+  {
+    "id": "6273",
+    "name": "1日分の鉄分 のむヨーグルト",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/1nichifusokubun/6273.html",
+    "calories": 54,
+    "protein": 4,
+    "fat": 0,
+    "carbs": 10.7
+  },
+  {
+    "id": "6408",
+    "name": "森永アロエ&ヨーグルト 3倍大粒",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/aloe/6408.html",
+    "calories": 114,
+    "protein": 3.8,
+    "fat": 2.6,
+    "carbs": 18.8
+  },
+  {
+    "id": "6426",
+    "name": "トリプルヨーグルト 砂糖不使用 ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/triplenosugar/6426.html",
+    "calories": 42,
+    "protein": 3.7,
+    "fat": 0,
+    "carbs": 10.5
+  },
+  {
+    "id": "7208",
+    "name": "認知機能対策ヨーグルト ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/ninchi_yoghurt/7208.html",
+    "calories": 40,
+    "protein": 3.4,
+    "fat": 0.5,
+    "carbs": 5.4
+  },
+  {
+    "id": "7720",
+    "name": "ビヒダス ヨーグルト 便通改善 ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/bentsu/7720.html",
+    "calories": 59,
+    "protein": 3.3,
+    "fat": 0.7,
+    "carbs": 11.9
+  },
+  {
+    "id": "7721",
+    "name": "ビヒダス ヨーグルト 便通改善",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/bentsu/7721.html",
+    "calories": 72,
+    "protein": 4.2,
+    "fat": 0.9,
+    "carbs": 14.1
+  },
+  {
+    "id": "7782",
+    "name": "ビヒダス ヨーグルト ざく盛りフルーツ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/fruits_yoghurt/7782.html",
+    "calories": 94,
+    "protein": 7.1,
+    "fat": 0,
+    "carbs": 16.8
+  },
+  {
+    "id": "7787",
+    "name": "ビヒダス ヨーグルト 便通改善 脂肪ゼロ ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/bifidus_bentsu_zerofat/7787.html",
+    "calories": 49,
+    "protein": 3.2,
+    "fat": 0,
+    "carbs": 10.8
+  },
+  {
+    "id": "7788",
+    "name": "ビヒダス ヨーグルト 便通改善 脂肪ゼロ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/bifidus_bentsu_zerofat/7788.html",
+    "calories": 52,
+    "protein": 4.3,
+    "fat": 0,
+    "carbs": 10.3
+  },
+  {
+    "id": "7819",
+    "name": "トリプルヨーグルト",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/triple/7819.html",
+    "calories": 48,
+    "protein": 3.7,
+    "fat": 0,
+    "carbs": 12
+  },
+  {
+    "id": "7821",
+    "name": "トリプルヨーグルト 砂糖不使用",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/triplenosugar/7821.html",
+    "calories": 43,
+    "protein": 3.7,
+    "fat": 0,
+    "carbs": 10.5
+  },
+  {
+    "id": "8301",
+    "name": "ギリシャヨーグルト パルテノ 脂肪ゼロ プレーン砂糖不使用",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/partheno_zerofat/8301.html",
+    "calories": 68,
+    "protein": 11,
+    "fat": 0,
+    "carbs": 5.2
+  },
+  {
+    "id": "8956",
+    "name": "森永カルダスヨーグルト ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/cardas_yoghurt/8956.html",
+    "calories": 64,
+    "protein": 3.5,
+    "fat": 0.7,
+    "carbs": 10.8
+  },
+  {
+    "id": "90",
+    "name": "ビヒダスヨーグルト 加糖",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/bifidus_personal/90.html",
+    "calories": 111,
+    "protein": 3.8,
+    "fat": 4.2,
+    "carbs": 14.9
+  },
+  {
+    "id": "92",
+    "name": "ギリシャヨーグルト パルテノ はちみつ付",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/partheno/92.html",
+    "calories": 103,
+    "protein": 8.2,
+    "fat": 3.5,
+    "carbs": 10.2
+  },
+  {
+    "id": "9201",
+    "name": "ギリシャヨーグルト パルテノ クリーミーバニラ味",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/partheno/9201.html",
+    "calories": 114,
+    "protein": 10,
+    "fat": 4.2,
+    "carbs": 9.1
+  },
+  {
+    "id": "9598",
+    "name": "ビヒダス ヨーグルト 便通改善 1日分の鉄分 ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/bentsu/9598.html",
+    "calories": 55,
+    "protein": 3.4,
+    "fat": 0.2,
+    "carbs": 12.1
+  },
+  {
+    "id": "9699",
+    "name": "森永アロエヨーグルト 脂肪ゼロ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/aloe_zero/9699.html",
+    "calories": 64,
+    "protein": 3.6,
+    "fat": 0,
+    "carbs": 11.4
+  },
+  {
+    "id": "9766",
+    "name": "森永ラクトフェリン200 ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/lactoferrin200/9766.html",
+    "calories": 61,
+    "protein": 3,
+    "fat": 1.2,
+    "carbs": 9.5
+  },
+  {
+    "id": "9767",
+    "name": "森永のむアロエヨーグルト",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/aloe/9767.html",
+    "calories": 99,
+    "protein": 7.5,
+    "fat": 0.7,
+    "carbs": 15.7
+  },
+  {
+    "id": "9857",
+    "name": "inPROTEIN 甘くないカフェオレ",
+    "category": "drink",
+    "url": "https://www.morinagamilk.co.jp/products/drink/inprotein/9857.html",
+    "calories": 137,
+    "protein": 20.2,
+    "fat": 0,
+    "carbs": 14
+  },
+  {
+    "id": "9858",
+    "name": "inPROTEIN 甘くない抹茶オレ",
+    "category": "drink",
+    "url": "https://www.morinagamilk.co.jp/products/drink/inprotein/9858.html",
+    "calories": 140,
+    "protein": 20.4,
+    "fat": 0,
+    "carbs": 14.6
+  },
+  {
+    "id": "9908",
+    "name": "マウントレーニア プロテイン カフェラッテ",
+    "category": "drink",
+    "url": "https://www.morinagamilk.co.jp/products/drink/mtr_caffelatte/9908.html",
+    "calories": 144,
+    "protein": 10.4,
+    "fat": 2.4,
+    "carbs": 20.1
+  },
+  {
+    "id": "9911",
+    "name": "森永アサイーボウル&ヨーグルト Powered by森永アロエ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/powered_by_morinagaaloe/9911.html",
+    "calories": 88,
+    "protein": 4.3,
+    "fat": 0,
+    "carbs": 16.9
+  },
+  {
+    "id": "9987",
+    "name": "宅配用 森永記憶対策ヨーグルト ドリンクタイプ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/kioku_yoghurt/9987.html",
+    "calories": 40,
+    "protein": 3.4,
+    "fat": 0.5,
+    "carbs": 5.4
+  }
+]
