@@ -1,10 +1,12 @@
 import familyMart from '@/data/familymart.json';
 import lawson from '@/data/lawson.json';
+import mcdonalds from '@/data/mcdonalds.json';
 import origin from '@/data/origin.json';
 import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
 import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
 import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
+import { MCDONALDS_CATEGORIES } from '@/lib/catalog/mcdonalds';
 import { ORIGIN_CATEGORIES } from '@/lib/catalog/origin';
 import { SEVEN_ELEVEN_CATEGORIES } from '@/lib/catalog/seven-eleven';
 import { SUKIYA_CATEGORIES } from '@/lib/catalog/sukiya';
@@ -55,5 +57,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: 'すき家',
     categories: SUKIYA_CATEGORIES,
     items: sukiya,
+  },
+  {
+    id: 'mcdonalds',
+    name: 'マクドナルド',
+    categories: MCDONALDS_CATEGORIES,
+    items: mcdonalds,
   },
 ];
