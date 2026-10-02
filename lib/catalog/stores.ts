@@ -1,4 +1,6 @@
+import familyMart from '@/data/familymart.json';
 import sevenEleven from '@/data/seven-eleven.json';
+import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
 import { SEVEN_ELEVEN_CATEGORIES } from '@/lib/catalog/seven-eleven';
 import type { CatalogCategory, CatalogItem } from '@/lib/catalog/types';
 
@@ -20,5 +22,12 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     scope: '関東',
     categories: SEVEN_ELEVEN_CATEGORIES,
     items: sevenEleven,
+  },
+  {
+    id: 'familymart',
+    name: 'ファミリーマート',
+    scope: '関東',
+    categories: FAMILYMART_CATEGORIES,
+    items: familyMart,
   },
 ];
