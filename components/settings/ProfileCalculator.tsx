@@ -68,7 +68,7 @@ export function ProfileCalculator({
   return (
     <div className="space-y-4 py-4">
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label>性別</Label>
           <Select
             value={profile.gender}
@@ -76,7 +76,7 @@ export function ProfileCalculator({
               update({ gender: gender as UserProfile['gender'] });
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="性別" />
             </SelectTrigger>
             <SelectContent>
@@ -103,7 +103,7 @@ export function ProfileCalculator({
           </div>
         ))}
 
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
           <Label>活動レベル</Label>
           <Select
             value={String(profile.activityLevel)}
@@ -111,7 +111,7 @@ export function ProfileCalculator({
               update({ activityLevel: Number(value) });
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="活動レベル" />
             </SelectTrigger>
             <SelectContent>
