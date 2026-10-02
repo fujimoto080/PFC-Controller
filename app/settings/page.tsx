@@ -10,7 +10,7 @@ import { SportSettingsPanel } from '@/components/settings/SportSettingsPanel';
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageTitle>設定</PageTitle>
 
       <GoalSettingsPanel />

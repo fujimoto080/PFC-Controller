@@ -22,8 +22,8 @@ export async function CalendarSettingsPanel() {
       <CardContent className="space-y-3">
         <p className="text-muted-foreground text-sm">
           {connected
-            ? '連携中。食事の提案で今日の予定（時間・場所）を考慮します。'
-            : '連携すると、食事の提案で今日の予定（時間・場所）を考慮します。予定は読み取りのみです。'}
+            ? '連携中。提案で今日の予定を考慮します。'
+            : '連携すると、提案で今日の予定を考慮します（読み取りのみ）。'}
         </p>
         <form
           action={async () => {

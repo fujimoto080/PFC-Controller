@@ -47,7 +47,7 @@ export function MealSuggestionSettingsPanel() {
         <CardTitle>食事の提案</CardTitle>
         <AutoSaveIndicator status={status} />
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-4">
         <PushToggle />
 
         <PlaceField
@@ -152,7 +152,7 @@ function PushToggle() {
   return (
     <div className="flex items-center gap-3">
       <p className="text-muted-foreground min-w-0 flex-1 text-sm">
-        毎朝 7:00 ごろに今日の朝昼晩の提案を通知します。
+        毎朝 7:00 ごろに朝昼晩の提案を通知します。
       </p>
       <Button
         variant={subscribed ? 'outline' : 'default'}

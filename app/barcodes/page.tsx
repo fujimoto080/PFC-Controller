@@ -22,7 +22,7 @@ export default function BarcodesPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageTitle>バーコード一覧</PageTitle>
 
       <div className="space-y-2 px-4">

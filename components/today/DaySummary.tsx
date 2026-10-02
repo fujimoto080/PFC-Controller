@@ -40,7 +40,7 @@ export function DaySummary({ date }: { date: string }) {
   const isOver = (key: PfcKey, left: number) => left < -allowance(key);
 
   return (
-    <Card className="gap-5 px-5 py-5">
+    <Card>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-muted-foreground text-xs">
@@ -179,10 +179,10 @@ function CheatDayProgress({
   if (isCheatDay) {
     return (
       <p className="text-muted-foreground text-xs">
-        {CHEAT_DAY_STREAK}日続けて記録できたのでチートデー。
+        チートデー（{CHEAT_DAY_STREAK}日連続で記録）。
         {cheatDayCalorieCap === null
           ? '上限を超えても負債になりません'
-          : `この${CHEAT_DAY_STREAK}日で合計+${roundPFC(overCalories, 0)}kcal超過したため、負債にならないのは上限から+${roundPFC(cheatDayCalorieCap, 0)}kcalまで`}
+          : `直近の超過+${roundPFC(overCalories, 0)}kcalがあるため、負債にならないのは上限+${roundPFC(cheatDayCalorieCap, 0)}kcalまで`}
       </p>
     );
   }

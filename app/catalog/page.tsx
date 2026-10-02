@@ -8,7 +8,7 @@ export const metadata = { title: '商品カタログ | PFC Balance' };
 /** 組み合わせ提案に使うお店の商品一覧（data/<店舗 ID>.json）。 */
 export default function CatalogPage() {
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-4 pb-24">
       <PageTitle>商品カタログ</PageTitle>
       <p className="text-muted-foreground px-4 text-sm">
         各お店の公式サイトから毎週取り直す

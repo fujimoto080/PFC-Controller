@@ -31,7 +31,7 @@ export default function UsagePage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageTitle>利用状況</PageTitle>
 
       {rows === 'loading' ? (

@@ -27,7 +27,7 @@ export function BulkStoreEditor({
   return (
     <div className="fixed inset-x-0 bottom-16 z-50 px-4">
       <Card>
-        <CardContent className="space-y-3 pt-4">
+        <CardContent className="space-y-3">
           <p className="text-sm font-medium">{selectedCount}件を選択中</p>
           <LabeledInput
             label="店舗（未入力でその他）"

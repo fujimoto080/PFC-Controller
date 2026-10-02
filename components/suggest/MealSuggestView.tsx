@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Loader2,
   RefreshCw,
+  RotateCcw,
   Sparkles,
   Store,
 } from 'lucide-react';
@@ -41,6 +42,7 @@ import {
 } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
 import { CatalogCombinations } from './CatalogCombinations';
+import { DEFAULT_MEAL_SPLIT, isDefaultSplit } from '@/lib/meal-split';
 import { MealSplitBar } from './MealSplitBar';
 import { StorePicker } from './StorePicker';
 import { SuggestionOptionCard } from './SuggestionOptionCard';
@@ -147,14 +149,14 @@ function MealNoteCard({
 }) {
   const status = useAutoSave(note.trim(), saveMealNote);
   return (
-    <Card className="gap-3 py-4">
-      <CardHeader className="px-4">
+    <Card>
+      <CardHeader>
         <CardTitle>
           <label htmlFor="meal-note">今日の予定・気分</label>
         </CardTitle>
         <AutoSaveIndicator status={status} />
       </CardHeader>
-      <CardContent className="px-4">
+      <CardContent>
         <Textarea
           id="meal-note"
           rows={3}
@@ -181,21 +183,35 @@ function MealSplitCard({
   const status = useAutoSave(split, saveMealSplit);
   const { limit } = useTodayLimit();
   return (
-    <Card className="gap-3 py-4">
-      <CardHeader className="px-4">
-        <CardTitle>朝昼晩の上限カロリー</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          朝昼晩の上限{' '}
+          <span className="text-muted-foreground text-sm font-normal">
+            1日 {Math.round(limit.calories)}kcal
+          </span>
+        </CardTitle>
         <AutoSaveIndicator status={status} />
       </CardHeader>
-      <CardContent className="space-y-2 px-4">
+      <CardContent className="space-y-2">
         <MealSplitBar
           split={split}
           totalCalories={Math.round(limit.calories)}
           onChange={onChange}
         />
-        <p className="text-muted-foreground text-xs">
-          線を動かして配分を変えます（1日の上限 {Math.round(limit.calories)}
-          kcal）。 食べた分はあとの食事に反映されます。
-        </p>
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isDefaultSplit(split)}
+            onClick={() => {
+              onChange({ ...DEFAULT_MEAL_SPLIT });
+            }}
+          >
+            <RotateCcw />
+            既定に戻す
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

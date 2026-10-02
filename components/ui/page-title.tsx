@@ -7,10 +7,7 @@ interface PageTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
 export function PageTitle({ children, className, ...props }: PageTitleProps) {
   return (
     <h1
-      className={cn(
-        'mb-6 px-4 py-2 text-2xl font-bold tracking-tight',
-        className,
-      )}
+      className={cn('mb-3 py-1 text-2xl font-bold tracking-tight', className)}
       {...props}
     >
       {children}

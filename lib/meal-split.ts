@@ -1,8 +1,8 @@
 import { MEAL_SLOTS, remainingSlots } from './meal-schedule';
 import type { MealSlot, MealSplit } from './types';
 
-/** 朝 30%・昼 35%・夜 35%。 */
-export const DEFAULT_MEAL_SPLIT: MealSplit = { breakfastEnd: 30, lunchEnd: 65 };
+/** 朝は軽め、昼と夜は同じ量（朝 20%・昼 40%・夜 40%）。 */
+export const DEFAULT_MEAL_SPLIT: MealSplit = { breakfastEnd: 20, lunchEnd: 60 };
 
 /** 食事枠ごとの配分（%）。 */
 function slotShares(split: MealSplit): Record<MealSlot, number> {
@@ -28,4 +28,12 @@ export function slotFraction(split: MealSplit, slot: MealSlot): number {
 export function splitSegments(split: MealSplit) {
   const shares = slotShares(split);
   return MEAL_SLOTS.map((meta) => ({ ...meta, share: shares[meta.slot] }));
+}
+
+/** 既定の配分と同じか。 */
+export function isDefaultSplit(split: MealSplit): boolean {
+  return (
+    split.breakfastEnd === DEFAULT_MEAL_SPLIT.breakfastEnd &&
+    split.lunchEnd === DEFAULT_MEAL_SPLIT.lunchEnd
+  );
 }

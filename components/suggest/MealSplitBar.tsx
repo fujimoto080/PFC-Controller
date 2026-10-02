@@ -13,9 +13,9 @@ const BOUNDARIES: { key: Boundary; label: string }[] = [
 ];
 
 const SLOT_COLORS: Record<MealSlot, string> = {
-  breakfast: 'bg-amber-400/70',
-  lunch: 'bg-sky-400/70',
-  dinner: 'bg-indigo-400/70',
+  breakfast: 'bg-foreground/10',
+  lunch: 'bg-foreground/20',
+  dinner: 'bg-foreground/30',
 };
 
 const KEY_STEP = 1;
@@ -108,7 +108,7 @@ export function MealSplitBar({
             onChange(moveBoundary(split, key, split[key] + delta));
           }}
         >
-          <span className="bg-foreground h-full w-1 rounded-full shadow" />
+          <span className="bg-foreground/60 h-full w-0.5 rounded-full" />
         </div>
       ))}
     </div>

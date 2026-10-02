@@ -64,11 +64,7 @@ export function MealPreferenceSettingsPanel() {
         <CardTitle>食の好み</CardTitle>
         <AutoSaveIndicator status={status} />
       </CardHeader>
-      <CardContent className="space-y-5">
-        <p className="text-muted-foreground text-sm">
-          食事の提案で AI が参考にします。
-        </p>
-
+      <CardContent className="space-y-4">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="meal-instructions">AI への指示</Label>
@@ -94,8 +90,8 @@ export function MealPreferenceSettingsPanel() {
             }}
           />
           <p className="text-muted-foreground text-xs">
-            メニュー選びのルールとして AI に渡します。苦手な食材（例:
-            「パクチー・レバーが入ったメニューは出さない」）もここに書きます。
+            メニュー選びのルール。苦手な食材もここに書きます（例:
+            パクチーは出さない）。
           </p>
         </div>
 

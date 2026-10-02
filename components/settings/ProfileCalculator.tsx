@@ -213,9 +213,6 @@ export function ProfileCalculator({
           )}
         </div>
       </div>
-      <p className="text-muted-foreground text-center text-[10px]">
-        ※プロフィールを変更すると自動で目標値が更新されます。
-      </p>
     </div>
   );
 }

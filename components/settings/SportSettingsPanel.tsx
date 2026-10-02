@@ -76,8 +76,7 @@ export function SportSettingsPanel() {
           </Button>
         </form>
         <p className="text-muted-foreground text-xs">
-          METs は運動の強さの単位です（例: ウォーキング 3.5、水泳 8、ジョギング
-          7）。消費カロリーは記録のたびに、強度・時間・体重から計算します。
+          METs は運動の強さの指標です（例: ウォーキング 3.5、ジョギング 7）。
         </p>
 
         {sports.length > 0 && (

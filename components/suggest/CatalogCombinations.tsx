@@ -48,11 +48,11 @@ export function CatalogCombinations({
   };
 
   return (
-    <Card className="gap-3 py-4">
-      <CardHeader className="px-4">
+    <Card>
+      <CardHeader>
         <CardTitle>お店の商品から組み合わせる（AI なし）</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 px-4">
+      <CardContent className="space-y-3">
         <div className="flex gap-2">
           <Select value={sourceId} onValueChange={setSourceId}>
             <SelectTrigger className="min-w-0 flex-1">
@@ -108,7 +108,6 @@ export function CatalogCombinations({
                 {Math.round(result.target.protein)} F
                 {Math.round(result.target.fat)} C
                 {Math.round(result.target.carbs)}
-                （今日の残りを朝昼晩の配分で分けた量）
               </p>
               {result.combinations.map(({ items, total, price }) => (
                 <SuggestionOptionCard

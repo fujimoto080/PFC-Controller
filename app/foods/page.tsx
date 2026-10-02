@@ -75,7 +75,7 @@ export default function FoodsPage() {
 
   if (editor) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         <PageTitle>食品リスト</PageTitle>
         <div className="px-4">
           <FoodEditor
@@ -95,7 +95,7 @@ export default function FoodsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageTitle>食品リスト</PageTitle>
 
       <div className="space-y-4 px-4">
@@ -133,7 +133,7 @@ export default function FoodsPage() {
         {sections.length === 0 ? (
           <StatusMessage>食品が見つかりません</StatusMessage>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {sections.map(({ storeName, groups }) => (
               <CollapsibleSection
                 key={storeName}

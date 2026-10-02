@@ -86,7 +86,7 @@ export function FoodEditor({
 
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <h2 className="mb-4 text-lg font-semibold">
           {food ? '食品を編集' : '新規食品を追加'}
         </h2>
@@ -142,7 +142,7 @@ export function FoodEditor({
               </Button>
             </div>
             <p className="text-muted-foreground text-xs">
-              カンマ・読点・空白区切りで複数バーコードを同時に紐づけできます。
+              カンマ・空白区切りで複数指定できます。
             </p>
           </div>
 
