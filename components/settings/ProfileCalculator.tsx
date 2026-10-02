@@ -21,13 +21,11 @@ import {
   type GoalBreakdown,
 } from '@/lib/nutrition-goals';
 import type { UserProfile } from '@/lib/types';
-import { roundPFC } from '@/lib/utils';
 
 interface ProfileCalculatorProps {
   profile: UserProfile;
   onProfileChange: (profile: UserProfile) => void;
   duration: number;
-  onDurationChange: (duration: number) => void;
   goals: GoalBreakdown;
 }
 
@@ -45,7 +43,6 @@ export function ProfileCalculator({
   profile,
   onProfileChange,
   duration,
-  onDurationChange,
   goals,
 }: ProfileCalculatorProps) {
   const update = (patch: Partial<UserProfile>) => {
@@ -161,26 +158,9 @@ export function ProfileCalculator({
         </div>
       </Card>
 
-      <div className="space-y-2 pt-4">
-        <Label htmlFor="targetDuration">目標期間 (ヶ月)</Label>
-        <Input
-          id="targetDuration"
-          type="number"
-          min="0.1"
-          step="0.1"
-          value={duration}
-          onChange={(e) => {
-            onDurationChange(parseFloat(e.target.value) || 0);
-          }}
-          onBlur={(e) => {
-            onDurationChange(
-              Math.max(0.1, roundPFC(parseFloat(e.target.value) || 0, 1)),
-            );
-          }}
-        />
-        <p className="text-muted-foreground text-[10px]">
-          目標体重を達成するまでの期間を設定してください。小数点第一位まで入力できます。
-        </p>
+      <div className="flex items-center justify-between pt-4 text-sm">
+        <span className="text-muted-foreground">目標期間（自動計算）</span>
+        <span className="font-semibold">{duration}ヶ月</span>
       </div>
 
       <div className="bg-muted/50 space-y-2 rounded-lg p-4">

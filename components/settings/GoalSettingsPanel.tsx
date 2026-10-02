@@ -11,7 +11,7 @@ import { useAppState } from '@/lib/client/store';
 import {
   DEFAULT_PROFILE,
   calculateGoals,
-  initialDuration,
+  targetDuration,
 } from '@/lib/nutrition-goals';
 
 export function GoalSettingsPanel() {
@@ -19,7 +19,7 @@ export function GoalSettingsPanel() {
   const [profile, setProfile] = useState<UserProfile>(
     settings.profile ?? DEFAULT_PROFILE,
   );
-  const [duration, setDuration] = useState(() => initialDuration(profile));
+  const duration = targetDuration(profile);
   const goals = calculateGoals(profile, duration);
   const { protein, fat, carbs, calories } = goals;
   const targetPFC = { protein, fat, carbs, calories };
@@ -28,7 +28,6 @@ export function GoalSettingsPanel() {
     [profile.age, profile.height, profile.weight, profile.targetWeight].every(
       (n) => n > 0,
     ) &&
-    duration > 0 &&
     Object.values(targetPFC).every((n) => Number.isFinite(n) && n >= 0);
   const status = useAutoSave({ targetPFC, profile }, updateSettings, valid);
 
@@ -43,7 +42,6 @@ export function GoalSettingsPanel() {
           profile={profile}
           onProfileChange={setProfile}
           duration={duration}
-          onDurationChange={setDuration}
           goals={goals}
         />
       </CardContent>

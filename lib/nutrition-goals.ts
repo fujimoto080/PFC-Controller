@@ -129,7 +129,7 @@ export function calculateRecommendedDuration(
   };
 }
 
-/** 推奨期間を初期値とする目標期間(月)。減量でない場合は 3ヶ月。 */
-export function initialDuration(profile: UserProfile): number {
+/** プロフィールから自動で決まる目標期間(月)。推奨期間を採用し、減量でない場合は 3ヶ月。 */
+export function targetDuration(profile: UserProfile): number {
   return calculateRecommendedDuration(profile).recommended || 3;
 }

@@ -4,7 +4,7 @@ import {
   calculateGoals,
   calculateRecommendedDuration,
   calculateTDEE,
-  initialDuration,
+  targetDuration,
 } from '@/lib/nutrition-goals';
 import type { UserProfile } from '@/lib/types';
 
@@ -52,9 +52,9 @@ describe('calculateRecommendedDuration', () => {
     });
   });
 
-  it('減量でなければ 0、初期期間は 3ヶ月', () => {
+  it('減量でなければ 0、目標期間は 3ヶ月', () => {
     const gain = { ...profile, targetWeight: 75 };
     expect(calculateRecommendedDuration(gain).recommended).toBe(0);
-    expect(initialDuration(gain)).toBe(3);
+    expect(targetDuration(gain)).toBe(3);
   });
 });
