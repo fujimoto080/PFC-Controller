@@ -10,6 +10,19 @@
 - 重複するコードは共通化すること
 - 使用しない機能・変数・ファイルは削除すること
 
+## 実行環境（Windows から作業するとき）
+
+リポジトリは WSL(debian) 上にある。Windows 側のシェルから直接 `pnpm` / `python3` を叩くと失敗するので、最初から次の形で実行すること。
+
+- `python3` は使えない。ファイル編集は Edit ツールで行う
+- コマンドは `wsl.exe -d debian -- bash -c '...'` で実行し、PATH は固定文字列で上書きする（Windows の PATH を `$PATH` で展開すると括弧で構文エラーになる）
+
+```sh
+wsl.exe -d debian -- bash -c 'cd ~/projects/PFC-Controller && export PATH="$HOME/.nvm/versions/node/v24.15.0/bin:/usr/local/bin:/usr/bin:/bin"; pnpm test'
+```
+
+- 整形は変更ファイルだけ `pnpm exec oxfmt <files>` で行う（`pnpm format` は全ファイルを書き換える）
+
 ## 検証
 
 変更後は以下がすべて通ることを確認する。

@@ -1,27 +1,32 @@
 'use client';
 
-import { useRef } from 'react';
-import { ImagePlus, Loader2, Sparkles } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ImagePlus, Loader2, Plus, Sparkles } from 'lucide-react';
 import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { MAX_READING_IMAGES } from '@/lib/barcode';
 import type { FoodTemplate } from '@/lib/food-form';
 
-/** 食べた物を文章で書くか画像を送るだけで AI が栄養値を推定する入力欄。推定結果は onEstimated に渡す。 */
+/** 食べた物を文章で書くか画像を送るだけで AI が栄養値を推定する入力欄。推定結果は onEstimated に渡す。手入力の追加ボタンも並べ、操作すると入力欄が広がる。 */
 export function QuickAiInput({
   onEstimated,
+  onAdd,
 }: {
   onEstimated: (food: FoodTemplate) => void;
+  onAdd: () => void;
 }) {
   const ai = useAiNutrition(onEstimated);
   const busy = ai.pending !== null;
   const pickerRef = useRef<HTMLInputElement | null>(null);
+  const [focused, setFocused] = useState(false);
+  // 文字が残っている間は、フォーカスが外れても広げたままにする
+  const expanded = focused || ai.text !== '';
 
   return (
     <form
-      className="flex gap-2"
+      className="flex items-start gap-2"
       onSubmit={(event) => {
         event.preventDefault();
         void ai.estimate().then((ok) => {
@@ -31,15 +36,21 @@ export function QuickAiInput({
     >
       <div className="relative flex-1">
         <Sparkles className="text-primary absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <Input
+        <Textarea
           value={ai.text}
           onChange={(event) => {
             ai.setText(event.target.value);
           }}
+          onFocus={() => {
+            setFocused(true);
+          }}
+          onBlur={() => {
+            setFocused(false);
+          }}
           placeholder="食べた物を書いてAIで記録"
           aria-label="食べた物を書いてAIで記録"
-          enterKeyHint="send"
-          className="pl-9"
+          rows={1}
+          className={`resize-none pl-9 transition-[height] ${expanded ? 'h-28' : 'h-9 py-1.5'}`}
           disabled={busy}
         />
       </div>
@@ -59,6 +70,9 @@ export function QuickAiInput({
       </Button>
       <Button type="submit" disabled={busy} aria-label="AI で推定">
         {ai.pending === 'text' ? <Loader2 className="animate-spin" /> : '推定'}
+      </Button>
+      <Button type="button" variant="outline" onClick={onAdd}>
+        <Plus /> 追加
       </Button>
       <ImageFileInput
         ref={pickerRef}

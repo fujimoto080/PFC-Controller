@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
-import { Button } from '@/components/ui/button';
 import { useAppState } from '@/lib/client/store';
 import type { FoodItem } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -24,19 +22,14 @@ export function DayLogList({ date, onAdd }: DayLogListProps) {
 
   return (
     <section className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">
-          食べたもの
-          {items.length > 0 && (
-            <span className="text-muted-foreground ml-1.5 text-xs font-normal">
-              {items.length}件
-            </span>
-          )}
-        </h2>
-        <Button size="sm" variant="outline" onClick={onAdd}>
-          <Plus /> 追加
-        </Button>
-      </div>
+      <h2 className="font-semibold">
+        食べたもの
+        {items.length > 0 && (
+          <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+            {items.length}件
+          </span>
+        )}
+      </h2>
 
       {items.length === 0 ? (
         <button

@@ -32,6 +32,7 @@ export default function TodayPage() {
         <DateHeader date={date} onChange={setDate} />
         <DaySummary date={date} />
         <QuickAiInput
+          onAdd={openAdd}
           onEstimated={(food) => {
             setAdding({ step: { kind: 'confirm', food } });
           }}
