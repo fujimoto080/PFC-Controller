@@ -46,6 +46,7 @@ interface DanoneProduct {
   protein: number;
   fat: number;
   carbs: number;
+  jans?: string[];
 }
 
 /** 栄養成分の見出しの 1 個あたりの単位。「1カップ」「1本」の後ろに量が付く。 */
@@ -96,6 +97,23 @@ function packNote(content: string, serving: string): string {
 const stripComments = (html: string) => html.replace(/<!--[\s\S]*?-->/g, '');
 
 /**
+ * オイコスのモーダルの JAN コード。公式サイトは JAN を文字で載せておらず、モーダルの販売店リンクのうち
+ * 楽天マートの商品ページの URL（sm.rakuten.co.jp/item/<JAN>）の末尾が商品の JAN になっている。
+ * 8 桁か 13 桁の数字でなければ例外にする。
+ */
+function oikosJans(block: string): string[] {
+  const jan = matchRequired(
+    block,
+    /sm\.rakuten\.co\.jp\/item\/([^/"?]+)/,
+    '楽天マートの商品 URL',
+  );
+  if (!/^(?:\d{8}|\d{13})$/.test(jan)) {
+    throw new Error(`JAN コードが読み取れません: ${jan}`);
+  }
+  return [jan];
+}
+
+/**
  * オイコスのラインナップページの、商品ごとのモーダルから商品を読む。
  * ヨーグルト（1 カップ）とドリンク（1 本）があり、モーダルの id が drink- で始まる物をドリンクとする。
  * 栄養成分表示が無いモーダル（商品以外の説明）は除く。栄養成分があるのに読めなければ例外にする。
@@ -129,6 +147,7 @@ export function parseOikos(html: string): DanoneProduct[] {
         name: normalizeText(`オイコス ${title.replace(/<br\s*\/?>/g, ' ')}`),
         category: id.startsWith('drink-') ? 'drink' : 'yogurt',
         ...nutrientsOf(block, '：'),
+        jans: oikosJans(block),
       },
     ];
   });
@@ -271,11 +290,16 @@ export async function scrapeDanone(): Promise<CatalogItem[]> {
     ];
   });
 
-  return [
+  const items = [
     ...parseOikos(oikosHtml).map((product) => toItem(product, OIKOS_URL)),
     ...parseDanoneYogurt(danoneHtml).map((product) =>
       toItem(product, DANONE_URL),
     ),
     ...bio,
   ];
+  const jans = items.flatMap((item) => item.jans ?? []);
+  if (new Set(jans).size !== jans.length) {
+    throw new Error('JAN コードが複数の商品で重複しています');
+  }
+  return items;
 }
