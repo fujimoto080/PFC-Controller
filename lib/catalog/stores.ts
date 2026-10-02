@@ -94,6 +94,7 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
   {
     id: 'maruchan',
     name: 'マルちゃん（東洋水産）',
+    scope: '関東',
     categories: MARUCHAN_CATEGORIES,
     items: maruchan,
   },

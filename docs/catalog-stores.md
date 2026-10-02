@@ -1,6 +1,5 @@
 # 商品カタログに店舗を追加する
 
-組み合わせ提案 API（`GET /api/combination-suggestions`）と商品カタログ画面（`/catalog`）は、お店（日清食品のようなメーカーも同じ仕組みで載せられる）の公式サイトから集めた商品の栄養成分 `data/<店舗 ID>.json` を使う。機能の仕様は [`features.md`](features.md) の「11.4 商品の組み合わせ提案 API」を参照。
 組み合わせ提案 API（`GET /api/combination-suggestions`）と商品カタログ画面（`/catalog`）は、お店（メーカーも可）の公式サイトから集めた商品の栄養成分 `data/<店舗 ID>.json` を使う。機能の仕様は [`features.md`](features.md) の「11.4 商品の組み合わせ提案 API」を参照。
 
 ## 方針
