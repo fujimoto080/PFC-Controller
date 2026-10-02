@@ -1,3 +1,4 @@
+import amatake from '@/data/amatake.json';
 import familyMart from '@/data/familymart.json';
 import lawson from '@/data/lawson.json';
 import maruchan from '@/data/maruchan.json';
@@ -9,6 +10,7 @@ import origin from '@/data/origin.json';
 import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
 import yoshinoya from '@/data/yoshinoya.json';
+import { AMATAKE_CATEGORIES } from '@/lib/catalog/amatake';
 import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
 import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { MARUCHAN_CATEGORIES } from '@/lib/catalog/maruchan';
@@ -105,5 +107,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: '吉野家',
     categories: YOSHINOYA_CATEGORIES,
     items: yoshinoya,
+  },
+  {
+    id: 'amatake',
+    name: 'アマタケ',
+    categories: AMATAKE_CATEGORIES,
+    items: amatake,
   },
 ];
