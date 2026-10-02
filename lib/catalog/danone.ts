@@ -3,6 +3,7 @@ import {
   mapConcurrent,
   matchRequired,
   normalizeText,
+  requireJan,
   toNumber,
 } from './scrape.ts';
 import type { CatalogCategory, CatalogItem } from './types';
@@ -107,10 +108,7 @@ function oikosJans(block: string): string[] {
     /sm\.rakuten\.co\.jp\/item\/([^/"?]+)/,
     '楽天マートの商品 URL',
   );
-  if (!/^(?:\d{8}|\d{13})$/.test(jan)) {
-    throw new Error(`JAN コードが読み取れません: ${jan}`);
-  }
-  return [jan];
+  return [requireJan(jan)];
 }
 
 /**
@@ -297,9 +295,5 @@ export async function scrapeDanone(): Promise<CatalogItem[]> {
     ),
     ...bio,
   ];
-  const jans = items.flatMap((item) => item.jans ?? []);
-  if (new Set(jans).size !== jans.length) {
-    throw new Error('JAN コードが複数の商品で重複しています');
-  }
   return items;
 }

@@ -4,5 +4,5 @@
   "singleQuote": true,
   "sortPackageJson": false,
   "sortTailwindcss": true,
-  "ignorePatterns": ["pnpm-lock.yaml", "twa", ".claude/worktrees"]
+  "ignorePatterns": ["pnpm-lock.yaml", "twa", ".claude/worktrees", "data"]
 }

@@ -3,6 +3,7 @@ import {
   mapConcurrent,
   matchRequired,
   normalizeText,
+  requireJan,
   toNumber,
 } from './scrape.ts';
 import type { CatalogCategory, CatalogItem } from './types';
@@ -156,10 +157,7 @@ export function parseProductPage(html: string): ProductDetail | undefined {
 function janCodes(html: string): { jans?: string[] } {
   const text = /JANコード\s*<\/th>\s*<td>\s*([^<]*?)\s*<\/td>/.exec(html)?.[1];
   if (text === undefined) return {};
-  if (!/^(?:\d{8}|\d{13})$/.test(text)) {
-    throw new Error(`JAN コードが読み取れません: ${text}`);
-  }
-  return { jans: [text] };
+  return { jans: [requireJan(text)] };
 }
 
 /** 1 食入りの商品の税込の希望小売価格。複数食入り・オープンプライス・価格の行が無い商品は空。 */
@@ -206,17 +204,5 @@ export async function scrapeNissin(): Promise<CatalogItem[]> {
       },
     ];
   });
-  const owners = new Map<string, string>();
-  for (const { id, jans } of items) {
-    for (const jan of jans ?? []) {
-      const owner = owners.get(jan);
-      if (owner !== undefined) {
-        throw new Error(
-          `JAN コード ${jan} が複数の商品にあります: ${owner}, ${id}`,
-        );
-      }
-      owners.set(jan, id);
-    }
-  }
   return items;
 }

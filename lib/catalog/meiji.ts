@@ -3,6 +3,7 @@ import {
   mapConcurrent,
   matchRequired,
   normalizeText,
+  requireJan,
   toNumber,
 } from './scrape.ts';
 import type { CatalogCategory, CatalogItem } from './types';
@@ -107,10 +108,7 @@ export function parseProductList(
       !products.has(id) &&
       !exclude.includes(section)
     ) {
-      if (!/^(?:\d{8}|\d{13})$/.test(id)) {
-        throw new Error(`商品ページの名前が JAN コードではありません: ${path}`);
-      }
-      products.set(id, { id, path, section });
+      products.set(id, { id: requireJan(id), path, section });
     }
   }
   if (products.size === 0) throw new Error('商品の一覧が読み取れません');
@@ -249,10 +247,5 @@ export async function scrapeMeiji(): Promise<CatalogItem[]> {
       ...nutrition,
     });
   });
-  const result = [...items.values()];
-  const jans = result.flatMap((item) => item.jans ?? []);
-  if (new Set(jans).size !== jans.length) {
-    throw new Error('同じ JAN コードが複数の商品にあります');
-  }
-  return result;
+  return [...items.values()];
 }

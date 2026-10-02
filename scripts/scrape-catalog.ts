@@ -77,6 +77,10 @@ async function scrapeStore(storeId: string) {
   if (new Set(items.map((item) => item.id)).size !== items.length) {
     throw new Error('商品 ID が重複しています');
   }
+  const jans = items.flatMap((item) => item.jans ?? []);
+  if (new Set(jans).size !== jans.length) {
+    throw new Error('JAN コードが複数の商品で重複しています');
+  }
   const previousCount = await readPreviousCount(storeId);
   if (items.length < previousCount * MIN_RATIO_TO_PREVIOUS) {
     throw new Error(

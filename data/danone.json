@@ -257,7 +257,9 @@
     "protein": 10.1,
     "fat": 0,
     "carbs": 11.3,
-    "jans": ["45207099"],
+    "jans": [
+      "45207099"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -268,7 +270,9 @@
     "protein": 18,
     "fat": 0,
     "carbs": 13.2,
-    "jans": ["4901112800136"],
+    "jans": [
+      "4901112800136"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -279,7 +283,9 @@
     "protein": 18,
     "fat": 0,
     "carbs": 13.2,
-    "jans": ["4901112800211"],
+    "jans": [
+      "4901112800211"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -290,7 +296,9 @@
     "protein": 18,
     "fat": 0,
     "carbs": 12,
-    "jans": ["4901112800563"],
+    "jans": [
+      "4901112800563"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -301,7 +309,9 @@
     "protein": 25,
     "fat": 0,
     "carbs": 9.6,
-    "jans": ["4901112800709"],
+    "jans": [
+      "4901112800709"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -312,7 +322,9 @@
     "protein": 25,
     "fat": 0,
     "carbs": 9.6,
-    "jans": ["4901112800549"],
+    "jans": [
+      "4901112800549"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -323,7 +335,9 @@
     "protein": 18,
     "fat": 0,
     "carbs": 12,
-    "jans": ["4901112800396"],
+    "jans": [
+      "4901112800396"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -334,7 +348,9 @@
     "protein": 10.1,
     "fat": 0,
     "carbs": 11.7,
-    "jans": ["4901112800259"],
+    "jans": [
+      "4901112800259"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -345,7 +361,9 @@
     "protein": 10.2,
     "fat": 0,
     "carbs": 10.7,
-    "jans": ["4901112800662"],
+    "jans": [
+      "4901112800662"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -356,7 +374,9 @@
     "protein": 10.2,
     "fat": 0,
     "carbs": 11.7,
-    "jans": ["4901112800655"],
+    "jans": [
+      "4901112800655"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -367,7 +387,9 @@
     "protein": 13,
     "fat": 0,
     "carbs": 4.4,
-    "jans": ["4901112800235"],
+    "jans": [
+      "4901112800235"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -378,7 +400,9 @@
     "protein": 18,
     "fat": 0,
     "carbs": 6.1,
-    "jans": ["4901112800006"],
+    "jans": [
+      "4901112800006"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -389,7 +413,9 @@
     "protein": 10.1,
     "fat": 0,
     "carbs": 10.7,
-    "jans": ["4901112800334"],
+    "jans": [
+      "4901112800334"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -400,7 +426,9 @@
     "protein": 11,
     "fat": 0,
     "carbs": 12.4,
-    "jans": ["4901112800242"],
+    "jans": [
+      "4901112800242"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   },
   {
@@ -411,7 +439,9 @@
     "protein": 10.2,
     "fat": 0,
     "carbs": 11,
-    "jans": ["45207082"],
+    "jans": [
+      "45207082"
+    ],
     "url": "https://www.danone.co.jp/oikos/"
   }
 ]

@@ -3,7 +3,9 @@ import {
   mapConcurrent,
   matchRequired,
   normalizeText,
+  requireJan,
   toNumber,
+  withoutSharedJans,
 } from './scrape.ts';
 import type { CatalogCategory, CatalogItem } from './types';
 
@@ -63,12 +65,12 @@ const firstGrams = (text: string, label: string) =>
 function janCodes(product: unknown, name: string): { jans?: string[] } {
   const value = (product as Record<string, unknown>).product_jancode;
   if (value === null || value === '') return {};
-  if (typeof value !== 'string' || !/^(?:\d{8}|\d{13})$/.test(value)) {
+  if (typeof value !== 'string') {
     throw new Error(
       `${name} の JAN コードが読み取れません: ${JSON.stringify(value)}`,
     );
   }
-  return { jans: [value] };
+  return { jans: [requireJan(value)] };
 }
 
 /** 税込の希望小売価格（円）。オープン価格など数字でなければ無し。 */
@@ -136,19 +138,4 @@ export async function scrapeMaruchan(): Promise<CatalogItem[]> {
     ),
   );
   return withoutSharedJans(items.flat());
-}
-
-/**
- * 公式サイトが複数の商品に同じ JAN コードを載せている場合（焼そばとスープ付焼そばなど）、
- * どの商品のバーコードか決まらないので、その JAN は全商品から外す。
- */
-function withoutSharedJans(items: CatalogItem[]): CatalogItem[] {
-  const counts = new Map<string, number>();
-  for (const jan of items.flatMap((item) => item.jans ?? [])) {
-    counts.set(jan, (counts.get(jan) ?? 0) + 1);
-  }
-  return items.map(({ jans, ...item }) => {
-    const unique = (jans ?? []).filter((jan) => counts.get(jan) === 1);
-    return unique.length > 0 ? { ...item, jans: unique } : item;
-  });
 }

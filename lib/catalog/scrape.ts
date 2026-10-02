@@ -73,6 +73,23 @@ export function matchRequired(
   return value;
 }
 
+/** JAN コード（8 桁か 13 桁の数字で、チェックディジットが合う物）。違えば例外にする。 */
+export function requireJan(value: string): string {
+  if (!/^(?:\d{8}|\d{13})$/.test(value)) {
+    throw new Error(`JAN コードが読み取れません: ${value}`);
+  }
+  const digits = [...value].map(Number);
+  const check = digits.pop();
+  // 右端（チェックディジットの左隣）から奇数番目を 3 倍して足す
+  const sum = digits
+    .reverse()
+    .reduce((total, digit, i) => total + digit * (i % 2 === 0 ? 3 : 1), 0);
+  if ((10 - (sum % 10)) % 10 !== check) {
+    throw new Error(`JAN コードのチェックディジットが合いません: ${value}`);
+  }
+  return value;
+}
+
 /**
  * 複数の商品に同じ JAN が出たら、その JAN を該当商品すべてから外す。
  * 公式サイトが期間限定の増量版などに通常版と同じ JAN を載せることがあるため。

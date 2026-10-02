@@ -4,6 +4,7 @@ import {
   matchRequired,
   normalizeText,
   toNumber,
+  requireJan,
   withoutSharedJans,
 } from './scrape.ts';
 import type { CatalogCategory, CatalogItem } from './types';
@@ -109,9 +110,6 @@ export function parseProductDetail(
       : undefined;
   const id = String((detail as { id: unknown }).id);
   const jan = normalizeText(requireString(detail, 'jan'));
-  if (jan !== '' && !/^(\d{8}|\d{13})$/.test(jan)) {
-    throw new Error(`JAN コードが読み取れません: ${jan}`);
-  }
 
   return {
     id,
@@ -120,7 +118,7 @@ export function parseProductDetail(
     ...(price !== undefined && { price }),
     ...(area !== NATIONWIDE_AREA && { area }),
     url: `${BASE_URL}/products/items/${id}/`,
-    ...(jan !== '' && { jans: [jan] }),
+    ...(jan !== '' && { jans: [requireJan(jan)] }),
     calories: amountOf('熱量', 'kcal'),
     protein: amountOf('たんぱく質', 'g'),
     fat: amountOf('脂質', 'g'),

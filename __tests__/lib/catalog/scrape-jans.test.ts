@@ -1,4 +1,4 @@
-import { withoutSharedJans } from '@/lib/catalog/scrape';
+import { requireJan, withoutSharedJans } from '@/lib/catalog/scrape';
 import type { CatalogItem } from '@/lib/catalog/types';
 
 function item(id: string, jans?: string[]): CatalogItem {
@@ -30,5 +30,18 @@ describe('withoutSharedJans', () => {
       undefined,
     ]);
     expect(result[0]).not.toHaveProperty('jans');
+  });
+});
+
+describe('requireJan', () => {
+  it('チェックディジットの合う 13 桁・8 桁の JAN を返す', () => {
+    expect(requireJan('4901990522731')).toBe('4901990522731');
+    expect(requireJan('49698329')).toBe('49698329');
+  });
+
+  it('桁数が違う・数字以外・チェックディジットが合わない値は例外にする', () => {
+    expect(() => requireJan('490199052273')).toThrow('読み取れません');
+    expect(() => requireJan('49019905227a')).toThrow('読み取れません');
+    expect(() => requireJan('4901990522730')).toThrow('チェックディジット');
   });
 });

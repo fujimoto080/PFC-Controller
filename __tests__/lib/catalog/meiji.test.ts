@@ -77,7 +77,7 @@ describe('parseProductList', () => {
         '<h2 id="category01" class="m-heading2">A</h2><a href="/products/sports/48009.html" class="l-card">',
         [],
       ),
-    ).toThrow('JAN コードではありません');
+    ).toThrow('JAN コードが読み取れません');
   });
 
   it('商品が 1 件も読めなければ例外にする', () => {
