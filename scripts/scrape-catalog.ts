@@ -11,6 +11,7 @@ import { scrapeLawson } from '../lib/catalog/lawson.ts';
 import { scrapeOrigin } from '../lib/catalog/origin.ts';
 import { scrapeSevenEleven } from '../lib/catalog/seven-eleven.ts';
 import { scrapeSukiya } from '../lib/catalog/sukiya.ts';
+import { scrapeYoshinoya } from '../lib/catalog/yoshinoya.ts';
 import type { CatalogItem } from '../lib/catalog/types.ts';
 
 /** 店舗 ID → 商品を集める関数。ID は data/<ID>.json と lib/catalog/stores.ts の id に揃える。 */
@@ -20,6 +21,7 @@ const SCRAPERS: Record<string, () => Promise<CatalogItem[]>> = {
   familymart: scrapeFamilyMart,
   origin: scrapeOrigin,
   sukiya: scrapeSukiya,
+  yoshinoya: scrapeYoshinoya,
 };
 
 /**

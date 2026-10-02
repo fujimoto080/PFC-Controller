@@ -1,8 +1,8 @@
+import type { PdfTextItem } from '@/lib/catalog/pdf';
 import {
   parseMenuListPage,
   parseMenuPage,
   parseNutritionPage,
-  type PdfTextItem,
 } from '@/lib/catalog/sukiya';
 
 /** 栄養成分一覧 PDF の i 番目の数値の列の見出し（単位）の x。数値はその右に書かれる */
