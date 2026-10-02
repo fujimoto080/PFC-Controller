@@ -1,5 +1,6 @@
 import familyMart from '@/data/familymart.json';
 import lawson from '@/data/lawson.json';
+import maruchan from '@/data/maruchan.json';
 import matsuya from '@/data/matsuya.json';
 import mcdonalds from '@/data/mcdonalds.json';
 import mos from '@/data/mos.json';
@@ -9,6 +10,7 @@ import sevenEleven from '@/data/seven-eleven.json';
 import sukiya from '@/data/sukiya.json';
 import { FAMILYMART_CATEGORIES } from '@/lib/catalog/familymart';
 import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
+import { MARUCHAN_CATEGORIES } from '@/lib/catalog/maruchan';
 import { MATSUYA_CATEGORIES } from '@/lib/catalog/matsuya';
 import { MCDONALDS_CATEGORIES } from '@/lib/catalog/mcdonalds';
 import { MOS_CATEGORIES } from '@/lib/catalog/mos';
@@ -88,5 +90,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     scope: '関東',
     categories: NISSIN_CATEGORIES,
     items: nissin,
+  },
+  {
+    id: 'maruchan',
+    name: 'マルちゃん（東洋水産）',
+    categories: MARUCHAN_CATEGORIES,
+    items: maruchan,
   },
 ];
