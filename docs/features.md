@@ -18,7 +18,7 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 
 - **食品リスト**（`/foods`）
 - **バーコード一覧**（`/barcodes`）
-- **商品カタログ**（`/catalog`）: 組み合わせ提案 API が使う `data/seven-eleven.json` の中身をカテゴリごとに折り畳んで一覧する。商品名から公式の商品ページを開ける
+- **商品カタログ**（`/catalog`）: 組み合わせ提案 API が使う `data/<店舗 ID>.json` の中身を、お店ごとにカテゴリで折り畳んで一覧する。商品名から公式の商品ページを開ける
 - **利用状況**（`/usage`）
 
 補助ページ:
@@ -335,11 +335,12 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 
 ### 11.4 商品の組み合わせ提案 API（AI なし）
 
-- `GET /api/combination-suggestions?slot=lunch`（要ログイン。`slot` は `breakfast` / `lunch` / `dinner`、省略時は今の時間帯）で、セブン-イレブン（関東）の商品から目標に近い組み合わせを最大5案返す。応答は `{ store, slot, target, combinations: [{ items, total, price }] }`。`items` は商品名・カテゴリ・税込価格・販売地域・PFC・商品ページの URL
+- `GET /api/combination-suggestions?store=seven-eleven&slot=lunch`（要ログイン。`store` は `lib/catalog/stores.ts` の店舗 ID、`slot` は `breakfast` / `lunch` / `dinner` で省略時は今の時間帯）で、そのお店の商品から目標に近い組み合わせを最大5案返す。応答は `{ store, slot, target, combinations: [{ items, total, price }] }`。`items` は商品名・カテゴリ・税込価格・販売地域・PFC・公式サイトの URL（価格・販売地域はお店により無し）
 - 目標（`target`）は今日の残りを、この食事を含めた今日これからの食事の数で等分した量。残りカロリーが無ければ空の配列
-- 組み合わせは主食（おにぎり・寿司・弁当・サンドイッチ・麺・パスタ・グラタン）1品と副菜（惣菜・サラダ・ホットスナック・おでん・中華まん）0〜2品。合計カロリーが目標の1.1倍以下のものから、P/F/C の差をカロリーに直した二乗和が小さい順に選ぶ。似た案ばかりにならないよう、1つの商品は1案にしか使わない（`lib/meal-combinations.ts`）
-- 商品データ `data/seven-eleven.json` は公式サイトの関東の商品ページから正規表現で機械的に読み取る（`scripts/scrape-seven-eleven.ts`、`pnpm scrape:seven-eleven`）。栄養成分を載せていない商品は除き、載っているのに読めない場合や前回より大幅に件数が減った場合はページの形が変わったとみなして失敗させる。パンは複数個入りの袋パンや菓子パンが大半なので集めない
-- GitHub Actions（`.github/workflows/scrape-catalog.yml`）で毎週月曜 4:00 JST に取り直し、変わっていれば main にコミットする（Vercel が再デプロイして反映）。Actions 画面から手動でも実行できる
+- 組み合わせは主食（カテゴリの `role: 'main'`）1品と副菜（`role: 'side'`）0〜2品。合計カロリーが目標の1.1倍以下のものから、P/F/C の差をカロリーに直した二乗和が小さい順に選ぶ。似た案ばかりにならないよう、1つの商品は1案にしか使わない（`lib/meal-combinations.ts`）
+- 商品データ `data/<店舗 ID>.json` は各お店の公式サイトから AI を使わず機械的に読み取る（`pnpm scrape:catalog [店舗 ID ...]`、`scripts/scrape-catalog.ts`）。お店ごとの読み取りは `lib/catalog/<店舗 ID>.ts`。栄養成分を載せていない商品は除き、載っているのに読めない場合や前回より大幅に件数が減った場合はページの形が変わったとみなしてそのお店を失敗させる
+- 対応店舗: セブン-イレブン（関東の商品ページ。パンは複数個入りの袋パンや菓子パンが大半なので集めない）
+- GitHub Actions（`.github/workflows/scrape-catalog.yml`）で毎週月曜 4:00 JST に取り直し、変わっていれば main にコミットする（Vercel が再デプロイして反映）。一部のお店で失敗しても取れた分はコミットし、ジョブは失敗にする。Actions 画面から手動でも実行できる
 
 ---
 

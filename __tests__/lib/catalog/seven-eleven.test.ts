@@ -1,4 +1,4 @@
-import { parseItemPage, parseListPage } from '@/lib/seven-eleven';
+import { parseItemPage, parseListPage } from '@/lib/catalog/seven-eleven';
 
 /** 公式サイトの商品ページから必要な部分だけを抜き出した HTML。 */
 function itemPage(nutrition?: string) {

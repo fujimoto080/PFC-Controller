@@ -1,6 +1,7 @@
 name: Update catalog
 
-# セブン-イレブンの栄養成分一覧 (data/seven-eleven.json) を週 1 回取り直し、変わっていれば main にコミットする。
+# お店ごとの栄養成分一覧 (data/*.json) を週 1 回取り直し、変わっていれば main にコミットする。
+# 一部のお店で失敗しても、取れたお店の分はコミットする（ジョブは失敗にして気付けるようにする）。
 # main への push で Vercel が再デプロイし、組み合わせ提案 API に反映される。
 on:
   schedule:
@@ -27,13 +28,14 @@ jobs:
           node-version: '24.x'
 
       - name: Scrape
-        run: pnpm scrape:seven-eleven
+        run: pnpm scrape:catalog
 
       - name: Commit
+        if: always()
         run: |
           git diff --quiet -- data && exit 0
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add data
-          git commit -m 'Update the 7-Eleven nutrition catalog'
+          git commit -m 'Update the store nutrition catalogs'
           git push

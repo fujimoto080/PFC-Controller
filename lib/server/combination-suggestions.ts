@@ -1,28 +1,13 @@
 import 'server-only';
 
-import catalog from '@/data/seven-eleven.json';
+import type { CatalogStore } from '@/lib/catalog/stores';
 import { remainingSlots } from '@/lib/meal-schedule';
 import { findMealCombinations } from '@/lib/meal-combinations';
 import { getNutritionStatus } from '@/lib/server/meal-context';
-import {
-  SEVEN_ELEVEN_CATEGORIES,
-  itemUrl,
-  type SevenElevenItem,
-} from '@/lib/seven-eleven';
 import type { MealSlot, PFC } from '@/lib/types';
 import { formatDate, roundPFC } from '@/lib/utils';
 
 const COMBINATION_COUNT = 5;
-
-const items: readonly SevenElevenItem[] = catalog;
-
-const itemsOf = (role: 'main' | 'side') =>
-  items.filter((item) =>
-    SEVEN_ELEVEN_CATEGORIES.some(
-      (c) => c.slug === item.category && c.role === role,
-    ),
-  );
-const candidates = { mains: itemsOf('main'), sides: itemsOf('side') };
 
 /** 今日の残りを、この食事を含めた今日これからの食事の数で等分した量。 */
 function targetFor(remaining: PFC, slot: MealSlot): PFC {
@@ -36,22 +21,34 @@ function targetFor(remaining: PFC, slot: MealSlot): PFC {
   };
 }
 
-/** セブン-イレブン（関東）の商品から、この食事の目標に近い組み合わせを機械的に選ぶ。AI は使わない。 */
-export async function suggestCombinations(userId: string, slot: MealSlot) {
+/** お店の商品から、この食事の目標に近い組み合わせを機械的に選ぶ。AI は使わない。 */
+export async function suggestCombinations(
+  userId: string,
+  store: CatalogStore,
+  slot: MealSlot,
+) {
   const status = await getNutritionStatus(userId, formatDate(Date.now()));
   const target = targetFor(status.remaining, slot);
+  const itemsOf = (role: 'main' | 'side') =>
+    store.items.filter((item) =>
+      store.categories.some((c) => c.slug === item.category && c.role === role),
+    );
+  const combinations = findMealCombinations(
+    { mains: itemsOf('main'), sides: itemsOf('side') },
+    target,
+    COMBINATION_COUNT,
+  );
   return {
-    store: 'セブン-イレブン',
+    store: store.name,
     slot,
     target,
-    combinations: findMealCombinations(
-      candidates,
-      target,
-      COMBINATION_COUNT,
-    ).map(({ items: picked, total }) => ({
-      items: picked.map((item) => ({ ...item, url: itemUrl(item.id) })),
+    combinations: combinations.map(({ items, total }) => ({
+      items,
       total,
-      price: picked.reduce((sum, item) => sum + item.price, 0),
+      /** 合計の税込価格。価格の分からない商品を含むなら無し */
+      price: items.every((item) => item.price !== undefined)
+        ? items.reduce((sum, item) => sum + (item.price ?? 0), 0)
+        : undefined,
     })),
   };
 }

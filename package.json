@@ -9,7 +9,7 @@
     "vercel-build": "pnpm run \"/^(migrate|build)$/\"",
     "migrate": "node scripts/migrate.mjs",
     "seed:sukiya": "node scripts/seed-sukiya-foods.mjs",
-    "scrape:seven-eleven": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/scrape-seven-eleven.ts",
+    "scrape:catalog": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/scrape-catalog.ts",
     "start": "next start",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
