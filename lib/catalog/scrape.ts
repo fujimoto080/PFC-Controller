@@ -1,6 +1,8 @@
 // お店の公式サイトから商品を集める処理の共通部品。
 // scripts/scrape-catalog.ts が Node から直接読み込むため、@/ の import は使わない。
 
+import type { CatalogItem } from './types';
+
 const RETRIES = 3;
 
 /** URL の応答を read で読む。失敗したら間を空けて取り直し、それでも駄目なら例外にする。 */
@@ -69,4 +71,19 @@ export function matchRequired(
   const value = pattern.exec(text)?.[1];
   if (value === undefined) throw new Error(`${label}が読み取れません`);
   return value;
+}
+
+/**
+ * 複数の商品に同じ JAN が出たら、その JAN を該当商品すべてから外す。
+ * 公式サイトが期間限定の増量版などに通常版と同じ JAN を載せることがあるため。
+ */
+export function withoutSharedJans(items: CatalogItem[]): CatalogItem[] {
+  const counts = new Map<string, number>();
+  for (const jan of items.flatMap((item) => item.jans ?? [])) {
+    counts.set(jan, (counts.get(jan) ?? 0) + 1);
+  }
+  return items.map(({ jans, ...item }) => {
+    const unique = (jans ?? []).filter((jan) => counts.get(jan) === 1);
+    return unique.length > 0 ? { ...item, jans: unique } : item;
+  });
 }

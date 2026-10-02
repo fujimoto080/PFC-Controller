@@ -4,13 +4,14 @@ import {
   matchRequired,
   normalizeText,
   toNumber,
+  withoutSharedJans,
 } from './scrape.ts';
 import type { CatalogCategory, CatalogItem } from './types';
 
 // 明星食品公式サイトの商品 API から栄養成分を機械的に読み取る。
 // 商品情報ページ（/products/category/<カテゴリ>/）は Vue で描画されており、中身は
 // /api/v1.1/ja_jp/products/list（小カテゴリごとの商品一覧）と、商品ごとの /api/v1/ja_jp/products/detail?id=<商品番号>
-// （栄養成分・希望小売価格・販売エリア入り）の JSON。robots.txt は無い（404）。商品の詳細は同時 4 件で取得する。
+// （栄養成分・希望小売価格・販売エリア・JAN コード入り）の JSON。robots.txt は無い（404）。商品の詳細は同時 4 件で取得する。
 
 const BASE_URL = 'https://www.myojofoods.co.jp';
 
@@ -107,6 +108,10 @@ export function parseProductDetail(
       ? Math.round(Number(rawPrice) * TAX_RATE)
       : undefined;
   const id = String((detail as { id: unknown }).id);
+  const jan = normalizeText(requireString(detail, 'jan'));
+  if (jan !== '' && !/^(\d{8}|\d{13})$/.test(jan)) {
+    throw new Error(`JAN コードが読み取れません: ${jan}`);
+  }
 
   return {
     id,
@@ -115,6 +120,7 @@ export function parseProductDetail(
     ...(price !== undefined && { price }),
     ...(area !== NATIONWIDE_AREA && { area }),
     url: `${BASE_URL}/products/items/${id}/`,
+    ...(jan !== '' && { jans: [jan] }),
     calories: amountOf('熱量', 'kcal'),
     protein: amountOf('たんぱく質', 'g'),
     fat: amountOf('脂質', 'g'),
@@ -148,5 +154,5 @@ export async function scrapeMyojo(): Promise<CatalogItem[]> {
         },
       ),
   );
-  return items.filter((item) => item !== undefined);
+  return withoutSharedJans(items.filter((item) => item !== undefined));
 }
