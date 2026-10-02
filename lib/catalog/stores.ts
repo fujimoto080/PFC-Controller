@@ -6,6 +6,7 @@ import lawson from '@/data/lawson.json';
 import maruchan from '@/data/maruchan.json';
 import matsuya from '@/data/matsuya.json';
 import mcdonalds from '@/data/mcdonalds.json';
+import meiji from '@/data/meiji.json';
 import morinagaMilk from '@/data/morinaga-milk.json';
 import mos from '@/data/mos.json';
 import myojo from '@/data/myojo.json';
@@ -23,6 +24,7 @@ import { LAWSON_CATEGORIES } from '@/lib/catalog/lawson';
 import { MARUCHAN_CATEGORIES } from '@/lib/catalog/maruchan';
 import { MATSUYA_CATEGORIES } from '@/lib/catalog/matsuya';
 import { MCDONALDS_CATEGORIES } from '@/lib/catalog/mcdonalds';
+import { MEIJI_CATEGORIES } from '@/lib/catalog/meiji';
 import { MORINAGA_MILK_CATEGORIES } from '@/lib/catalog/morinaga-milk';
 import { MOS_CATEGORIES } from '@/lib/catalog/mos';
 import { MYOJO_CATEGORIES } from '@/lib/catalog/myojo';
@@ -154,5 +156,11 @@ export const CATALOG_STORES: readonly CatalogStore[] = [
     name: 'ダノン',
     categories: DANONE_CATEGORIES,
     items: danone,
+  },
+  {
+    id: 'meiji',
+    name: '明治',
+    categories: MEIJI_CATEGORIES,
+    items: meiji,
   },
 ];
