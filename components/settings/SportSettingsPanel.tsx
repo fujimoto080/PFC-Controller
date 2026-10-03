@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SportIcon } from '@/components/SportIcon';
 import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,6 +87,10 @@ export function SportSettingsPanel() {
                 key={sport.id}
                 className="flex items-center gap-3 px-3 py-1.5"
               >
+                <SportIcon
+                  name={sport.name}
+                  className="text-muted-foreground size-4 shrink-0"
+                />
                 <span className="min-w-0 flex-1 truncate text-sm">
                   {sport.name}
                 </span>
