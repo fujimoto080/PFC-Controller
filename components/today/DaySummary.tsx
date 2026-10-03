@@ -40,7 +40,7 @@ export function DaySummary({ date }: { date: string }) {
   const isOver = (key: PfcKey, left: number) => left < -allowance(key);
 
   return (
-    <Card>
+    <Card className="px-4">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-muted-foreground text-xs">
