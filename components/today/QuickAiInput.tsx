@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ImagePlus, Loader2, Plus, Sparkles } from 'lucide-react';
+import { Camera, ImagePlus, Loader2, Plus, Sparkles } from 'lucide-react';
 import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,7 @@ export function QuickAiInput({
   const ai = useAiNutrition(onEstimated);
   const busy = ai.pending !== null;
   const pickerRef = useRef<HTMLInputElement | null>(null);
+  const cameraRef = useRef<HTMLInputElement | null>(null);
   const [focused, setFocused] = useState(false);
   // 文字が残っている間は、フォーカスが外れても広げたままにする
   const expanded = focused || ai.text !== '';
@@ -58,6 +59,16 @@ export function QuickAiInput({
         type="button"
         variant="outline"
         size="icon"
+        onClick={() => cameraRef.current?.click()}
+        disabled={busy}
+        aria-label="撮影してAIで記録"
+      >
+        <Camera />
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
         onClick={() => pickerRef.current?.click()}
         disabled={busy}
         aria-label="画像を送ってAIで記録"
@@ -71,9 +82,22 @@ export function QuickAiInput({
       <Button type="submit" disabled={busy} aria-label="AI で推定">
         {ai.pending === 'text' ? <Loader2 className="animate-spin" /> : '推定'}
       </Button>
-      <Button type="button" variant="outline" onClick={onAdd}>
-        <Plus /> 追加
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={onAdd}
+        aria-label="手入力で追加"
+      >
+        <Plus />
       </Button>
+      <ImageFileInput
+        ref={cameraRef}
+        capture
+        onSelect={(files) => {
+          void ai.estimateFromImages(files);
+        }}
+      />
       <ImageFileInput
         ref={pickerRef}
         multiple
