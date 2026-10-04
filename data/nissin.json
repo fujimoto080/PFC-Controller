@@ -1948,20 +1948,6 @@
     ]
   },
   {
-    "id": "13740",
-    "name": "出前一丁 塩とごま油を味わう油そば",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13740/",
-    "calories": 402,
-    "protein": 6.1,
-    "fat": 20,
-    "carbs": 49.4,
-    "price": 268,
-    "jans": [
-      "4902105295922"
-    ]
-  },
-  {
     "id": "13741",
     "name": "チキンラーメン汁なしどんぶり スパイス香るドライカレー味",
     "category": "即席麺",
@@ -1973,20 +1959,6 @@
     "price": 268,
     "jans": [
       "4902105295939"
-    ]
-  },
-  {
-    "id": "13742",
-    "name": "オーベルジーヌ監修 欧風カレー",
-    "category": "カップライス",
-    "url": "https://www.nissin.com/jp/product/items/13742/",
-    "calories": 382,
-    "protein": 6.2,
-    "fat": 13.3,
-    "carbs": 59.3,
-    "price": 376,
-    "jans": [
-      "4902105940969"
     ]
   },
   {
@@ -2042,34 +2014,6 @@
     "price": 268,
     "jans": [
       "4902105296493"
-    ]
-  },
-  {
-    "id": "13763",
-    "name": "日清のどん兵衛 カップヌードルシーフードうどん",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13763/",
-    "calories": 341,
-    "protein": 6.9,
-    "fat": 14.2,
-    "carbs": 46.5,
-    "price": 268,
-    "jans": [
-      "4902105296714"
-    ]
-  },
-  {
-    "id": "13764",
-    "name": "日清焼そばU.F.O. カップヌードルシーフード焼そば",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13764/",
-    "calories": 468,
-    "protein": 7.9,
-    "fat": 21.7,
-    "carbs": 60.2,
-    "price": 268,
-    "jans": [
-      "4902105297117"
     ]
   },
   {
