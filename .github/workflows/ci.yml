@@ -192,3 +192,4 @@ jobs:
         with:
           name: lighthouse-reports
           path: .lighthouse
+          include-hidden-files: true
