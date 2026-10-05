@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { SerwistProvider } from '@serwist/turbopack/react';
 import { Toaster } from '@/components/ui/sonner';
 import { CloudDataProvider } from '@/components/layout/CloudDataProvider';
@@ -34,6 +35,7 @@ export default function RootLayout({
             <CloudDataProvider>{children}</CloudDataProvider>
           </main>
           <Toaster position="top-center" visibleToasts={3} />
+          <SpeedInsights />
         </SerwistProvider>
       </body>
     </html>

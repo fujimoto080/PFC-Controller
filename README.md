@@ -157,6 +157,17 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
+## パフォーマンス計測
+
+- **実ユーザー**: 本番で Vercel Speed Insights（`@vercel/speed-insights`）が Web Vitals を送ります。Vercel ダッシュボードの Speed Insights で見ます。
+- **API の処理時間**: `defineRoute` を使う API は `Server-Timing: total;dur=<ms>` ヘッダを返します。DevTools の Network → Timing で確認できます。
+- **バンドルサイズ**: `pnpm analyze` で `.next/diagnostics/analyze` にバンドル分析を出力します（対話的に見るなら `pnpm exec next experimental-analyze`）。
+- **Lighthouse**: `pnpm build && pnpm start` で本番ビルドを起動し、ログイン済みセッション Cookie を渡して計測します。結果は `.lighthouse/` に出力されます。
+
+```bash
+LIGHTHOUSE_COOKIE='authjs.session-token=<ブラウザの Cookie 値>' pnpm lighthouse [URL...]
+```
+
 ## アプリ内フィードバック
 
 設定画面の「フィードバック」から、タイトルと内容を `POST /api/feedback` で送ると、このリポジトリに GitHub Issue として起票されます（ログインユーザーのみ）。

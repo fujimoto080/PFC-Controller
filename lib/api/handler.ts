@@ -45,6 +45,19 @@ export function defineRoute<
     request: NextRequest,
     routeContext: { params: Promise<unknown> },
   ): Promise<NextResponse> {
+    const startedAt = performance.now();
+    const response = await run(request, routeContext);
+    response.headers.set(
+      'Server-Timing',
+      `total;dur=${(performance.now() - startedAt).toFixed(1)}`,
+    );
+    return response;
+  };
+
+  async function run(
+    request: NextRequest,
+    routeContext: { params: Promise<unknown> },
+  ): Promise<NextResponse> {
     try {
       const params = options.params
         ? parse(options.params, await routeContext.params)
@@ -76,7 +89,7 @@ export function defineRoute<
     } catch (error) {
       return toErrorResponse(options.label, error);
     }
-  };
+  }
 }
 
 /** 本文なしの成功レスポンス。 */
