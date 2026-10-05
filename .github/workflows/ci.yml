@@ -111,3 +111,84 @@ jobs:
         with:
           name: playwright-test-results
           path: test-results
+
+  # 本番ビルドを起動してログイン済みの主要画面を Lighthouse で計測し、Performance スコアの下限を割ったら失敗させる
+  lighthouse:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pfc_e2e
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # e2e/env.ts と同じ接続先・認証設定（アプリとセッション発行の両方で使う）
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:54329/pfc_e2e
+      AUTH_SECRET: e2e-auth-secret-not-for-production
+      AUTH_URL: http://localhost:3210
+      AUTH_TRUST_HOST: 'true'
+      AUTH_GOOGLE_ID: e2e
+      AUTH_GOOGLE_SECRET: e2e
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Next.js build
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Migrate
+        run: pnpm migrate
+
+      - name: Build
+        run: pnpm build
+
+      - name: Start app
+        run: |
+          pnpm start --port 3210 &
+          for _ in $(seq 60); do
+            curl -sf -o /dev/null http://localhost:3210/login && exit 0
+            sleep 1
+          done
+          echo 'アプリが起動しませんでした' >&2
+          exit 1
+
+      - name: Lighthouse
+        env:
+          LIGHTHOUSE_BASE_URL: http://localhost:3210
+          LIGHTHOUSE_MIN_SCORE: '0.4'
+        run: |
+          export LIGHTHOUSE_COOKIE="$(node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/e2e-session-cookie.ts)"
+          pnpm lighthouse
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-reports
+          path: .lighthouse

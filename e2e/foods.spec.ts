@@ -14,7 +14,7 @@ test('食品リストに登録したお気に入りをホームからワンタ�
   const foodSaved = page.waitForResponse(
     (res) => res.url().includes('/api/foods') && res.ok(),
   );
-  await page.getByRole('button', { name: '保存' }).click();
+  await page.getByRole('button', { name: '保存', exact: true }).click();
   await foodSaved;
 
   const favoriteSaved = page.waitForResponse(

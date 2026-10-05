@@ -2,6 +2,10 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import type { ZodError, ZodType } from 'zod';
 import { auth } from '@/auth';
+import {
+  collectQueryTimings,
+  formatServerTiming,
+} from '@/lib/server/query-timing';
 
 export class ApiError extends Error {
   constructor(
@@ -46,10 +50,12 @@ export function defineRoute<
     routeContext: { params: Promise<unknown> },
   ): Promise<NextResponse> {
     const startedAt = performance.now();
-    const response = await run(request, routeContext);
+    const { result: response, timings } = await collectQueryTimings(() =>
+      run(request, routeContext),
+    );
     response.headers.set(
       'Server-Timing',
-      `total;dur=${(performance.now() - startedAt).toFixed(1)}`,
+      formatServerTiming(performance.now() - startedAt, timings),
     );
     return response;
   };

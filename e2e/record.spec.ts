@@ -27,7 +27,7 @@ test('食事を手入力で記録し、編集・削除できる', async ({ page 
 
   await logItem.click();
   await page.getByLabel('カロリー').fill('200');
-  await page.getByRole('button', { name: '保存' }).click();
+  await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByText('更新しました')).toBeVisible();
   await expect(logItem).toContainText('200');
 

@@ -160,9 +160,9 @@ pnpm test:e2e
 ## パフォーマンス計測
 
 - **実ユーザー**: 本番で Vercel Speed Insights（`@vercel/speed-insights`）が Web Vitals を送ります。Vercel ダッシュボードの Speed Insights で見ます。
-- **API の処理時間**: `defineRoute` を使う API は `Server-Timing: total;dur=<ms>` ヘッダを返します。DevTools の Network → Timing で確認できます。
+- **API・DB の処理時間**: `defineRoute` を使う API は `Server-Timing` ヘッダに、全体（`total`）・DB 合計（`db`）・遅い順のクエリごとの所要時間（`q1`…、SQL の先頭 40 文字つき）を載せます。DevTools の Network → Timing で確認できます。クエリ単位の計測は `getPool().query` と `transaction` を通るクエリが対象です。
 - **バンドルサイズ**: `pnpm analyze` で `.next/diagnostics/analyze` にバンドル分析を出力します（対話的に見るなら `pnpm exec next experimental-analyze`）。
-- **Lighthouse**: `pnpm build && pnpm start` で本番ビルドを起動し、ログイン済みセッション Cookie を渡して計測します。結果は `.lighthouse/` に出力されます。
+- **Lighthouse**: `pnpm build && pnpm start` で本番ビルドを起動し、ログイン済みセッション Cookie を渡して計測します。結果は `.lighthouse/` に出力されます。`LIGHTHOUSE_MIN_SCORE`（0〜1）を渡すと、Performance がそれを下回る URL があれば異常終了します。CI の `lighthouse` ジョブが同じ手順で E2E 用 DB・ユーザーに対して計測し、下限 0.4 を割ると失敗します（現状は 54〜76 点で、CPU スロットリングによる TBT が主因です）。レポートは Artifact `lighthouse-reports` から取得できます。
 
 ```bash
 LIGHTHOUSE_COOKIE='authjs.session-token=<ブラウザの Cookie 値>' pnpm lighthouse [URL...]
