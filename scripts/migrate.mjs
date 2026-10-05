@@ -51,7 +51,10 @@ const APP_SCHEMA_SQL = `
     target_carbs DOUBLE PRECISION NOT NULL,
     target_calories DOUBLE PRECISION NOT NULL,
     profile_json JSONB,
-    favorite_food_ids_json JSONB
+    favorite_food_ids_json JSONB,
+    meal_schedule_json JSONB,
+    meal_preferences_json JSONB,
+    carryover_excluded_dates_json JSONB
   );
 
   CREATE TABLE IF NOT EXISTS pfc_foods (
@@ -99,16 +102,6 @@ const APP_SCHEMA_SQL = `
     PRIMARY KEY (user_id, sport_id)
   );
 
-  -- スポーツは1回あたりの消費カロリー固定から、消費の単位 METs だけを登録する形に変えた。
-  -- 旧形式の行は METs に換算できないため捨てる
-  ALTER TABLE pfc_sports
-    ADD COLUMN IF NOT EXISTS mets DOUBLE PRECISION;
-  DELETE FROM pfc_sports WHERE mets IS NULL;
-  ALTER TABLE pfc_sports
-    ALTER COLUMN mets SET NOT NULL;
-  ALTER TABLE pfc_sports
-    DROP COLUMN IF EXISTS calories_burned;
-
   CREATE TABLE IF NOT EXISTS pfc_log_activities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -148,16 +141,7 @@ const APP_SCHEMA_SQL = `
     expires_at TIMESTAMPTZ NOT NULL
   );
 
-  -- 食事提案。居場所の推定に使う予定・食の好み、最後に取得した現在地、提案結果、Web Push の購読
-  ALTER TABLE pfc_user_settings
-    ADD COLUMN IF NOT EXISTS meal_schedule_json JSONB;
-  ALTER TABLE pfc_user_settings
-    ADD COLUMN IF NOT EXISTS meal_preferences_json JSONB;
-
-  -- 超過・不足を繰り越さない日（記録を入れ忘れた日など）
-  ALTER TABLE pfc_user_settings
-    ADD COLUMN IF NOT EXISTS carryover_excluded_dates_json JSONB;
-
+  -- 食事提案。最後に取得した現在地と提案結果
   CREATE TABLE IF NOT EXISTS pfc_user_locations (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     lat DOUBLE PRECISION NOT NULL,
@@ -173,11 +157,6 @@ const APP_SCHEMA_SQL = `
     suggestion_json JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
-  -- 食事枠ごとに 1 件だった頃のテーブルからの移行
-  ALTER TABLE pfc_meal_suggestions
-    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
-  ALTER TABLE pfc_meal_suggestions
-    DROP CONSTRAINT IF EXISTS pfc_meal_suggestions_pkey;
   CREATE INDEX IF NOT EXISTS pfc_meal_suggestions_user_date_idx
     ON pfc_meal_suggestions (user_id, date, created_at);
 
