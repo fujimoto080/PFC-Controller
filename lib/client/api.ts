@@ -91,6 +91,13 @@ export function saveBarcodeMapping(
   return api.post('/api/barcode', { barcodes, food });
 }
 
+/** 公式サイトのカタログ、無ければ Kalori から商品を探す。 */
+export function searchCatalogFoods(
+  query: string,
+): Promise<{ source: 'catalog' | 'kalori'; foods: BarcodeFood[] }> {
+  return api.get(`/api/catalog-search?q=${encodeURIComponent(query)}`);
+}
+
 /** テキストから AI で PFC・カロリーを推定する。 */
 export function estimateNutrition(text: string): Promise<BarcodeFood> {
   return api.post('/api/ai-nutrition', { text });

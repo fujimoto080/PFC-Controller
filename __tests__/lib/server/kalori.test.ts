@@ -1,6 +1,7 @@
 /** @jest-environment node */
 import {
   beginKaloriAuthorization,
+  searchKaloriFoods,
   completeKaloriAuthorization,
   disconnectKalori,
   getKaloriAccessToken,
@@ -10,6 +11,13 @@ import {
 const query = jest.fn<Promise<unknown>, [string, unknown[]?]>();
 jest.mock('@/lib/server/db', () => ({ getPool: () => ({ query }) }));
 jest.mock('server-only', () => ({}));
+
+const callTool = jest.fn();
+const close = jest.fn();
+jest.mock('@modelcontextprotocol/client', () => ({
+  Client: jest.fn(() => ({ connect: jest.fn(), callTool, close })),
+  StreamableHTTPClientTransport: jest.fn(),
+}));
 
 const fetchMock = jest.fn<Promise<Response>, [string, RequestInit]>();
 global.fetch = fetchMock as unknown as typeof fetch;
@@ -203,5 +211,92 @@ describe('disconnectKalori', () => {
     query.mockResolvedValueOnce({ rows: [] });
     await disconnectKalori('user-1');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('searchKaloriFoods', () => {
+  const connected = () =>
+    query.mockResolvedValueOnce({
+      rows: [
+        {
+          client_id: 'client-1',
+          access_token: 'at',
+          refresh_token: 'rt',
+          expires_at: new Date(Date.now() + 10 * 60_000),
+        },
+      ],
+    });
+
+  beforeEach(() => {
+    callTool.mockReset();
+    close.mockReset();
+  });
+
+  it('連携していなければ検索しない', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    await expect(
+      searchKaloriFoods('user-1', 'サラダ'),
+    ).resolves.toBeUndefined();
+    expect(callTool).not.toHaveBeenCalled();
+  });
+
+  it('search_foods の結果を食品にして返す', async () => {
+    connected();
+    callTool.mockResolvedValueOnce({
+      structuredContent: {
+        items: [
+          {
+            type: 'product',
+            name: 'サラダチキン',
+            shopName: 'ニューデイズ',
+            cal: 113,
+            protein: 24.3,
+            fat: 1.5,
+            carbs: 0.4,
+          },
+          {
+            type: 'dish',
+            name: '醤油ラーメン',
+            cal: 470,
+            protein: 21,
+            fat: 8,
+            carbs: 65,
+          },
+        ],
+      },
+    });
+    await expect(searchKaloriFoods('user-1', 'サラダ')).resolves.toEqual([
+      {
+        name: 'サラダチキン',
+        store: 'ニューデイズ',
+        calories: 113,
+        protein: 24.3,
+        fat: 1.5,
+        carbs: 0.4,
+      },
+      { name: '醤油ラーメン', calories: 470, protein: 21, fat: 8, carbs: 65 },
+    ]);
+    expect(callTool).toHaveBeenCalledWith({
+      name: 'search_foods',
+      arguments: { query: 'サラダ', limit: 10 },
+    });
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('結果の形が違えば例外にする', async () => {
+    connected();
+    callTool.mockResolvedValueOnce({ structuredContent: { results: [] } });
+    await expect(searchKaloriFoods('user-1', 'サラダ')).rejects.toThrow(
+      '読み取れません',
+    );
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('ツールがエラーを返したら例外にする', async () => {
+    connected();
+    callTool.mockResolvedValueOnce({ isError: true, content: [] });
+    await expect(searchKaloriFoods('user-1', 'サラダ')).rejects.toThrow(
+      '検索に失敗',
+    );
   });
 });

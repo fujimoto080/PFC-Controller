@@ -337,7 +337,7 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 - 各案の「記録する」で全品を現在時刻で食事記録に追加
 - 提案はやり直した分も含めてすべて保存（`pfc_meal_suggestions`）。画面では最新を上に、前の提案を折りたたんで下に残し、「別の案」ではその日その食事枠で出した案すべてを避けさせる。現在地は提案時に保存し（`pfc_user_locations`）、18時間以内なら定期実行でも使う。食事（朝・昼・晩）ごとに見出しを押すと折り畳め、畳んでいる間は最新の提案のお店名（考え中はスピナー）を見出しに出す
 - Google カレンダー連携（設定画面「Google カレンダー」、`lib/server/google-calendar.ts`）: 連携すると今日の予定（時間・タイトル・場所、終わった予定には印）を「今日の予定と居場所」に加える。`calendar.readonly` を追加で同意させ、リフレッシュトークンを `accounts` に保存するので定期実行の通知でも使える。取得に失敗したら予定なしで提案を続ける。「連携を解除」で Google 側の許可も取り消す
-- Kalori 連携（設定画面「Kalori」、`lib/server/kalori.ts`）: Kalori（kalori.jp）の MCP サーバーに OAuth（認可コード + PKCE、`kalori.read` のみ）で接続する。連携のたびにクライアントを動的登録し、リフレッシュトークンを `kalori_connections` に保存して、期限が近いアクセストークンを取り直す。リフレッシュトークンが失効していれば連携を消す。「連携を解除」で Kalori 側のトークンも失効させる。商品の検索にはまだ使っていない
+- Kalori 連携（設定画面「Kalori」、`lib/server/kalori.ts`）: Kalori（kalori.jp）の MCP サーバーに OAuth（認可コード + PKCE、`kalori.read` のみ）で接続する。連携のたびにクライアントを動的登録し、リフレッシュトークンを `kalori_connections` に保存して、期限が近いアクセストークンを取り直す。リフレッシュトークンが失効していれば連携を消す。「連携を解除」で Kalori 側のトークンも失効させる。食事を記録するシートの検索（`components/record/AddFoodDrawer.tsx`）で、過去の記録・食品リストに当てはまるものが無いときに `GET /api/catalog-search` を引く。公式サイトから集めたカタログ（`data/*.json`）を先に探し、1 件も無ければ連携済みの場合に限って Kalori の `search_foods`（MCP、`@modelcontextprotocol/client`）を引く。結果の栄養値は公式値と AI 推定値が混ざり、区別はしていない
 - 通知: 設定画面でオンにすると毎朝 7:00 ごろに今日の朝昼晩の提案をまとめて作って Web Push で通知し、タップで提案画面を開く
 
 ### 11.4 商品の組み合わせ提案 API（AI なし）

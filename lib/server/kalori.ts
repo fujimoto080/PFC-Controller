@@ -1,6 +1,11 @@
 import 'server-only';
 
+import {
+  Client,
+  StreamableHTTPClientTransport,
+} from '@modelcontextprotocol/client';
 import { z } from 'zod';
+import type { BarcodeFood } from '@/lib/barcode';
 import {
   KALORI_ISSUER,
   KALORI_REGISTER_URL,
@@ -14,6 +19,8 @@ import { getPool } from '@/lib/server/db';
 
 // Kalori の商品カタログを引くための OAuth 連携。
 // アクセストークンは短命なので、連携時に得たリフレッシュトークンを kalori_connections に保存して更新する。
+
+const SEARCH_LIMIT = 10;
 
 export const KALORI_PENDING_COOKIE = 'kalori_oauth';
 
@@ -214,4 +221,60 @@ export async function disconnectKalori(userId: string): Promise<void> {
     console.error('Kalori のトークンの失効に失敗', error);
   });
   await deleteConnection(userId);
+}
+
+/** search_foods の 1 件。商品は店名つき、料理名（dish）は店名なし。 */
+const searchItemSchema = z.object({
+  name: z.string(),
+  shopName: z.string().nullish(),
+  cal: z.number(),
+  protein: z.number(),
+  fat: z.number(),
+  carbs: z.number(),
+});
+const searchResultSchema = z.object({ items: z.array(searchItemSchema) });
+
+/**
+ * Kalori のカタログを名前で検索する。連携していなければ undefined。
+ * 結果は構造化出力（structuredContent）で受け取る。
+ */
+export async function searchKaloriFoods(
+  userId: string,
+  query: string,
+): Promise<BarcodeFood[] | undefined> {
+  const accessToken = await getKaloriAccessToken(userId);
+  if (!accessToken) return undefined;
+
+  const client = new Client({ name: 'PFC Controller', version: '1.0.0' });
+  await client.connect(
+    new StreamableHTTPClientTransport(new URL(KALORI_RESOURCE), {
+      authProvider: { token: () => Promise.resolve(accessToken) },
+    }),
+  );
+  try {
+    const result = await client.callTool({
+      name: 'search_foods',
+      arguments: { query, limit: SEARCH_LIMIT },
+    });
+    if (result.isError) {
+      throw new Error(`Kalori の検索に失敗: ${JSON.stringify(result.content)}`);
+    }
+    const parsed = searchResultSchema.safeParse(result.structuredContent);
+    if (!parsed.success) {
+      throw new Error(
+        `Kalori の検索結果を読み取れません: ${JSON.stringify(result)}`,
+        { cause: parsed.error },
+      );
+    }
+    return parsed.data.items.map((item) => ({
+      name: item.name,
+      store: item.shopName ?? undefined,
+      calories: item.cal,
+      protein: item.protein,
+      fat: item.fat,
+      carbs: item.carbs,
+    }));
+  } finally {
+    await client.close();
+  }
 }

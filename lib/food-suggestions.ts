@@ -74,7 +74,10 @@ const MAX_CANDIDATES = 30;
  * 食品名か店名が検索語に当てはまるか。
  * 区切り文字を無視して食品名・店名のどちらかに含まれるか、空白区切りの各語が食品名・店名のいずれかに含まれれば当てはまる。
  */
-const matchesFoodQuery = (food: FoodItem, query: string): boolean => {
+export const matchesFoodQuery = (
+  food: Pick<FoodItem, 'name' | 'store'>,
+  query: string,
+): boolean => {
   const name = normalizeFoodName(food.name);
   const store = normalizeFoodName(food.store ?? '');
   const matches = (term: string) => name.includes(term) || store.includes(term);

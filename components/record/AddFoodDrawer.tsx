@@ -6,7 +6,10 @@ import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
+import { useCatalogSearch } from '@/hooks/use-catalog-search';
 import { useAppState } from '@/lib/client/store';
+import type { BarcodeFood } from '@/lib/barcode';
+import type { FoodItem } from '@/lib/types';
 import { searchFoodCandidates } from '@/lib/food-suggestions';
 import { defaultTimestampFor } from '@/lib/utils';
 import { RecordDrawer, RecordStepView, type RecordStep } from './RecordDrawer';
@@ -103,6 +106,8 @@ function FoodSearch({
     () => searchFoodCandidates(foods, logs, query),
     [foods, logs, query],
   );
+  // 過去の記録・食品リストに無いときだけ、公式サイトのカタログや Kalori から探す
+  const catalog = useCatalogSearch(query, candidates.length === 0);
   const ai = useAiNutrition((food) => {
     onSelect({ kind: 'confirm', food });
   });
@@ -151,30 +156,53 @@ function FoodSearch({
       <p className="text-muted-foreground pt-1 text-xs">
         {query ? '検索結果' : '最近食べたもの'}
       </p>
-      {candidates.length === 0 ? (
-        <StatusMessage>見つかりませんでした</StatusMessage>
+      {candidates.length > 0 ? (
+        <FoodList foods={candidates} onSelect={onSelect} />
+      ) : catalog.loading ? (
+        <StatusMessage>商品を探しています…</StatusMessage>
+      ) : catalog.foods.length > 0 ? (
+        <>
+          <p className="text-muted-foreground text-xs">
+            {catalog.source === 'kalori'
+              ? 'Kalori のカタログ'
+              : '店舗・メーカーのカタログ'}
+          </p>
+          <FoodList foods={catalog.foods} onSelect={onSelect} />
+        </>
       ) : (
-        <ul className="divide-y rounded-lg border">
-          {candidates.map((food) => (
-            <li key={food.id}>
-              <button
-                type="button"
-                data-track="検索結果の食品を選択"
-                className="hover:bg-muted/60 w-full px-3 py-2.5 text-left"
-                onClick={() => {
-                  onSelect({ kind: 'confirm', food });
-                }}
-              >
-                <p className="text-sm font-medium">{food.name}</p>
-                <PfcMacroLine food={food} />
-                {food.store && (
-                  <p className="text-muted-foreground text-xs">{food.store}</p>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <StatusMessage>見つかりませんでした</StatusMessage>
       )}
     </div>
+  );
+}
+
+function FoodList({
+  foods,
+  onSelect,
+}: {
+  foods: readonly (BarcodeFood & Pick<FoodItem, 'storeGroup'>)[];
+  onSelect: (step: RecordStep) => void;
+}) {
+  return (
+    <ul className="divide-y rounded-lg border">
+      {foods.map((food) => (
+        <li key={`${food.store ?? ''}|${food.name}|${food.calories}`}>
+          <button
+            type="button"
+            data-track="検索結果の食品を選択"
+            className="hover:bg-muted/60 w-full px-3 py-2.5 text-left"
+            onClick={() => {
+              onSelect({ kind: 'confirm', food });
+            }}
+          >
+            <p className="text-sm font-medium">{food.name}</p>
+            <PfcMacroLine food={food} />
+            {food.store && (
+              <p className="text-muted-foreground text-xs">{food.store}</p>
+            )}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
