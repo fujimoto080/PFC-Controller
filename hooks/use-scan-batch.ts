@@ -4,7 +4,10 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFormDraft } from '@/hooks/use-form-draft';
 import type { BarcodeFood } from '@/lib/barcode';
 import { addFoodItem, rememberFood } from '@/lib/client/actions';
-import { fetchBarcodeFood } from '@/lib/client/api';
+import {
+  estimateNutritionFromImages,
+  fetchBarcodeFood,
+} from '@/lib/client/api';
 import { toLogInput } from '@/lib/food-form';
 import {
   addBarcodeItem,
@@ -26,7 +29,7 @@ interface ScanBatchDraft {
 
 const newId = () => crypto.randomUUID();
 
-/** まとめてスキャンした商品の一覧と、照会・一括保存の操作。 */
+/** まとめてスキャンした商品の一覧と、照会・写真読み取り・一括保存の操作。 */
 export function useScanBatch() {
   const [items, setItems] = useState<BatchItem[]>([]);
   /** true なら食べた記録にも追加する。false なら食品リストへの登録だけ */
@@ -39,7 +42,7 @@ export function useScanBatch() {
   }, []);
 
   const draft = useMemo<ScanBatchDraft>(
-    () => ({ items, record }),
+    () => ({ items: items.map(({ photos: _, ...item }) => item), record }),
     [items, record],
   );
   const applyDraft = useCallback(
@@ -79,6 +82,30 @@ export function useScanBatch() {
         toast.fromError('バーコード照会エラー', error);
       });
     return { id, duplicate: false };
+  };
+
+  /**
+   * 成分表示を撮った写真から栄養値を入れる（未登録の商品の入力・登録済みの商品の撮り直し）。
+   * append なら前に読み取った写真と合わせて読み取り直す（成分表示と商品名が別の面にある商品のため）。
+   */
+  const fillFromPhoto = async (
+    id: string,
+    imageDataUrl: string,
+    append: boolean,
+  ) => {
+    const previous = append
+      ? (itemsRef.current.find((item) => item.id === id)?.photos ?? [])
+      : [];
+    const photos = [...previous, imageDataUrl];
+    patch(id, { status: 'loading', loadingLabel: '成分表示を読み取り中' });
+    try {
+      const food = await estimateNutritionFromImages(photos);
+      finish(id, { food, photos, linkBarcode: true });
+    } catch (error) {
+      // 失敗したら元の内容に戻す
+      finish(id);
+      toast.fromError('写真の読み取りに失敗しました', error);
+    }
   };
 
   /** 手で入力・修正した栄養値にする。保存時にバーコードへの紐付けも直す。 */
@@ -136,6 +163,7 @@ export function useScanBatch() {
     record,
     setRecord,
     addBarcode,
+    fillFromPhoto,
     setFood,
     setQuantity,
     remove,

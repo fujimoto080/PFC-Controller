@@ -1,10 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
+  Camera,
   Check,
   CircleAlert,
+  ImagePlus,
   Loader2,
   Minus,
   PenLine,
@@ -12,8 +14,10 @@ import {
   ScanBarcode,
   X,
 } from 'lucide-react';
+import { AiReadingLog } from '@/components/input/AiReadingLog';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
 import { FoodNameField } from '@/components/input/FoodNameField';
+import { ImageFileInput } from '@/components/input/ImageFileInput';
 import { PfcMacroInputs } from '@/components/input/FormFields';
 import { StoreField } from '@/components/input/StoreField';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
@@ -24,7 +28,8 @@ import { IconButton } from '@/components/ui/icon-button';
 import { Label } from '@/components/ui/label';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import type { ScanBatch } from '@/hooks/use-scan-batch';
-import { toBarcodeFood } from '@/lib/barcode';
+import { MAX_READING_IMAGES, toBarcodeFood } from '@/lib/barcode';
+import { imageToDataUrl } from '@/lib/client/image';
 import { useAppState } from '@/lib/client/store';
 import {
   EMPTY_FORM_VALUES,
@@ -40,6 +45,7 @@ import {
   type BatchItem,
 } from '@/lib/scan-batch';
 import { collectStores } from '@/lib/store-sections';
+import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
 interface BatchReviewProps {
@@ -55,6 +61,26 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
   const stores = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const eatAt = useEatDateTime();
   const [editingId, setEditingId] = useState<string | null>(null);
+  // 成分表示は端末のカメラで撮る。撮った写真をどの商品に使い、前の写真に足すかを覚えておく
+  const photoTargetRef = useRef<{ id: string; append: boolean } | null>(null);
+  const cameraRef = useRef<HTMLInputElement | null>(null);
+  const takePhoto = (id: string, append: boolean) => {
+    photoTargetRef.current = { id, append };
+    cameraRef.current?.click();
+  };
+  const fillFromPhoto = async ([file]: File[]) => {
+    const target = photoTargetRef.current;
+    if (!file || !target) return;
+    try {
+      void batch.fillFromPhoto(
+        target.id,
+        await imageToDataUrl(file),
+        target.append,
+      );
+    } catch (error) {
+      toast.fromError('画像の読み込みに失敗しました', error);
+    }
+  };
   const { items, record } = batch;
 
   const readyCount = readyFoods(items).length;
@@ -90,6 +116,10 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
                 onCancel={() => {
                   setEditingId(null);
                 }}
+                onTakePhoto={(append) => {
+                  setEditingId(null);
+                  takePhoto(item.id, append);
+                }}
               />
             </li>
           ) : (
@@ -99,6 +129,9 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
               showQuantity={record}
               onEdit={() => {
                 setEditingId(item.id);
+              }}
+              onTakePhoto={() => {
+                takePhoto(item.id, false);
               }}
               onQuantityChange={(quantity) => {
                 batch.setQuantity(item.id, quantity);
@@ -112,6 +145,14 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
       </ul>
 
       <ScanMoreButton onScanMore={onScanMore} />
+      <AiReadingLog />
+      <ImageFileInput
+        ref={cameraRef}
+        capture
+        onSelect={(files) => {
+          void fillFromPhoto(files);
+        }}
+      />
 
       <div className="bg-muted/50 space-y-3 rounded-lg p-3">
         <div className="flex items-center gap-2">
@@ -192,12 +233,14 @@ function ItemCard({
   item,
   showQuantity,
   onEdit,
+  onTakePhoto,
   onQuantityChange,
   onRemove,
 }: {
   item: BatchItem;
   showQuantity: boolean;
   onEdit: () => void;
+  onTakePhoto: () => void;
   onQuantityChange: (quantity: number) => void;
   onRemove: () => void;
 }) {
@@ -235,9 +278,14 @@ function ItemCard({
           </div>
           {removeButton}
         </div>
-        <Button size="sm" className="w-full" onClick={onEdit}>
-          <PenLine /> 栄養値を入力
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button size="sm" onClick={onTakePhoto}>
+            <Camera /> 成分表示を撮影
+          </Button>
+          <Button size="sm" variant="outline" onClick={onEdit}>
+            <PenLine /> 手で入力
+          </Button>
+        </div>
       </li>
     );
   }
@@ -326,12 +374,16 @@ function ItemEditor({
   stores,
   onSave,
   onCancel,
+  onTakePhoto,
 }: {
   item: BatchItem;
   stores: string[];
   onSave: (values: PfcFormValues) => void;
   onCancel: () => void;
+  /** 写真を撮って読み取り直す。append なら前の写真と合わせて読み取る（編集中の内容は破棄する） */
+  onTakePhoto: (append: boolean) => void;
 }) {
+  const photoCount = item.photos?.length ?? 0;
   const { register, handleSubmit, reset, control, setValue } =
     useForm<PfcFormValues>({
       defaultValues: item.food ? toFormValues(item.food) : EMPTY_FORM_VALUES,
@@ -345,6 +397,32 @@ function ItemEditor({
       }}
     >
       <BarcodeLabel barcode={item.barcode} />
+      <div className="grid grid-cols-2 gap-2">
+        {photoCount > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={photoCount >= MAX_READING_IMAGES}
+            onClick={() => {
+              onTakePhoto(true);
+            }}
+          >
+            <ImagePlus /> 写真を足す（{photoCount}枚読み取り済み）
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className={photoCount === 0 ? 'col-span-2' : undefined}
+          onClick={() => {
+            onTakePhoto(false);
+          }}
+        >
+          <Camera /> 成分表示を{item.food ? '撮り直す' : '撮影'}
+        </Button>
+      </div>
       <FoodNameField
         register={register}
         control={control}

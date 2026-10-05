@@ -18,6 +18,8 @@ export interface BatchItem {
   quantity: number;
   /** 保存時にバーコードへ食品情報を紐付けるか（未登録だった・内容を直した） */
   linkBarcode: boolean;
+  /** 栄養値を読み取った成分表示の写真（dataURL）。写真を足したときに合わせて送る。大きいので一覧の保存には含めない */
+  photos?: string[];
 }
 
 export const QUANTITY_STEP = 0.5;
@@ -62,7 +64,7 @@ export function updateItem(
   return items.map((item) => (item.id === id ? { ...item, ...patch } : item));
 }
 
-/** 照会中を終える。栄養値があれば ready、なければ未登録にする。 */
+/** 照会・読み取り中を終える。栄養値があれば ready、なければ未登録にする。 */
 function settle(item: BatchItem): BatchItem {
   return {
     ...item,
@@ -71,7 +73,7 @@ function settle(item: BatchItem): BatchItem {
   };
 }
 
-/** 照会の結果（patch）を反映して照会中を終える。失敗なら patch は空で、未登録になる。 */
+/** 照会・読み取りの結果（patch）を反映して読み取り中を終える。失敗なら patch は空で、元の栄養値（無ければ未登録）に戻る。 */
 export function finishLoading(
   items: BatchItem[],
   id: string,

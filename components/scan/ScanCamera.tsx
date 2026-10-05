@@ -166,7 +166,7 @@ function LastScanLine({
     content = (
       <>
         <CircleAlert className="size-4 text-amber-400" />
-        未登録の商品です。確認画面で入力できます
+        未登録の商品です。確認画面で撮影・入力できます
       </>
     );
   } else if (item?.food) {
