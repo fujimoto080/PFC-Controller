@@ -5,6 +5,7 @@ import { barcodeFoodSchema } from '@/lib/api/schemas';
 import { normalizeBarcodes, toBarcodeFood } from '@/lib/barcode';
 import { findCatalogItemByJan } from '@/lib/catalog/stores';
 import { getBarcodeMapping, saveBarcodeMapping } from '@/lib/server/barcode-kv';
+import { findOpenFoodFactsByBarcode } from '@/lib/server/open-food-facts';
 
 export const GET = defineRoute(
   { label: 'バーコード取得', auth: true },
@@ -14,12 +15,16 @@ export const GET = defineRoute(
 
     const food = await getBarcodeMapping(code);
     if (food) return NextResponse.json(food);
-    // 登録が無ければ、公式サイトから集めた商品カタログの JAN コードで探す
+    // 登録が無ければ、公式サイトから集めた商品カタログの JAN コード、次に Open Food Facts で探す
     const found = findCatalogItemByJan(code);
-    if (!found) throw new ApiError('該当する商品が見つかりません', 404);
-    return NextResponse.json(
-      toBarcodeFood({ ...found.item, store: found.store.name }),
-    );
+    if (found) {
+      return NextResponse.json(
+        toBarcodeFood({ ...found.item, store: found.store.name }),
+      );
+    }
+    const openFoodFacts = await findOpenFoodFactsByBarcode(code);
+    if (!openFoodFacts) throw new ApiError('該当する商品が見つかりません', 404);
+    return NextResponse.json(openFoodFacts);
   },
 );
 
