@@ -222,6 +222,16 @@ const APP_SCHEMA_SQL = `
   );
   CREATE INDEX IF NOT EXISTS idx_pfc_usage_events_user
     ON pfc_usage_events (user_id);
+
+  -- スマホのヘルスケア連携で同期する、日ごとの体重・体脂肪率・歩数。同期できた項目だけ入る
+  CREATE TABLE IF NOT EXISTS pfc_health_daily (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    weight_kg DOUBLE PRECISION,
+    body_fat_percent DOUBLE PRECISION,
+    steps INT,
+    PRIMARY KEY (user_id, date)
+  );
 `;
 
 async function main() {

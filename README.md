@@ -87,14 +87,14 @@ GitHub Actions で運用する場合は、リポジトリの **Settings > Secret
   - `CRON_SECRET`（Vercel が Cron 呼び出し時に Bearer トークンとして付与する）
 - 通知は Service Worker が必要なため本番ビルド（PWA / TWA）でのみ動作する
 
-## スマホの消費カロリー連携
+## スマホのヘルスケア連携
 
-Android の Health Connect（Samsung Health などの活動消費）を、`PUT /api/health-sync` で 1 日 1 件の運動記録として同期できます。
+Android の Health Connect（Samsung Health など）の 1 日分のデータを、`PUT /api/health-sync` で同期できます。
 
 - 認証はセッションではなく共有トークン: `Authorization: Bearer <HEALTH_SYNC_TOKEN>`（環境変数 `HEALTH_SYNC_TOKEN` が未設定なら無効）
-- body: `{ "email": "<ログインメール>", "date": "YYYY-MM-DD", "caloriesBurned": 数値 }`。同じ日は上書きされ、0 kcal なら記録を消す
-- 送るのはアクティブ消費のみ（基礎代謝分は目標カロリーに含まれるため）
-- Android 側の送信は `twa/` のアプリが行う（`twa/app/src/main/java/app/vercel/pfc_controller/twa/`）
+- body: `{ "email": "<ログインメール>", "date": "YYYY-MM-DD", "caloriesBurned"?, "weightKg"?, "bodyFatPercent"?, "steps"? }`。送った項目だけが更新され、1 つ以上は必須
+  - `caloriesBurned`: アクティブ消費のみ（基礎代謝分は目標カロリーに含まれるため）。同じ日は 1 件の運動記録として上書きされ、0 kcal なら記録を消す
+  - `weightKg` / `bodyFatPercent` / `steps`: 日ごとに保存される。体重がその日までの最新なら、プロフィールの体重も更新する
 
 ## ChatGPT 連携（MCP サーバー）
 

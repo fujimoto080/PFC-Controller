@@ -188,11 +188,22 @@ export const activityInputSchema = z.object({
   timestamp: timestampSchema,
 }) satisfies z.ZodType<SportActivityInput>;
 
-export const healthSyncSchema = z.object({
-  email: z.email(),
-  date: dateSchema,
-  caloriesBurned: nonNegative,
-});
+export const healthSyncSchema = z
+  .object({
+    email: z.email(),
+    date: dateSchema,
+    caloriesBurned: nonNegative.optional(),
+    weightKg: z.number().positive().optional(),
+    bodyFatPercent: z.number().positive().max(100).optional(),
+    steps: z.number().int().nonnegative().optional(),
+  })
+  .refine(
+    ({ caloriesBurned, weightKg, bodyFatPercent, steps }) =>
+      [caloriesBurned, weightKg, bodyFatPercent, steps].some(
+        (value) => value !== undefined,
+      ),
+    { message: '同期する項目を 1 つ以上指定してください' },
+  );
 
 export const uuidParamsSchema = z.object({ id: z.uuid() });
 
