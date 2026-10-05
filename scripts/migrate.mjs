@@ -139,6 +139,15 @@ const APP_SCHEMA_SQL = `
     expires_at TIMESTAMPTZ NOT NULL
   );
 
+  -- Kalori（kalori.jp）の商品カタログに繋ぐ OAuth 連携。アクセストークンは短命なのでリフレッシュトークンで更新する。
+  CREATE TABLE IF NOT EXISTS kalori_connections (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    client_id TEXT NOT NULL,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL
+  );
+
   -- 食事提案。居場所の推定に使う予定・食の好み、最後に取得した現在地、提案結果、Web Push の購読
   ALTER TABLE pfc_user_settings
     ADD COLUMN IF NOT EXISTS meal_schedule_json JSONB;

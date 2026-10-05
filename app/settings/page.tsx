@@ -4,6 +4,7 @@ import { GoalSettingsPanel } from '@/components/settings/GoalSettingsPanel';
 import { AccountPanel } from '@/components/settings/AccountPanel';
 import { DataLinksPanel } from '@/components/settings/DataLinksPanel';
 import { CalendarSettingsPanel } from '@/components/settings/CalendarSettingsPanel';
+import { KaloriSettingsPanel } from '@/components/settings/KaloriSettingsPanel';
 import { MealPreferenceSettingsPanel } from '@/components/settings/MealPreferenceSettingsPanel';
 import { MealSuggestionSettingsPanel } from '@/components/settings/MealSuggestionSettingsPanel';
 import { SportSettingsPanel } from '@/components/settings/SportSettingsPanel';
@@ -20,6 +21,7 @@ export default function SettingsPage() {
       <MealSuggestionSettingsPanel />
 
       <CalendarSettingsPanel />
+      <KaloriSettingsPanel />
       <MealPreferenceSettingsPanel />
       <DataLinksPanel />
       <AccountPanel />
