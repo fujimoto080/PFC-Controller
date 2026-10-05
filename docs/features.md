@@ -21,6 +21,8 @@ PFC Balance は、**タンパク質（P）・脂質（F）・炭水化物（C）
 - **商品カタログ**（`/catalog`）: 組み合わせ提案 API が使う `data/<店舗 ID>.json` の中身を、お店ごとにカテゴリで折り畳んで一覧する。商品名から公式の商品ページを開ける
 - **利用状況**（`/usage`）
 
+設定画面の「フィードバック」で、タイトルと内容を送ると GitHub Issue として起票される（`POST /api/feedback`、`lib/server/github-issues.ts`。環境変数 `GITHUB_ISSUE_TOKEN` が必要）。
+
 補助ページ:
 
 - **プライバシーポリシー**（`/privacy-policy`）

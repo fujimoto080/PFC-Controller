@@ -156,3 +156,9 @@ docker run -d --name pfc-e2e-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_
 pnpm exec playwright install chromium
 pnpm test:e2e
 ```
+
+## アプリ内フィードバック
+
+設定画面の「フィードバック」から、タイトルと内容を `POST /api/feedback` で送ると、このリポジトリに GitHub Issue として起票されます（ログインユーザーのみ）。
+
+- 必要な環境変数: `GITHUB_ISSUE_TOKEN`（このリポジトリの Issues を読み書きできる fine-grained personal access token。未設定だと起票は 500 になる）

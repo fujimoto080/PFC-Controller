@@ -213,3 +213,8 @@ export const barcodeFoodSchema = pfcSchema.extend({
   name: z.string().min(1),
   store: z.string().optional(),
 }) satisfies z.ZodType<BarcodeFood>;
+
+export const feedbackSchema = z.object({
+  title: z.string().trim().min(1).max(100),
+  body: z.string().trim().min(1).max(2000),
+});

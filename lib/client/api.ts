@@ -132,3 +132,11 @@ export async function estimateNutritionFromImages(
   }
   return first.food;
 }
+
+/** 要望・不具合を GitHub Issue として起票する。 */
+export function sendFeedback(feedback: {
+  title: string;
+  body: string;
+}): Promise<{ url: string }> {
+  return api.post('/api/feedback', feedback);
+}
