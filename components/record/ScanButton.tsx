@@ -1,11 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { ScanBarcode } from 'lucide-react';
-import { BatchReview } from '@/components/scan/BatchReview';
-import { BatchCamera } from '@/components/scan/ScanCamera';
+import { useEverOpen } from '@/hooks/use-ever-open';
 import { useScanBatch } from '@/hooks/use-scan-batch';
-import { RecordDrawer } from './RecordDrawer';
+
+// カメラと確認画面は重いため、初めて開くまで読み込まない
+const BatchCamera = dynamic(() =>
+  import('@/components/scan/ScanCamera').then((m) => m.BatchCamera),
+);
+const BatchReviewDrawer = dynamic(() =>
+  import('@/components/scan/BatchReviewDrawer').then(
+    (m) => m.BatchReviewDrawer,
+  ),
+);
 
 /** 表示中の画面。 */
 type View = { kind: 'camera' } | { kind: 'review' } | null;
@@ -18,6 +27,7 @@ export function ScanButton() {
   const batch = useScanBatch();
   const [view, setView] = useState<View>(null);
   const count = batch.items.length;
+  const reviewMounted = useEverOpen(view?.kind === 'review');
 
   const openReview = () => {
     setView({ kind: 'review' });
@@ -55,19 +65,16 @@ export function ScanButton() {
         <BatchCamera batch={batch} onDone={openReview} onClose={close} />
       )}
 
-      <RecordDrawer
-        open={view?.kind === 'review'}
-        onClose={close}
-        title={count > 0 ? `まとめて記録（${count}品）` : 'まとめて記録'}
-      >
-        <BatchReview
+      {reviewMounted && (
+        <BatchReviewDrawer
+          open={view?.kind === 'review'}
           batch={batch}
           onScanMore={() => {
             setView({ kind: 'camera' });
           }}
-          onDone={close}
+          onClose={close}
         />
-      </RecordDrawer>
+      )}
     </>
   );
 }

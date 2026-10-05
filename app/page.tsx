@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AddFoodDrawer } from '@/components/record/AddFoodDrawer';
+import dynamic from 'next/dynamic';
 import type { RecordStep } from '@/components/record/RecordDrawer';
 import { DayActivityList } from '@/components/today/DayActivityList';
 import { DateHeader } from '@/components/today/DateHeader';
@@ -10,7 +10,13 @@ import { DaySummary } from '@/components/today/DaySummary';
 import { FavoriteChips } from '@/components/today/FavoriteChips';
 import { QuickAiInput } from '@/components/today/QuickAiInput';
 import { useDaySwipe } from '@/hooks/use-day-swipe';
+import { useEverOpen } from '@/hooks/use-ever-open';
 import { formatDate, shiftDate } from '@/lib/utils';
+
+// 食品の追加シートは重いため、初めて開くまで読み込まない
+const AddFoodDrawer = dynamic(() =>
+  import('@/components/record/AddFoodDrawer').then((m) => m.AddFoodDrawer),
+);
 
 export default function TodayPage() {
   const [date, setDate] = useState(() => formatDate(Date.now()));
@@ -20,6 +26,8 @@ export default function TodayPage() {
   const { contentRef, handlers } = useDaySwipe(date, (days) => {
     setDate((current) => shiftDate(current, days));
   });
+
+  const addMounted = useEverOpen(adding !== null);
 
   const openAdd = () => {
     setAdding({});
@@ -41,14 +49,16 @@ export default function TodayPage() {
         <DayLogList date={date} onAdd={openAdd} />
         <DayActivityList date={date} />
       </div>
-      <AddFoodDrawer
-        open={adding !== null}
-        date={date}
-        initialStep={adding?.step}
-        onClose={() => {
-          setAdding(null);
-        }}
-      />
+      {addMounted && (
+        <AddFoodDrawer
+          open={adding !== null}
+          date={date}
+          initialStep={adding?.step}
+          onClose={() => {
+            setAdding(null);
+          }}
+        />
+      )}
     </div>
   );
 }

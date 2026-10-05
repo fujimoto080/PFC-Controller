@@ -1,11 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { useAppState } from '@/lib/client/store';
 import type { FoodItem } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
-import { EditLogItemDrawer } from './EditLogItemDrawer';
+import { useEverOpen } from '@/hooks/use-ever-open';
+
+// 編集シートは重いため、初めて開くまで読み込まない
+const EditLogItemDrawer = dynamic(() =>
+  import('./EditLogItemDrawer').then((m) => m.EditLogItemDrawer),
+);
 
 interface DayLogListProps {
   date: string;
@@ -16,6 +22,7 @@ interface DayLogListProps {
 export function DayLogList({ date, onAdd }: DayLogListProps) {
   const { logs } = useAppState();
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
+  const editMounted = useEverOpen(editingItem !== null);
   const items = [...(logs[date]?.items ?? [])].sort(
     (a, b) => a.timestamp - b.timestamp,
   );
@@ -72,12 +79,14 @@ export function DayLogList({ date, onAdd }: DayLogListProps) {
         </ul>
       )}
 
-      <EditLogItemDrawer
-        item={editingItem}
-        onClose={() => {
-          setEditingItem(null);
-        }}
-      />
+      {editMounted && (
+        <EditLogItemDrawer
+          item={editingItem}
+          onClose={() => {
+            setEditingItem(null);
+          }}
+        />
+      )}
     </section>
   );
 }
