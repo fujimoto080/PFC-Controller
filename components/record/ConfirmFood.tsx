@@ -9,8 +9,7 @@ import { MACROS } from '@/lib/macros';
 import { scalePFC } from '@/lib/pfc';
 import type { PFC } from '@/lib/types';
 import { cn } from '@/lib/utils';
-
-const FACTORS = [0.5, 1, 1.5, 2] as const;
+import { QuantitySelector } from './QuantitySelector';
 
 interface ConfirmFoodProps {
   food: FoodTemplate;
@@ -43,23 +42,7 @@ export function ConfirmFood({
 
       <NutrientTiles pfc={scaled} />
 
-      <div className="space-y-2">
-        <p className="text-muted-foreground text-xs">数量</p>
-        <div className="grid grid-cols-4 gap-2">
-          {FACTORS.map((value) => (
-            <Button
-              key={value}
-              type="button"
-              variant={factor === value ? 'default' : 'outline'}
-              onClick={() => {
-                setFactor(value);
-              }}
-            >
-              ×{value}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <QuantitySelector value={factor} onChange={setFactor} />
 
       <div className="space-y-2">
         <Button

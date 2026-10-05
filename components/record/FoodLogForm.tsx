@@ -24,7 +24,9 @@ import {
   type PfcFormValues,
 } from '@/lib/food-form';
 import { collectStores } from '@/lib/store-sections';
+import { scalePFC } from '@/lib/pfc';
 import { toast } from '@/lib/toast';
+import { QuantitySelector } from './QuantitySelector';
 
 // 入力途中のデータを localStorage に保持するためのキー
 const FORM_DRAFT_STORAGE_KEY = 'pfc_add_food_form_draft';
@@ -68,6 +70,7 @@ export function FoodLogForm({
   const formValues = useWatch({ control }) as PfcFormValues;
 
   const [photos, setPhotos] = useState(initialPhotos);
+  const [factor, setFactor] = useState(1);
 
   const applyFood = (food: FoodTemplate, estimatedPhotos?: string[]) => {
     reset(toFormValues(food));
@@ -96,6 +99,7 @@ export function FoodLogForm({
 
   const handleClear = () => {
     reset(EMPTY_FORM_VALUES);
+    setFactor(1);
     setAiText('');
     clearDraft();
   };
@@ -104,7 +108,7 @@ export function FoodLogForm({
   // 失敗時のロールバックとトーストは actions 側で行う。
   const onSubmit = (values: PfcFormValues) => {
     const item = toFoodInput(values, eatAt.timestamp);
-    void addFoodItem(item);
+    void addFoodItem(scalePFC(item, factor));
     toast.success(`${item.name}を記録しました`);
 
     const { foodAdded, mappingSaved } = rememberFood(item, barcode);
@@ -143,6 +147,7 @@ export function FoodLogForm({
         onSelect={applyFood}
       />
       <PfcMacroInputs register={register} />
+      <QuantitySelector value={factor} onChange={setFactor} />
       <StoreField
         register={register}
         control={control}
