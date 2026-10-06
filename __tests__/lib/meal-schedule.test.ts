@@ -1,5 +1,6 @@
 import { findChainStore } from '@/lib/chain-stores';
 import {
+  assignMealSlots,
   DEFAULT_MEAL_SCHEDULE,
   distanceMeters,
   planMeal,
@@ -34,6 +35,57 @@ describe('slotForTime', () => {
     expect(slotForTime(toJstTimestamp(MONDAY, '07:00'))).toBe('breakfast');
     expect(slotForTime(toJstTimestamp(MONDAY, '11:00'))).toBe('lunch');
     expect(slotForTime(toJstTimestamp(MONDAY, '17:00'))).toBe('dinner');
+  });
+});
+
+describe('assignMealSlots', () => {
+  const at = (time: string) => ({ timestamp: toJstTimestamp(MONDAY, time) });
+  const slotsOf = (times: string[]) =>
+    assignMealSlots(times.map(at)).map((meal) => [
+      meal.slot,
+      meal.items.length,
+    ]);
+
+  it('時間帯どおりの 3 回の食事を朝昼夜に分ける', () => {
+    expect(slotsOf(['19:00', '07:30', '12:00'])).toEqual([
+      ['breakfast', 1],
+      ['lunch', 1],
+      ['dinner', 1],
+    ]);
+  });
+
+  it('1 時間以内に続けて食べた物は同じ 1 回の食事にまとめる', () => {
+    expect(slotsOf(['12:00', '12:40', '13:30', '19:00'])).toEqual([
+      ['lunch', 3],
+      ['dinner', 1],
+    ]);
+  });
+
+  it('朝の時間帯を過ぎた 1 回目も、その後に昼と夜があれば朝にする', () => {
+    expect(slotsOf(['10:30', '13:00', '19:00'])).toEqual([
+      ['breakfast', 1],
+      ['lunch', 1],
+      ['dinner', 1],
+    ]);
+  });
+
+  it('朝を抜いた日の遅めの 1 回目は昼にする', () => {
+    expect(slotsOf(['10:30', '19:00'])).toEqual([
+      ['lunch', 1],
+      ['dinner', 1],
+    ]);
+  });
+
+  it('夕食後の夜食は夜にまとめる', () => {
+    expect(slotsOf(['07:00', '12:00', '19:00', '23:00'])).toEqual([
+      ['breakfast', 1],
+      ['lunch', 1],
+      ['dinner', 2],
+    ]);
+  });
+
+  it('記録が無ければ空', () => {
+    expect(assignMealSlots([])).toEqual([]);
   });
 });
 

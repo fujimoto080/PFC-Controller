@@ -11,12 +11,90 @@ export function mealSlotLabel(slot: MealSlot): string {
   return MEAL_SLOTS.find((meta) => meta.slot === slot)?.label ?? slot;
 }
 
-/** その時刻に提案すべき食事枠。10時までは朝、15時までは昼、以降は夜。 */
+/** 食事枠の時間帯（JST の 0 時からの分、終わりは含まない）。10時までは朝、15時までは昼、以降は夜。 */
+const SLOT_WINDOWS: Record<MealSlot, readonly [number, number]> = {
+  breakfast: [0, 10 * 60],
+  lunch: [10 * 60, 15 * 60],
+  dinner: [15 * 60, 24 * 60],
+};
+
+/** JST の 0 時からの分。 */
+function minutesOfDay(timestamp: number): number {
+  const [hours = 0, minutes = 0] = formatTime(timestamp).split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+/** 時刻が食事枠の時間帯から何分外れているか。時間帯の中なら 0。 */
+function minutesOutside(slot: MealSlot, minutes: number): number {
+  const [start, end] = SLOT_WINDOWS[slot];
+  return Math.max(0, start - minutes, minutes - (end - 1));
+}
+
+/** その時刻に提案すべき食事枠。 */
 export function slotForTime(timestamp: number): MealSlot {
-  const time = formatTime(timestamp);
-  if (time < '10:00') return 'breakfast';
-  if (time < '15:00') return 'lunch';
-  return 'dinner';
+  const minutes = minutesOfDay(timestamp);
+  return (
+    MEAL_SLOTS.find((meta) => minutesOutside(meta.slot, minutes) === 0)?.slot ??
+    'dinner'
+  );
+}
+
+/** 前の記録からこの間隔以内に食べた物は、同じ 1 回の食事と数える。 */
+const SAME_MEAL_GAP_MS = 60 * 60 * 1000;
+
+/** 2 回の食事を同じ食事枠に入れるときの重み（時間帯から外れる分数に換算）。 */
+const SHARED_SLOT_PENALTY = 60;
+
+interface SlotPath {
+  cost: number;
+  slots: MealSlot[];
+}
+
+/**
+ * 食べた物を朝・昼・夜に割り当てる。記録を食事 1 回ずつにまとめ、食事の順番は
+ * 朝→昼→夜を逆戻りしない範囲で、時間帯からの外れと同じ枠への詰め込みが最も少ない割り当てを選ぶ。
+ * 例えば 10:30・13:00・19:00 の 3 回なら 10:30 は朝、10:30・19:00 の 2 回なら 10:30 は昼になる。
+ */
+export function assignMealSlots<T extends { timestamp: number }>(
+  items: readonly T[],
+): { slot: MealSlot; items: T[] }[] {
+  const meals: T[][] = [];
+  for (const item of [...items].sort((a, b) => a.timestamp - b.timestamp)) {
+    const meal = meals.at(-1);
+    const last = meal?.at(-1);
+    if (meal && last && item.timestamp - last.timestamp <= SAME_MEAL_GAP_MS) {
+      meal.push(item);
+    } else {
+      meals.push([item]);
+    }
+  }
+
+  // paths[s]: ここまでの食事を割り当て、直前の食事を MEAL_SLOTS[s] にしたときの最小の重み
+  let paths: SlotPath[] = MEAL_SLOTS.map(() => ({ cost: 0, slots: [] }));
+  for (const meal of meals) {
+    const minutes = minutesOfDay(meal[0]?.timestamp ?? 0);
+    paths = MEAL_SLOTS.map(({ slot }, s) => {
+      const best = paths
+        .slice(0, s + 1)
+        .map((path, p) => ({
+          ...path,
+          cost:
+            path.cost +
+            (p === s && path.slots.length > 0 ? SHARED_SLOT_PENALTY : 0),
+        }))
+        .reduce((a, b) => (b.cost < a.cost ? b : a));
+      return {
+        cost: best.cost + minutesOutside(slot, minutes),
+        slots: [...best.slots, slot],
+      };
+    });
+  }
+  const { slots } = paths.reduce((a, b) => (b.cost < a.cost ? b : a));
+
+  return MEAL_SLOTS.map(({ slot }) => ({
+    slot,
+    items: meals.filter((_, i) => slots[i] === slot).flat(),
+  })).filter((group) => group.items.length > 0);
 }
 
 /** この食事を含め、今日これからの食事枠。 */
