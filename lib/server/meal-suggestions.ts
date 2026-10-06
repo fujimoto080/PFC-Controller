@@ -9,14 +9,13 @@ import {
   distanceMeters,
   mealSlotLabel,
   planMeal,
-  remainingSlots,
-  slotForTime,
+  upcomingSlots,
 } from '@/lib/meal-schedule';
+import { targetFor } from '@/lib/meal-split';
 import { sumPFC } from '@/lib/pfc';
 import { getPool } from '@/lib/server/db';
 import {
   combinationsNear,
-  targetFor,
   totalPrice,
 } from '@/lib/server/combination-suggestions';
 import type { CombinationItem } from '@/lib/catalog/types';
@@ -33,7 +32,6 @@ import { getSettings } from '@/lib/server/settings';
 import type {
   GeoPoint,
   MealSlot,
-  MealSplit,
   MealSuggestion,
   MealSuggestionRequest,
   NearbyStore,
@@ -201,38 +199,37 @@ function describeStores(stores: NearbyStore[]): string[] {
   );
 }
 
-/** 配分の説明。slots は提案する食事枠で、今日これからの食事の先頭から並ぶ。 */
+/**
+ * 配分の説明。targets は提案する食事枠とその上限で、mealsLeft はそれを含めた今日これからの食事の数。
+ * 食べた物を割り当て済みの食事枠は、その分を差し引いた食べ足す分を上限にしている。
+ */
 function describeAllocation(
-  slots: MealSlot[],
-  remaining: PFC,
-  split: MealSplit,
+  targets: { slot: MealSlot; target: PFC }[],
+  mealsLeft: number,
+  eaten: readonly { slot: MealSlot }[],
 ): string {
-  const [first] = slots;
-  if (!first) throw new Error('食事枠がありません');
-  const mealsLeft = remainingSlots(first).length;
-  const targets = slots
-    .map(
-      (slot) =>
-        `${mealSlotLabel(slot)} ${formatPfc(targetFor(remaining, slot, split))}`,
-    )
+  const list = targets
+    .map(({ slot, target }) => `${mealSlotLabel(slot)} ${formatPfc(target)}`)
     .join('、');
-  const rule =
-    'ユーザーが決めた朝昼晩の配分（今日の残りをこの比率で分けた量）を、それぞれの食事の上限にする。';
-  if (slots.length > 1) {
-    return `今日はあと${mealsLeft}食（${slots.map(mealSlotLabel).join('・')}）。${rule}各食事の上限: ${targets}。全部食べると残りをちょうど使い切って1日を終えられる量にする。`;
+  const started = targets.filter(({ slot }) =>
+    eaten.some((meal) => meal.slot === slot),
+  );
+  const rule = `ユーザーが決めた朝昼晩の配分（今日の残りをこの比率で分けた量）を、それぞれの食事の上限にする。${
+    started.length > 0
+      ? `${started.map(({ slot }) => mealSlotLabel(slot)).join('・')}は既に食べた分を差し引いた、食べ足す分の上限。`
+      : ''
+  }`;
+  if (targets.length > 1) {
+    return `今日はあと${mealsLeft}食（${targets.map(({ slot }) => mealSlotLabel(slot)).join('・')}）。${rule}各食事の上限: ${list}。全部食べると残りをちょうど使い切って1日を終えられる量にする。`;
   }
-  return `この食事を含めて今日はあと${mealsLeft}食。${rule}この食事の上限: ${targets}。${
+  return `この食事を含めて今日はあと${mealsLeft}食。${rule}この食事の上限: ${list}。${
     mealsLeft === 1
       ? '今日の最後の食事なので、残りをちょうど使い切って1日を終えられる量にする。'
       : ''
   }`;
 }
 
-async function buildPrompt(
-  userId: string,
-  request: MealSuggestionRequest,
-  slots: MealSlot[],
-) {
+async function buildPrompt(userId: string, request: MealSuggestionRequest) {
   const now = Date.now();
   const today = formatDate(now);
   const [settings, status, history, calendar, note, split] = await Promise.all([
@@ -243,6 +240,9 @@ async function buildPrompt(
     getMealNote(userId, today),
     getMealSplit(userId, today),
   ]);
+  const slots = request.slot
+    ? [request.slot]
+    : upcomingSlots(status.meals, now);
   const plans = slots.map((slot) =>
     planMeal(settings.mealSchedule, today, slot),
   );
@@ -278,12 +278,15 @@ async function buildPrompt(
   const storePreferences = settings.mealPreferences?.stores ?? [];
   const { avoid, welcome } = classifyRecentFoods(history, today);
   // ユーザーがお店を選んだらそのお店だけ、選んでいなければ近くのお店の候補を出す
-  const [firstSlot] = slots;
-  if (!firstSlot) throw new Error('食事枠がありません');
-  const mealTarget = targetFor(status.remaining, firstSlot, split);
+  const targets = slots.map((slot) => ({
+    slot,
+    target: targetFor(status.remaining, slot, split, status.meals, now),
+  }));
+  const [mealTarget] = targets;
+  if (!mealTarget) throw new Error('食事枠がありません');
   const catalog = describeCatalogCombinations(
     request.stores && request.stores.length > 0 ? request.stores : stores,
-    mealTarget,
+    mealTarget.target,
   );
   const slotLabels = slots.map((slot) => `「${mealSlotLabel(slot)}」`).join('');
 
@@ -318,12 +321,16 @@ async function buildPrompt(
             : `今日はチートデー（毎日記録を続けたご褒美）。ただしこの数日の超過が不足と相殺しきれていないため、負債にならないのは上限から+${formatPfc(status.cheatDayCap)}まで。その範囲で食べたい物を楽しめる案も出してよい。`,
         ]
       : []),
-    describeAllocation(slots, status.remaining, split),
+    describeAllocation(
+      targets,
+      new Set([...slots, ...upcomingSlots(status.meals, now)]).size,
+      status.meals,
+    ),
     '今日食べた物:',
     ...(status.meals.length > 0
       ? status.meals.map(
           (m) =>
-            `- ${m.time} ${m.name}${m.store ? `（${m.store}）` : ''} ${formatPfc(m)}`,
+            `- ${m.time}［${mealSlotLabel(m.slot)}］${m.name}${m.store ? `（${m.store}）` : ''} ${formatPfc(m)}`,
         )
       : ['- まだ無し']),
     '',
@@ -349,7 +356,7 @@ async function buildPrompt(
       ? [
           '',
           '## 公式の栄養成分が分かる商品の組み合わせ候補',
-          `近くのお店の公式サイトの栄養成分から、この食事の目安（残りをユーザーが決めた朝昼晩の配分で分けた量: ${formatPfc(mealTarget)}）に近い組み合わせを機械的に選んだもの。これらのお店を提案するときは、ここの商品を優先して使い、商品名は一字一句そのまま、栄養値も書かれた値を使う。食事ごとの配分に合わせて組み替えたり品数を変えたりしてよい。メーカー名の付いた商品はコンビニ・スーパーで買える既製品で、店によっては置いていない。`,
+          `近くのお店の公式サイトの栄養成分から、この食事の目安（残りをユーザーが決めた朝昼晩の配分で分けた量: ${formatPfc(mealTarget.target)}）に近い組み合わせを機械的に選んだもの。これらのお店を提案するときは、ここの商品を優先して使い、商品名は一字一句そのまま、栄養値も書かれた値を使う。食事ごとの配分に合わせて組み替えたり品数を変えたりしてよい。メーカー名の付いた商品はコンビニ・スーパーで買える既製品で、店によっては置いていない。`,
           ...catalog.lines,
         ]
       : []),
@@ -388,6 +395,7 @@ async function buildPrompt(
 
   return {
     prompt: lines.join('\n'),
+    slots,
     today,
     stores,
     official: catalog.official,
@@ -448,14 +456,10 @@ export async function generateMealSuggestions(
   userId: string,
   request: MealSuggestionRequest,
 ): Promise<MealSuggestion[]> {
-  const slots = request.slot
-    ? [request.slot]
-    : remainingSlots(slotForTime(Date.now()));
   if (request.location) await saveLastLocation(userId, request.location);
-  const { prompt, today, stores, official } = await buildPrompt(
+  const { prompt, slots, today, stores, official } = await buildPrompt(
     userId,
     request,
-    slots,
   );
   const { text, citations } = await callOpenAIWithWebSearch(
     prompt,

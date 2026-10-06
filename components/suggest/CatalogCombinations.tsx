@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import type { CombinationSuggestions } from '@/lib/catalog/types';
 import { api } from '@/lib/client/api';
-import { MEAL_SLOTS, slotForTime } from '@/lib/meal-schedule';
+import { MEAL_SLOTS } from '@/lib/meal-schedule';
 import { toast } from '@/lib/toast';
 import type { MealSlot } from '@/lib/types';
 import { SuggestionOptionCard } from './SuggestionOptionCard';
@@ -24,11 +24,14 @@ import { SuggestionOptionCard } from './SuggestionOptionCard';
  */
 export function CatalogCombinations({
   sources,
+  initialSlot,
 }: {
   sources: { id: string; name: string }[];
+  /** 最初に選んでおく食事枠（今日これから食べる最初の食事） */
+  initialSlot: MealSlot;
 }) {
   const [sourceId, setSourceId] = useState('');
-  const [slot, setSlot] = useState<MealSlot>(() => slotForTime(Date.now()));
+  const [slot, setSlot] = useState(initialSlot);
   const [result, setResult] = useState<CombinationSuggestions>();
   const [loading, setLoading] = useState(false);
 

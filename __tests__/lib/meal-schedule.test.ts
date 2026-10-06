@@ -4,8 +4,8 @@ import {
   DEFAULT_MEAL_SCHEDULE,
   distanceMeters,
   planMeal,
-  remainingSlots,
   slotForTime,
+  upcomingSlots,
   weekdayOf,
 } from '@/lib/meal-schedule';
 import type { MealSchedule } from '@/lib/types';
@@ -89,15 +89,38 @@ describe('assignMealSlots', () => {
   });
 });
 
-describe('remainingSlots', () => {
-  it('この食事を含む今日これからの食事枠', () => {
-    expect(remainingSlots('breakfast')).toEqual([
+describe('upcomingSlots', () => {
+  const now = (time: string) => toJstTimestamp(MONDAY, time);
+
+  it('何も食べていなければ今の時間帯から', () => {
+    expect(upcomingSlots([], now('07:00'))).toEqual([
       'breakfast',
       'lunch',
       'dinner',
     ]);
-    expect(remainingSlots('lunch')).toEqual(['lunch', 'dinner']);
-    expect(remainingSlots('dinner')).toEqual(['dinner']);
+    expect(upcomingSlots([], now('11:00'))).toEqual(['lunch', 'dinner']);
+  });
+
+  it('食べた最後の食事枠の次から', () => {
+    expect(upcomingSlots([{ slot: 'breakfast' }], now('08:00'))).toEqual([
+      'lunch',
+      'dinner',
+    ]);
+    expect(upcomingSlots([{ slot: 'lunch' }], now('13:00'))).toEqual([
+      'dinner',
+    ]);
+  });
+
+  it('時間帯を過ぎた食事枠は食べていなくても飛ばす', () => {
+    expect(upcomingSlots([{ slot: 'breakfast' }], now('16:00'))).toEqual([
+      'dinner',
+    ]);
+  });
+
+  it('夜まで食べ終えていても夜は残す', () => {
+    expect(upcomingSlots([{ slot: 'dinner' }], now('20:00'))).toEqual([
+      'dinner',
+    ]);
   });
 });
 

@@ -27,8 +27,8 @@ import { useAppState } from '@/lib/client/store';
 import {
   MEAL_SLOTS,
   mealSlotLabel,
-  remainingSlots,
-  slotForTime,
+  upcomingSlots,
+  withMealSlots,
 } from '@/lib/meal-schedule';
 import { computeDailyLimit, subtractPFC } from '@/lib/pfc';
 import { toast } from '@/lib/toast';
@@ -39,10 +39,15 @@ import {
   type MealSplit,
   type MealSuggestion,
   type NearbyStore,
+  type PFC,
 } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
 import { CatalogCombinations } from './CatalogCombinations';
-import { DEFAULT_MEAL_SPLIT, isDefaultSplit } from '@/lib/meal-split';
+import {
+  DEFAULT_MEAL_SPLIT,
+  isDefaultSplit,
+  targetFor,
+} from '@/lib/meal-split';
 import { MealSplitBar } from './MealSplitBar';
 import { StorePicker } from './StorePicker';
 import { SuggestionOptionCard } from './SuggestionOptionCard';
@@ -58,6 +63,7 @@ export function MealSuggestView({
   catalogSources: { id: string; name: string }[];
 }) {
   const meal = todayMeal(useAppState().meal);
+  const { now, remaining, eaten } = useTodayLimit();
   // 提案を考えている最中の食事枠
   const [loadingSlots, setLoadingSlots] = useState<MealSlot[]>([]);
   // 入力中の今日の予定・気分。入力が止まると自動保存する
@@ -78,7 +84,7 @@ export function MealSuggestView({
   }) => {
     const slots = request.slot
       ? [request.slot]
-      : remainingSlots(slotForTime(Date.now()));
+      : upcomingSlots(eaten, Date.now());
     setLoadingSlots((prev) => [...prev, ...slots]);
     try {
       // サーバーは保存済みの予定・気分を使うので、自動保存を待たずに保存しておく
@@ -118,12 +124,16 @@ export function MealSuggestView({
         今日の食事をまとめて提案してもらう
       </Button>
 
-      <CatalogCombinations sources={catalogSources} />
+      <CatalogCombinations
+        sources={catalogSources}
+        initialSlot={upcomingSlots(eaten, now)[0] ?? 'dinner'}
+      />
 
       {MEAL_SLOTS.map(({ slot }) => (
         <SlotSection
           key={slot}
           slot={slot}
+          target={targetFor(remaining, slot, split, eaten, now)}
           suggestions={meal.suggestions.filter((s) => s.slot === slot)}
           loading={loadingSlots.includes(slot)}
           collapsed={collapsed.isCollapsed(collapsedKey(slot))}
@@ -220,6 +230,7 @@ function MealSplitCard({
 /** 1 食分の提案。最新の提案と、その食事だけの提案し直し・前の提案を表示する。見出しを押すと折り畳める。 */
 function SlotSection({
   slot,
+  target,
   suggestions,
   loading,
   collapsed,
@@ -227,6 +238,8 @@ function SlotSection({
   onGenerate,
 }: {
   slot: MealSlot;
+  /** 今日の残りからこの食事に割り当てた量。食べた分は差し引き済み */
+  target: PFC;
   /** この食事枠の今日の提案（新しい順） */
   suggestions: MealSuggestion[];
   loading: boolean;
@@ -271,6 +284,9 @@ function SlotSection({
             <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-aria-expanded:rotate-90" />
             <span className="shrink-0 font-semibold">
               {mealSlotLabel(slot)}
+            </span>
+            <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+              あと{target.calories}kcal
             </span>
             {/* 畳んでいる間も何が提案されたか・考え中かが分かるようにする */}
             {collapsed &&
@@ -410,13 +426,17 @@ function SuggestionSection({ suggestion }: { suggestion: MealSuggestion }) {
   );
 }
 
-/** 今日の上限と残り（上限 - 摂取済み）。記録すると即座に反映される。 */
+/** 今日の上限と残り（上限 - 摂取済み）、食べた物とその食事枠。記録すると即座に反映される。 */
 function useTodayLimit() {
   const { logs, settings } = useAppState();
-  const [today] = useState(() => formatDate(Date.now()));
+  // 開いた時点の日時で考える（描画のたびに変えない）
+  const [now] = useState(() => Date.now());
+  const today = formatDate(now);
   const { limit } = computeDailyLimit(today, settings, logs);
   const remaining = subtractPFC(limit, logs[today]?.total ?? EMPTY_PFC);
-  return { limit, remaining };
+  // 今日食べた物と、それぞれを割り当てた朝・昼・夜
+  const eaten = withMealSlots(logs[today]?.items ?? []);
+  return { now, limit, remaining, eaten };
 }
 
 /** 今日の残り。 */

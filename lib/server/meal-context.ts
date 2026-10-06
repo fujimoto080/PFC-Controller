@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { withMealSlots } from '@/lib/meal-schedule';
 import { burnedCalories, computeDailyLimit, subtractPFC } from '@/lib/pfc';
 import { getLogsBetween, getUserData } from '@/lib/server/user-data';
 import {
@@ -39,7 +40,10 @@ function toDay(log: DailyLog) {
     date: log.date,
     total: log.total,
     burnedCalories: burnedCalories(log),
-    meals: [...log.items].sort((a, b) => a.timestamp - b.timestamp).map(toMeal),
+    meals: withMealSlots(log.items).map((item) => ({
+      ...toMeal(item),
+      slot: item.slot,
+    })),
     activities: log.activities.map(toActivity),
   };
 }

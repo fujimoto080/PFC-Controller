@@ -5,7 +5,8 @@ import type {
   CombinationItem,
   CombinationSuggestions,
 } from '@/lib/catalog/types';
-import { slotFraction } from '@/lib/meal-split';
+import { upcomingSlots } from '@/lib/meal-schedule';
+import { targetFor } from '@/lib/meal-split';
 import {
   mealCombinationFinder,
   type MealCandidates,
@@ -13,8 +14,8 @@ import {
 } from '@/lib/meal-combinations';
 import { getNutritionStatus } from '@/lib/server/meal-context';
 import { getMealSplit } from '@/lib/server/meal-splits';
-import type { MealSlot, MealSplit, NearbyStore, PFC } from '@/lib/types';
-import { formatDate, roundPFC } from '@/lib/utils';
+import type { MealSlot, NearbyStore, PFC } from '@/lib/types';
+import { formatDate } from '@/lib/utils';
 
 const COMBINATION_COUNT = 5;
 
@@ -100,42 +101,31 @@ function combinationsOf(
   return find(target, count);
 }
 
-/** 今日の残りを、朝昼晩の配分に応じて slot に割り当てた量（slot を含めた今日これからの食事で分ける）。 */
-export function targetFor(
-  remaining: PFC,
-  slot: MealSlot,
-  split: MealSplit,
-): PFC {
-  const fraction = slotFraction(split, slot);
-  const share = (value: number) => roundPFC(Math.max(0, value) * fraction, 1);
-  return {
-    protein: share(remaining.protein),
-    fat: share(remaining.fat),
-    carbs: share(remaining.carbs),
-    calories: Math.round(Math.max(0, remaining.calories) * fraction),
-  };
-}
-
 /** 合計の税込価格。価格の分からない商品を含むなら無し。 */
 export const totalPrice = (items: CombinationItem[]) =>
   items.every((item) => item.price !== undefined)
     ? items.reduce((sum, item) => sum + (item.price ?? 0), 0)
     : undefined;
 
-/** 範囲の商品から、この食事の目標に近い組み合わせを機械的に選ぶ。AI は使わない。範囲が無ければ undefined。 */
+/**
+ * 範囲の商品から、この食事の目標に近い組み合わせを機械的に選ぶ。AI は使わない。範囲が無ければ undefined。
+ * slot 省略時は今日これから食べる最初の食事。
+ */
 export async function suggestCombinations(
   userId: string,
   sourceId: string,
-  slot: MealSlot,
+  requestedSlot: MealSlot | undefined,
 ): Promise<CombinationSuggestions | undefined> {
   const source = CATALOG_SOURCES.find((s) => s.id === sourceId);
   if (!source) return undefined;
-  const today = formatDate(Date.now());
+  const now = Date.now();
+  const today = formatDate(now);
   const [status, split] = await Promise.all([
     getNutritionStatus(userId, today),
     getMealSplit(userId, today),
   ]);
-  const target = targetFor(status.remaining, slot, split);
+  const slot = requestedSlot ?? upcomingSlots(status.meals, now)[0] ?? 'dinner';
+  const target = targetFor(status.remaining, slot, split, status.meals, now);
   return {
     store: source.name,
     slot,

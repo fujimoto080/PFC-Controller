@@ -50,6 +50,15 @@ interface SlotPath {
   slots: MealSlot[];
 }
 
+/** 食べた物それぞれに割り当てた食事枠を付け、時刻順に並べる。 */
+export function withMealSlots<T extends { timestamp: number }>(
+  items: readonly T[],
+): (T & { slot: MealSlot })[] {
+  return assignMealSlots(items).flatMap(({ slot, items: meal }) =>
+    meal.map((item) => ({ ...item, slot })),
+  );
+}
+
 /**
  * 食べた物を朝・昼・夜に割り当てる。記録を食事 1 回ずつにまとめ、食事の順番は
  * 朝→昼→夜を逆戻りしない範囲で、時間帯からの外れと同じ枠への詰め込みが最も少ない割り当てを選ぶ。
@@ -97,10 +106,25 @@ export function assignMealSlots<T extends { timestamp: number }>(
   })).filter((group) => group.items.length > 0);
 }
 
-/** この食事を含め、今日これからの食事枠。 */
-export function remainingSlots(slot: MealSlot): MealSlot[] {
+const slotIndex = (slot: MealSlot) =>
+  MEAL_SLOTS.findIndex((meta) => meta.slot === slot);
+
+/**
+ * 今日これから食べる食事枠。今の時間帯の枠と、食べた物を割り当てた最後の枠の次のうち遅いほうから夜まで。
+ * 夜まで食べ終えていても、残りで食べ足す分として夜は残す。
+ */
+export function upcomingSlots(
+  eaten: readonly { slot: MealSlot }[],
+  now: number,
+): MealSlot[] {
+  const afterEaten = Math.max(
+    0,
+    ...eaten.map(({ slot }) =>
+      Math.min(slotIndex(slot) + 1, MEAL_SLOTS.length - 1),
+    ),
+  );
   return MEAL_SLOTS.slice(
-    MEAL_SLOTS.findIndex((meta) => meta.slot === slot),
+    Math.max(slotIndex(slotForTime(now)), afterEaten),
   ).map((meta) => meta.slot);
 }
 
