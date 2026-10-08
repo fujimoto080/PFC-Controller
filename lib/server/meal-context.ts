@@ -57,6 +57,7 @@ export async function getNutritionStatus(userId: string, date: string) {
     calorieRange,
     fatRange,
     weekly,
+    adjustment,
     burnedCalories: burned,
   } = computeDailyLimit(date, settings, logs);
   const log = logs[date];
@@ -71,6 +72,7 @@ export async function getNutritionStatus(userId: string, date: string) {
     fatRange,
     weekly,
     limit,
+    adjustment,
     consumed,
     remaining: subtractPFC(limit, consumed),
     meals: log ? toDay(log).meals : [],

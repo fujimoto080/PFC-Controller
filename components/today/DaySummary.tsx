@@ -8,15 +8,18 @@ import { computeDailyLimit } from '@/lib/pfc';
 import { EMPTY_PFC } from '@/lib/types';
 import { cn, roundPFC } from '@/lib/utils';
 
-/** 日次目標は過去の過不足で変更せず、週平均は評価として表示する。 */
+/** 直近の超過を分散した日次目標と、週平均を表示する。 */
 export function DaySummary({ date }: { date: string }) {
   const { logs, settings } = useAppState();
   const total = logs[date]?.total ?? EMPTY_PFC;
-  const { target, calorieRange, fatRange, weekly } = computeDailyLimit(
-    date,
-    settings,
-    logs,
-  );
+  const {
+    limit: target,
+    target: baseTarget,
+    adjustment,
+    calorieRange,
+    fatRange,
+    weekly,
+  } = computeDailyLimit(date, settings, logs);
   const left = target.calories - total.calories;
   const inRange =
     total.calories >= calorieRange.min && total.calories <= calorieRange.max;
@@ -57,6 +60,11 @@ export function DaySummary({ date }: { date: string }) {
           <span className="block">
             目安 {calorieRange.min}〜{calorieRange.max} kcal
           </span>
+          {adjustment.calories < 0 && (
+            <span className="block">
+              基本 {baseTarget.calories} · 週の調整 {adjustment.calories} kcal
+            </span>
+          )}
         </Link>
       </div>
       <ProgressBar
@@ -92,6 +100,9 @@ export function DaySummary({ date }: { date: string }) {
       <p className="text-muted-foreground text-xs">
         残りカロリー内でたんぱく質を優先。脂質・炭水化物を埋めるために追加で食べる必要はありません。
       </p>
+      <p className="text-muted-foreground text-xs">
+        減額は1日5%・最大100kcalまで。P・Fは維持し、Cで調整します。下限に達した分は無理に取り戻しません。食事は漏れなく記録してください。
+      </p>
       <div className="text-muted-foreground space-y-1 text-xs">
         <p>前日まで7日間の記録平均（{weekly.recordedDays}/7日）</p>
         {weekly.average ? (
@@ -105,7 +116,7 @@ export function DaySummary({ date }: { date: string }) {
           <p>記録がまだありません。</p>
         )}
         <p>
-          未記録日と今日は平均に含みません。記録漏れがある日は平均が低く出ます。過不足は翌日に繰り越しません。
+          未記録日と今日は平均に含みません。記録漏れがある日は平均が低く出ます。超過は7日間に分散して目標を少し調整します。
         </p>
       </div>
     </Card>

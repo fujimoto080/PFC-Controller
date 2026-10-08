@@ -197,7 +197,7 @@ export function registerMealPlanningTools(server: McpServer) {
     'get_nutrition_status',
     {
       title: '摂取状況の取得',
-      description: `指定日（省略時は今日）の栄養目標と摂取状況を返す。limit と baseTarget はプロフィールから計算した共通目標。calorieRange はカロリーの許容範囲、fatRange は脂質の目安。remaining = limit - consumed。Pは確保する目標、F/Cは目安で、残りカロリー内でPを優先する。PFCを全部埋めるための追加食は求めない。過不足の繰越はなく、weekly は前日まで7日間の記録日の平均（未記録日は除外）。運動は活動レベルに含め、burnedCalories は記録値のみで食事枠に加算しない。献立を考えるときは最初にこれを呼び、mealPreferences.instructions と stores に従う。`,
+      description: `指定日（省略時は今日）の栄養目標と摂取状況を返す。baseTarget はプロフィールから計算した基本目標。limit は直近のカロリー超過を7日間に分散した今日の目標。adjustment は減額・残る超過・下限を返す。減額は基本の5%・100kcalまで、総赤字25%と最低カロリーの下限を守る。P/Fは固定、Cで調整する。calorieRange はカロリーの許容範囲、fatRange は脂質の目安。remaining = limit - consumed。Pは確保する目標、F/Cは目安で、残りカロリー内でPを優先する。PFCを全部埋めるための追加食は求めない。栄養素別の繰越や不足の先取りはしない。超過は7日で調整を終了し無理に返済しない。weekly は前日まで7日間の記録日の平均（未記録日は除外）。運動は活動レベルに含め、burnedCalories は記録値のみで食事枠に加算しない。献立を考えるときは最初にこれを呼び、mealPreferences.instructions と stores に従う。`,
       inputSchema: z.object({ date: dateSchema.optional() }),
       annotations: { readOnlyHint: true },
     },

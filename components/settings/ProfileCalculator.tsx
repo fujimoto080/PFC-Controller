@@ -126,11 +126,13 @@ export function ProfileCalculator({
         <div className="flex items-center gap-2">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">
-            ダイエット期間の目安
+            減量期間の概算
           </p>
         </div>
         <div className="space-y-0.5 pl-6 text-[10px] text-blue-700 dark:text-blue-400">
-          <p>減量は1ヶ月あたり現在の体重の5%以内が目安です。</p>
+          <p>
+            減量は1ヶ月あたり現在の体重の5%以内が目安です。期間は概算で、体重や代謝の変化によってずれます。
+          </p>
           <p>
             ・安全な月間減量ペース: {profile.weight}kg × 5% ={' '}
             <strong>{safeMonthlyLoss}kg</strong>
@@ -148,7 +150,7 @@ export function ProfileCalculator({
                 <strong>{durationInfo.byCalorieLimit}ヶ月</strong>
               </p>
               <p className="pt-1 font-bold text-blue-900 dark:text-blue-200">
-                → 推奨期間: {durationInfo.recommended}ヶ月以上
+                → 期間の目安: {durationInfo.recommended}ヶ月以上
                 {durationInfo.byCalorieLimit > durationInfo.byWeightLoss && (
                   <span> (カロリー制限を考慮)</span>
                 )}
@@ -159,10 +161,10 @@ export function ProfileCalculator({
       </Card>
 
       <p className="text-muted-foreground text-xs">
-        Pは体重×1.6g（カロリーの40%まで）、Fは25%、Cは残り。カロリーは±5%を目安にし、過不足は翌日に繰り越しません。運動は活動レベルに含めます。
+        Pは体重×1.6g（カロリーの40%まで）、Fは25%、Cは残り。カロリーは±5%を目安にし、超過は7日間で分散し、1日の減額は5%・最大100kcalまで。P・Fは維持してCで調整します。運動は活動レベルに含めます。
       </p>
       <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">目標期間（自動計算）</span>
+        <span className="text-muted-foreground">目標期間（概算）</span>
         <span className="font-semibold">{duration}ヶ月</span>
       </div>
 

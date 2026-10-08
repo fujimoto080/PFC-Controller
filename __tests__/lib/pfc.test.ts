@@ -17,6 +17,7 @@ import {
   calculateGoals,
   targetDuration,
 } from '@/lib/nutrition-goals';
+import { shiftDate } from '@/lib/utils';
 
 const target: PFC = { protein: 100, fat: 50, carbs: 200, calories: 2000 };
 const settings = { profile: DEFAULT_PROFILE };
@@ -115,16 +116,112 @@ describe('burnedCalories', () => {
 });
 
 describe('computeDailyLimit', () => {
-  it('過去の過不足や運動記録で今日の目標を変更しない', () => {
+  it('前後の不足と超過が相殺できていれば、週平均が基本目標内のまま減額しない', () => {
+    const base = computeDailyLimit('2026-09-01', settings, {}).target;
+    for (const first of [-200, 200]) {
+      const logs = logsOf({
+        '2026-09-01': { ...base, calories: base.calories + first },
+        '2026-09-02': { ...base, calories: base.calories - first },
+      });
+      expect(computeDailyLimit('2026-09-03', settings, logs).limit).toEqual(
+        base,
+      );
+    }
+  });
+  it('350kcalの超過を7日で分散し、実際の摂取差だけで相殺する', () => {
+    const base = computeDailyLimit('2026-09-01', settings, {}).target;
+    const logs = logsOf({
+      '2026-09-01': { ...base, calories: base.calories + 350 },
+    });
+    for (let i = 1; i <= 7; i += 1) {
+      const date = shiftDate('2026-09-01', i);
+      const day = computeDailyLimit(date, settings, logs);
+      expect(day.adjustment.calories).toBe(-50);
+      expect(day.limit.protein).toBe(base.protein);
+      expect(day.limit.fat).toBe(base.fat);
+      expect(
+        Math.abs(
+          day.limit.protein * 4 +
+            day.limit.fat * 9 +
+            day.limit.carbs * 4 -
+            day.limit.calories,
+        ),
+      ).toBeLessThan(1);
+      logs[date] = recordedLog(date, day.limit);
+    }
+    expect(
+      computeDailyLimit('2026-09-09', settings, logs).adjustment.calories,
+    ).toBe(0);
+  });
+  it('調整しただけでは返済扱いにせず、7日を過ぎた超過は持ち越さない', () => {
+    const base = computeDailyLimit('2026-09-01', settings, {}).target;
+    const logs = logsOf({
+      '2026-09-01': { ...base, calories: base.calories + 350 },
+    });
+    logs['2026-09-02'] = recordedLog('2026-09-02', base);
+    expect(
+      computeDailyLimit('2026-09-03', settings, logs).adjustment
+        .outstandingCalories,
+    ).toBe(350);
+    expect(
+      computeDailyLimit('2026-09-09', settings, logs).adjustment
+        .outstandingCalories,
+    ).toBe(0);
+  });
+  it('不足・未記録・少なすぎる記録から食事枠を増やさない', () => {
+    const base = computeDailyLimit('2026-09-01', settings, {}).target;
+    const logs = logsOf({ '2026-09-01': { ...base, calories: 500 } });
+    expect(computeDailyLimit('2026-09-02', settings, logs).limit).toEqual(base);
+    logs['2026-09-02'] = recordedLog('2026-09-02', {
+      ...base,
+      calories: base.calories + 350,
+    });
+    logs['2026-09-03'] = recordedLog('2026-09-03', { ...base, calories: 500 });
+    expect(
+      computeDailyLimit('2026-09-04', settings, logs).adjustment
+        .outstandingCalories,
+    ).toBe(350);
+  });
+  it('カロリーが収まっている場合は炭水化物だけの超過を返済させない', () => {
+    const base = computeDailyLimit('2026-09-01', settings, {}).target;
+    const logs = logsOf({ '2026-09-01': { ...base, carbs: base.carbs + 80 } });
+    expect(computeDailyLimit('2026-09-02', settings, logs).limit).toEqual(base);
+  });
+  it('基本目標が最低カロリーなら、超過があってもさらに減らさない', () => {
+    const lowSettings = {
+      profile: {
+        ...DEFAULT_PROFILE,
+        gender: 'female' as const,
+        height: 150,
+        age: 50,
+        weight: 45,
+        targetWeight: 40,
+        activityLevel: 1.2,
+      },
+    };
+    const base = computeDailyLimit('2026-09-01', lowSettings, {}).target;
+    const logs = logsOf({
+      '2026-09-01': { ...base, calories: base.calories + 1000 },
+    });
+    expect(base.calories).toBe(1200);
+    expect(
+      computeDailyLimit('2026-09-02', lowSettings, logs).limit.calories,
+    ).toBe(1200);
+  });
+  it('運動は二重計上せず、超過は減額の上限内で調整する', () => {
     const logs = logsOf({
       '2026-09-24': { protein: 0, fat: 0, carbs: 0, calories: 4000 },
     });
     logs['2026-09-25'] = activityLog('2026-09-25', target, [600]);
     const result = computeDailyLimit('2026-09-25', settings, logs);
-    expect(result.limit).toEqual(
-      computeDailyLimit('2026-09-25', settings, {}).limit,
+    expect(result.adjustment.calories).toBe(
+      -Math.floor(result.target.calories * 0.05),
     );
-    expect(result.limit).toEqual(result.target);
+    expect(result.limit.protein).toBe(result.target.protein);
+    expect(result.limit.fat).toBe(result.target.fat);
+    expect(result.limit.calories).toBeGreaterThanOrEqual(
+      result.adjustment.minimumCalories,
+    );
     expect(result.burnedCalories).toBe(600);
   });
   it('前日まで7日間の記録日だけで平均を計算する', () => {

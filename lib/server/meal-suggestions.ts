@@ -308,7 +308,8 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     `1日の目標: ${formatPfc(status.limit)}。カロリー許容範囲 ${status.calorieRange.min}〜${status.calorieRange.max}kcal、脂質の目安 ${status.fatRange.min}〜${status.fatRange.max}g。`,
     `摂取済み: ${formatPfc(status.consumed)}`,
     `残り: ${formatPfc(status.remaining)}`,
-    '過去の超過・不足を翌日に返済しない。運動は活動レベルに含まれ、消費カロリーを食事枠に全量加算しない。',
+    `基本目標 ${formatPfc(status.baseTarget)} から、直近の超過を分散して今日 ${status.adjustment.calories}kcal 調整済み。過去の炭水化物や脂質の超過を個別に差し引かず、追加の返済・断食は提案しない。P・Fを維持しCで調整する。運動の消費を全量加算しない。`,
+    '満腹感と続けやすさを考慮し、野菜・食物繊維・たんぱく源を組み合わせる。食品や遅い食事を一律に禁止せず、生活予定に合う案にする。代謝をリセットできるとは説明しない。',
     '残りカロリー内で不足するたんぱく質を優先し、脂質・炭水化物は目安。PFCを全部埋めるための追加食を求めない。カロリー目標に達していれば、追加の食事は不要と説明する。',
     describeAllocation(
       targets,
