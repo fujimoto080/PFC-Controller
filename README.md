@@ -96,6 +96,12 @@ Android の Health Connect（Samsung Health など）の 1 日分のデータを
   - `caloriesBurned`: アクティブ消費のみ（基礎代謝分は目標カロリーに含まれるため）。同じ日は 1 件の運動記録として上書きされ、0 kcal なら記録を消す
   - `weightKg` / `bodyFatPercent` / `steps`: 日ごとに保存される。体重がその日までの最新なら、プロフィールの体重も更新する
 
+### Android 側（`twa/`）
+
+TWA アプリの「PFC 同期設定」画面（ランチャーに別アイコンで出る）で、ログインメールと `HEALTH_SYNC_TOKEN` を入れて「保存して許可・同期」を押す。
+ヘルスコネクトの権限（体重・体脂肪・歩数・アクティブ消費・バックグラウンド読み取り）を許可すると、6 時間ごとに今日と昨日の分を送る。
+ビルドは Android Studio か `cd twa && ./gradlew assembleDebug`（Android SDK と JDK 17 が必要）。
+
 ## ChatGPT 連携（MCP サーバー）
 
 `/api/mcp` がリモート MCP サーバーになっており、ChatGPT から今日の摂取状況・食事履歴・登録食品を読み取って献立を提案させたり、食べた物や運動を記録させたりできます。
