@@ -67,17 +67,11 @@ export function DaySummary({ date }: { date: string }) {
       />
       <div className="grid grid-cols-3 gap-4">
         {MACROS.map(({ key, label, barClass }) => {
-          const protein = key === 'protein';
-          const remaining = Math.max(0, target[key] - total[key]);
           return (
             <div key={key} className="space-y-1.5">
               <p className="text-muted-foreground text-xs">{label}</p>
-              <p className="text-lg leading-none font-semibold tabular-nums">
-                {protein
-                  ? remaining > 0
-                    ? `目標まで ${roundPFC(remaining, 1)}g`
-                    : '目標達成'
-                  : `${roundPFC(total[key], 1)}g`}
+              <p className="text-lg leading-none font-semibold whitespace-nowrap tabular-nums">
+                {roundPFC(total[key], 1)}g
               </p>
               <ProgressBar
                 current={total[key]}
@@ -85,8 +79,8 @@ export function DaySummary({ date }: { date: string }) {
                 barClass={barClass}
               />
               <p className="text-muted-foreground text-[10px] tabular-nums">
-                {protein
-                  ? `${roundPFC(total[key], 1)} / ${target[key]}g`
+                {key === 'protein'
+                  ? `目標 ${target.protein}g`
                   : key === 'fat'
                     ? `目安 ${fatRange.min}〜${fatRange.max}g`
                     : `目安 ${target.carbs}g`}
