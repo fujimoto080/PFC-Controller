@@ -12,6 +12,30 @@ const meal = (slot: MealSlot, calories: number) => ({
 });
 
 describe('targetFor', () => {
+  it('カロリーに達したらPFCが不足していても追加食を割り当てない', () => {
+    expect(
+      targetFor(
+        { protein: 40, fat: 20, carbs: 60, calories: -42 },
+        'dinner',
+        DEFAULT_MEAL_SPLIT,
+        [],
+        at('19:00'),
+      ),
+    ).toEqual({ protein: 0, fat: 0, carbs: 0, calories: 0 });
+  });
+  it('PFCのエネルギーが残りカロリーを超えない', () => {
+    const target = targetFor(
+      { protein: 40, fat: 20, carbs: 60, calories: 200 },
+      'dinner',
+      DEFAULT_MEAL_SPLIT,
+      [],
+      at('19:00'),
+    );
+    expect(
+      target.protein * 4 + target.fat * 9 + target.carbs * 4,
+    ).toBeLessThanOrEqual(target.calories);
+    expect(target.protein).toBe(40);
+  });
   const remaining = { protein: 90, fat: 30, carbs: 300, calories: 1800 };
 
   it('朝から考えるときは残りを配分の比率で割り当てる', () => {
@@ -19,7 +43,7 @@ describe('targetFor', () => {
     expect(targetFor(remaining, 'breakfast', split, [], at('07:00'))).toEqual({
       protein: 22.5,
       fat: 7.5,
-      carbs: 75,
+      carbs: 73.1,
       calories: 450,
     });
   });

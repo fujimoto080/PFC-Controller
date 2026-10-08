@@ -27,16 +27,12 @@ describe('mealCombinationFinder', () => {
   it('主食 1 品と副菜 0〜2 品で目標に最も近い組み合わせを先頭にする', () => {
     const target: PFC = food('目標', 31, 7, 40);
     const [best] = mealCombinationFinder(candidates)(target, 1);
-    expect(best && names(best)).toEqual([
-      'おにぎり',
-      'ゆでたまご',
-      'サラダチキン',
-    ]);
+    expect(best && names(best)).toEqual(['おにぎり', 'サラダチキン']);
     expect(best?.total).toEqual({
-      protein: 35,
-      fat: 8,
+      protein: 29,
+      fat: 3,
       carbs: 40,
-      calories: 372,
+      calories: 303,
     });
   });
 
@@ -50,7 +46,7 @@ describe('mealCombinationFinder', () => {
     expect(combinations).toHaveLength(2);
   });
 
-  it('目標カロリーの 1.1 倍を超える組み合わせは選ばない', () => {
+  it('目標カロリーの 1.05 倍を超える組み合わせは選ばない', () => {
     const combinations = mealCombinationFinder(candidates)(
       food('目標', 4, 2, 40),
       5,

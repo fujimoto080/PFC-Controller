@@ -1,7 +1,6 @@
 import { MEAL_SLOTS, upcomingSlots } from './meal-schedule';
 import { sumPFC } from './pfc';
 import type { MealSlot, MealSplit, PFC } from './types';
-import { roundPFC } from './utils';
 
 /** 朝は軽め、昼と夜は同じ量（朝 20%・昼 40%・夜 40%）。 */
 export const DEFAULT_MEAL_SPLIT: MealSplit = { breakfastEnd: 20, lunchEnd: 60 };
@@ -37,12 +36,22 @@ export function targetFor(
       0,
       (Math.max(0, remaining[key]) + done[key]) * fraction - done[key],
     );
-  return {
-    protein: roundPFC(share('protein'), 1),
-    fat: roundPFC(share('fat'), 1),
-    carbs: roundPFC(share('carbs'), 1),
-    calories: Math.round(share('calories')),
-  };
+  const calories = Math.round(share('calories'));
+  // 残りカロリー内でPを優先し、F/Cの不足を埋めるための追加食を求めない。
+  const protein =
+    Math.floor(Math.min(share('protein'), calories / 4) * 10) / 10;
+  const fat =
+    Math.floor(
+      Math.min(share('fat'), Math.max(0, calories - protein * 4) / 9) * 10,
+    ) / 10;
+  const carbs =
+    Math.floor(
+      Math.min(
+        share('carbs'),
+        Math.max(0, calories - protein * 4 - fat * 9) / 4,
+      ) * 10,
+    ) / 10;
+  return { protein, fat, carbs, calories };
 }
 
 /** 食事枠の並びと配分（%）。画面に出す用。 */

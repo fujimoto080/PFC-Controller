@@ -33,7 +33,7 @@ export function GoalSettingsPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>1日の上限</CardTitle>
+        <CardTitle>1日の栄養目標</CardTitle>
         <AutoSaveIndicator status={status} />
       </CardHeader>
       <CardContent className="space-y-4">

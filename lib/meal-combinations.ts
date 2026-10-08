@@ -2,7 +2,7 @@ import { sumPFC } from '@/lib/pfc';
 import type { PFC } from '@/lib/types';
 
 /** 目標カロリーをこの割合まで超える組み合わせは候補にする。 */
-const CALORIE_TOLERANCE = 1.1;
+const CALORIE_TOLERANCE = 1.05;
 
 export interface MealCombination<T extends PFC> {
   items: T[];
@@ -70,7 +70,7 @@ function lowerBound<T extends PFC>(packs: SidePack<T>[], value: number) {
 
 /**
  * 目標に最も近い組み合わせ。ずれは P/F/C それぞれの差をカロリーに直した二乗和で、
- * 栄養素ごとの量の違いに引きずられず、カロリーへの影響の大きさで比べられる。
+ * たんぱく質の差を2倍の重みで優先し、カロリーへの影響で比べる。
  * 3 つの差の和を s とするとずれは s²/3 以上なので、主食ごとに副菜の組を「目標の残りとの weight の差」が
  * 小さい順に調べ、その下限がそれまでの最良を超えたら打ち切る。used の商品は使わない。
  */
@@ -112,7 +112,7 @@ function findBest<T extends PFC>(
       const dp = pack.p - p;
       const df = pack.f - f;
       const dc = pack.c - c;
-      const score = dp * dp + df * df + dc * dc;
+      const score = 2 * dp * dp + df * df + dc * dc;
       if (score < bestScore) {
         bestScore = score;
         best = [main, ...pack.items];

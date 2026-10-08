@@ -26,7 +26,7 @@ describe('calculateGoals', () => {
     const goals = calculateGoals(profile, 3);
     expect(goals.calorieAdjustment).toBe(-400);
     expect(goals.calories).toBe(1825);
-    expect(goals).toMatchObject({ protein: 114, fat: 51, carbs: 228 });
+    expect(goals).toMatchObject({ protein: 112, fat: 50.7, carbs: 230.2 });
   });
 
   it('増量時は加算する', () => {
@@ -35,20 +35,36 @@ describe('calculateGoals', () => {
     ).toBe(400);
   });
 
-  it('最低カロリーを下回らない', () => {
+  it('短期間の目標でも赤字を20%以内に抑える', () => {
     const goals = calculateGoals(profile, 0.5);
-    expect(goals.caloriesBeforeLimit).toBeLessThan(1500);
-    expect(goals.calories).toBe(1500);
+    expect(goals.calories).toBe(1780);
+    expect(goals.calories).toBeGreaterThanOrEqual(goals.tdee * 0.8);
+  });
+  it('各プロフィールでPFCとカロリーの差が1kcal未満になる', () => {
+    for (const gender of ['male', 'female'] as const) {
+      for (const weight of [45, 70, 120]) {
+        const goals = calculateGoals({ ...profile, gender, weight }, 3);
+        expect(
+          Math.abs(
+            goals.protein * 4 +
+              goals.fat * 9 +
+              goals.carbs * 4 -
+              goals.calories,
+          ),
+        ).toBeLessThan(1);
+        expect(goals.calories).toBeGreaterThanOrEqual(goals.minimumCalories);
+      }
+    }
   });
 });
 
 describe('calculateRecommendedDuration', () => {
-  it('5%ルールと最低カロリーのうち長い方を推奨する', () => {
-    // 5 / 3.5 = 1.43, 36000 / (30 * 725) = 1.66
+  it('5%ルールと赤字20%制限のうち長い方を推奨する', () => {
+    // 5 / 3.5 = 1.43、36000 / (30 * 445) ≒ 2.7
     expect(calculateRecommendedDuration(profile)).toEqual({
       byWeightLoss: 1.4,
-      byCalorieLimit: 1.7,
-      recommended: 1.7,
+      byCalorieLimit: 2.7,
+      recommended: 2.7,
     });
   });
 

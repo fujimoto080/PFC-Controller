@@ -13,7 +13,7 @@ import type { AppData, UserDataResponse } from '@/lib/types';
 export type AppState = AppData;
 
 // localStorage のキャッシュ形式。AppState の形を変えたらインクリメントする。
-const CACHE_KEY_PREFIX = 'pfc:cache:v6:';
+const CACHE_KEY_PREFIX = 'pfc:cache:v7:';
 
 let state: AppState | null = null;
 let currentUserId: string | null = null;

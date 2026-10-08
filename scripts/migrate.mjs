@@ -53,8 +53,7 @@ const APP_SCHEMA_SQL = `
     profile_json JSONB,
     favorite_food_ids_json JSONB,
     meal_schedule_json JSONB,
-    meal_preferences_json JSONB,
-    carryover_excluded_dates_json JSONB
+    meal_preferences_json JSONB
   );
 
   CREATE TABLE IF NOT EXISTS pfc_foods (

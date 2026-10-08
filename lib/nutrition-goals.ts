@@ -66,7 +66,7 @@ export interface GoalBreakdown extends PFC {
   minimumCalories: number;
 }
 
-/** プロフィールと目標期間(月)から1日の目標 PFC とその計算内訳を求める。PFC 比は 25:25:50。 */
+/** プロフィールと目標期間(月)から1日の目標 PFC とその計算内訳を求める。減量の赤字は維持カロリーの20%まで。Pは体重×1.6g、Fは25%、Cは残り。 */
 export function calculateGoals(
   profile: UserProfile,
   durationMonths: number,
@@ -74,19 +74,26 @@ export function calculateGoals(
   const bmr = calculateBMR(profile);
   const tdee = calculateTDEE(profile);
   const weightDifference = profile.targetWeight - profile.weight;
-  const calorieAdjustment =
+  const requestedAdjustment =
     durationMonths > 0
       ? (weightDifference * KCAL_PER_KG) / (durationMonths * DAYS_PER_MONTH)
       : 0;
+  const calorieAdjustment = Math.max(requestedAdjustment, -tdee * 0.2);
   const caloriesBeforeLimit = tdee + calorieAdjustment;
   const minimum = minimumCalories(profile.gender);
-  const calories = Math.max(caloriesBeforeLimit, minimum);
+  const calories = roundPFC(Math.max(caloriesBeforeLimit, minimum), 0);
+  const protein = roundPFC(
+    Math.min(profile.weight * 1.6, (calories * 0.4) / 4),
+    1,
+  );
+  const fat = roundPFC((calories * 0.25) / 9, 1);
+  const carbs = roundPFC((calories - protein * 4 - fat * 9) / 4, 1);
 
   return {
-    protein: roundPFC((calories * 0.25) / 4, 0),
-    fat: roundPFC((calories * 0.25) / 9, 0),
-    carbs: roundPFC((calories * 0.5) / 4, 0),
-    calories: roundPFC(calories, 0),
+    protein,
+    fat,
+    carbs,
+    calories,
     bmr,
     tdee,
     calorieAdjustment: roundPFC(calorieAdjustment, 0),
@@ -98,7 +105,7 @@ export function calculateGoals(
 export interface RecommendedDuration {
   /** 月5%ルールでの最短期間(月) */
   byWeightLoss: number;
-  /** 最低カロリーを守った場合の最短期間(月) */
+  /** 赤字20%と最低カロリーを守った場合の最短期間(月) */
   byCalorieLimit: number;
   /** 上記のうち長い方（より安全な期間）。減量でなければ 0 */
   recommended: number;
@@ -114,8 +121,11 @@ export function calculateRecommendedDuration(
   }
 
   const byWeightLoss = weightToLose / (profile.weight * SAFE_MONTHLY_LOSS_RATE);
-  const maxDailyDeficit =
-    calculateTDEE(profile) - minimumCalories(profile.gender);
+  const tdee = calculateTDEE(profile);
+  const maxDailyDeficit = Math.min(
+    tdee * 0.2,
+    tdee - minimumCalories(profile.gender),
+  );
   // 維持カロリーが既に最低カロリー以下なら食事制限だけでの安全な減量は難しいため長めの期間とする
   const byCalorieLimit =
     maxDailyDeficit > 0

@@ -49,14 +49,15 @@ function toDay(log: DailyLog) {
 }
 
 export async function getNutritionStatus(userId: string, date: string) {
-  // 上限は前日までの繰越とチートデーの連続記録に依存するため全履歴を読む
+  // 日次目標と前日までの7日間の記録平均を共通の計算から得る
   const { logs, settings } = await getUserData(userId);
   const {
     limit,
-    carryover,
+    target,
+    calorieRange,
+    fatRange,
+    weekly,
     burnedCalories: burned,
-    isCheatDay,
-    cheatDayCap,
   } = computeDailyLimit(date, settings, logs);
   const log = logs[date];
   const consumed = log?.total ?? { ...EMPTY_PFC };
@@ -64,17 +65,14 @@ export async function getNutritionStatus(userId: string, date: string) {
   return {
     date,
     currentTime: formatDate(now) === date ? formatTime(now) : undefined,
-    baseTarget: settings.targetPFC,
+    baseTarget: target,
     burnedCalories: burned,
-    /** 前日までの繰越。正なら超過（上限が減る）、負なら不足（上限が増える） */
-    carryover,
+    calorieRange,
+    fatRange,
+    weekly,
     limit,
     consumed,
     remaining: subtractPFC(limit, consumed),
-    /** チートデーなら true。上限を超えても負債にならない */
-    isCheatDay,
-    /** チートデーで負債を免除する超過の上限。null なら無制限 */
-    cheatDayCap,
     meals: log ? toDay(log).meals : [],
     activities: log ? log.activities.map(toActivity) : [],
     profile: settings.profile,

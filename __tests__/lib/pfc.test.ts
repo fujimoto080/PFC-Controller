@@ -1,6 +1,4 @@
 import {
-  CARRYOVER_DAYS,
-  CHEAT_DAY_STREAK,
   burnedCalories,
   computeDailyLimit,
   hasNutrition,
@@ -14,10 +12,14 @@ import {
   type Logs,
   type PFC,
 } from '@/lib/types';
-import { shiftDate } from '@/lib/utils';
+import {
+  DEFAULT_PROFILE,
+  calculateGoals,
+  targetDuration,
+} from '@/lib/nutrition-goals';
 
 const target: PFC = { protein: 100, fat: 50, carbs: 200, calories: 2000 };
-const settings = { targetPFC: target, carryoverExcludedDates: [] };
+const settings = { profile: DEFAULT_PROFILE };
 
 /** 摂取合計が total の食事を1件記録したその日のログ。 */
 function recordedLog(date: string, total: PFC): DailyLog {
@@ -32,11 +34,6 @@ function logsOf(totals: Record<string, PFC>): Logs {
       recordedLog(date, total),
     ]),
   );
-}
-
-/** date の前日までの繰越。 */
-function carryoverOn(date: string, logs: Logs): PFC {
-  return computeDailyLimit(date, settings, logs).carryover;
 }
 
 describe('sumPFC', () => {
@@ -64,106 +61,6 @@ describe('subtractPFC', () => {
         calories: 500,
       }),
     ).toEqual({ protein: 69.67, fat: -10, carbs: 200, calories: 1500 });
-  });
-});
-
-describe('繰越', () => {
-  it('記録が無ければ 0', () => {
-    expect(carryoverOn('2026-09-25', {})).toEqual({
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-      calories: 0,
-    });
-  });
-
-  it('超過と不足を相殺し、記録の無い日は影響しない', () => {
-    const logs = logsOf({
-      '2026-09-20': { protein: 150, fat: 50, carbs: 200, calories: 3000 },
-      // 09-21 は記録なし
-      '2026-09-22': { protein: 100, fat: 80, carbs: 150, calories: 1700 },
-    });
-    expect(carryoverOn('2026-09-23', logs)).toEqual({
-      protein: 50,
-      fat: 30,
-      carbs: -50,
-      calories: 700,
-    });
-  });
-
-  it('不足の繰越は上限を増やす', () => {
-    const logs = logsOf({
-      '2026-09-24': { protein: 80, fat: 50, carbs: 200, calories: 1500 },
-    });
-    expect(computeDailyLimit('2026-09-25', settings, logs).limit).toEqual({
-      protein: 120,
-      fat: 50,
-      carbs: 200,
-      calories: 2500,
-    });
-  });
-
-  it('当日以降の記録は含めない', () => {
-    const logs = logsOf({
-      '2026-09-25': { protein: 500, fat: 500, carbs: 500, calories: 9000 },
-    });
-    expect(carryoverOn('2026-09-25', logs).calories).toBe(0);
-  });
-
-  it(`各日の繰越は${CARRYOVER_DAYS}日で消える（月をまたいでも日付を正しく進める）`, () => {
-    const logs = logsOf({
-      '2026-08-31': { protein: 100, fat: 50, carbs: 200, calories: 2600 },
-    });
-    expect(carryoverOn('2026-09-01', logs).calories).toBe(600);
-    expect(
-      carryoverOn(shiftDate('2026-08-31', CARRYOVER_DAYS), logs).calories,
-    ).toBe(600);
-    expect(
-      carryoverOn(shiftDate('2026-08-31', CARRYOVER_DAYS + 1), logs).calories,
-    ).toBe(0);
-  });
-
-  it('相殺で残った超過は元の日の期限で消え、相殺に使った不足は戻らない', () => {
-    const logs = logsOf({
-      '2026-09-01': { ...target, calories: 2600 },
-      '2026-09-05': { ...target, calories: 1800 },
-    });
-    expect(carryoverOn('2026-09-06', logs).calories).toBe(400);
-    expect(carryoverOn('2026-09-09', logs).calories).toBe(0);
-  });
-
-  it('繰り越さない日に選んだ日は、超過も不足も繰り越さない', () => {
-    const logs = logsOf({
-      '2026-09-20': { ...target, calories: 2500 },
-      '2026-09-21': { ...target, calories: 800 },
-    });
-    const excluding = { ...settings, carryoverExcludedDates: ['2026-09-21'] };
-    expect(
-      computeDailyLimit('2026-09-22', excluding, logs).carryover.calories,
-    ).toBe(500);
-  });
-
-  it('繰り越さない日も記録の連続日数には数え、超過の合計には含めない', () => {
-    const logs = recordedDays('2026-09-01', 2, { ...target, calories: 2500 });
-    const excluding = { ...settings, carryoverExcludedDates: ['2026-09-02'] };
-    expect(computeDailyLimit('2026-09-03', excluding, logs)).toMatchObject({
-      streak: 2,
-      overCalories: 500,
-    });
-  });
-
-  it('不足が超過を上回れば、残りを不足として繰り越す', () => {
-    const logs = logsOf({
-      '2026-09-01': { ...target, calories: 2300 },
-      '2026-09-02': { ...target, calories: 1500 },
-    });
-    expect(carryoverOn('2026-09-03', logs).calories).toBe(-200);
-    expect(
-      carryoverOn(shiftDate('2026-09-02', CARRYOVER_DAYS), logs).calories,
-    ).toBe(-200);
-    expect(
-      carryoverOn(shiftDate('2026-09-02', CARRYOVER_DAYS + 1), logs).calories,
-    ).toBe(0);
   });
 });
 
@@ -209,173 +106,58 @@ function activityLog(date: string, total: PFC, burned: number[]): DailyLog {
 }
 
 describe('burnedCalories', () => {
-  it('運動の消費カロリーを合計する', () => {
+  it('運動の記録値を合計する', () => {
     expect(burnedCalories(activityLog('2026-09-25', target, [300, 150]))).toBe(
       450,
     );
-  });
-
-  it('ログが無ければ 0', () => {
     expect(burnedCalories(undefined)).toBe(0);
   });
 });
 
-describe('運動を考慮した上限', () => {
-  it('運動した日は消費分だけ目標カロリーが増え、超過が減る', () => {
-    const logs: Logs = {
-      '2026-09-24': activityLog(
-        '2026-09-24',
-        { protein: 100, fat: 50, carbs: 200, calories: 2300 },
-        [300],
-      ),
-    };
-    expect(carryoverOn('2026-09-25', logs).calories).toBe(0);
-  });
-
-  it('運動の消費分は元の比率でタンパク質と炭水化物に振り分け、脂質は増えない', () => {
-    const logs: Logs = {
-      '2026-09-25': activityLog('2026-09-25', { ...target }, [400]),
-    };
-    expect(computeDailyLimit('2026-09-25', settings, logs).target).toEqual({
-      protein: 133.33,
-      fat: 50,
-      carbs: 266.67,
-      calories: 2400,
-    });
-  });
-
-  it('当日の上限 = 目標 + 当日の運動 − 前日までの繰越', () => {
-    const logs: Logs = {
-      '2026-09-24': activityLog(
-        '2026-09-24',
-        { protein: 120, fat: 50, carbs: 200, calories: 2500 },
-        [],
-      ),
-      '2026-09-25': activityLog('2026-09-25', { ...target }, [400]),
-    };
-    expect(computeDailyLimit('2026-09-25', settings, logs)).toEqual({
-      limit: { protein: 113.33, fat: 50, carbs: 266.67, calories: 1900 },
-      target: { protein: 133.33, fat: 50, carbs: 266.67, calories: 2400 },
-      carryover: { protein: 20, fat: 0, carbs: 0, calories: 500 },
-      burnedCalories: 400,
-      isCheatDay: false,
-      cheatDayCap: null,
-      streak: 1,
-      overCalories: 500,
-    });
-  });
-
-  it('上限は 0 未満にならない', () => {
+describe('computeDailyLimit', () => {
+  it('過去の過不足や運動記録で今日の目標を変更しない', () => {
     const logs = logsOf({
-      '2026-09-24': { protein: 0, fat: 0, carbs: 0, calories: 9000 },
+      '2026-09-24': { protein: 0, fat: 0, carbs: 0, calories: 4000 },
     });
-    expect(computeDailyLimit('2026-09-25', settings, logs).limit.calories).toBe(
-      0,
+    logs['2026-09-25'] = activityLog('2026-09-25', target, [600]);
+    const result = computeDailyLimit('2026-09-25', settings, logs);
+    expect(result.limit).toEqual(
+      computeDailyLimit('2026-09-25', settings, {}).limit,
     );
+    expect(result.limit).toEqual(result.target);
+    expect(result.burnedCalories).toBe(600);
   });
-});
-
-/** start から days 日分、total の食事を1件ずつ記録したログ。 */
-function recordedDays(start: string, days: number, total: PFC): Logs {
-  return Object.fromEntries(
-    Array.from({ length: days }, (_, i) => {
-      const date = shiftDate(start, i);
-      return [date, recordedLog(date, total)];
-    }),
-  );
-}
-
-describe('チートデー', () => {
-  const start = '2026-09-01';
-  const cheatDate = shiftDate(start, CHEAT_DAY_STREAK);
-
-  it('続けて記録した日数を数え、規定日数に達した翌日がチートデーになる', () => {
-    const logs = recordedDays(start, CHEAT_DAY_STREAK, target);
-    expect(
-      computeDailyLimit(shiftDate(cheatDate, -1), settings, logs),
-    ).toMatchObject({ isCheatDay: false, streak: CHEAT_DAY_STREAK - 1 });
-    expect(computeDailyLimit(cheatDate, settings, logs)).toMatchObject({
-      isCheatDay: true,
-      streak: CHEAT_DAY_STREAK,
+  it('前日まで7日間の記録日だけで平均を計算する', () => {
+    const logs = logsOf({
+      '2026-08-30': { ...target, calories: 9000 },
+      '2026-08-31': { ...target, calories: 1800 },
+      '2026-09-06': { ...target, calories: 2200 },
+      '2026-09-07': { ...target, calories: 9000 },
+      '2026-09-08': { ...target, calories: 9000 },
+    });
+    logs['2026-09-04'] = createEmptyDailyLog('2026-09-04');
+    const result = computeDailyLimit('2026-09-07', settings, logs);
+    expect(result.weekly.recordedDays).toBe(2);
+    expect(result.weekly.average?.calories).toBe(2000);
+    expect(result.weekly.calorieDifference).toBe(2000 - result.target.calories);
+  });
+  it('未記録日は不足扱いにしない', () => {
+    expect(computeDailyLimit('2026-09-25', settings, {}).weekly).toEqual({
+      recordedDays: 0,
+      average: null,
+      calorieDifference: null,
     });
   });
-
-  it('記録の無い日があると数え直す', () => {
-    // 3日目だけ記録が無い
-    const logs = {
-      ...recordedDays(start, 2, target),
-      ...recordedDays(shiftDate(start, 3), CHEAT_DAY_STREAK - 3, target),
-    };
-    expect(computeDailyLimit(cheatDate, settings, logs)).toMatchObject({
-      isCheatDay: false,
-      streak: CHEAT_DAY_STREAK - 3,
+  it('プロフィールがない場合も共通の既定プロフィールを使う', () => {
+    const { protein, fat, carbs, calories } = calculateGoals(
+      DEFAULT_PROFILE,
+      targetDuration(DEFAULT_PROFILE),
+    );
+    expect(computeDailyLimit('2026-09-25', {}, {}).limit).toEqual({
+      protein,
+      fat,
+      carbs,
+      calories,
     });
-  });
-
-  it('チートデーの超過は繰り越さず、翌日から数え直す', () => {
-    const logs = {
-      ...recordedDays(start, CHEAT_DAY_STREAK, target),
-      ...recordedDays(cheatDate, 1, { ...target, calories: 3500 }),
-    };
-    const nextDay = shiftDate(cheatDate, 1);
-    expect(computeDailyLimit(nextDay, settings, logs)).toMatchObject({
-      carryover: { calories: 0 },
-      isCheatDay: false,
-      cheatDayCap: null,
-      streak: 0,
-      overCalories: 0,
-    });
-  });
-
-  it('超過しても別の日の不足で相殺していれば免除は無制限', () => {
-    const logs = {
-      ...recordedDays(start, 1, { ...target, calories: 2500 }),
-      ...recordedDays(shiftDate(start, 1), 1, { ...target, calories: 1500 }),
-      ...recordedDays(shiftDate(start, 2), CHEAT_DAY_STREAK - 2, target),
-    };
-    expect(computeDailyLimit(cheatDate, settings, logs)).toMatchObject({
-      isCheatDay: true,
-      cheatDayCap: null,
-      overCalories: 0,
-    });
-  });
-
-  it('相殺しきれない超過があると免除に上限が付き、上限を超えた分は繰り越す', () => {
-    // 2日超過（+100kcal ずつ）、残り4日は目標どおり
-    const logs = {
-      ...recordedDays(start, 2, { ...target, calories: 2100 }),
-      ...recordedDays(shiftDate(start, 2), CHEAT_DAY_STREAK - 2, target),
-      ...recordedDays(cheatDate, 1, { ...target, calories: 3500 }),
-    };
-    // 目標の50% から超過の合計200kcal（目標の10%）を引いて目標の40%
-    expect(computeDailyLimit(cheatDate, settings, logs)).toMatchObject({
-      isCheatDay: true,
-      overCalories: 200,
-      cheatDayCap: { protein: 40, fat: 20, carbs: 80, calories: 800 },
-    });
-    // 前日までの繰越200 + 超過1500 - 免除800
-    expect(carryoverOn(shiftDate(cheatDate, 1), logs).calories).toBe(900);
-  });
-
-  it('超過の合計が目標の半分以上なら免除しない', () => {
-    const logs = recordedDays(start, CHEAT_DAY_STREAK, {
-      ...target,
-      calories: 2200,
-    });
-    expect(computeDailyLimit(cheatDate, settings, logs)).toMatchObject({
-      isCheatDay: true,
-      overCalories: 1200,
-      cheatDayCap: { protein: 0, fat: 0, carbs: 0, calories: 0 },
-    });
-  });
-
-  it('チートデーに目標を下回れば超過の繰越と相殺する', () => {
-    const logs = {
-      ...recordedDays(start, 1, { ...target, calories: 2500 }),
-      ...recordedDays(shiftDate(start, 1), CHEAT_DAY_STREAK - 1, target),
-      ...recordedDays(cheatDate, 1, { ...target, calories: 1800 }),
-    };
-    expect(carryoverOn(cheatDate, logs).calories).toBe(500);
-    expect(carryoverOn(shiftDate(cheatDate, 1), logs).calories).toBe(300);
   });
 });

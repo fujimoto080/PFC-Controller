@@ -168,7 +168,6 @@ export const settingsSchema = z.object({
     })
     .optional(),
   favoriteFoodIds: z.array(z.string()),
-  carryoverExcludedDates: z.array(dateSchema),
   mealSchedule: mealScheduleSchema.optional(),
   mealPreferences: mealPreferencesSchema.optional(),
 }) satisfies z.ZodType<UserSettings>;

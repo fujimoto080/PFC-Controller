@@ -142,12 +142,6 @@ const daysBetween = (from: string, to: string) =>
 const formatPfc = ({ calories, protein, fat, carbs }: PFC) =>
   `${Math.round(calories)}kcal P${roundPFC(protein, 1)}g F${roundPFC(fat, 1)}g C${roundPFC(carbs, 1)}g`;
 
-/** 前日までの繰越（正なら超過、負なら不足）のカロリー表記。 */
-const formatCarryover = (calories: number) =>
-  calories >= 0
-    ? `前日までの超過 -${Math.round(calories)}kcal`
-    : `前日までの不足 +${Math.round(-calories)}kcal`;
-
 type MealHistory = Awaited<ReturnType<typeof getMealHistory>>;
 
 /** 食べた物を最後に食べた日の近さで「避ける」「また食べてよい」に分ける。 */
@@ -311,16 +305,11 @@ async function buildPrompt(userId: string, request: MealSuggestionRequest) {
     ...(surroundings.length === 0 ? ['位置情報は取得できていない。'] : []),
     '',
     '## 今日の栄養',
-    `1日の上限: ${formatPfc(status.limit)}（運動の消費 +${status.burnedCalories}kcal、${formatCarryover(status.carryover.calories)} を反映済み）`,
+    `1日の目標: ${formatPfc(status.limit)}。カロリー許容範囲 ${status.calorieRange.min}〜${status.calorieRange.max}kcal、脂質の目安 ${status.fatRange.min}〜${status.fatRange.max}g。`,
     `摂取済み: ${formatPfc(status.consumed)}`,
     `残り: ${formatPfc(status.remaining)}`,
-    ...(status.isCheatDay
-      ? [
-          status.cheatDayCap === null
-            ? '今日はチートデー（毎日記録を続けたご褒美）。上限を超えても負債にならないので、残りにこだわらず食べたい物を楽しめる案も出してよい。'
-            : `今日はチートデー（毎日記録を続けたご褒美）。ただしこの数日の超過が不足と相殺しきれていないため、負債にならないのは上限から+${formatPfc(status.cheatDayCap)}まで。その範囲で食べたい物を楽しめる案も出してよい。`,
-        ]
-      : []),
+    '過去の超過・不足を翌日に返済しない。運動は活動レベルに含まれ、消費カロリーを食事枠に全量加算しない。',
+    '残りカロリー内で不足するたんぱく質を優先し、脂質・炭水化物は目安。PFCを全部埋めるための追加食を求めない。カロリー目標に達していれば、追加の食事は不要と説明する。',
     describeAllocation(
       targets,
       new Set([...slots, ...upcomingSlots(status.meals, now)]).size,

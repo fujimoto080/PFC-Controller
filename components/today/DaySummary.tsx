@@ -1,63 +1,45 @@
 'use client';
 
-import { useMemo } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { toggleCarryoverExcludedDate } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
-import { MACROS, type PfcKey } from '@/lib/macros';
-import { CARRYOVER_DAYS, CHEAT_DAY_STREAK, computeDailyLimit } from '@/lib/pfc';
+import { MACROS } from '@/lib/macros';
+import { computeDailyLimit } from '@/lib/pfc';
 import { EMPTY_PFC } from '@/lib/types';
 import { cn, roundPFC } from '@/lib/utils';
 
-/**
- * 選択日の摂取量と上限の比較。運動した日は消費分だけ上限が増え、前日までの超過（負債）は上限から差し引き、不足は上限に足す。
- * チートデーは超過しても負債にならないため、免除される範囲の超過は赤で示さない。
- */
+/** 日次目標は過去の過不足で変更せず、週平均は評価として表示する。 */
 export function DaySummary({ date }: { date: string }) {
   const { logs, settings } = useAppState();
   const total = logs[date]?.total ?? EMPTY_PFC;
-  const {
-    limit,
-    target,
-    carryover,
-    burnedCalories,
-    isCheatDay,
-    cheatDayCap,
-    streak,
-    overCalories,
-  } = useMemo(
-    () => computeDailyLimit(date, settings, logs),
-    [date, settings, logs],
+  const { target, calorieRange, fatRange, weekly } = computeDailyLimit(
+    date,
+    settings,
+    logs,
   );
-
-  // 負債にならずに超えてよい量（チートデーでなければ 0、上限が無ければ無制限）
-  const allowance = (key: PfcKey) =>
-    isCheatDay ? (cheatDayCap?.[key] ?? Infinity) : 0;
-  const calorieLeft = limit.calories - total.calories;
-  const isOver = (key: PfcKey, left: number) => left < -allowance(key);
-
+  const left = target.calories - total.calories;
+  const inRange =
+    total.calories >= calorieRange.min && total.calories <= calorieRange.max;
   return (
     <Card className="px-4">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-muted-foreground text-xs">
-            {calorieLeft >= 0 ? 'あと' : '上限を超過'}
-            {isCheatDay && (
-              <span className="bg-primary text-primary-foreground ml-2 rounded-full px-2 py-0.5 font-semibold">
-                チートデー
-              </span>
-            )}
+            {inRange
+              ? '今日の目標範囲内'
+              : left >= 0
+                ? '目標まであと'
+                : '目標より多め'}
           </p>
           <p
             className={cn(
               'text-5xl font-bold tracking-tight tabular-nums',
-              isOver('calories', calorieLeft) && 'text-destructive',
+              total.calories > calorieRange.max && 'text-destructive',
             )}
           >
-            {roundPFC(Math.abs(calorieLeft), 0).toLocaleString()}
+            {inRange
+              ? roundPFC(total.calories, 0).toLocaleString()
+              : roundPFC(Math.abs(left), 0).toLocaleString()}
             <span className="text-muted-foreground ml-1 text-base font-medium">
               kcal
             </span>
@@ -67,219 +49,97 @@ export function DaySummary({ date }: { date: string }) {
           href="/settings"
           className="text-muted-foreground text-right text-xs underline-offset-2 hover:underline"
         >
-          <span className="block">上限</span>
-          <span className="text-foreground block text-3xl font-bold tracking-tight tabular-nums">
-            {roundPFC(limit.calories, 0).toLocaleString()}
-            <span className="text-muted-foreground ml-1 text-sm font-medium">
-              kcal
-            </span>
+          <span className="block">1日の目標</span>
+          <span className="text-foreground block text-3xl font-bold tabular-nums">
+            {target.calories.toLocaleString()}
+            <span className="ml-1 text-sm font-medium">kcal</span>
           </span>
-          {burnedCalories > 0 && (
-            <span className="block">運動 +{roundPFC(burnedCalories, 0)}</span>
-          )}
-          {carryover.calories !== 0 && (
-            <>
-              <span
-                className={cn(
-                  'block',
-                  carryover.calories > 0 && 'text-destructive',
-                )}
-              >
-                {carryover.calories > 0
-                  ? `超過の繰越 −${roundPFC(carryover.calories, 0)}`
-                  : `不足の繰越 +${roundPFC(-carryover.calories, 0)}`}
-              </span>
-              <span className="block">
-                各日の繰越は{CARRYOVER_DAYS}日で消えます
-              </span>
-            </>
-          )}
+          <span className="block">
+            目安 {calorieRange.min}〜{calorieRange.max} kcal
+          </span>
         </Link>
       </div>
-
-      <LimitBar
+      <ProgressBar
         current={total.calories}
         target={target.calories}
-        limit={limit.calories}
         barClass="bg-primary"
-        allowance={allowance('calories')}
+        over={total.calories > calorieRange.max}
       />
-
       <div className="grid grid-cols-3 gap-4">
         {MACROS.map(({ key, label, barClass }) => {
-          const left = limit[key] - total[key];
+          const protein = key === 'protein';
+          const remaining = Math.max(0, target[key] - total[key]);
           return (
             <div key={key} className="space-y-1.5">
               <p className="text-muted-foreground text-xs">{label}</p>
-              <p
-                className={cn(
-                  'text-lg leading-none font-semibold tabular-nums',
-                  isOver(key, left) && 'text-destructive',
-                )}
-              >
-                <span className="mr-1 text-[10px] font-normal">
-                  {left < 0 ? '超過' : 'あと'}
-                </span>
-                {roundPFC(Math.abs(left), 0)}
-                <span className="text-muted-foreground ml-0.5 text-xs font-normal">
-                  g
-                </span>
+              <p className="text-lg leading-none font-semibold tabular-nums">
+                {protein
+                  ? remaining > 0
+                    ? `目標まで ${roundPFC(remaining, 1)}g`
+                    : '目標達成'
+                  : `${roundPFC(total[key], 1)}g`}
               </p>
-              <LimitBar
+              <ProgressBar
                 current={total[key]}
                 target={target[key]}
-                limit={limit[key]}
                 barClass={barClass}
-                allowance={allowance(key)}
-                thin
               />
               <p className="text-muted-foreground text-[10px] tabular-nums">
-                {roundPFC(total[key], 1)} / {roundPFC(limit[key], 0)}g
+                {protein
+                  ? `${roundPFC(total[key], 1)} / ${target[key]}g`
+                  : key === 'fat'
+                    ? `目安 ${fatRange.min}〜${fatRange.max}g`
+                    : `目安 ${target.carbs}g`}
               </p>
             </div>
           );
         })}
       </div>
-
-      <CheatDayProgress
-        isCheatDay={isCheatDay}
-        cheatDayCalorieCap={cheatDayCap?.calories ?? null}
-        streak={streak}
-        overCalories={overCalories}
-      />
-
-      <Label className="text-muted-foreground text-xs font-normal">
-        <Checkbox
-          checked={settings.carryoverExcludedDates.includes(date)}
-          onCheckedChange={() => {
-            void toggleCarryoverExcludedDate(date);
-          }}
-        />
-        この日の超過・不足を翌日以降に繰り越さない（入れ忘れた日など）
-      </Label>
+      <p className="text-muted-foreground text-xs">
+        残りカロリー内でたんぱく質を優先。脂質・炭水化物を埋めるために追加で食べる必要はありません。
+      </p>
+      <div className="text-muted-foreground space-y-1 text-xs">
+        <p>前日まで7日間の記録平均（{weekly.recordedDays}/7日）</p>
+        {weekly.average ? (
+          <p>
+            1日平均 {roundPFC(weekly.average.calories, 0)} kcal · P{' '}
+            {roundPFC(weekly.average.protein, 1)}g · F{' '}
+            {roundPFC(weekly.average.fat, 1)}g · C{' '}
+            {roundPFC(weekly.average.carbs, 1)}g
+          </p>
+        ) : (
+          <p>記録がまだありません。</p>
+        )}
+        <p>
+          未記録日と今日は平均に含みません。記録漏れがある日は平均が低く出ます。過不足は翌日に繰り越しません。
+        </p>
+      </div>
     </Card>
   );
 }
 
-/**
- * チートデーの案内。チートデーでなければ、あと何日記録すれば迎えられるかを示す。
- * 連続記録中の超過が不足と相殺しきれないとチートデーに上限が付くため、その旨も示す。
- */
-function CheatDayProgress({
-  isCheatDay,
-  cheatDayCalorieCap,
-  streak,
-  overCalories,
-}: {
-  isCheatDay: boolean;
-  cheatDayCalorieCap: number | null;
-  streak: number;
-  overCalories: number;
-}) {
-  if (isCheatDay) {
-    return (
-      <p className="text-muted-foreground text-xs">
-        チートデー（{CHEAT_DAY_STREAK}日連続で記録）。
-        {cheatDayCalorieCap === null
-          ? '上限を超えても負債になりません'
-          : `直近の超過+${roundPFC(overCalories, 0)}kcalがあるため、負債にならないのは上限+${roundPFC(cheatDayCalorieCap, 0)}kcalまで`}
-      </p>
-    );
-  }
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-1" aria-hidden>
-        {Array.from({ length: CHEAT_DAY_STREAK }, (_, i) => (
-          <span
-            key={i}
-            className={cn(
-              'size-1.5 rounded-full',
-              i < streak ? 'bg-primary' : 'bg-muted',
-            )}
-          />
-        ))}
-      </div>
-      <p className="text-muted-foreground text-xs">
-        あと{CHEAT_DAY_STREAK - streak}日記録するとチートデー
-        {overCalories > 0 &&
-          `（合計+${roundPFC(overCalories, 0)}kcal超過のため上限付き）`}
-      </p>
-    </div>
-  );
-}
-
-interface LimitBarProps {
-  current: number;
-  target: number;
-  /** 繰越を反映した上限。目標より小さければ右端を削り、大きければバーを延ばす。 */
-  limit: number;
-  barClass: string;
-  /** 上限をこの量まで超えても赤くしない（チートデー） */
-  allowance?: number;
-  thin?: boolean;
-}
-
-/**
- * 目標値・上限・摂取量の最大を全幅とした摂取量バー。超過の繰越で削られた部分は斜線、
- * 不足の繰越で増えた部分は薄い色で示す。上限を超えた分は上限の目盛りの先に延ばし、
- * allowance より多く超えていれば赤くする。
- */
-function LimitBar({
+function ProgressBar({
   current,
   target,
-  limit,
   barClass,
-  allowance = 0,
-  thin,
-}: LimitBarProps) {
-  const scale = Math.max(1, target, limit, current);
-  const pct = (value: number) => (value / scale) * 100;
-  const isOver = current > limit + allowance;
-
+  over = false,
+}: {
+  current: number;
+  target: number;
+  barClass: string;
+  over?: boolean;
+}) {
   return (
-    <div
-      className={cn(
-        'bg-muted relative w-full overflow-hidden rounded-full',
-        thin ? 'h-1.5' : 'h-2.5',
-      )}
-    >
-      {limit < target && (
-        <div
-          className="absolute inset-y-0 bg-[repeating-linear-gradient(135deg,var(--muted-foreground)_0_2px,transparent_2px_5px)] opacity-40"
-          style={{ left: `${pct(limit)}%`, width: `${pct(target - limit)}%` }}
-        />
-      )}
-      {limit > target && (
-        <div
-          className={cn('absolute inset-y-0 opacity-25', barClass)}
-          style={{ left: `${pct(target)}%`, width: `${pct(limit - target)}%` }}
-        />
-      )}
+    <div className="bg-muted h-2 overflow-hidden rounded-full">
       <div
         className={cn(
-          'absolute inset-y-0 left-0 rounded-full transition-[width] duration-500',
-          barClass,
+          'h-full rounded-full transition-[width] duration-500',
+          over ? 'bg-destructive' : barClass,
         )}
-        style={{ width: `${pct(Math.min(current, limit))}%` }}
+        style={{
+          width: `${Math.min(100, Math.max(0, (current / Math.max(1, target)) * 100))}%`,
+        }}
       />
-      {current > limit && (
-        <>
-          <div
-            className={cn(
-              'absolute inset-y-0 rounded-r-full transition-[width] duration-500',
-              isOver ? 'bg-destructive' : barClass,
-            )}
-            style={{
-              left: `${pct(limit)}%`,
-              width: `${pct(current - limit)}%`,
-            }}
-          />
-          <div
-            className="bg-foreground absolute inset-y-0 w-0.5 -translate-x-1/2"
-            style={{ left: `${pct(limit)}%` }}
-          />
-        </>
-      )}
     </div>
   );
 }

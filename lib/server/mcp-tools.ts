@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { foodInputSchema } from '@/lib/api/schemas';
 import { rankFrequentFoods } from '@/lib/food-suggestions';
 import { DEFAULT_PROFILE } from '@/lib/nutrition-goals';
-import { CARRYOVER_DAYS } from '@/lib/pfc';
 import { listFoods } from '@/lib/server/foods';
 import {
   getMealHistory,
@@ -198,7 +197,7 @@ export function registerMealPlanningTools(server: McpServer) {
     'get_nutrition_status',
     {
       title: '摂取状況の取得',
-      description: `指定日（省略時は今日）の1日の上限と摂取状況を返す。limit がその日の上限（PFC は g、calories は kcal）で、baseTarget（設定した目標）にその日の運動の消費カロリー burnedCalories を足し、前日までの繰越 carryover を差し引いたもの（carryover は正なら超過で上限が減り、負なら不足で上限が増える。各日の超過・不足は${CARRYOVER_DAYS}日で消える）。remaining = limit - consumed（負なら超過）。isCheatDay が true の日はチートデーで、上限を超えても負債にならない（cheatDayCap があれば、免除される超過はその量まで）。食べた物 meals・運動 activities・プロフィール・食の好み mealPreferences（ユーザーが書いた食事提案の指示 instructions と、お店ごとの定番メニュー stores）も返す。献立を考えるときは最初にこれを呼び、instructions（苦手な食材なども書かれる）とお店ごとの定番メニューに従う。`,
+      description: `指定日（省略時は今日）の栄養目標と摂取状況を返す。limit と baseTarget はプロフィールから計算した共通目標。calorieRange はカロリーの許容範囲、fatRange は脂質の目安。remaining = limit - consumed。Pは確保する目標、F/Cは目安で、残りカロリー内でPを優先する。PFCを全部埋めるための追加食は求めない。過不足の繰越はなく、weekly は前日まで7日間の記録日の平均（未記録日は除外）。運動は活動レベルに含め、burnedCalories は記録値のみで食事枠に加算しない。献立を考えるときは最初にこれを呼び、mealPreferences.instructions と stores に従う。`,
       inputSchema: z.object({ date: dateSchema.optional() }),
       annotations: { readOnlyHint: true },
     },

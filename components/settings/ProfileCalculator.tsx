@@ -143,7 +143,7 @@ export function ProfileCalculator({
                 kg/月 ≒ <strong>{durationInfo.byWeightLoss}ヶ月</strong>
               </p>
               <p>
-                ・安全カロリー({minimumCalories(profile.gender)}
+                ・赤字20%・最低カロリー({minimumCalories(profile.gender)}
                 kcal)での最短期間:{' '}
                 <strong>{durationInfo.byCalorieLimit}ヶ月</strong>
               </p>
@@ -158,6 +158,9 @@ export function ProfileCalculator({
         </div>
       </Card>
 
+      <p className="text-muted-foreground text-xs">
+        Pは体重×1.6g（カロリーの40%まで）、Fは25%、Cは残り。カロリーは±5%を目安にし、過不足は翌日に繰り越しません。運動は活動レベルに含めます。
+      </p>
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">目標期間（自動計算）</span>
         <span className="font-semibold">{duration}ヶ月</span>
@@ -200,7 +203,7 @@ export function ProfileCalculator({
           />
           <BreakdownStep
             title={`3. 目標カロリー (${targetStatus})`}
-            description="1日の調整カロリーを計算:"
+            description="目標期間から計算し、減量の赤字は維持カロリーの20%までに抑える:"
             formula={`${goals.tdee}kcal ${goals.calorieAdjustment >= 0 ? '+' : ''} ${goals.calorieAdjustment}kcal`}
             result={goals.caloriesBeforeLimit}
           />
