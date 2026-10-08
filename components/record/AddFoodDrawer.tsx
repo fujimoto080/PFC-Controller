@@ -1,16 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Loader2, PenLine, Search, Sparkles } from 'lucide-react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
-import { useCatalogSearch } from '@/hooks/use-catalog-search';
-import { useAppState } from '@/lib/client/store';
+import { useFoodSearch } from '@/hooks/use-food-search';
 import type { BarcodeFood } from '@/lib/barcode';
 import type { FoodItem } from '@/lib/types';
-import { searchFoodCandidates } from '@/lib/food-suggestions';
 import { defaultTimestampFor } from '@/lib/utils';
 import { RecordDrawer, RecordStepView, type RecordStep } from './RecordDrawer';
 import { StatusMessage } from '@/components/ui/status-message';
@@ -24,12 +22,6 @@ interface AddFoodDrawerProps {
   onClose: () => void;
 }
 
-const TITLES = {
-  search: '食事を記録',
-  confirm: '内容を確認',
-  form: '栄養を入力',
-} as const;
-
 /** 過去の記録・食品リストから選んで記録するか、新しく入力して記録するシート。 */
 interface Selection {
   step: RecordStep;
@@ -42,7 +34,11 @@ export function AddFoodDrawer({
   initialStep,
   onClose,
 }: AddFoodDrawerProps) {
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(() =>
+    open && initialStep
+      ? { step: initialStep, timestamp: defaultTimestampFor(date) }
+      : null,
+  );
   const [query, setQuery] = useState('');
   const [wasOpen, setWasOpen] = useState(open);
   // 開いた瞬間に、指定された画面から始める
@@ -61,7 +57,7 @@ export function AddFoodDrawer({
         setSelection(null);
         setQuery('');
       }}
-      title={TITLES[selection?.step.kind ?? 'search']}
+      title={selection ? '食品を登録・記録' : '食品を検索'}
       onBack={
         selection
           ? () => {
@@ -74,9 +70,6 @@ export function AddFoodDrawer({
         <RecordStepView
           step={selection.step}
           timestamp={selection.timestamp}
-          onStepChange={(step) => {
-            setSelection({ ...selection, step });
-          }}
           onDone={onClose}
         />
       ) : (
@@ -101,15 +94,9 @@ function FoodSearch({
   onQueryChange: (query: string) => void;
   onSelect: (step: RecordStep) => void;
 }) {
-  const { foods, logs } = useAppState();
-  const candidates = useMemo(
-    () => searchFoodCandidates(foods, logs, query),
-    [foods, logs, query],
-  );
-  // 過去の記録・食品リストに無いときだけ、公式サイトのカタログや Kalori から探す
-  const catalog = useCatalogSearch(query, candidates.length === 0);
+  const search = useFoodSearch(query);
   const ai = useAiNutrition((food) => {
-    onSelect({ kind: 'confirm', food });
+    onSelect({ food });
   });
 
   return (
@@ -130,7 +117,7 @@ function FoodSearch({
         variant="outline"
         className="w-full"
         onClick={() => {
-          onSelect({ kind: 'form' });
+          onSelect({});
         }}
       >
         <PenLine /> 新しく入力する
@@ -156,18 +143,18 @@ function FoodSearch({
       <p className="text-muted-foreground pt-1 text-xs">
         {query ? '検索結果' : '最近食べたもの'}
       </p>
-      {candidates.length > 0 ? (
-        <FoodList foods={candidates} onSelect={onSelect} />
-      ) : catalog.loading ? (
+      {search.loading ? (
         <StatusMessage>商品を探しています…</StatusMessage>
-      ) : catalog.foods.length > 0 ? (
+      ) : search.foods.length > 0 ? (
         <>
-          <p className="text-muted-foreground text-xs">
-            {catalog.source === 'kalori'
-              ? 'Kalori のカタログ'
-              : '店舗・メーカーのカタログ'}
-          </p>
-          <FoodList foods={catalog.foods} onSelect={onSelect} />
+          {search.source !== 'history' && (
+            <p className="text-muted-foreground text-xs">
+              {search.source === 'kalori'
+                ? 'Kalori のカタログ'
+                : '店舗・メーカーのカタログ'}
+            </p>
+          )}
+          <FoodList foods={search.foods} onSelect={onSelect} />
         </>
       ) : (
         <StatusMessage>見つかりませんでした</StatusMessage>
@@ -192,7 +179,7 @@ function FoodList({
             data-track="検索結果の食品を選択"
             className="hover:bg-muted/60 w-full px-3 py-2.5 text-left"
             onClick={() => {
-              onSelect({ kind: 'confirm', food });
+              onSelect({ food });
             }}
           >
             <p className="text-sm font-medium">{food.name}</p>

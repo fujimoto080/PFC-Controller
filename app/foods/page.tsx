@@ -82,8 +82,6 @@ export default function FoodsPage() {
             key={editor.food?.id ?? 'new'}
             food={editor.food}
             initialBarcodes={editor.food ? barcodesOf(editor.food) : []}
-            storeOptions={storeOptions}
-            groupOptions={groupOptions}
             onBarcodesSaved={addBarcodes}
             onClose={() => {
               setEditor(null);

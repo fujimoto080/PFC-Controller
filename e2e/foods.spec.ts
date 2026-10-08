@@ -1,6 +1,6 @@
 import { dayLogList, expect, test } from './fixtures';
 
-test('食品リストに登録したお気に入りをホームからワンタップで記録できる', async ({
+test('食品リストに登録したお気に入りを共通フォームで確認して記録できる', async ({
   page,
 }) => {
   await page.goto('/foods');
@@ -25,6 +25,7 @@ test('食品リストに登録したお気に入りをホームからワンタ�
 
   await page.getByRole('link', { name: '今日' }).click();
   await page.getByRole('button', { name: /プロテインバー\s*180kcal/ }).click();
+  await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(
     dayLogList(page).getByRole('button', { name: /プロテインバー/ }),
   ).toContainText('180');

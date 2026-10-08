@@ -53,14 +53,15 @@ export function PfcMacroInputs<T extends FieldValues>({
 }: {
   register: UseFormRegister<T>;
 }) {
+  const inputId = useId();
   return (
     <div className="grid grid-cols-4 gap-2">
       {MACRO_FIELDS.map(({ key, label, unit }) => (
         <div key={key} className="space-y-1.5">
-          <Label htmlFor={`macro-${key}`}>{label}</Label>
+          <Label htmlFor={`${inputId}-${key}`}>{label}</Label>
           <div className="relative">
             <Input
-              id={`macro-${key}`}
+              id={`${inputId}-${key}`}
               type="number"
               inputMode="decimal"
               step="any"

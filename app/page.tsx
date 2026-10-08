@@ -42,10 +42,14 @@ export default function TodayPage() {
         <QuickAiInput
           onAdd={openAdd}
           onEstimated={(food, photos) => {
-            setAdding({ step: { kind: 'confirm', food, photos } });
+            setAdding({ step: { food, photos } });
           }}
         />
-        <FavoriteChips date={date} />
+        <FavoriteChips
+          onSelect={(food) => {
+            setAdding({ step: { food } });
+          }}
+        />
         <DayLogList date={date} onAdd={openAdd} />
         <DayActivityList date={date} />
       </div>

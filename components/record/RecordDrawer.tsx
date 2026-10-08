@@ -9,16 +9,14 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { IconButton } from '@/components/ui/icon-button';
-import { addFoodItem } from '@/lib/client/actions';
-import { toLogInput, type FoodTemplate } from '@/lib/food-form';
-import { toast } from '@/lib/toast';
-import { ConfirmFood } from './ConfirmFood';
-import { FoodLogForm } from './FoodLogForm';
+import { type FoodTemplate } from '@/lib/food-form';
+import { FoodForm } from '@/components/input/FoodForm';
 
-/** 記録シート内の画面。確認して 1 タップで記録するか、フォームで入力して記録する。 */
-export type RecordStep =
-  | { kind: 'confirm'; food: FoodTemplate; photos?: string[] }
-  | { kind: 'form'; food?: FoodTemplate; photos?: string[] };
+/** 検索や AI からフォームへ渡す初期値。 */
+export interface RecordStep {
+  food?: FoodTemplate;
+  photos?: string[];
+}
 
 interface RecordDrawerProps {
   open: boolean;
@@ -72,43 +70,21 @@ export function RecordDrawer({
 interface RecordStepViewProps {
   step: RecordStep;
   timestamp: number;
-  barcode?: string;
-  onStepChange: (step: RecordStep) => void;
   onDone: () => void;
 }
 
 export function RecordStepView({
   step,
   timestamp,
-  barcode,
-  onStepChange,
   onDone,
 }: RecordStepViewProps) {
-  if (step.kind === 'form') {
-    return (
-      <FoodLogForm
-        initial={step.food}
-        photos={step.photos}
-        initialTimestamp={timestamp}
-        barcode={barcode}
-        onDone={onDone}
-      />
-    );
-  }
-
   return (
-    <ConfirmFood
-      food={step.food}
+    <FoodForm
+      initial={step.food}
       photos={step.photos}
-      onRecord={(food) => {
-        // 楽観的に即時反映されるため応答を待たずに閉じる
-        void addFoodItem(toLogInput(food, timestamp));
-        toast.success(`${food.name}を記録しました`);
-        onDone();
-      }}
-      onEdit={() => {
-        onStepChange({ kind: 'form', food: step.food, photos: step.photos });
-      }}
+      initialTimestamp={timestamp}
+      onDone={onDone}
+      onCancel={onDone}
     />
   );
 }

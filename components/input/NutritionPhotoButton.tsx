@@ -10,7 +10,8 @@ import { MAX_READING_IMAGES } from '@/lib/barcode';
 
 interface NutritionPhotoButtonProps {
   /** 溜めた写真（同じ商品を別の面から撮ったもの）をまとめて渡す。読み取れたら true を返す。 */
-  onRead: (files: File[]) => Promise<boolean>;
+  onRead: (files: File[], previousPhotos?: string[]) => Promise<boolean>;
+  initialPhotos?: string[];
   disabled: boolean;
   /** 写真を読み取り中か。 */
   reading: boolean;
@@ -26,10 +27,12 @@ export function NutritionPhotoButton({
   onRead,
   disabled,
   reading,
+  initialPhotos = [],
 }: NutritionPhotoButtonProps) {
   const cameraRef = useRef<HTMLInputElement | null>(null);
   const pickerRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [previousPhotos, setPreviousPhotos] = useState(initialPhotos);
   // 最後に読み取れた写真の組。写真を足す・外すまでは同じ組を読み取り直させない
   const [readFiles, setReadFiles] = useState<File[] | null>(null);
   const previews = useMemo(
@@ -44,13 +47,19 @@ export function NutritionPhotoButton({
     },
     [previews],
   );
-  const full = files.length >= MAX_READING_IMAGES;
+  const photoCount = files.length + previousPhotos.length;
+  const full = photoCount >= MAX_READING_IMAGES;
   const add = (added: File[]) => {
-    setFiles((current) => [...current, ...added].slice(0, MAX_READING_IMAGES));
+    setFiles((current) =>
+      [...current, ...added].slice(
+        0,
+        MAX_READING_IMAGES - previousPhotos.length,
+      ),
+    );
   };
   const alreadyRead = readFiles === files;
   const read = async () => {
-    if (await onRead(files)) setReadFiles(files);
+    if (await onRead(files, previousPhotos)) setReadFiles(files);
   };
 
   return (
@@ -75,9 +84,32 @@ export function NutritionPhotoButton({
           <ImagePlus /> 画像
         </Button>
       </div>
-      {files.length > 0 && (
+      {photoCount > 0 && (
         <div className="space-y-2">
           <ul className="flex gap-2">
+            {previousPhotos.map((src, index) => (
+              <li key={src} className="relative">
+                {/* oxlint-disable-next-line nextjs/no-img-element -- 端末内の読み取り元写真 */}
+                <img
+                  src={src}
+                  alt={`以前の写真 ${index + 1}`}
+                  className="bg-muted size-16 rounded object-cover"
+                />
+                <IconButton
+                  type="button"
+                  className="bg-background absolute -top-2 -right-2 size-6 rounded-full border"
+                  aria-label={`以前の写真 ${index + 1} を外す`}
+                  onClick={() => {
+                    setPreviousPhotos((current) =>
+                      current.filter((_, i) => i !== index),
+                    );
+                    setReadFiles(null);
+                  }}
+                >
+                  <X />
+                </IconButton>
+              </li>
+            ))}
             {previews.map((src, index) => (
               <li key={src} className="relative">
                 {/* oxlint-disable-next-line nextjs/no-img-element -- 端末内の写真のプレビューで最適化は不要 */}
@@ -116,7 +148,7 @@ export function NutritionPhotoButton({
             ) : alreadyRead ? (
               '読み取り済み'
             ) : (
-              `${files.length}枚の写真から自動入力`
+              `${photoCount}枚の写真から自動入力`
             )}
           </Button>
           {alreadyRead && !full && (

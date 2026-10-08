@@ -2,13 +2,15 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFormDraft } from '@/hooks/use-form-draft';
-import type { BarcodeFood } from '@/lib/barcode';
-import { addFoodItem, rememberFood } from '@/lib/client/actions';
+import type { FoodTemplate } from '@/lib/food-form';
+import {
+  saveFoodRegistration,
+  type FoodRegistration,
+} from '@/lib/client/food-registration';
 import {
   estimateNutritionFromImages,
   fetchBarcodeFood,
 } from '@/lib/client/api';
-import { toLogInput } from '@/lib/food-form';
 import {
   addBarcodeItem,
   finishLoading,
@@ -30,10 +32,12 @@ interface ScanBatchDraft {
 const newId = () => crypto.randomUUID();
 
 /** まとめてスキャンした商品の一覧と、照会・写真読み取り・一括保存の操作。 */
-export function useScanBatch() {
+export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
   const [items, setItems] = useState<BatchItem[]>([]);
   /** true なら食べた記録にも追加する。false なら食品リストへの登録だけ */
-  const [record, setRecord] = useState(true);
+  const [record, setRecordState] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   // 連続スキャンで更新が重なっても最新の一覧を元に計算するため ref にも持つ
   const itemsRef = useRef(items);
   const update = useCallback((fn: (items: BatchItem[]) => BatchItem[]) => {
@@ -48,11 +52,25 @@ export function useScanBatch() {
   const applyDraft = useCallback(
     (saved: ScanBatchDraft) => {
       update(() => restoreItems(saved.items));
-      setRecord(saved.record);
+      setRecordState(saved.record);
     },
     [update],
   );
-  useFormDraft(DRAFT_STORAGE_KEY, draft, applyDraft, true);
+  useFormDraft(storageKey, draft, applyDraft, true);
+
+  const addFoods = (foods: FoodTemplate[]) => {
+    update((current) => [
+      ...current,
+      ...foods.map((food): BatchItem => ({
+        id: newId(),
+        status: 'ready',
+        barcode: '',
+        food,
+        quantity: 1,
+        linkBarcode: false,
+      })),
+    ]);
+  };
 
   const patch = (id: string, value: Partial<BatchItem>) => {
     update((current) => updateItem(current, id, value));
@@ -108,54 +126,62 @@ export function useScanBatch() {
     }
   };
 
-  /** 手で入力・修正した栄養値にする。保存時にバーコードへの紐付けも直す。 */
-  const setFood = (id: string, food: BarcodeFood) => {
-    patch(id, { status: 'ready', food, linkBarcode: true });
+  /** 共通フォームの編集内容を一覧に反映し、一括保存まで保持する。 */
+  const setRegistration = (id: string, entry: FoodRegistration) => {
+    patch(id, {
+      status: 'ready',
+      food: entry.food,
+      quantity: entry.quantity,
+      barcodes: entry.barcodes,
+      timestamp: entry.food.timestamp,
+      saveFood: entry.saveFood,
+      record: entry.record,
+      photos: entry.photos,
+      linkBarcode: true,
+    });
+  };
+
+  const setRecord = (value: boolean) => {
+    setRecordState(value);
+    update((current) => current.map((item) => ({ ...item, record: value })));
   };
 
   const setQuantity = (id: string, quantity: number) => {
     patch(id, { quantity });
   };
 
+  const setTimestamp = (timestamp: number) => {
+    update((current) => current.map((item) => ({ ...item, timestamp })));
+  };
+
   const clear = () => {
     update(() => []);
   };
 
-  /**
-   * 栄養値のそろった商品をまとめて保存する。record なら指定時刻の食事として記録し、
-   * どちらの場合も新しい食品は食品リストに加え、バーコードに食品情報を紐付ける。
-   */
-  const commit = (timestamp: number) => {
+  /** 保存できた商品だけ一覧から外し、失敗した商品は再試行できるよう残す。 */
+  const commit = async (timestamp: number): Promise<boolean> => {
+    if (savingRef.current) return false;
+    savingRef.current = true;
+    setSaving(true);
     const entries = readyFoods(itemsRef.current);
-    let addedFoods = 0;
-    const mappings: Promise<void>[] = [];
-    for (const { item, food, scaled } of entries) {
-      if (record) void addFoodItem(toLogInput(scaled, timestamp));
-      const { foodAdded, mappingSaved } = rememberFood(
-        { ...food, timestamp },
-        item.linkBarcode ? item.barcode : undefined,
-      );
-      if (foodAdded) addedFoods++;
-      if (mappingSaved) mappings.push(mappingSaved);
-    }
-    Promise.all(mappings).catch((error: unknown) =>
-      toast.fromError('バーコード情報の保存に失敗しました', error),
-    );
-
-    const skipped = entries.length - addedFoods;
-    if (record) {
-      toast.success(`${entries.length}品を記録しました`, {
-        description:
-          addedFoods > 0
-            ? `新しい${addedFoods}品は食品リストにも保存しました`
-            : undefined,
+    let savedCount = 0;
+    for (const { item, food } of entries) {
+      const saved = await saveFoodRegistration({
+        food: { ...food, timestamp: item.timestamp ?? timestamp },
+        quantity: item.quantity,
+        barcodes: item.barcodes ?? (item.linkBarcode ? [item.barcode] : []),
+        saveFood: item.saveFood ?? true,
+        record: item.record ?? record,
       });
-    } else {
-      toast.success(`${addedFoods}品を食品リストに登録しました`, {
-        description: skipped > 0 ? `${skipped}品は登録済みでした` : undefined,
-      });
+      if (saved) {
+        remove(item.id);
+        savedCount++;
+      }
     }
-    clear();
+    setSaving(false);
+    savingRef.current = false;
+    if (savedCount > 0) toast.success(`${savedCount}品を保存しました`);
+    return itemsRef.current.length === 0;
   };
 
   return {
@@ -163,9 +189,12 @@ export function useScanBatch() {
     record,
     setRecord,
     addBarcode,
+    addFoods,
     fillFromPhoto,
-    setFood,
+    setRegistration,
+    saving,
     setQuantity,
+    setTimestamp,
     remove,
     clear,
     commit,

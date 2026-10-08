@@ -65,11 +65,3 @@ export function toFoodInput(
     timestamp,
   };
 }
-
-/** 既存の食品を指定時刻の記録として追加するための入力に変換する。 */
-export function toLogInput(
-  { name, protein, fat, carbs, calories, store, storeGroup }: FoodTemplate,
-  timestamp: number,
-): FoodItemInput {
-  return { name, protein, fat, carbs, calories, store, storeGroup, timestamp };
-}

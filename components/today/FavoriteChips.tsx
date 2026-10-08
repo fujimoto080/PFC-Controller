@@ -2,14 +2,15 @@
 
 import { useMemo } from 'react';
 import { Star } from 'lucide-react';
-import { addFoodItem } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
-import { toLogInput } from '@/lib/food-form';
-import { toast } from '@/lib/toast';
-import { defaultTimestampFor } from '@/lib/utils';
+import type { FoodTemplate } from '@/lib/food-form';
 
-/** お気に入り食品をワンタップで選択日に記録する。お気に入りが無ければ何も出さない。 */
-export function FavoriteChips({ date }: { date: string }) {
+/** お気に入り食品から共通の登録フォームを開く。お気に入りが無ければ何も出さない。 */
+export function FavoriteChips({
+  onSelect,
+}: {
+  onSelect: (food: FoodTemplate) => void;
+}) {
   const { foods, settings } = useAppState();
   const favorites = useMemo(
     () =>
@@ -33,8 +34,7 @@ export function FavoriteChips({ date }: { date: string }) {
           data-track="お気に入りから記録"
           className="bg-card hover:bg-muted/60 flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-transform active:scale-95"
           onClick={() => {
-            void addFoodItem(toLogInput(food, defaultTimestampFor(date)));
-            toast.success(`${food.name}を記録しました`);
+            onSelect(food);
           }}
         >
           <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />

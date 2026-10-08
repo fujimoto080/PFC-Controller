@@ -122,3 +122,32 @@ describe('batchTotal', () => {
     });
   });
 });
+
+it('一括登録の合計には食事記録に追加する商品だけを含める', () => {
+  const items: BatchItem[] = [
+    {
+      id: 'a',
+      status: 'ready',
+      barcode: '',
+      food: { name: 'チキン', protein: 25, fat: 5, carbs: 10, calories: 185 },
+      quantity: 2,
+      linkBarcode: false,
+      record: true,
+    },
+    {
+      id: 'b',
+      status: 'ready',
+      barcode: '',
+      food: { name: 'サラダ', protein: 5, fat: 1, carbs: 10, calories: 70 },
+      quantity: 1,
+      linkBarcode: false,
+      record: false,
+    },
+  ];
+  expect(batchTotal(items, false)).toEqual({
+    protein: 50,
+    fat: 10,
+    carbs: 20,
+    calories: 370,
+  });
+});

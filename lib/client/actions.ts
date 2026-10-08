@@ -1,7 +1,7 @@
 'use client';
 
-import { buildFoodMatchKey, toBarcodeFood } from '@/lib/barcode';
-import { api, saveBarcodeMapping } from '@/lib/client/api';
+import { buildFoodMatchKey } from '@/lib/barcode';
+import { api } from '@/lib/client/api';
 import {
   getState,
   optimistic,
@@ -115,7 +115,7 @@ function withFoods(fn: (foods: FoodItem[]) => FoodItem[]) {
   });
 }
 
-export function addFood(item: FoodItem): Promise<boolean> {
+function addFood(item: FoodItem): Promise<boolean> {
   return optimistic({
     apply: withFoods((foods) => [...foods, item]),
     request: () => api.post('/api/foods', item),
@@ -124,22 +124,19 @@ export function addFood(item: FoodItem): Promise<boolean> {
 }
 
 /**
- * 記録した食品を次回から選べるよう残す。同じ内容が食品リストに無ければ追加し、
- * バーコードがあれば食品情報を紐付ける。保存しなかったものは undefined。
+ * 同じ店舗・グループ・栄養値の食品がリストに無ければ追加する。
  */
-export function rememberFood(food: FoodItemInput, barcode?: string) {
+export function rememberFood(food: FoodItemInput): Promise<boolean> {
   const matchKey = buildFoodMatchKey(food);
   const exists = getState().foods.some(
-    (saved) => buildFoodMatchKey(saved) === matchKey,
+    (saved) =>
+      buildFoodMatchKey(saved) === matchKey &&
+      saved.store === food.store &&
+      saved.storeGroup === food.storeGroup,
   );
-  return {
-    foodAdded: exists
-      ? undefined
-      : addFood({ ...food, id: crypto.randomUUID() }),
-    mappingSaved: barcode
-      ? saveBarcodeMapping([barcode], toBarcodeFood(food))
-      : undefined,
-  };
+  return exists
+    ? Promise.resolve(true)
+    : addFood({ ...food, id: crypto.randomUUID() });
 }
 
 export function updateFood(item: FoodItem): Promise<boolean> {

@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { LabeledInput } from '@/components/input/FormFields';
 
 const FACTORS = [0.5, 1, 1.5, 2] as const;
 
@@ -28,6 +29,18 @@ export function QuantitySelector({
           </Button>
         ))}
       </div>
+      <LabeledInput
+        label="数量を指定"
+        type="number"
+        inputMode="decimal"
+        min={0.5}
+        step={0.5}
+        value={value}
+        onChange={(event) => {
+          const quantity = event.target.valueAsNumber;
+          if (Number.isFinite(quantity) && quantity >= 0.5) onChange(quantity);
+        }}
+      />
     </div>
   );
 }

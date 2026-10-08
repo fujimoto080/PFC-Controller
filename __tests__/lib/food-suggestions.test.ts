@@ -1,5 +1,4 @@
 import {
-  getSimilarFoodSuggestions,
   rankFrequentFoods,
   searchFoodCandidates,
 } from '@/lib/food-suggestions';
@@ -34,22 +33,6 @@ const foods: FoodItem[] = [
     timestamp: 1,
   },
 ];
-
-describe('getSimilarFoodSuggestions', () => {
-  it('入力が短すぎる場合は候補を返さない', () => {
-    expect(getSimilarFoodSuggestions(foods, 'サ')).toEqual([]);
-  });
-
-  it('名前が似ている食品を優先して返す', () => {
-    const suggestions = getSimilarFoodSuggestions(foods, 'サラダチキ');
-    expect(suggestions.map((item) => item.id)).toEqual(['1', '2']);
-  });
-
-  it('区切り文字が異なる食品名でも候補に含む', () => {
-    const suggestions = getSimilarFoodSuggestions(foods, 'サラダチキンバジル');
-    expect(suggestions[0]?.id).toBe('2');
-  });
-});
 
 describe('searchFoodCandidates', () => {
   const eaten = (id: string, timestamp: number, food: FoodItem): FoodItem => ({

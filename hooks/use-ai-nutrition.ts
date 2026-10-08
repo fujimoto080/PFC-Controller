@@ -7,7 +7,7 @@ import {
   estimateNutritionFromImages,
 } from '@/lib/client/api';
 import { imageToDataUrl } from '@/lib/client/image';
-import type { BarcodeFood } from '@/lib/barcode';
+import { MAX_READING_IMAGES, type BarcodeFood } from '@/lib/barcode';
 
 /** 実行中の AI 入力の種類。 */
 type AiNutritionPending = 'text' | 'image' | null;
@@ -55,9 +55,12 @@ export function useAiNutrition(
   };
 
   /** 同じ商品を撮った写真（複数可）から推定する。 */
-  const estimateFromImages = (files: File[]) =>
+  const estimateFromImages = (files: File[], previousPhotos: string[] = []) =>
     run('image', async () => {
-      const photos = await Promise.all(files.map(imageToDataUrl));
+      const photos = [
+        ...previousPhotos,
+        ...(await Promise.all(files.map(imageToDataUrl))),
+      ].slice(0, MAX_READING_IMAGES);
       return { food: await estimateNutritionFromImages(photos), photos };
     });
 

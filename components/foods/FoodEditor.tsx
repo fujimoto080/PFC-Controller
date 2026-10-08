@@ -1,39 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Save, ScanBarcode, X } from 'lucide-react';
-import { BarcodeScanner } from '@/components/BarcodeScanner';
-import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
-import { NutritionPhotoButton } from '@/components/input/NutritionPhotoButton';
-import { StoreField } from '@/components/input/StoreField';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAiNutrition } from '@/hooks/use-ai-nutrition';
-import {
-  normalizeBarcodes,
-  toBarcodeFood,
-  type BarcodeFood,
-} from '@/lib/barcode';
-import { addFood, updateFood } from '@/lib/client/actions';
-import { saveBarcodeMapping } from '@/lib/client/api';
-import {
-  EMPTY_FORM_VALUES,
-  toFoodInput,
-  toFormValues,
-  type PfcFormValues,
-} from '@/lib/food-form';
-import { toast } from '@/lib/toast';
+import { FoodForm } from '@/components/input/FoodForm';
+import { RecordDrawer } from '@/components/record/RecordDrawer';
+import type { BarcodeFood } from '@/lib/barcode';
 import type { FoodItem } from '@/lib/types';
 
 interface FoodEditorProps {
-  /** 編集対象。null なら新規追加。 */
   food: FoodItem | null;
   initialBarcodes: string[];
-  storeOptions: string[];
-  groupOptions: string[];
   onBarcodesSaved: (food: BarcodeFood, barcodes: string[]) => void;
   onClose: () => void;
 }
@@ -41,139 +16,26 @@ interface FoodEditorProps {
 export function FoodEditor({
   food,
   initialBarcodes,
-  storeOptions,
-  groupOptions,
   onBarcodesSaved,
   onClose,
 }: FoodEditorProps) {
-  const [barcodeInput, setBarcodeInput] = useState(initialBarcodes.join(', '));
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const { register, handleSubmit, reset, getValues, control, setValue } =
-    useForm<PfcFormValues>({
-      defaultValues: food ? toFormValues(food) : EMPTY_FORM_VALUES,
-    });
-  // 読み取れなかった店名と、写真からは分からない店内グループは入力済みの値を残す
-  const ai = useAiNutrition((estimated) => {
-    const current = getValues();
-    reset({
-      ...toFormValues(estimated),
-      store: estimated.store ?? current.store,
-      storeGroup: current.storeGroup,
-    });
-  });
-
-  const onSubmit = async (values: PfcFormValues) => {
-    const input = toFoodInput(values, Date.now());
-    const saved = food
-      ? await updateFood({ ...food, ...input })
-      : await addFood({ id: crypto.randomUUID(), ...input });
-    if (!saved) return;
-    toast.success(food ? '食品を更新しました' : '食品を追加しました');
-
-    const barcodes = normalizeBarcodes(barcodeInput);
-    if (barcodes.length > 0) {
-      try {
-        const barcodeFood = toBarcodeFood(input);
-        await saveBarcodeMapping(barcodes, barcodeFood);
-        toast.success(`バーコード情報を${barcodes.length}件保存しました`);
-        onBarcodesSaved(barcodeFood, barcodes);
-      } catch (error) {
-        toast.fromError('バーコード情報の保存に失敗しました', error);
-      }
-    }
-    onClose();
-  };
-
+  const [timestamp] = useState(() => Date.now());
   return (
-    <Card>
-      <CardContent>
-        <h2 className="mb-4 text-lg font-semibold">
-          {food ? '食品を編集' : '新規食品を追加'}
-        </h2>
-        <form
-          onSubmit={(e) => {
-            void handleSubmit(onSubmit)(e);
-          }}
-          className="space-y-4"
-        >
-          <NutritionPhotoButton
-            onRead={ai.estimateFromImages}
-            disabled={ai.pending !== null}
-            reading={ai.pending === 'image'}
-          />
-          <LabeledInput
-            label="食品名"
-            {...register('name', { required: true })}
-            placeholder="例: ハンバーグ"
-          />
-          <PfcMacroInputs register={register} />
-          <StoreField
-            register={register}
-            control={control}
-            setValue={setValue}
-            options={storeOptions}
-          />
-          <LabeledInput
-            label="店内グループ (任意)"
-            {...register('storeGroup')}
-            options={groupOptions}
-            placeholder="例: おにぎり"
-          />
-          <div className="space-y-2">
-            <Label htmlFor="barcode">バーコード (任意・複数可)</Label>
-            <div className="flex gap-2">
-              <Input
-                id="barcode"
-                value={barcodeInput}
-                onChange={(event) => {
-                  setBarcodeInput(event.target.value);
-                }}
-                placeholder="例: 4901234567890"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsScannerOpen(true);
-                }}
-              >
-                <ScanBarcode className="mr-2 h-4 w-4" />
-                スキャン
-              </Button>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              カンマ・空白区切りで複数指定できます。
-            </p>
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={onClose}
-            >
-              <X className="mr-2 h-4 w-4" /> キャンセル
-            </Button>
-            <Button type="submit" className="flex-1">
-              <Save className="mr-2 h-4 w-4" /> 保存
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-
-      {isScannerOpen && (
-        <BarcodeScanner
-          onScanSuccess={(code) => {
-            setBarcodeInput(code);
-            setIsScannerOpen(false);
-            toast.success(`バーコードを読み取りました: ${code}`);
-          }}
-          onClose={() => {
-            setIsScannerOpen(false);
-          }}
-        />
-      )}
-    </Card>
+    <RecordDrawer
+      open
+      onClose={onClose}
+      title={food ? '食品を編集' : '食品を登録・記録'}
+    >
+      <FoodForm
+        initial={food ?? undefined}
+        foodId={food?.id}
+        initialTimestamp={timestamp}
+        initialBarcodes={initialBarcodes}
+        defaultRecord={false}
+        onBarcodesSaved={onBarcodesSaved}
+        onDone={onClose}
+        onCancel={onClose}
+      />
+    </RecordDrawer>
   );
 }

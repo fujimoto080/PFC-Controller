@@ -4,11 +4,14 @@ import { useState } from 'react';
 import { Check, Plus } from 'lucide-react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
-import { addFoodItem } from '@/lib/client/actions';
-import { toast } from '@/lib/toast';
+import {
+  FoodBatchFlow,
+  type FoodBatchView,
+} from '@/components/record/FoodBatchFlow';
+import { useScanBatch } from '@/hooks/use-scan-batch';
 import type { MealSuggestionOption } from '@/lib/types';
 
-/** 提案 1 案。食べたら「記録する」で全品を今の時刻で記録できる。 */
+/** 提案の全商品を共通の一括登録フローで確認・修正して保存する。 */
 export function SuggestionOptionCard({
   option,
 }: {
@@ -16,17 +19,22 @@ export function SuggestionOptionCard({
 }) {
   const [logged, setLogged] = useState(false);
 
-  const logAll = async () => {
-    const timestamp = Date.now();
-    const results = await Promise.all(
-      option.items.map((item) =>
-        addFoodItem({ ...item, store: option.store || undefined, timestamp }),
-      ),
-    );
-    if (results.every(Boolean)) {
-      setLogged(true);
-      toast.success(`${option.store}の${option.items.length}品を記録しました`);
-    }
+  const [view, setView] = useState<FoodBatchView>(null);
+  const batch = useScanBatch(
+    'pfc_suggestion:' +
+      option.store +
+      ':' +
+      option.items.map((item) => item.name).join('|'),
+  );
+  const open = () => {
+    if (batch.items.length === 0)
+      batch.addFoods(
+        option.items.map((item) => ({
+          ...item,
+          store: option.store || undefined,
+        })),
+      );
+    setView('review');
   };
 
   return (
@@ -57,7 +65,7 @@ export function SuggestionOptionCard({
           variant={logged ? 'ghost' : 'outline'}
           disabled={logged}
           onClick={() => {
-            void logAll();
+            open();
           }}
         >
           {logged ? <Check /> : <Plus />}
@@ -65,6 +73,14 @@ export function SuggestionOptionCard({
         </Button>
       </div>
       <p className="text-muted-foreground text-xs">{option.reason}</p>
+      <FoodBatchFlow
+        batch={batch}
+        view={view}
+        onViewChange={setView}
+        onSaved={() => {
+          setLogged(true);
+        }}
+      />
     </article>
   );
 }

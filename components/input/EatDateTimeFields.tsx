@@ -1,6 +1,6 @@
 'use client';
 
-import type { MouseEvent } from 'react';
+import { useId, type MouseEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { EatDateTime } from '@/hooks/use-eat-datetime';
@@ -23,13 +23,14 @@ const openNativePicker = (e: MouseEvent<HTMLInputElement>) => {
 
 /** 「食べた日付 / 時刻」の 2 列入力グリッド。useEatDateTime と組み合わせて使う。 */
 export function EatDateTimeFields({ value, onChange }: EatDateTimeFieldsProps) {
+  const inputId = useId();
   return (
     <div className="grid grid-cols-2 gap-4">
       {FIELDS.map(({ key, id, type, label }) => (
         <div key={key} className="space-y-2">
-          <Label htmlFor={id}>{label}</Label>
+          <Label htmlFor={`${inputId}-${id}`}>{label}</Label>
           <Input
-            id={id}
+            id={`${inputId}-${id}`}
             type={type}
             value={value[key]}
             onChange={(e) => {

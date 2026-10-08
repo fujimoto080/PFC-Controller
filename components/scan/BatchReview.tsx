@@ -1,12 +1,10 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useRef, useState } from 'react';
 import {
   Camera,
   Check,
   CircleAlert,
-  ImagePlus,
   Loader2,
   Minus,
   PenLine,
@@ -16,27 +14,17 @@ import {
 } from 'lucide-react';
 import { AiReadingLog } from '@/components/input/AiReadingLog';
 import { EatDateTimeFields } from '@/components/input/EatDateTimeFields';
-import { FoodNameField } from '@/components/input/FoodNameField';
 import { ImageFileInput } from '@/components/input/ImageFileInput';
-import { PfcMacroInputs } from '@/components/input/FormFields';
-import { StoreField } from '@/components/input/StoreField';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
-import { NutrientTiles } from '@/components/record/ConfirmFood';
+import { NutrientTiles } from '@/components/pfc/NutrientTiles';
+import { FoodForm } from '@/components/input/FoodForm';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { IconButton } from '@/components/ui/icon-button';
 import { Label } from '@/components/ui/label';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import type { ScanBatch } from '@/hooks/use-scan-batch';
-import { MAX_READING_IMAGES, toBarcodeFood } from '@/lib/barcode';
 import { imageToDataUrl } from '@/lib/client/image';
-import { useAppState } from '@/lib/client/store';
-import {
-  EMPTY_FORM_VALUES,
-  toFoodInput,
-  toFormValues,
-  type PfcFormValues,
-} from '@/lib/food-form';
 import { scalePFC } from '@/lib/pfc';
 import {
   batchTotal,
@@ -44,9 +32,8 @@ import {
   readyFoods,
   type BatchItem,
 } from '@/lib/scan-batch';
-import { collectStores } from '@/lib/store-sections';
+import { toJstTimestamp } from '@/lib/utils';
 import { toast } from '@/lib/toast';
-import { cn } from '@/lib/utils';
 
 interface BatchReviewProps {
   batch: ScanBatch;
@@ -57,8 +44,6 @@ interface BatchReviewProps {
 
 /** まとめて読み取った商品を確認・修正し、一括で記録（または食品リストに登録）する。 */
 export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
-  const { foods, logs } = useAppState();
-  const stores = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const eatAt = useEatDateTime();
   const [editingId, setEditingId] = useState<string | null>(null);
   // 成分表示は端末のカメラで撮る。撮った写真をどの商品に使い、前の写真に足すかを覚えておく
@@ -85,7 +70,11 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
 
   const readyCount = readyFoods(items).length;
   const pendingCount = items.filter((item) => item.status !== 'ready').length;
-  const total = batchTotal(items);
+  const total = batchTotal(items, record);
+  const hasRecords = readyFoods(items).some(
+    ({ item }) => item.record ?? record,
+  );
+  const editingItem = items.find((item) => item.id === editingId);
 
   if (items.length === 0) {
     return (
@@ -98,50 +87,58 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
     );
   }
 
+  if (editingItem) {
+    return (
+      <FoodForm
+        key={editingItem.id}
+        draftKey={`batch:${editingItem.id}`}
+        initial={editingItem.food}
+        photos={editingItem.photos}
+        initialTimestamp={editingItem.timestamp ?? eatAt.timestamp}
+        initialBarcodes={
+          editingItem.barcodes ??
+          (editingItem.barcode ? [editingItem.barcode] : [])
+        }
+        initialQuantity={editingItem.quantity}
+        defaultSaveFood={editingItem.saveFood ?? true}
+        defaultRecord={editingItem.record ?? record}
+        onSave={(entry) => {
+          batch.setRegistration(editingItem.id, entry);
+        }}
+        onDone={() => {
+          setEditingId(null);
+        }}
+        onCancel={() => {
+          setEditingId(null);
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      {record && <NutrientTiles pfc={total} />}
+    <fieldset disabled={batch.saving} className="min-w-0 space-y-4">
+      {hasRecords && <NutrientTiles pfc={total} />}
 
       <ul className="space-y-2">
-        {items.map((item) =>
-          editingId === item.id ? (
-            <li key={item.id}>
-              <ItemEditor
-                item={item}
-                stores={stores}
-                onSave={(values) => {
-                  batch.setFood(item.id, toBarcodeFood(toFoodInput(values, 0)));
-                  setEditingId(null);
-                }}
-                onCancel={() => {
-                  setEditingId(null);
-                }}
-                onTakePhoto={(append) => {
-                  setEditingId(null);
-                  takePhoto(item.id, append);
-                }}
-              />
-            </li>
-          ) : (
-            <ItemCard
-              key={item.id}
-              item={item}
-              showQuantity={record}
-              onEdit={() => {
-                setEditingId(item.id);
-              }}
-              onTakePhoto={() => {
-                takePhoto(item.id, false);
-              }}
-              onQuantityChange={(quantity) => {
-                batch.setQuantity(item.id, quantity);
-              }}
-              onRemove={() => {
-                batch.remove(item.id);
-              }}
-            />
-          ),
-        )}
+        {items.map((item) => (
+          <ItemCard
+            key={item.id}
+            item={item}
+            showQuantity={item.record ?? record}
+            onEdit={() => {
+              setEditingId(item.id);
+            }}
+            onTakePhoto={() => {
+              takePhoto(item.id, false);
+            }}
+            onQuantityChange={(quantity) => {
+              batch.setQuantity(item.id, quantity);
+            }}
+            onRemove={() => {
+              batch.remove(item.id);
+            }}
+          />
+        ))}
       </ul>
 
       <ScanMoreButton onScanMore={onScanMore} />
@@ -164,25 +161,26 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
             }}
           />
           <Label htmlFor="batch-record" className="flex-1">
-            食べた記録にも追加する
+            全商品を食べた記録にも追加する
           </Label>
         </div>
-        {record ? (
-          <EatDateTimeFields value={eatAt.value} onChange={eatAt.onChange} />
+        {hasRecords ? (
+          <EatDateTimeFields
+            value={eatAt.value}
+            onChange={(value) => {
+              eatAt.onChange(value);
+              batch.setTimestamp(toJstTimestamp(value.date, value.time));
+            }}
+          />
         ) : (
           <p className="text-muted-foreground text-xs">
-            食品リストへの登録とバーコードの紐付けだけを行います。
+            商品を開くと保存先や数量、日時を個別に指定できます。
           </p>
         )}
       </div>
 
-      {/* 修正中は記録できず、入力欄とキーボードの間に挟まって邪魔になるので画面下に固定しない */}
-      <div
-        className={cn(
-          'bg-background -mx-4 space-y-1.5 border-t px-4 pt-3 pb-1',
-          editingId === null && 'sticky bottom-0',
-        )}
-      >
+      {/* 編集時は共通フォームに切り替え、一覧では保存ボタンを下に固定する */}
+      <div className="bg-background sticky bottom-0 -mx-4 space-y-1.5 border-t px-4 pt-3 pb-1">
         {pendingCount > 0 && (
           <p className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
             <CircleAlert className="size-3.5" />
@@ -204,20 +202,19 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
           <Button
             size="lg"
             className="h-12 flex-1 text-base"
-            disabled={readyCount === 0 || editingId !== null}
+            disabled={batch.saving || readyCount === 0 || editingId !== null}
             onClick={() => {
-              batch.commit(eatAt.timestamp);
-              onDone();
+              void batch.commit(eatAt.timestamp).then((saved) => {
+                if (saved) onDone();
+              });
             }}
           >
             <Check />
-            {record
-              ? `${readyCount}品を記録`
-              : `${readyCount}品を食品リストに登録`}
+            {batch.saving ? '保存中…' : `${readyCount}品を保存`}
           </Button>
         </div>
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -361,90 +358,10 @@ function QuantityStepper({
 }
 
 function BarcodeLabel({ barcode }: { barcode: string }) {
+  if (!barcode) return null;
   return (
     <p className="text-muted-foreground flex items-center gap-1 font-mono text-xs">
       <ScanBarcode className="size-3" /> {barcode}
     </p>
-  );
-}
-
-/** 一覧の中でそのまま栄養値を入力・修正する。 */
-function ItemEditor({
-  item,
-  stores,
-  onSave,
-  onCancel,
-  onTakePhoto,
-}: {
-  item: BatchItem;
-  stores: string[];
-  onSave: (values: PfcFormValues) => void;
-  onCancel: () => void;
-  /** 写真を撮って読み取り直す。append なら前の写真と合わせて読み取る（編集中の内容は破棄する） */
-  onTakePhoto: (append: boolean) => void;
-}) {
-  const photoCount = item.photos?.length ?? 0;
-  const { register, handleSubmit, reset, control, setValue } =
-    useForm<PfcFormValues>({
-      defaultValues: item.food ? toFormValues(item.food) : EMPTY_FORM_VALUES,
-    });
-
-  return (
-    <form
-      className="border-primary space-y-3 rounded-lg border-2 p-3"
-      onSubmit={(e) => {
-        void handleSubmit(onSave)(e);
-      }}
-    >
-      <BarcodeLabel barcode={item.barcode} />
-      <div className="grid grid-cols-2 gap-2">
-        {photoCount > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={photoCount >= MAX_READING_IMAGES}
-            onClick={() => {
-              onTakePhoto(true);
-            }}
-          >
-            <ImagePlus /> 写真を足す（{photoCount}枚読み取り済み）
-          </Button>
-        )}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className={photoCount === 0 ? 'col-span-2' : undefined}
-          onClick={() => {
-            onTakePhoto(false);
-          }}
-        >
-          <Camera /> 成分表示を{item.food ? '撮り直す' : '撮影'}
-        </Button>
-      </div>
-      <FoodNameField
-        register={register}
-        control={control}
-        onSelect={(food) => {
-          reset(toFormValues(food));
-        }}
-      />
-      <PfcMacroInputs register={register} />
-      <StoreField
-        register={register}
-        control={control}
-        setValue={setValue}
-        options={stores}
-      />
-      <div className="flex gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel}>
-          キャンセル
-        </Button>
-        <Button type="submit" className="flex-1">
-          <Check /> 決定
-        </Button>
-      </div>
-    </form>
   );
 }
