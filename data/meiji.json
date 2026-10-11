@@ -267,10 +267,10 @@
       "4902705096707"
     ],
     "name": "明治北海道十勝ミルクきわだつヨーグルト 75g×4",
-    "calories": 71,
-    "protein": 2.5,
+    "calories": 70,
+    "protein": 2.6,
     "fat": 2.3,
-    "carbs": 10.1
+    "carbs": 9.7
   },
   {
     "id": "4902705097018",
@@ -494,19 +494,6 @@
     "carbs": 6.1
   },
   {
-    "id": "4902705127678",
-    "category": "yogurt",
-    "url": "https://www.meiji.co.jp/products/yogurt/4902705127678.html",
-    "jans": [
-      "4902705127678"
-    ],
-    "name": "明治北海道十勝ミルクきわだつヨーグルト メロン 70g×4",
-    "calories": 61,
-    "protein": 2.3,
-    "fat": 1.6,
-    "carbs": 9.4
-  },
-  {
     "id": "4902705128132",
     "category": "yogurt",
     "url": "https://www.meiji.co.jp/products/yogurt/4902705128132.html",
@@ -622,19 +609,6 @@
     "protein": 15,
     "fat": 0,
     "carbs": 7.7
-  },
-  {
-    "id": "4902705131224",
-    "category": "yogurt",
-    "url": "https://www.meiji.co.jp/products/yogurt/4902705131224.html",
-    "jans": [
-      "4902705131224"
-    ],
-    "name": "明治ブルガリアヨーグルト 果実の深み 赤葡萄&フルーツミックス 70g×4",
-    "calories": 57,
-    "protein": 3,
-    "fat": 1.2,
-    "carbs": 8.5
   },
   {
     "id": "4902705131231",
@@ -767,17 +741,43 @@
     "carbs": 15.8
   },
   {
-    "id": "4902705133105",
+    "id": "4902705133075",
     "category": "yogurt",
-    "url": "https://www.meiji.co.jp/products/yogurt/4902705133105.html",
+    "url": "https://www.meiji.co.jp/products/yogurt/4902705133075.html",
     "jans": [
-      "4902705133105"
+      "4902705133075"
     ],
-    "name": "明治ブルガリアヨーグルトあじわい芳醇 赤葡萄仕立てのりんごコンポート 110g",
-    "calories": 112,
+    "name": "明治ブルガリアヨーグルト 果実の深み ブラッドオレンジ&フルーツミックス 70g×4",
+    "calories": 56,
+    "protein": 3,
+    "fat": 1.2,
+    "carbs": 8.3
+  },
+  {
+    "id": "4902705133082",
+    "category": "yogurt",
+    "url": "https://www.meiji.co.jp/products/yogurt/4902705133082.html",
+    "jans": [
+      "4902705133082"
+    ],
+    "name": "明治北海道十勝ミルクきわだつヨーグルト キャラメル風味 70g×4",
+    "calories": 66,
+    "protein": 2.4,
+    "fat": 1.9,
+    "carbs": 9.9
+  },
+  {
+    "id": "4902705133143",
+    "category": "yogurt",
+    "url": "https://www.meiji.co.jp/products/yogurt/4902705133143.html",
+    "jans": [
+      "4902705133143"
+    ],
+    "name": "明治ブルガリアヨーグルトあじわい芳醇 洋梨コンフィチュール 110g",
+    "calories": 115,
     "protein": 4.5,
     "fat": 4.7,
-    "carbs": 13
+    "carbs": 13.6
   },
   {
     "id": "4902705133167",

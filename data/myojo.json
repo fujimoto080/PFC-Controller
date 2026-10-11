@@ -271,10 +271,7 @@
     "calories": 760,
     "protein": 12.3,
     "fat": 32,
-    "carbs": 105.8,
-    "jans": [
-      "4902881404570"
-    ]
+    "carbs": 105.8
   },
   {
     "id": "13204",
@@ -1311,6 +1308,59 @@
     "jans": [
       "4902881414302"
     ]
+  },
+  {
+    "id": "14026",
+    "name": "明星 チャルメラカップ ゆず塩味ラーメン",
+    "category": "regular",
+    "price": 272,
+    "url": "https://www.myojofoods.co.jp/products/items/14026/",
+    "calories": 306,
+    "protein": 7,
+    "fat": 12.6,
+    "carbs": 41.1,
+    "jans": [
+      "4902881415859"
+    ]
+  },
+  {
+    "id": "14027",
+    "name": "明星 チャルメラ ゆず塩味焼そば",
+    "category": "yakisoba",
+    "price": 272,
+    "url": "https://www.myojofoods.co.jp/products/items/14027/",
+    "calories": 483,
+    "protein": 9.6,
+    "fat": 21.3,
+    "carbs": 63.1,
+    "jans": [
+      "4902881415811"
+    ]
+  },
+  {
+    "id": "14028",
+    "name": "明星 NEO油そば 満鶏軒(マンチーケン)監修 フォアグラ風味鴨油そば",
+    "category": "regular",
+    "price": 387,
+    "url": "https://www.myojofoods.co.jp/products/items/14028/",
+    "calories": 734,
+    "protein": 11.2,
+    "fat": 34.2,
+    "carbs": 95.3,
+    "jans": [
+      "4902881459679"
+    ]
+  },
+  {
+    "id": "14036",
+    "name": "明星 一平ちゃん夜店の焼そば 大盛 今だけ!肉2倍量",
+    "category": "yakisoba_big",
+    "price": 322,
+    "url": "https://www.myojofoods.co.jp/products/items/14036/",
+    "calories": 771,
+    "protein": 12.9,
+    "fat": 32.7,
+    "carbs": 106.2
   },
   {
     "id": "8747",

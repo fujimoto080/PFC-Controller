@@ -572,6 +572,94 @@
     "carbs": 5.9
   },
   {
+    "id": "ネオカシミールカレー",
+    "name": "ネオカシミールカレー",
+    "category": "curry",
+    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/kashmir_hp_261006.html",
+    "price": 680,
+    "calories": 711,
+    "protein": 12.4,
+    "fat": 21.9,
+    "carbs": 111.6
+  },
+  {
+    "id": "ネオカシミールカレー 単品",
+    "name": "ネオカシミールカレー 単品",
+    "category": "curry",
+    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/kashmir_hp_261006.html",
+    "price": 560,
+    "calories": 322,
+    "protein": 5.4,
+    "fat": 19.9,
+    "carbs": 29.8
+  },
+  {
+    "id": "ネオカシミールカレギュウ",
+    "name": "ネオカシミールカレギュウ",
+    "category": "curry",
+    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/kashmir_gyuu_hp_261006.html",
+    "price": 950,
+    "calories": 945,
+    "protein": 20.1,
+    "fat": 42.9,
+    "carbs": 115.1
+  },
+  {
+    "id": "ネオカシミールごろごろチキンカレー",
+    "name": "ネオカシミールごろごろチキンカレー",
+    "category": "curry",
+    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/kashmir_chikin_hp_261006.html",
+    "price": 1050,
+    "calories": 1325,
+    "protein": 47.5,
+    "fat": 70.1,
+    "carbs": 115.3
+  },
+  {
+    "id": "ネオカシミールごろごろチキンカレー 単品",
+    "name": "ネオカシミールごろごろチキンカレー 単品",
+    "category": "curry",
+    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/kashmir_chikin_hp_261006.html",
+    "price": 930,
+    "calories": 945,
+    "protein": 40.6,
+    "fat": 68.2,
+    "carbs": 35.5
+  },
+  {
+    "id": "ネオカシミールチーズカレー",
+    "name": "ネオカシミールチーズカレー",
+    "category": "curry",
+    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/kashmir_cheese_hp_261006.html",
+    "price": 880,
+    "calories": 870,
+    "protein": 20.6,
+    "fat": 35.2,
+    "carbs": 113.1
+  },
+  {
+    "id": "ネオカシミールハンバーグカレー",
+    "name": "ネオカシミールハンバーグカレー",
+    "category": "curry",
+    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/kashmir_hb_hp_261006.html",
+    "price": 890,
+    "calories": 1007,
+    "protein": 25.4,
+    "fat": 43.7,
+    "carbs": 121.1
+  },
+  {
+    "id": "ネオカシミールロースかつカレー",
+    "name": "ネオカシミールロースかつカレー",
+    "category": "curry",
+    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/kashmir_rosu_hp_261006.html",
+    "price": 1070,
+    "calories": 1153,
+    "protein": 31.3,
+    "fat": 52.2,
+    "carbs": 135.5
+  },
+  {
     "id": "ネギたっぷり旨辛ネギたま牛めし あたま大盛",
     "name": "ネギたっぷり旨辛ネギたま牛めし あたま大盛",
     "category": "gyumeshi",
@@ -702,61 +790,6 @@
     "protein": 14.8,
     "fat": 28.5,
     "carbs": 19.6
-  },
-  {
-    "id": "ほうれん草とカッテージチーズのカレー",
-    "name": "ほうれん草とカッテージチーズのカレー",
-    "category": "curry",
-    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/palak_hp_260922.html",
-    "price": 780,
-    "calories": 694,
-    "protein": 13.6,
-    "fat": 23.1,
-    "carbs": 103.8
-  },
-  {
-    "id": "ほうれん草とカッテージチーズのカレー 単品",
-    "name": "ほうれん草とカッテージチーズのカレー 単品",
-    "category": "curry",
-    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/palak_hp_260922.html",
-    "price": 660,
-    "calories": 306,
-    "protein": 6.6,
-    "fat": 21.1,
-    "carbs": 22
-  },
-  {
-    "id": "ほうれん草とカッテージチーズのカレギュウ",
-    "name": "ほうれん草とカッテージチーズのカレギュウ",
-    "category": "curry",
-    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/palak_gyu_hp_260922.html",
-    "price": 1050,
-    "calories": 994,
-    "protein": 31,
-    "fat": 47.2,
-    "carbs": 103.9
-  },
-  {
-    "id": "ほうれん草とカッテージチーズのチキンカレー",
-    "name": "ほうれん草とカッテージチーズのチキンカレー",
-    "category": "curry",
-    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/palak_chikin_hp_260922.html",
-    "price": 960,
-    "calories": 928,
-    "protein": 21.3,
-    "fat": 44.1,
-    "carbs": 107.3
-  },
-  {
-    "id": "ほうれん草とカッテージチーズのロースかつカレー",
-    "name": "ほうれん草とカッテージチーズのロースかつカレー",
-    "category": "curry",
-    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/curry/palak_rosu_hp_260922.html",
-    "price": 1170,
-    "calories": 1131,
-    "protein": 32.5,
-    "fat": 53.4,
-    "carbs": 126.5
   },
   {
     "id": "ポテサラ",
@@ -1208,39 +1241,6 @@
     "protein": 5.7,
     "fat": 3.8,
     "carbs": 5.5
-  },
-  {
-    "id": "豚と茄子の辛味噌炒め定食",
-    "name": "豚と茄子の辛味噌炒め定食",
-    "category": "teishoku",
-    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/teishoku/tei_karamiso_hp_260908.html",
-    "price": 880,
-    "calories": 906,
-    "protein": 27.4,
-    "fat": 39.3,
-    "carbs": 109.6
-  },
-  {
-    "id": "豚と茄子の辛味噌炒め定食 ダブル",
-    "name": "豚と茄子の辛味噌炒め定食 ダブル",
-    "category": "teishoku",
-    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/teishoku/tei_karamiso_hp_260908.html",
-    "price": 1370,
-    "calories": 1409,
-    "protein": 46.7,
-    "fat": 76.5,
-    "carbs": 134.2
-  },
-  {
-    "id": "豚と茄子の辛味噌炒め定食 単品",
-    "name": "豚と茄子の辛味噌炒め定食 単品",
-    "category": "teishoku",
-    "url": "https://www.matsuyafoods.co.jp/matsuya/menu/teishoku/tei_karamiso_hp_260908.html",
-    "price": 680,
-    "calories": 502,
-    "protein": 19.3,
-    "fat": 37.2,
-    "carbs": 24.7
   },
   {
     "id": "豚ロースネギ塩丼 並盛",

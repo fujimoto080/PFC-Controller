@@ -30,6 +30,16 @@
     "carbs": 9.1
   },
   {
+    "id": "bio-drink-apple",
+    "name": "ダノン ビオ 脂肪燃焼ヨーグルトドリンク アップル風味",
+    "category": "drink",
+    "url": "https://www.danone.co.jp/bio/lineup/drink-apple/",
+    "calories": 27,
+    "protein": 3.1,
+    "fat": 0,
+    "carbs": 9
+  },
+  {
     "id": "bio-drink-blueberry",
     "name": "ダノン ビオ 脂肪燃焼ヨーグルトドリンク ブルーベリー風味",
     "category": "drink",

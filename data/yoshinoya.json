@@ -170,6 +170,28 @@
     "carbs": 111.3
   },
   {
+    "id": "さんま(単品)",
+    "name": "さんま(単品)",
+    "category": "sidemenu",
+    "price": 327,
+    "url": "https://www.yoshinoya.com/menu/gentei/sanma/",
+    "calories": 127,
+    "protein": 15.7,
+    "fat": 6.8,
+    "carbs": 1.1
+  },
+  {
+    "id": "さんま定食",
+    "name": "さんま定食",
+    "category": "set",
+    "price": 789,
+    "url": "https://www.yoshinoya.com/menu/gentei/sanma-tei/",
+    "calories": 507,
+    "protein": 23.1,
+    "fat": 8.5,
+    "carbs": 87.7
+  },
+  {
     "id": "しじみ汁",
     "name": "しじみ汁",
     "category": "sidemenu",
@@ -518,6 +540,17 @@
     "protein": 26.6,
     "fat": 33.1,
     "carbs": 88.2
+  },
+  {
+    "id": "牛さんま定食",
+    "name": "牛さんま定食",
+    "category": "set",
+    "price": 899,
+    "url": "https://www.yoshinoya.com/menu/gentei/gyusanma-tei/",
+    "calories": 680,
+    "protein": 31.6,
+    "fat": 23.3,
+    "carbs": 89
   },
   {
     "id": "牛丼 アタマの大盛",

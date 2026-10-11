@@ -298,20 +298,6 @@
     ]
   },
   {
-    "id": "205910",
-    "name": "黒い豚カレーうどん",
-    "category": "instant-cupnoodles",
-    "price": 268,
-    "url": "https://www.maruchan.co.jp/products/search/kuroibutakareudon.html",
-    "calories": 387,
-    "protein": 8,
-    "fat": 16.4,
-    "carbs": 51.8,
-    "jans": [
-      "4901990325189"
-    ]
-  },
-  {
     "id": "205924",
     "name": "だし香るまめ天ぷらうどん",
     "category": "instant-cupnoodles",
@@ -1137,6 +1123,48 @@
     "carbs": 65.9,
     "jans": [
       "4901990384698"
+    ]
+  },
+  {
+    "id": "206928",
+    "name": "黒い豚カレーうどん",
+    "category": "instant-cupnoodles",
+    "price": 268,
+    "url": "https://www.maruchan.co.jp/products/search/kuroibutakareudon.html",
+    "calories": 385,
+    "protein": 8.4,
+    "fat": 15.1,
+    "carbs": 53.9,
+    "jans": [
+      "4901990325189"
+    ]
+  },
+  {
+    "id": "206929",
+    "name": "汁なし黒い豚カレーうどん",
+    "category": "instant-cupnoodles",
+    "price": 268,
+    "url": "https://www.maruchan.co.jp/products/search/206929.html",
+    "calories": 377,
+    "protein": 7.3,
+    "fat": 17.4,
+    "carbs": 47.8,
+    "jans": [
+      "4901990384735"
+    ]
+  },
+  {
+    "id": "206930",
+    "name": "辛い豚汁うどん",
+    "category": "instant-cupnoodles",
+    "price": 268,
+    "url": "https://www.maruchan.co.jp/products/search/206930.html",
+    "calories": 399,
+    "protein": 9.2,
+    "fat": 19.1,
+    "carbs": 47.5,
+    "jans": [
+      "4901990384759"
     ]
   },
   {

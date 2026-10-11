@@ -1,5 +1,25 @@
 [
   {
+    "id": "10102",
+    "name": "ドラゴンフルーツボウル&ヨーグルト Powered by森永アロエ",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/powered_by_morinagaaloe/10102.html",
+    "calories": 79,
+    "protein": 4.1,
+    "fat": 0,
+    "carbs": 14.8
+  },
+  {
+    "id": "10107",
+    "name": "おいしいカルシウムヨーグルト 80g",
+    "category": "yoghurt",
+    "url": "https://www.morinagamilk.co.jp/products/yoghurt/oishi_calcium/10107.html",
+    "calories": 63,
+    "protein": 3.9,
+    "fat": 0.2,
+    "carbs": 11.4
+  },
+  {
     "id": "1015",
     "name": "ギリシャヨーグルト パルテノ プレーン砂糖不使用",
     "category": "yoghurt",
@@ -238,16 +258,6 @@
     "protein": 3.4,
     "fat": 0.2,
     "carbs": 12.1
-  },
-  {
-    "id": "9699",
-    "name": "森永アロエヨーグルト 脂肪ゼロ",
-    "category": "yoghurt",
-    "url": "https://www.morinagamilk.co.jp/products/yoghurt/aloe_zero/9699.html",
-    "calories": 64,
-    "protein": 3.6,
-    "fat": 0,
-    "carbs": 11.4
   },
   {
     "id": "9766",

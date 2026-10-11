@@ -735,5 +735,16 @@
     "protein": 15.3,
     "fat": 16.6,
     "carbs": 14.7
+  },
+  {
+    "id": "710169",
+    "name": "【テイクアウト限定】<冷凍>香る醤油のローストチキン 〜鹿児島県産 若鶏〜",
+    "category": "7",
+    "price": 690,
+    "url": "https://www.mos.jp/menu/detail/?menu_id=710169&c_id=7",
+    "calories": 208,
+    "protein": 20.3,
+    "fat": 12.9,
+    "carbs": 2.6
   }
 ]
