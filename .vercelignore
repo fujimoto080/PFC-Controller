@@ -1,0 +1,24 @@
+# 本番のビルド・実行に不要なファイルはアップロードしない。
+.claude/
+.github/
+.pnpm-store/
+.swc/
+build/
+.env*
+*.keystore
+*.jks
+__tests__/
+e2e/
+docs/
+twa/
+coverage/
+test-results/
+playwright-report/
+.lighthouse/
+*.md
+jest.config.ts
+jest.setup.ts
+playwright.config.ts
+knip.json
+scripts/lighthouse.mjs
+scripts/e2e-session-cookie.ts

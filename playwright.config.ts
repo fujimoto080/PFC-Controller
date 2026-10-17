@@ -23,7 +23,10 @@ export default defineConfig({
   projects: [{ name: 'mobile', use: { ...devices['Pixel 7'] } }],
   webServer: {
     // 本番と同じ挙動で確かめるため、開発サーバーではなくビルド成果物で動かす
-    command: `pnpm build && pnpm start --port ${E2E_PORT}`,
+    command:
+      process.env.E2E_PREBUILT === '1'
+        ? `pnpm start --port ${E2E_PORT}`
+        : `pnpm build && pnpm start --port ${E2E_PORT}`,
     url: E2E_BASE_URL,
     timeout: 300_000,
     // .env.local より優先されるよう、E2E 用の DB と認証設定をプロセス環境変数で渡す

@@ -3,8 +3,18 @@ name: CI
 on:
   push:
     branches: ['main']
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'twa/**'
+      - '.claude/**'
   pull_request:
     branches: ['main']
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'twa/**'
+      - '.claude/**'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -27,7 +37,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Format
         run: pnpm format:check
@@ -44,7 +54,57 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+  # 実行用ファイルだけを共有し、キャッシュや開発サーバーの成果物は転送しない。
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Cache Next.js build
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Build
+        run: pnpm build
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:54329/pfc_e2e
+          AUTH_SECRET: e2e-auth-secret-not-for-production
+          AUTH_URL: http://localhost:3210
+          AUTH_TRUST_HOST: 'true'
+          AUTH_GOOGLE_ID: e2e
+          AUTH_GOOGLE_SECRET: e2e
+
+      - name: Pack build
+        run: tar --exclude=.next/cache --exclude=.next/dev -cf /tmp/next-build.tar .next
+
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: next-build
+          path: /tmp/next-build.tar
+          retention-days: 1
+          compression-level: 1
+          if-no-files-found: error
+
   e2e:
+    needs: build
     runs-on: ubuntu-latest
 
     services:
@@ -74,7 +134,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       # ブラウザ本体は Playwright のバージョンごとにキャッシュし、OS 依存ライブラリだけ毎回入れる
       - name: Cache Playwright browser
@@ -92,18 +152,19 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium-headless-shell
 
-      # Turbopack のビルドキャッシュを引き継いで next build を速くする
-      - name: Cache Next.js build
-        uses: actions/cache@v6
+      - name: Download build
+        uses: actions/download-artifact@v8
         with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+          name: next-build
+          path: /tmp
 
-      # E2E はアプリをビルドして起動するため、ビルドの確認も兼ねる
-      - name: Build & E2E
+      - name: Extract build
+        run: tar -xf /tmp/next-build.tar
+
+      - name: E2E
         run: pnpm test:e2e
+        env:
+          E2E_PREBUILT: '1'
 
       - name: Upload Playwright traces
         if: failure()
@@ -114,6 +175,7 @@ jobs:
 
   # 本番ビルドを起動してログイン済みの主要画面を Lighthouse で計測し、Performance スコアの下限を割ったら失敗させる
   lighthouse:
+    needs: build
     runs-on: ubuntu-latest
 
     services:
@@ -152,21 +214,19 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Cache Next.js build
-        uses: actions/cache@v6
+      - name: Download build
+        uses: actions/download-artifact@v8
         with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+          name: next-build
+          path: /tmp
+
+      - name: Extract build
+        run: tar -xf /tmp/next-build.tar
 
       - name: Migrate
         run: pnpm migrate
-
-      - name: Build
-        run: pnpm build
 
       - name: Start app
         run: |

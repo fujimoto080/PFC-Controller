@@ -48,7 +48,7 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
 スキーマは `scripts/migrate.mjs` で管理します。内容は冪等 (`CREATE TABLE IF NOT EXISTS` + `CREATE EXTENSION IF NOT EXISTS pgcrypto`)。
 
 - **ローカル**: `pnpm migrate`
-- **Vercel**: デプロイ毎に `pnpm vercel-build` が走る（Vercel は `scripts.vercel-build` を自動検出）。マイグレーション → Next.js ビルドの順に実行される。Vercel のビルド環境から `DATABASE_URL` にネットワーク到達できる必要があります。
+- **Vercel**: デプロイ毎に `pnpm vercel-build` が走る（Vercel は `scripts.vercel-build` を自動検出）。マイグレーションと Next.js ビルドを並列実行し、両方の成功を待ちます。Vercel のビルド環境から `DATABASE_URL` にネットワーク到達できる必要があります。依存関係はキャッシュを優先してインストールし、`.vercelignore` でテストや Android 用ファイルなどのアップロードを省きます。
 
 生成されるテーブル:
 
@@ -156,6 +156,8 @@ docker run -d --name pfc-e2e-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_
 pnpm exec playwright install chromium
 pnpm test:e2e
 ```
+
+CI では `build` ジョブが本番ビルドを一度だけ作り、E2E と Lighthouse が同じ成果物を使って並列に検証します。`E2E_PREBUILT=1 pnpm test:e2e` はビルド済みの `.next` を使います（ソース変更後は先にビルドし直してください）。ドキュメント・Android 用ファイルだけの変更では CI を省略します。単体テストの並列数はローカルで4、CIで2に制限しています。
 
 ## パフォーマンス計測
 

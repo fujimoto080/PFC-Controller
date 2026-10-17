@@ -26,16 +26,16 @@ test('食品リストに登録したお気に入りを共通フォームで確�
   await page.getByRole('link', { name: '今日' }).click();
   await page.getByRole('button', { name: /プロテインバー\s*180kcal/ }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(
-    dayLogList(page).getByRole('button', { name: /プロテインバー/ }),
-  ).toContainText('180');
+  // 食品の新規保存時と、お気に入りからの追加時の2件が記録される。
+  const records = dayLogList(page).getByRole('button', {
+    name: /プロテインバー/,
+  });
+  await expect(records).toHaveText([/180/, /180/]);
 
   // お気に入りと記録がサーバーに保存されていることをリロード後の表示で確かめる
   await page.reload();
   await expect(
     page.getByRole('button', { name: /プロテインバー\s*180kcal/ }),
   ).toBeVisible();
-  await expect(
-    dayLogList(page).getByRole('button', { name: /プロテインバー/ }),
-  ).toBeVisible();
+  await expect(records).toHaveText([/180/, /180/]);
 });
