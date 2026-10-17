@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { isValidBarcode } from '@/lib/barcode-validation';
+import { createBarcodeStability } from '@/lib/barcode-stability';
 import { setContinuousFocus } from '@/lib/client/camera';
 import { vibrate } from '@/lib/client/device';
 import { toast } from '@/lib/toast';
@@ -19,8 +20,6 @@ const SUPPORTED_FORMATS: BarcodeFormat[] = [
   'qr_code',
 ];
 
-// 誤読を避けるため、同じ値を指定回数読み取れたら確定する
-const REQUIRED_SCANS = 2;
 const FEEDBACK_MS = 300;
 // 連続読み取りで、かざしたままの同じ商品を何度も数えないための間隔
 const SAME_CODE_COOLDOWN_MS = 2500;
@@ -75,7 +74,7 @@ export function useBarcodeCamera(
     const video = videoRef.current;
     if (!video) return;
     const { continuous = false } = optionsRef.current;
-    const scanCounts = new Map<string, number>();
+    const isStable = createBarcodeStability();
     const lastScannedAt = new Map<string, number>();
     // スキャン完了・失敗・アンマウントのいずれかで abort し、検出ループを止める
     const controller = new AbortController();
@@ -106,11 +105,6 @@ export function useBarcodeCamera(
         showFeedback('error');
         return;
       }
-      const count = (scanCounts.get(rawValue) ?? 0) + 1;
-      scanCounts.set(rawValue, count);
-      if (count < REQUIRED_SCANS) return;
-
-      scanCounts.clear();
       lastScannedAt.set(rawValue, now);
       if (!continuous) {
         controller.abort();
@@ -144,15 +138,54 @@ export function useBarcodeCamera(
       if (!canDetect) return;
 
       const detector = new BarcodeDetector({ formats: SUPPORTED_FORMATS });
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('読み取り用画像を作成できません');
       // 検出の完了を待ってから次のフレームを渡し、処理が詰まらないようにする
       for (;;) {
-        const barcodes = await detector.detect(video);
-        for (const barcode of barcodes) {
-          signal.throwIfAborted();
+        await nextVideoFrame(video);
+        signal.throwIfAborted();
+        // object-cover による切り落としを考慮し、白い枠の内側だけを検出する。
+        const scale = Math.max(
+          video.clientWidth / video.videoWidth,
+          video.clientHeight / video.videoHeight,
+        );
+        const visibleWidth = video.clientWidth / scale;
+        const visibleHeight = video.clientHeight / scale;
+        const width = visibleWidth * 0.8;
+        const height = visibleHeight / 3;
+        canvas.width = Math.max(1, Math.round(width));
+        canvas.height = Math.max(1, Math.round(height));
+        context.drawImage(
+          video,
+          (video.videoWidth - width) / 2,
+          (video.videoHeight - height) / 2,
+          width,
+          height,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
+        const barcodes = await detector.detect(canvas);
+        signal.throwIfAborted();
+        // 複数候補や検証失敗を挟んだ一致は採用しない。
+        const [barcode] = barcodes;
+        const valid =
+          barcodes.length === 1 &&
+          barcode !== undefined &&
+          isValidBarcode(barcode.rawValue, barcode.format);
+        if (barcode && !valid) showFeedback('error');
+        if (
+          isStable(
+            valid ? `${barcode.format}:${barcode.rawValue}` : null,
+            Date.now(),
+          ) &&
+          barcode
+        ) {
           onDetected(barcode);
         }
         signal.throwIfAborted();
-        await nextVideoFrame(video);
       }
     };
 

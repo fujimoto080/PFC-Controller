@@ -65,8 +65,8 @@ export function BatchCamera({ batch, onDone, onClose }: BatchCameraProps) {
           muted
           playsInline
         />
-        {/* バーコードを狙いやすいよう出す目安の枠。検出は画面全体から行う */}
-        <div className="pointer-events-none absolute top-1/2 left-1/2 h-[22%] w-4/5 -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 border-white/80" />
+        {/* 枠内だけをバーコードの検出対象にする */}
+        <div className="pointer-events-none absolute top-1/2 left-1/2 h-1/3 w-4/5 -translate-x-1/2 -translate-y-1/2 rounded-xl border-2 border-white/80" />
         <CameraControls track={track} videoRef={videoRef} />
       </div>
 
