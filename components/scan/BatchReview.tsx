@@ -19,9 +19,7 @@ import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { NutrientTiles } from '@/components/pfc/NutrientTiles';
 import { FoodForm } from '@/components/input/FoodForm';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { IconButton } from '@/components/ui/icon-button';
-import { Label } from '@/components/ui/label';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import type { ScanBatch } from '@/hooks/use-scan-batch';
 import { imageToDataUrl } from '@/lib/client/image';
@@ -42,7 +40,7 @@ interface BatchReviewProps {
   onDone: () => void;
 }
 
-/** まとめて読み取った商品を確認・修正し、一括で記録（または食品リストに登録）する。 */
+/** まとめて読み取った商品を確認・修正し、食品リストと食事記録に一括保存する。 */
 export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
   const eatAt = useEatDateTime();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,14 +64,11 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
       toast.fromError('画像の読み込みに失敗しました', error);
     }
   };
-  const { items, record } = batch;
+  const { items } = batch;
 
   const readyCount = readyFoods(items).length;
   const pendingCount = items.filter((item) => item.status !== 'ready').length;
-  const total = batchTotal(items, record);
-  const hasRecords = readyFoods(items).some(
-    ({ item }) => item.record ?? record,
-  );
+  const total = batchTotal(items);
   const editingItem = items.find((item) => item.id === editingId);
 
   if (items.length === 0) {
@@ -100,8 +95,6 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
           (editingItem.barcode ? [editingItem.barcode] : [])
         }
         initialQuantity={editingItem.quantity}
-        defaultSaveFood={editingItem.saveFood ?? true}
-        defaultRecord={editingItem.record ?? record}
         onSave={(entry) => {
           batch.setRegistration(editingItem.id, entry);
         }}
@@ -117,14 +110,13 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
 
   return (
     <fieldset disabled={batch.saving} className="min-w-0 space-y-4">
-      {hasRecords && <NutrientTiles pfc={total} />}
+      <NutrientTiles pfc={total} />
 
       <ul className="space-y-2">
         {items.map((item) => (
           <ItemCard
             key={item.id}
             item={item}
-            showQuantity={item.record ?? record}
             onEdit={() => {
               setEditingId(item.id);
             }}
@@ -152,31 +144,13 @@ export function BatchReview({ batch, onScanMore, onDone }: BatchReviewProps) {
       />
 
       <div className="bg-muted/50 space-y-3 rounded-lg p-3">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="batch-record"
-            checked={record}
-            onCheckedChange={(checked) => {
-              batch.setRecord(checked === true);
-            }}
-          />
-          <Label htmlFor="batch-record" className="flex-1">
-            全商品を食べた記録にも追加する
-          </Label>
-        </div>
-        {hasRecords ? (
-          <EatDateTimeFields
-            value={eatAt.value}
-            onChange={(value) => {
-              eatAt.onChange(value);
-              batch.setTimestamp(toJstTimestamp(value.date, value.time));
-            }}
-          />
-        ) : (
-          <p className="text-muted-foreground text-xs">
-            商品を開くと保存先や数量、日時を個別に指定できます。
-          </p>
-        )}
+        <EatDateTimeFields
+          value={eatAt.value}
+          onChange={(value) => {
+            eatAt.onChange(value);
+            batch.setTimestamp(toJstTimestamp(value.date, value.time));
+          }}
+        />
       </div>
 
       {/* 編集時は共通フォームに切り替え、一覧では保存ボタンを下に固定する */}
@@ -228,14 +202,12 @@ function ScanMoreButton({ onScanMore }: { onScanMore: () => void }) {
 
 function ItemCard({
   item,
-  showQuantity,
   onEdit,
   onTakePhoto,
   onQuantityChange,
   onRemove,
 }: {
   item: BatchItem;
-  showQuantity: boolean;
   onEdit: () => void;
   onTakePhoto: () => void;
   onQuantityChange: (quantity: number) => void;
@@ -307,14 +279,9 @@ function ItemCard({
           <span className="line-clamp-2">{food.name}</span>
           <PenLine className="text-muted-foreground size-3 shrink-0" />
         </p>
-        <PfcMacroLine
-          food={showQuantity ? scalePFC(food, item.quantity) : food}
-          className="mt-0.5"
-        />
+        <PfcMacroLine food={scalePFC(food, item.quantity)} className="mt-0.5" />
       </button>
-      {showQuantity && (
-        <QuantityStepper value={item.quantity} onChange={onQuantityChange} />
-      )}
+      <QuantityStepper value={item.quantity} onChange={onQuantityChange} />
       {removeButton}
     </li>
   );

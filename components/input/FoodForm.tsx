@@ -15,8 +15,6 @@ import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { useFormDraft } from '@/hooks/use-form-draft';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { normalizeBarcodes } from '@/lib/barcode';
 import { fetchBarcodeFood } from '@/lib/client/api';
 import {
@@ -43,8 +41,6 @@ interface FoodFormDraft {
   aiInputText: string;
   quantity: number;
   barcodes: string;
-  saveFood: boolean;
-  record: boolean;
   eatAt: { date: string; time: string };
 }
 
@@ -57,8 +53,6 @@ interface FoodFormProps {
   /** 追加・更新するバーコード。保存先に関わらず1個分の栄養値を紐付ける。 */
   initialBarcodes?: string[];
   initialQuantity?: number;
-  defaultSaveFood?: boolean;
-  defaultRecord?: boolean;
   foodId?: string;
   logId?: string;
   draftKey?: string;
@@ -69,7 +63,7 @@ interface FoodFormProps {
 }
 
 /**
- * 全入口で使う食品の登録・編集フォーム。写真と文章からの AI 入力、商品名・バーコード検索、保存先指定をまとめる。
+ * 全入口で使う食品の登録・編集フォーム。写真と文章からの AI 入力、商品名・バーコード検索をまとめる。
  * 入力途中の内容は対象ごとの下書きに保持し、一括登録では一覧への反映まで行う。
  */
 export function FoodForm({
@@ -78,8 +72,6 @@ export function FoodForm({
   initialTimestamp,
   initialBarcodes = [],
   initialQuantity = 1,
-  defaultSaveFood = true,
-  defaultRecord = true,
   foodId,
   logId,
   draftKey,
@@ -93,8 +85,6 @@ export function FoodForm({
   const groups = useMemo(() => collectStoreGroups(foods), [foods]);
   const [barcodes, setBarcodes] = useState(initialBarcodes.join(', '));
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [saveFood, setSaveFood] = useState(defaultSaveFood);
-  const [record, setRecord] = useState(defaultRecord);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [lookingUp, setLookingUp] = useState(false);
@@ -129,11 +119,9 @@ export function FoodForm({
       aiInputText: ai.text,
       quantity: factor,
       barcodes,
-      saveFood,
-      record,
       eatAt: eatAt.value,
     }),
-    [formValues, ai.text, factor, barcodes, saveFood, record, eatAt.value],
+    [formValues, ai.text, factor, barcodes, eatAt.value],
   );
   const applyDraft = useCallback(
     (saved: FoodFormDraft) => {
@@ -141,14 +129,12 @@ export function FoodForm({
       setAiText(saved.aiInputText);
       setFactor(saved.quantity);
       setBarcodes(saved.barcodes);
-      setSaveFood(saved.saveFood);
-      setRecord(saved.record);
       setEatAt(saved.eatAt);
     },
     [reset, setAiText, setEatAt],
   );
   const clearDraft = useFormDraft(
-    `${FORM_DRAFT_STORAGE_KEY}:v2:${draftKey ?? foodId ?? logId ?? initial?.name ?? (defaultRecord ? 'new-record' : 'new-food')}`,
+    `${FORM_DRAFT_STORAGE_KEY}:v3:${draftKey ?? foodId ?? logId ?? initial?.name ?? 'new'}`,
     draft,
     applyDraft,
     true,
@@ -161,8 +147,6 @@ export function FoodForm({
     setBarcodes('');
     setPhotos(undefined);
     setPhotoVersion((version) => version + 1);
-    setSaveFood(defaultSaveFood);
-    setRecord(defaultRecord);
     clearDraft();
   };
 
@@ -172,16 +156,10 @@ export function FoodForm({
       toast.info('日付と時刻を入力してください');
       return;
     }
-    if (!saveFood && !record && normalizeBarcodes(barcodes).length === 0) {
-      toast.info('保存先を選んでください');
-      return;
-    }
     const entry: FoodRegistration = {
       food: toFoodInput(values, eatAt.timestamp),
       quantity: factor,
       barcodes: normalizeBarcodes(barcodes),
-      saveFood,
-      record,
       photos,
     };
     if (onSave) {
@@ -286,26 +264,6 @@ export function FoodForm({
           >
             {lookingUp ? '商品を照会中…' : '最後のバーコードから商品を検索'}
           </Button>
-        </div>
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Checkbox
-              checked={saveFood}
-              onCheckedChange={(checked) => {
-                setSaveFood(checked === true);
-              }}
-            />
-            {foodId ? '食品リストを更新する' : '食品リストに登録する'}
-          </Label>
-          <Label className="flex items-center gap-2">
-            <Checkbox
-              checked={record}
-              onCheckedChange={(checked) => {
-                setRecord(checked === true);
-              }}
-            />
-            {logId ? '食事記録を更新する' : '食べた記録にも追加する'}
-          </Label>
         </div>
         <EatDateTimeFields value={eatAt.value} onChange={eatAt.onChange} />
         <div className="flex gap-2">

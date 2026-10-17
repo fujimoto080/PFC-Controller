@@ -26,7 +26,6 @@ const DRAFT_STORAGE_KEY = 'pfc_scan_batch';
 
 interface ScanBatchDraft {
   items: BatchItem[];
-  record: boolean;
 }
 
 const newId = () => crypto.randomUUID();
@@ -34,8 +33,6 @@ const newId = () => crypto.randomUUID();
 /** まとめてスキャンした商品の一覧と、照会・写真読み取り・一括保存の操作。 */
 export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
   const [items, setItems] = useState<BatchItem[]>([]);
-  /** true なら食べた記録にも追加する。false なら食品リストへの登録だけ */
-  const [record, setRecordState] = useState(true);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   // 連続スキャンで更新が重なっても最新の一覧を元に計算するため ref にも持つ
@@ -46,13 +43,12 @@ export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
   }, []);
 
   const draft = useMemo<ScanBatchDraft>(
-    () => ({ items: items.map(({ photos: _, ...item }) => item), record }),
-    [items, record],
+    () => ({ items: items.map(({ photos: _, ...item }) => item) }),
+    [items],
   );
   const applyDraft = useCallback(
     (saved: ScanBatchDraft) => {
       update(() => restoreItems(saved.items));
-      setRecordState(saved.record);
     },
     [update],
   );
@@ -134,16 +130,9 @@ export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
       quantity: entry.quantity,
       barcodes: entry.barcodes,
       timestamp: entry.food.timestamp,
-      saveFood: entry.saveFood,
-      record: entry.record,
       photos: entry.photos,
       linkBarcode: true,
     });
-  };
-
-  const setRecord = (value: boolean) => {
-    setRecordState(value);
-    update((current) => current.map((item) => ({ ...item, record: value })));
   };
 
   const setQuantity = (id: string, quantity: number) => {
@@ -170,8 +159,6 @@ export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
         food: { ...food, timestamp: item.timestamp ?? timestamp },
         quantity: item.quantity,
         barcodes: item.barcodes ?? (item.linkBarcode ? [item.barcode] : []),
-        saveFood: item.saveFood ?? true,
-        record: item.record ?? record,
       });
       if (saved) {
         remove(item.id);
@@ -186,8 +173,6 @@ export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
 
   return {
     items,
-    record,
-    setRecord,
     addBarcode,
     addFoods,
     fillFromPhoto,

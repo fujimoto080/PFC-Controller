@@ -29,7 +29,6 @@ export function EditLogItemDrawer({ item, onClose }: EditLogItemDrawerProps) {
           initial={item}
           logId={item.id}
           initialTimestamp={item.timestamp}
-          defaultSaveFood={false}
           onDone={onClose}
           onCancel={onClose}
         />

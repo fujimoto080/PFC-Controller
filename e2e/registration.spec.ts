@@ -20,10 +20,10 @@ test('JSONカタログの商品を共通フォームで開き、食品リスト�
   await expect(page.getByLabel('バーコード (任意・複数可)')).toBeVisible();
   await expect(
     page.getByRole('checkbox', { name: '食品リストに登録する' }),
-  ).toBeChecked();
+  ).toHaveCount(0);
   await expect(
     page.getByRole('checkbox', { name: '食べた記録にも追加する' }),
-  ).toBeChecked();
+  ).toHaveCount(0);
   await page.getByLabel('店内グループ (任意)').fill('カタログから登録');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeHidden();
@@ -49,7 +49,6 @@ test('食品管理からも日時と数量を指定して記録でき、食品�
   await page.getByLabel('炭水化物').fill('10');
   await page.getByLabel('カロリー').fill('185');
   await page.getByLabel('数量を指定').fill('3');
-  await page.getByRole('checkbox', { name: '食べた記録にも追加する' }).check();
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeHidden();
   await expect(

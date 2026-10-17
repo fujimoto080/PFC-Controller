@@ -123,7 +123,7 @@ describe('batchTotal', () => {
   });
 });
 
-it('一括登録の合計には食事記録に追加する商品だけを含める', () => {
+it('一括登録の合計にはすべての商品を数量込みで含める', () => {
   const items: BatchItem[] = [
     {
       id: 'a',
@@ -132,7 +132,6 @@ it('一括登録の合計には食事記録に追加する商品だけを含め�
       food: { name: 'チキン', protein: 25, fat: 5, carbs: 10, calories: 185 },
       quantity: 2,
       linkBarcode: false,
-      record: true,
     },
     {
       id: 'b',
@@ -141,13 +140,12 @@ it('一括登録の合計には食事記録に追加する商品だけを含め�
       food: { name: 'サラダ', protein: 5, fat: 1, carbs: 10, calories: 70 },
       quantity: 1,
       linkBarcode: false,
-      record: false,
     },
   ];
-  expect(batchTotal(items, false)).toEqual({
-    protein: 50,
-    fat: 10,
-    carbs: 20,
-    calories: 370,
+  expect(batchTotal(items)).toEqual({
+    protein: 55,
+    fat: 11,
+    carbs: 30,
+    calories: 440,
   });
 });

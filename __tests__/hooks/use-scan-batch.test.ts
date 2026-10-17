@@ -29,7 +29,7 @@ beforeEach(() => {
   save.mockResolvedValue(true);
 });
 
-it('共通フォームで指定した数量・日時・グループ・複数バーコード・保存先を一括保存に渡す', async () => {
+it('共通フォームで指定した数量・日時・グループ・複数バーコードを一括保存に渡す', async () => {
   const { result } = renderHook(() => useScanBatch());
   act(() => {
     result.current.addFoods([food]);
@@ -38,8 +38,6 @@ it('共通フォームで指定した数量・日時・グループ・複数バ�
     food: { ...food, storeGroup: 'おかず', timestamp: 123456 },
     quantity: 3,
     barcodes: ['4901', '4902'],
-    saveFood: false,
-    record: true,
   };
   act(() => {
     const item = result.current.items[0];
@@ -72,7 +70,7 @@ it('保存できた商品だけ一覧から外し、失敗した商品を再試�
   expect(result.current.items).toEqual([]);
 });
 
-it('一括指定した保存先と日時を編集済みの商品にも反映する', () => {
+it('一括指定した日時を編集済みの商品にも反映する', () => {
   const { result } = renderHook(() => useScanBatch());
   act(() => {
     result.current.addFoods([food]);
@@ -84,16 +82,13 @@ it('一括指定した保存先と日時を編集済みの商品にも反映す�
       food: { ...food, timestamp: 1 },
       quantity: 2,
       barcodes: [],
-      saveFood: true,
-      record: true,
     });
   });
   act(() => {
-    result.current.setRecord(false);
     result.current.setTimestamp(123456);
   });
   expect(result.current.items[0]).toEqual(
-    expect.objectContaining({ record: false, timestamp: 123456, quantity: 2 }),
+    expect.objectContaining({ timestamp: 123456, quantity: 2 }),
   );
 });
 

@@ -31,7 +31,6 @@ export function FoodEditor({
         foodId={food?.id}
         initialTimestamp={timestamp}
         initialBarcodes={initialBarcodes}
-        defaultRecord={false}
         onBarcodesSaved={onBarcodesSaved}
         onDone={onClose}
         onCancel={onClose}

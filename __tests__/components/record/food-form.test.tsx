@@ -122,13 +122,12 @@ const initial = {
   store: 'ローソン',
 };
 
-it('食品リストだけに登録でき、店舗・グループ・複数バーコードを保存する', async () => {
+it('食品リストと食事記録に登録し、店舗・グループ・複数バーコードを保存する', async () => {
   const onDone = jest.fn();
   render(
     <FoodForm
       initial={initial}
       initialTimestamp={Date.now()}
-      defaultRecord={false}
       onDone={onDone}
     />,
   );
@@ -149,22 +148,20 @@ it('食品リストだけに登録でき、店舗・グループ・複数バー�
   expect(rememberFood).toHaveBeenCalledWith(
     expect.objectContaining({ ...initial, storeGroup: 'おかず' }),
   );
-  expect(addFoodItem).not.toHaveBeenCalled();
+  expect(addFoodItem).toHaveBeenCalledWith(
+    expect.objectContaining({ protein: 75 }),
+  );
 });
 
-it('既存食品を更新し、選択すれば数量を掛けて食事にも記録する', async () => {
+it('既存食品を更新し、数量を掛けて食事にも記録する', async () => {
   const onDone = jest.fn();
   render(
     <FoodForm
       initial={initial}
       foodId="food-1"
       initialTimestamp={Date.now()}
-      defaultRecord={false}
       onDone={onDone}
     />,
-  );
-  fireEvent.click(
-    screen.getByRole('checkbox', { name: '食べた記録にも追加する' }),
   );
   fireEvent.click(screen.getByRole('button', { name: '×2' }));
   fireEvent.click(screen.getByRole('button', { name: '保存' }));
@@ -187,7 +184,6 @@ it('既存記録を更新し、新しい食事記録を重複追加しない', a
       initial={initial}
       logId="log-1"
       initialTimestamp={Date.now()}
-      defaultSaveFood={false}
       onDone={onDone}
     />,
   );
@@ -208,10 +204,10 @@ it('既存記録を更新し、新しい食事記録を重複追加しない', a
     }),
   );
   expect(addFoodItem).not.toHaveBeenCalled();
-  expect(rememberFood).not.toHaveBeenCalled();
+  expect(rememberFood).toHaveBeenCalled();
 });
 
-it('食事記録のみ保存する指定を尊重する', async () => {
+it('保存先のチェック項目を表示せず両方に保存する', async () => {
   const onDone = jest.fn();
   render(
     <FoodForm
@@ -220,18 +216,16 @@ it('食事記録のみ保存する指定を尊重する', async () => {
       onDone={onDone}
     />,
   );
-  fireEvent.click(
-    screen.getByRole('checkbox', { name: '食品リストに登録する' }),
-  );
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: '保存' }));
   await waitFor(() => {
     expect(onDone).toHaveBeenCalled();
   });
   expect(addFoodItem).toHaveBeenCalled();
-  expect(rememberFood).not.toHaveBeenCalled();
+  expect(rememberFood).toHaveBeenCalled();
 });
 
-it('スキャン一覧への反映では、数量・日時・保存先を保持してまだ保存しない', async () => {
+it('スキャン一覧への反映では、数量・日時を保持してまだ保存しない', async () => {
   const onSave = jest.fn();
   render(
     <FoodForm
@@ -239,7 +233,6 @@ it('スキャン一覧への反映では、数量・日時・保存先を保持�
       initialTimestamp={1000}
       initialBarcodes={['4901']}
       initialQuantity={3}
-      defaultRecord={false}
       onSave={onSave}
       onDone={jest.fn()}
     />,
@@ -250,8 +243,6 @@ it('スキャン一覧への反映では、数量・日時・保存先を保持�
       expect.objectContaining({
         quantity: 3,
         barcodes: ['4901'],
-        saveFood: true,
-        record: false,
       }),
     );
   });

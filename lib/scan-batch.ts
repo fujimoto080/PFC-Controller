@@ -17,8 +17,6 @@ export interface BatchItem {
   food?: FoodTemplate;
   barcodes?: string[];
   timestamp?: number;
-  saveFood?: boolean;
-  record?: boolean;
   quantity: number;
   /** 保存時にバーコードへ食品情報を紐付けるか（未登録だった・内容を直した） */
   linkBarcode: boolean;
@@ -102,10 +100,6 @@ export function readyFoods(items: BatchItem[]) {
   );
 }
 
-export function batchTotal(items: BatchItem[], record = true): PFC {
-  return sumPFC(
-    readyFoods(items)
-      .filter(({ item }) => item.record ?? record)
-      .map(({ scaled }) => scaled),
-  );
+export function batchTotal(items: BatchItem[]): PFC {
+  return sumPFC(readyFoods(items).map(({ scaled }) => scaled));
 }

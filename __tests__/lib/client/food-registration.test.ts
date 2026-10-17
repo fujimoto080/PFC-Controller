@@ -32,8 +32,6 @@ const entry: FoodRegistration = {
   },
   quantity: 3,
   barcodes: ['4901', '4902'],
-  saveFood: true,
-  record: true,
 };
 
 beforeEach(() => {
