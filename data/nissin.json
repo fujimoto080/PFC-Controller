@@ -1934,20 +1934,6 @@
     ]
   },
   {
-    "id": "13737",
-    "name": "日清の最強どん兵衛 博多ごぼ天うどん",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13737/",
-    "calories": 442,
-    "protein": 6.8,
-    "fat": 21.6,
-    "carbs": 55,
-    "price": 334,
-    "jans": [
-      "4902105295885"
-    ]
-  },
-  {
     "id": "13741",
     "name": "チキンラーメン汁なしどんぶり スパイス香るドライカレー味",
     "category": "即席麺",
@@ -2532,6 +2518,34 @@
     "carbs": 53.3,
     "jans": [
       "4902105119327"
+    ]
+  },
+  {
+    "id": "13969",
+    "name": "WAGYUMAFIA ULTRAラ王 WAGYU SEAFOOD FLAVOR",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/13969/",
+    "calories": 405,
+    "protein": 9.2,
+    "fat": 12.4,
+    "carbs": 64.1,
+    "price": 397,
+    "jans": [
+      "4902105295595"
+    ]
+  },
+  {
+    "id": "13970",
+    "name": "カップヌードル ブラックペッパークラブ",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/13970/",
+    "calories": 370,
+    "protein": 8.2,
+    "fat": 16.2,
+    "carbs": 47.8,
+    "price": 268,
+    "jans": [
+      "4902105296578"
     ]
   },
   {

@@ -1168,6 +1168,20 @@
     ]
   },
   {
+    "id": "206931",
+    "name": "マルちゃん正麺 カップ 豚骨醤油",
+    "category": "instant-cupnoodles",
+    "price": 322,
+    "url": "https://www.maruchan.co.jp/products/search/206931.html",
+    "calories": 444,
+    "protein": 12.6,
+    "fat": 14.9,
+    "carbs": 64.8,
+    "jans": [
+      "4901990384773"
+    ]
+  },
+  {
     "id": "211402",
     "name": "昔ながらの中華そば",
     "category": "instant-noodles",
@@ -1601,6 +1615,20 @@
     "carbs": 13.1,
     "jans": [
       "4901990052689"
+    ]
+  },
+  {
+    "id": "220226",
+    "name": "ホットワンタン にんにく黒しょうゆ味",
+    "category": "soup",
+    "price": 248,
+    "url": "https://www.maruchan.co.jp/products/search/220226.html",
+    "calories": 251,
+    "protein": 5.5,
+    "fat": 16.1,
+    "carbs": 21,
+    "jans": [
+      "4901990052726"
     ]
   },
   {

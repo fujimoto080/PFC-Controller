@@ -260,6 +260,19 @@
     "url": "https://www.danone.co.jp/danone/products/"
   },
   {
+    "id": "oikos-acaibowl",
+    "name": "オイコス 高吸収タンパク質 アサイーボウル",
+    "category": "yogurt",
+    "calories": 84,
+    "protein": 10.2,
+    "fat": 0,
+    "carbs": 10.5,
+    "jans": [
+      "4901112800631"
+    ],
+    "url": "https://www.danone.co.jp/oikos/"
+  },
+  {
     "id": "oikos-blueberry",
     "name": "オイコス 高吸収タンパク質 ブルーベリー",
     "category": "yogurt",

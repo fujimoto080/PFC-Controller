@@ -429,19 +429,6 @@
     "carbs": 3.9
   },
   {
-    "id": "4902705098855",
-    "category": "savas",
-    "url": "https://www.meiji.co.jp/products/sports/4902705098855.html",
-    "jans": [
-      "4902705098855"
-    ],
-    "name": "ザバス MILK PROTEIN ヨーグルト 脂肪0 低糖質 125g",
-    "calories": 85,
-    "protein": 15,
-    "fat": 0,
-    "carbs": 6.4
-  },
-  {
     "id": "4902705099425",
     "category": "savas",
     "url": "https://www.meiji.co.jp/products/sports/4902705099425.html",
@@ -479,19 +466,6 @@
     "protein": 15,
     "fat": 0,
     "carbs": 10.7
-  },
-  {
-    "id": "4902705127586",
-    "category": "yogurt",
-    "url": "https://www.meiji.co.jp/products/probioticsyogurt/4902705127586.html",
-    "jans": [
-      "4902705127586"
-    ],
-    "name": "明治Wのスキンケアヨーグルト 112g",
-    "calories": 49,
-    "protein": 4.6,
-    "fat": 0.7,
-    "carbs": 6.1
   },
   {
     "id": "4902705128132",
@@ -598,19 +572,6 @@
     "carbs": 6.3
   },
   {
-    "id": "4902705131156",
-    "category": "savas",
-    "url": "https://www.meiji.co.jp/products/sports/4902705131156.html",
-    "jans": [
-      "4902705131156"
-    ],
-    "name": "ザバス MILK PROTEIN ヨーグルト 脂肪0 ピーチ 125g",
-    "calories": 90,
-    "protein": 15,
-    "fat": 0,
-    "carbs": 7.7
-  },
-  {
     "id": "4902705131231",
     "category": "yogurt",
     "url": "https://www.meiji.co.jp/products/yogurt/4902705131231.html",
@@ -676,19 +637,6 @@
     "carbs": 14.4
   },
   {
-    "id": "4902705131675",
-    "category": "savas",
-    "url": "https://www.meiji.co.jp/products/sports/4902705131675.html",
-    "jans": [
-      "4902705131675"
-    ],
-    "name": "ザバス MILK PROTEIN ヨーグルト 脂肪0 マンゴー 125g",
-    "calories": 90,
-    "protein": 15,
-    "fat": 0,
-    "carbs": 7.7
-  },
-  {
     "id": "4902705131682",
     "category": "savas",
     "url": "https://www.meiji.co.jp/products/sports/4902705131682.html",
@@ -713,6 +661,19 @@
     "protein": 12,
     "fat": 0,
     "carbs": 12
+  },
+  {
+    "id": "4902705132580",
+    "category": "yogurt",
+    "url": "https://www.meiji.co.jp/products/probioticsyogurt/4902705132580.html",
+    "jans": [
+      "4902705132580"
+    ],
+    "name": "明治ヘモグロビンA1c対策ヨーグルトドリンクタイプ ブルーベリー風味 112g",
+    "calories": 40,
+    "protein": 3.3,
+    "fat": 0.6,
+    "carbs": 5.4
   },
   {
     "id": "4902705133044",
@@ -817,6 +778,19 @@
     "protein": 20,
     "fat": 0,
     "carbs": 15.3
+  },
+  {
+    "id": "4902705133808",
+    "category": "yogurt",
+    "url": "https://www.meiji.co.jp/products/probioticsyogurt/4902705133808.html",
+    "jans": [
+      "4902705133808"
+    ],
+    "name": "明治プロビオヨーグルトR-1 The GREEK 加糖プレーン 112g",
+    "calories": 88,
+    "protein": 10,
+    "fat": 0,
+    "carbs": 12
   },
   {
     "id": "4902777300269",

@@ -22,17 +22,6 @@
     "carbs": 95.6
   },
   {
-    "id": "あさり汁",
-    "name": "あさり汁",
-    "category": "sidemenu",
-    "price": 228,
-    "url": "https://www.yoshinoya.com/menu/sidemenu/asari-jiru/",
-    "calories": 49,
-    "protein": 7.3,
-    "fat": 1.2,
-    "carbs": 2.8
-  },
-  {
     "id": "お新香 1皿",
     "name": "お新香 1皿",
     "category": "sidemenu",
@@ -465,48 +454,6 @@
     "protein": 2,
     "fat": 1.4,
     "carbs": 5
-  },
-  {
-    "id": "月見牛とじ丼 並盛",
-    "name": "月見牛とじ丼 並盛",
-    "category": "yoshinoyanodon",
-    "price": 699,
-    "url": "https://www.yoshinoya.com/menu/yoshinoyanodon/tsukimi_gyutoji_don/",
-    "calories": 841,
-    "protein": 32.9,
-    "fat": 35.5,
-    "carbs": 98.5
-  },
-  {
-    "id": "月見牛とじ丼 大盛",
-    "name": "月見牛とじ丼 大盛",
-    "category": "yoshinoyanodon",
-    "price": 875,
-    "url": "https://www.yoshinoya.com/menu/yoshinoyanodon/tsukimi_gyutoji_don/",
-    "calories": 1026,
-    "protein": 37.8,
-    "fat": 40.9,
-    "carbs": 128.6
-  },
-  {
-    "id": "月見牛とじ御膳 並盛",
-    "name": "月見牛とじ御膳 並盛",
-    "category": "set",
-    "url": "https://www.yoshinoya.com/menu/set/tsukimi_gyutoji_tei/",
-    "calories": 866,
-    "protein": 34.4,
-    "fat": 36.2,
-    "carbs": 101.6
-  },
-  {
-    "id": "月見牛とじ御膳 肉2倍盛",
-    "name": "月見牛とじ御膳 肉2倍盛",
-    "category": "set",
-    "url": "https://www.yoshinoya.com/menu/set/tsukimi_gyutoji_tei/",
-    "calories": 1185,
-    "protein": 48.9,
-    "fat": 60.6,
-    "carbs": 111.9
   },
   {
     "id": "焼魚定食(鮭)",
