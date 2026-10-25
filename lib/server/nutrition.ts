@@ -113,20 +113,31 @@ function parseJson(text: string): unknown {
 
 /**
  * 写真を AI に読み取らせて食品 1 件分を答えさせる。確認できるよう AI の応答テキストもそのまま返す。
- * 応答を解釈できない・栄養値が全部 0 のときは foods を空配列にする。
+ * 安価なモデルで読み取れなかったときだけ、性能の高いモデル（precise）で読み直す。
+ * それでも応答を解釈できない・栄養値が全部 0 のときは foods を空配列にする。
  */
 export async function readNutritionImage(
   instructions: string[],
-  generate: (prompt: string, format: JsonSchemaFormat) => Promise<string>,
+  generate: (
+    prompt: string,
+    format: JsonSchemaFormat,
+    precise: boolean,
+  ) => Promise<string>,
 ): Promise<ImageReading> {
-  const response = await generate(
-    [
-      ...instructions,
-      '食品1件分を答えてください。',
-      ...IMAGE_VALUE_INSTRUCTIONS,
-    ].join('\n'),
-    toJsonSchemaFormat('food', imageFoodSchema),
-  );
+  const prompt = [
+    ...instructions,
+    '食品1件分を答えてください。',
+    ...IMAGE_VALUE_INSTRUCTIONS,
+  ].join('\n');
+  const format = toJsonSchemaFormat('food', imageFoodSchema);
+  const read = async (precise: boolean) =>
+    toImageReading(await generate(prompt, format, precise));
+  const reading = await read(false);
+  return reading.foods.length > 0 ? reading : read(true);
+}
+
+/** 写真の読み取りの応答を食品に整形する。 */
+function toImageReading(response: string): ImageReading {
   const answer = imageFoodSchema.safeParse(parseJson(response)).data;
   const foods = (answer ? [answer] : [])
     .map(({ confidence, ...value }) => ({

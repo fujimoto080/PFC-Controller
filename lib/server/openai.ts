@@ -49,7 +49,7 @@ function requireOpenAIApiKey(): string {
 
 async function callOpenAI(body: {
   model: string;
-  reasoning: { effort: 'minimal' | 'low' | 'medium' };
+  reasoning: { effort: 'none' | 'low' | 'medium' };
   input: { role: 'user'; content: InputContent[] }[];
   tools?: unknown[];
   text?: { format: JsonSchemaFormat & { type: 'json_schema'; strict: true } };
@@ -84,20 +84,27 @@ async function callOpenAI(body: {
   };
 }
 
-/** 指示文と画像（data URL、複数可）を渡して OpenAI に format の形の JSON を生成させる。 */
+/**
+ * 指示文と画像（data URL、複数可）を渡して OpenAI に format の形の JSON を生成させる。
+ * precise なら、安価なモデルで読み取れなかったときの再試行用に性能の高いモデルを使う。
+ */
 export async function callOpenAIWithImage({
   prompt,
   format,
   imageDataUrls,
+  precise,
 }: {
   prompt: string;
   format: JsonSchemaFormat;
   imageDataUrls: string[];
+  precise: boolean;
 }): Promise<string> {
   const { text } = await callOpenAI({
-    model: 'gpt-5-nano',
-    // 成分表示の読み取りに推論は不要なので最小にしてコストと待ち時間を抑える
-    reasoning: { effort: 'minimal' },
+    ...(precise
+      ? // 不鮮明な表示の読み取りや換算に推論を使わせる
+        { model: 'gpt-5-mini', reasoning: { effort: 'low' } }
+      : // 成分表示の読み取りに推論は不要なので最小にしてコストと待ち時間を抑える
+        { model: 'gpt-6-luna', reasoning: { effort: 'none' } }),
     input: [
       {
         role: 'user',

@@ -50,6 +50,33 @@ describe('readNutritionImage', () => {
       });
     }
   });
+
+  it('読み取れたら性能の高いモデルで読み直さない', async () => {
+    const generate = jest.fn(
+      (_prompt: string, _format: unknown, _precise: boolean) =>
+        Promise.resolve(JSON.stringify(ANSWER)),
+    );
+    await readNutritionImage([], generate);
+    expect(generate.mock.calls.map(([, , precise]) => precise)).toEqual([
+      false,
+    ]);
+  });
+
+  it('読み取れなければ性能の高いモデルで読み直した結果を返す', async () => {
+    const response = JSON.stringify(ANSWER);
+    const generate = jest.fn(
+      (_prompt: string, _format: unknown, precise: boolean) =>
+        Promise.resolve(precise ? response : '読み取れませんでした'),
+    );
+    await expect(readNutritionImage([], generate)).resolves.toEqual({
+      foods: [{ food: { ...FOOD, store: undefined }, confidence: 'medium' }],
+      response,
+    });
+    expect(generate.mock.calls.map(([, , precise]) => precise)).toEqual([
+      false,
+      true,
+    ]);
+  });
 });
 
 describe('askNutrition', () => {
