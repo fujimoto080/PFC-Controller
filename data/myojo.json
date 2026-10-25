@@ -1352,6 +1352,34 @@
     ]
   },
   {
+    "id": "14029",
+    "name": "明星 食べて応援 沖縄そうめんチャンプルー",
+    "category": "regular",
+    "price": 272,
+    "url": "https://www.myojofoods.co.jp/products/items/14029/",
+    "calories": 504,
+    "protein": 9.8,
+    "fat": 25.5,
+    "carbs": 58.8,
+    "jans": [
+      "4902881406819"
+    ]
+  },
+  {
+    "id": "14030",
+    "name": "明星 中華三昧タテ型ビッグ 重慶飯店 具だくさん麻辣湯麺",
+    "category": "regular",
+    "price": 354,
+    "url": "https://www.myojofoods.co.jp/products/items/14030/",
+    "calories": 352,
+    "protein": 9.5,
+    "fat": 7.3,
+    "carbs": 62,
+    "jans": [
+      "4902881418935"
+    ]
+  },
+  {
     "id": "14036",
     "name": "明星 一平ちゃん夜店の焼そば 大盛 今だけ!肉2倍量",
     "category": "yakisoba_big",

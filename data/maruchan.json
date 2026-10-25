@@ -1182,6 +1182,34 @@
     ]
   },
   {
+    "id": "206932",
+    "name": "まぜそば ごつ盛り 塩担々",
+    "category": "instant-cupnoodles",
+    "price": 0,
+    "url": "https://www.maruchan.co.jp/products/search/206932.html",
+    "calories": 542,
+    "protein": 10,
+    "fat": 30.2,
+    "carbs": 57.5,
+    "jans": [
+      "4901990384797"
+    ]
+  },
+  {
+    "id": "206933",
+    "name": "鴨だしきつねそば でか盛",
+    "category": "instant-cupnoodles",
+    "price": 339,
+    "url": "https://www.maruchan.co.jp/products/search/206933.html",
+    "calories": 680,
+    "protein": 22.2,
+    "fat": 30.4,
+    "carbs": 79.5,
+    "jans": [
+      "4901990384810"
+    ]
+  },
+  {
     "id": "211402",
     "name": "昔ながらの中華そば",
     "category": "instant-noodles",

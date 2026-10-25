@@ -416,19 +416,6 @@
     "carbs": 18.1
   },
   {
-    "id": "4902705098640",
-    "category": "savas",
-    "url": "https://www.meiji.co.jp/products/sports/4902705098640.html",
-    "jans": [
-      "4902705098640"
-    ],
-    "name": "(ザバス)WHEY PROTEIN マスカット風味 430ml",
-    "calories": 94,
-    "protein": 20,
-    "fat": 0,
-    "carbs": 3.9
-  },
-  {
     "id": "4902705099425",
     "category": "savas",
     "url": "https://www.meiji.co.jp/products/sports/4902705099425.html",
@@ -702,6 +689,19 @@
     "carbs": 15.8
   },
   {
+    "id": "4902705133068",
+    "category": "savas",
+    "url": "https://www.meiji.co.jp/products/sports/4902705133068.html",
+    "jans": [
+      "4902705133068"
+    ],
+    "name": "(ザバス)WHEY PROTEIN レモネード風味 430ml",
+    "calories": 103,
+    "protein": 20,
+    "fat": 0,
+    "carbs": 5.7
+  },
+  {
     "id": "4902705133075",
     "category": "yogurt",
     "url": "https://www.meiji.co.jp/products/yogurt/4902705133075.html",
@@ -791,6 +791,19 @@
     "protein": 10,
     "fat": 0,
     "carbs": 12
+  },
+  {
+    "id": "4902705133815",
+    "category": "yogurt",
+    "url": "https://www.meiji.co.jp/products/probioticsyogurt/4902705133815.html",
+    "jans": [
+      "4902705133815"
+    ],
+    "name": "明治プロビオヨーグルトR-1 The GREEK ブルーベリーミックス 112g",
+    "calories": 82,
+    "protein": 10,
+    "fat": 0,
+    "carbs": 10.6
   },
   {
     "id": "4902777300269",
