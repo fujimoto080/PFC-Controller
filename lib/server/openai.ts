@@ -102,7 +102,7 @@ export async function callOpenAIWithImage({
   const { text } = await callOpenAI({
     ...(precise
       ? // 不鮮明な表示の読み取りや換算に推論を使わせる
-        { model: 'gpt-5-mini', reasoning: { effort: 'low' } }
+        { model: 'gpt-6-sol', reasoning: { effort: 'low' } }
       : // 成分表示の読み取りに推論は不要なので最小にしてコストと待ち時間を抑える
         { model: 'gpt-6-luna', reasoning: { effort: 'none' } }),
     input: [
