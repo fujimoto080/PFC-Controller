@@ -330,19 +330,6 @@
     ]
   },
   {
-    "id": "13302",
-    "name": "明星 評判屋 味噌ラーメン 5食パック",
-    "category": "noodle",
-    "url": "https://www.myojofoods.co.jp/products/items/13302/",
-    "calories": 383,
-    "protein": 7.9,
-    "fat": 15.4,
-    "carbs": 53.2,
-    "jans": [
-      "4902881066440"
-    ]
-  },
-  {
     "id": "13357",
     "name": "明星 チャルメラ しょうゆラーメン 5食パック",
     "category": "noodle",
@@ -705,47 +692,6 @@
     "carbs": 71.8,
     "jans": [
       "4902881056915"
-    ]
-  },
-  {
-    "id": "13758",
-    "name": "明星 評判屋 梅かつお塩焼そば",
-    "category": "yakisoba",
-    "url": "https://www.myojofoods.co.jp/products/items/13758/",
-    "calories": 484,
-    "protein": 9.7,
-    "fat": 23.6,
-    "carbs": 58.2,
-    "jans": [
-      "4902881433976"
-    ]
-  },
-  {
-    "id": "13759",
-    "name": "明星 らぁ麺や嶋 トリュフ香る白醤油らぁ麺",
-    "category": "regular",
-    "price": 366,
-    "url": "https://www.myojofoods.co.jp/products/items/13759/",
-    "calories": 383,
-    "protein": 11.1,
-    "fat": 8.9,
-    "carbs": 64.6,
-    "jans": [
-      "4902881405287"
-    ]
-  },
-  {
-    "id": "13805",
-    "name": "明星 チャルメラ 油そばカップ",
-    "category": "regular",
-    "price": 272,
-    "url": "https://www.myojofoods.co.jp/products/items/13805/",
-    "calories": 509,
-    "protein": 8,
-    "fat": 23.5,
-    "carbs": 66.3,
-    "jans": [
-      "4902881416290"
     ]
   },
   {

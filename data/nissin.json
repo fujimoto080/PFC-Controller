@@ -502,20 +502,6 @@
     ]
   },
   {
-    "id": "12611",
-    "name": "日清麺職人 柚子しお",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/12611/",
-    "calories": 282,
-    "protein": 7.1,
-    "fat": 4.9,
-    "carbs": 52.4,
-    "price": 199,
-    "jans": [
-      "4902105284940"
-    ]
-  },
-  {
     "id": "12655",
     "name": "完全メシ コーンクリームポタージュ",
     "category": "スープ",
@@ -1920,20 +1906,6 @@
     ]
   },
   {
-    "id": "13694",
-    "name": "日清謎うなぎ丼",
-    "category": "カップライス",
-    "url": "https://www.nissin.com/jp/product/items/13694/",
-    "calories": 325,
-    "protein": 8,
-    "fat": 6.1,
-    "carbs": 59.5,
-    "price": 399,
-    "jans": [
-      "4902105940365"
-    ]
-  },
-  {
     "id": "13741",
     "name": "チキンラーメン汁なしどんぶり スパイス香るドライカレー味",
     "category": "即席麺",
@@ -2536,6 +2508,174 @@
     ]
   },
   {
+    "id": "14002",
+    "name": "カップヌードル 異世界合体シリーズ カップヌードル&銀だこ",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14002/",
+    "calories": 353,
+    "protein": 8,
+    "fat": 15,
+    "carbs": 46.4,
+    "price": 280,
+    "jans": [
+      "4902105300022"
+    ]
+  },
+  {
+    "id": "14003",
+    "name": "カップヌードル 異世界合体シリーズ カレー&カラムーチョ",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14003/",
+    "calories": 384,
+    "protein": 7.2,
+    "fat": 17.8,
+    "carbs": 48.7,
+    "price": 280,
+    "jans": [
+      "4902105300046"
+    ]
+  },
+  {
+    "id": "14004",
+    "name": "カップヌードル 異世界合体シリーズ シーフードヌードル&ごはんですよ!",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14004/",
+    "calories": 327,
+    "protein": 7.9,
+    "fat": 12.5,
+    "carbs": 45.6,
+    "price": 280,
+    "jans": [
+      "4902105300039"
+    ]
+  },
+  {
+    "id": "14005",
+    "name": "完全メシ 謎肉丼",
+    "category": "カップライス",
+    "url": "https://www.nissin.com/jp/product/items/14005/",
+    "calories": 458,
+    "protein": 18.1,
+    "fat": 13.8,
+    "carbs": 70.2,
+    "price": 430,
+    "jans": [
+      "4902105989937"
+    ]
+  },
+  {
+    "id": "14007",
+    "name": "日清のどん兵衛 きつねうどん 年に一度のだし比べ 西",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14007/",
+    "calories": 417,
+    "protein": 8.9,
+    "fat": 16.9,
+    "carbs": 57.2,
+    "price": 268,
+    "jans": [
+      "4902105296691"
+    ]
+  },
+  {
+    "id": "14008",
+    "name": "日清のどん兵衛 きつねうどん 年に一度のだし比べ 博多",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14008/",
+    "calories": 428,
+    "protein": 9.2,
+    "fat": 17.6,
+    "carbs": 58.3,
+    "price": 268,
+    "jans": [
+      "4902105296707"
+    ]
+  },
+  {
+    "id": "14009",
+    "name": "日清のどん兵衛 きつねうどん 年に一度のだし比べ 東",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14009/",
+    "calories": 423,
+    "protein": 9.5,
+    "fat": 17.4,
+    "carbs": 57,
+    "price": 268,
+    "jans": [
+      "4902105296684"
+    ]
+  },
+  {
+    "id": "14010",
+    "name": "日清のどん兵衛 天ぷらそば 年に一度のだし比べ 信州",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14010/",
+    "calories": 442,
+    "protein": 9.3,
+    "fat": 21,
+    "carbs": 54,
+    "price": 268,
+    "jans": [
+      "4902105296745"
+    ]
+  },
+  {
+    "id": "14011",
+    "name": "日清のどん兵衛 天ぷらそば 年に一度のだし比べ 西",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14011/",
+    "calories": 491,
+    "protein": 10.5,
+    "fat": 24.3,
+    "carbs": 57.6,
+    "price": 268,
+    "jans": [
+      "4902105296738"
+    ]
+  },
+  {
+    "id": "14012",
+    "name": "日清のどん兵衛 天ぷらそば 年に一度のだし比べ 東",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14012/",
+    "calories": 491,
+    "protein": 10.5,
+    "fat": 24.2,
+    "carbs": 57.8,
+    "price": 268,
+    "jans": [
+      "4902105296721"
+    ]
+  },
+  {
+    "id": "14013",
+    "name": "チキンラーメンどんぶり",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14013/",
+    "calories": 386,
+    "protein": 9.6,
+    "fat": 14.9,
+    "carbs": 53.3,
+    "price": 268,
+    "jans": [
+      "4902105002605"
+    ]
+  },
+  {
+    "id": "14024",
+    "name": "日清麺職人 柚子しお",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14024/",
+    "calories": 291,
+    "protein": 7.5,
+    "fat": 5.8,
+    "carbs": 52.1,
+    "price": 199,
+    "jans": [
+      "4902105284940"
+    ]
+  },
+  {
     "id": "8676",
     "name": "チキンラーメン Mini",
     "category": "即席麺",
@@ -2560,20 +2700,6 @@
     "price": 168,
     "jans": [
       "49698541"
-    ]
-  },
-  {
-    "id": "8721",
-    "name": "チキンラーメンどんぶり",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/8721/",
-    "calories": 386,
-    "protein": 9.6,
-    "fat": 14.9,
-    "carbs": 53.3,
-    "price": 268,
-    "jans": [
-      "4902105002605"
     ]
   },
   {

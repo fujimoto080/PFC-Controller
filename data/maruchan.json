@@ -761,7 +761,10 @@
     "calories": 515,
     "protein": 7.5,
     "fat": 25.7,
-    "carbs": 63.4
+    "carbs": 63.4,
+    "jans": [
+      "4901990380393"
+    ]
   },
   {
     "id": "206674",
@@ -1045,31 +1048,6 @@
     ]
   },
   {
-    "id": "206921",
-    "name": "マルちゃん焼そば スープ付",
-    "category": "instant-cupnoodles",
-    "price": 268,
-    "url": "https://www.maruchan.co.jp/products/search/206921.html",
-    "calories": 503,
-    "protein": 8.4,
-    "fat": 21.9,
-    "carbs": 68
-  },
-  {
-    "id": "206922",
-    "name": "とんこつパラダイス 辛黒豚骨",
-    "category": "instant-cupnoodles",
-    "price": 322,
-    "url": "https://www.maruchan.co.jp/products/search/206922.html",
-    "calories": 493,
-    "protein": 14.1,
-    "fat": 25.4,
-    "carbs": 52,
-    "jans": [
-      "4901990384612"
-    ]
-  },
-  {
     "id": "206923",
     "name": "マルちゃん正麺 カップ 中華そば",
     "category": "instant-cupnoodles",
@@ -1109,20 +1087,6 @@
     "carbs": 55.3,
     "jans": [
       "4901990384674"
-    ]
-  },
-  {
-    "id": "206926",
-    "name": "でかまる バリシャキ!辛もやし中華そば",
-    "category": "instant-cupnoodles",
-    "price": 339,
-    "url": "https://www.maruchan.co.jp/products/search/206926.html",
-    "calories": 523,
-    "protein": 11.6,
-    "fat": 23.7,
-    "carbs": 65.9,
-    "jans": [
-      "4901990384698"
     ]
   },
   {
@@ -1207,6 +1171,20 @@
     "carbs": 79.5,
     "jans": [
       "4901990384810"
+    ]
+  },
+  {
+    "id": "206934",
+    "name": "マジ盛 ごま豆乳担々麺",
+    "category": "instant-cupnoodles",
+    "price": 322,
+    "url": "https://www.maruchan.co.jp/products/search/206934.html",
+    "calories": 570,
+    "protein": 12.3,
+    "fat": 30.1,
+    "carbs": 62.4,
+    "jans": [
+      "4901990384834"
     ]
   },
   {
@@ -1517,6 +1495,34 @@
     "carbs": 66.1,
     "jans": [
       "4901990515214"
+    ]
+  },
+  {
+    "id": "211903",
+    "name": "マルちゃん正麺 豚だし醤油そば",
+    "category": "instant-noodles",
+    "price": 147,
+    "url": "https://www.maruchan.co.jp/products/search/211903.html",
+    "calories": 334,
+    "protein": 11.3,
+    "fat": 6.1,
+    "carbs": 58.5,
+    "jans": [
+      "4901990515245"
+    ]
+  },
+  {
+    "id": "211905",
+    "name": "マルちゃん正麺 貝だし塩そば",
+    "category": "instant-noodles",
+    "price": 147,
+    "url": "https://www.maruchan.co.jp/products/search/211905.html",
+    "calories": 336,
+    "protein": 9.1,
+    "fat": 5.5,
+    "carbs": 62.6,
+    "jans": [
+      "4901990515276"
     ]
   },
   {
