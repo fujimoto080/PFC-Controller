@@ -1337,6 +1337,20 @@
     "carbs": 106.2
   },
   {
+    "id": "14049",
+    "name": "明星 一平ちゃん夜店の焼そば 大盛 だっくだくタルタルソース えびフライ味",
+    "category": "yakisoba_big",
+    "price": 387,
+    "url": "https://www.myojofoods.co.jp/products/items/14049/",
+    "calories": 791,
+    "protein": 13.8,
+    "fat": 38.6,
+    "carbs": 97.2,
+    "jans": [
+      "4902881459709"
+    ]
+  },
+  {
     "id": "8747",
     "name": "明星 チャルメラどんぶり 宮崎辛麺 (みやざきからめん)",
     "category": "regular",

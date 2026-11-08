@@ -143,6 +143,17 @@
     "category": "basebread"
   },
   {
+    "id": "102023",
+    "name": "BASE BREAD ピザ",
+    "price": 289,
+    "url": "https://shop.basefood.co.jp/products/basebread/pizza",
+    "calories": 264,
+    "protein": 13.9,
+    "fat": 8.3,
+    "carbs": 36.2,
+    "category": "basebread"
+  },
+  {
     "id": "112001",
     "name": "BASE YAKISOBA ソース焼きそば",
     "price": 421,

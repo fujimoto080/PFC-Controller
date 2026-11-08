@@ -1188,6 +1188,34 @@
     ]
   },
   {
+    "id": "206946",
+    "name": "MARUCHAN QTTA 背徳ブラック醤油",
+    "category": "instant-cupnoodles",
+    "price": 255,
+    "url": "https://www.maruchan.co.jp/products/search/206946.html",
+    "calories": 338,
+    "protein": 7.7,
+    "fat": 12.2,
+    "carbs": 49.4,
+    "jans": [
+      "4901990385046"
+    ]
+  },
+  {
+    "id": "206947",
+    "name": "でかまる じゃが入りコーン塩バター味ラーメン",
+    "category": "instant-cupnoodles",
+    "price": 322,
+    "url": "https://www.maruchan.co.jp/products/search/206947.html",
+    "calories": 522,
+    "protein": 9.8,
+    "fat": 24.5,
+    "carbs": 65.6,
+    "jans": [
+      "4901990385060"
+    ]
+  },
+  {
     "id": "211402",
     "name": "昔ながらの中華そば",
     "category": "instant-noodles",

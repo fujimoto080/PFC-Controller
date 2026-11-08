@@ -220,6 +220,50 @@
     "carbs": 14.4
   },
   {
+    "id": "1900",
+    "name": "チーズチーズダブルチーズバーガー",
+    "category": "burger",
+    "price": 550,
+    "url": "https://www.mcdonalds.co.jp/products/1900/",
+    "calories": 561,
+    "protein": 32.4,
+    "fat": 33.2,
+    "carbs": 33.1
+  },
+  {
+    "id": "1910",
+    "name": "チーズチーズてりやきマックバーガー",
+    "category": "burger",
+    "price": 470,
+    "url": "https://www.mcdonalds.co.jp/products/1910/",
+    "calories": 586,
+    "protein": 20.1,
+    "fat": 39.3,
+    "carbs": 38.7
+  },
+  {
+    "id": "1920",
+    "name": "チーズチーズてりやきチキンジューシーマック",
+    "category": "burger",
+    "price": 540,
+    "url": "https://www.mcdonalds.co.jp/products/1920/",
+    "calories": 590,
+    "protein": 23.5,
+    "fat": 31.2,
+    "carbs": 54.5
+  },
+  {
+    "id": "1930",
+    "name": "チーチーダブチソーセージマフィン",
+    "category": "burger",
+    "price": 490,
+    "url": "https://www.mcdonalds.co.jp/products/1930/",
+    "calories": 745,
+    "protein": 30.6,
+    "fat": 54.6,
+    "carbs": 32.7
+  },
+  {
     "id": "2200",
     "name": "サイドサラダ",
     "category": "side",

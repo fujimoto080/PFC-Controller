@@ -1906,20 +1906,6 @@
     ]
   },
   {
-    "id": "13741",
-    "name": "チキンラーメン汁なしどんぶり スパイス香るドライカレー味",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13741/",
-    "calories": 441,
-    "protein": 9.1,
-    "fat": 20.5,
-    "carbs": 55,
-    "price": 268,
-    "jans": [
-      "4902105295939"
-    ]
-  },
-  {
     "id": "13760",
     "name": "冷しカップヌードル 鶏塩レモン味",
     "category": "即席麺",
@@ -1945,20 +1931,6 @@
     "price": 308,
     "jans": [
       "4902105295472"
-    ]
-  },
-  {
-    "id": "13762",
-    "name": "カップヌードル レッドシーフードヌードル",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13762/",
-    "calories": 335,
-    "protein": 9,
-    "fat": 13.4,
-    "carbs": 44.5,
-    "price": 268,
-    "jans": [
-      "4902105296493"
     ]
   },
   {
@@ -2001,34 +1973,6 @@
     "price": 367,
     "jans": [
       "4902105267349"
-    ]
-  },
-  {
-    "id": "13781",
-    "name": "日清の辛どん兵衛 牛だしそば",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13781/",
-    "calories": 379,
-    "protein": 11.5,
-    "fat": 15.6,
-    "carbs": 48.1,
-    "price": 268,
-    "jans": [
-      "4902105295908"
-    ]
-  },
-  {
-    "id": "13782",
-    "name": "日清の辛どん兵衛 豚だしうどん",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13782/",
-    "calories": 409,
-    "protein": 7.3,
-    "fat": 20.2,
-    "carbs": 49.6,
-    "price": 268,
-    "jans": [
-      "4902105295892"
     ]
   },
   {
