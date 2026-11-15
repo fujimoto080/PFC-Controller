@@ -1906,34 +1906,6 @@
     ]
   },
   {
-    "id": "13760",
-    "name": "冷しカップヌードル 鶏塩レモン味",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13760/",
-    "calories": 278,
-    "protein": 7.3,
-    "fat": 12.6,
-    "carbs": 33.8,
-    "price": 308,
-    "jans": [
-      "4902105295489"
-    ]
-  },
-  {
-    "id": "13761",
-    "name": "冷しカップヌードル ピリ辛キムチ味",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13761/",
-    "calories": 285,
-    "protein": 7.1,
-    "fat": 13.3,
-    "carbs": 34.1,
-    "price": 308,
-    "jans": [
-      "4902105295472"
-    ]
-  },
-  {
     "id": "13771",
     "name": "日清焼そばU.F.O.",
     "category": "即席麺",
@@ -2449,6 +2421,48 @@
     "price": 268,
     "jans": [
       "4902105296578"
+    ]
+  },
+  {
+    "id": "13999",
+    "name": "日清BLACKカレーメシ 濃厚チーズ",
+    "category": "カップライス",
+    "url": "https://www.nissin.com/jp/product/items/13999/",
+    "calories": 361,
+    "protein": 6.9,
+    "fat": 11.6,
+    "carbs": 57.2,
+    "price": 322,
+    "jans": [
+      "4902105940983"
+    ]
+  },
+  {
+    "id": "14000",
+    "name": "日清のBLACKどん兵衛 背脂醤油黒うどん",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14000/",
+    "calories": 377,
+    "protein": 6.7,
+    "fat": 18,
+    "carbs": 47.1,
+    "price": 268,
+    "jans": [
+      "4902105296776"
+    ]
+  },
+  {
+    "id": "14001",
+    "name": "日清焼そばBLACK U.F.O. ガリマヨブラックイカスミソース焼そば",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/14001/",
+    "calories": 445,
+    "protein": 7.4,
+    "fat": 19.5,
+    "carbs": 60,
+    "price": 268,
+    "jans": [
+      "4902105297131"
     ]
   },
   {

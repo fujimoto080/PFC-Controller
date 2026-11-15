@@ -120,6 +120,16 @@
     "carbs": 9.1
   },
   {
+    "id": "bio-mixberry",
+    "name": "ダノン ビオ 5種のベリーミックス(4カップ入りの1カップ)",
+    "category": "yogurt",
+    "url": "https://www.danone.co.jp/bio/lineup/mixberry/",
+    "calories": 56,
+    "protein": 2.6,
+    "fat": 1.1,
+    "carbs": 9
+  },
+  {
     "id": "bio-pearandapple",
     "name": "ダノン ビオ 和梨&りんご(4カップ入りの1カップ)",
     "category": "yogurt",
@@ -128,16 +138,6 @@
     "protein": 2.6,
     "fat": 1.1,
     "carbs": 9.1
-  },
-  {
-    "id": "bio-peargrape",
-    "name": "ダノン ビオ 洋梨&ぶどう(4カップ入りの1カップ)",
-    "category": "yogurt",
-    "url": "https://www.danone.co.jp/bio/lineup/peargrape/",
-    "calories": 56,
-    "protein": 2.6,
-    "fat": 1.1,
-    "carbs": 9
   },
   {
     "id": "bio-plain",

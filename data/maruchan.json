@@ -1216,6 +1216,34 @@
     ]
   },
   {
+    "id": "206948",
+    "name": "赤い天ぷらそば",
+    "category": "instant-cupnoodles",
+    "price": 268,
+    "url": "https://www.maruchan.co.jp/products/search/206948.html",
+    "calories": 422,
+    "protein": 9.6,
+    "fat": 21.3,
+    "carbs": 48,
+    "jans": [
+      "4901990385084"
+    ]
+  },
+  {
+    "id": "206949",
+    "name": "緑の天ぷらうどん",
+    "category": "instant-cupnoodles",
+    "price": 268,
+    "url": "https://www.maruchan.co.jp/products/search/206949.html",
+    "calories": 439,
+    "protein": 6.7,
+    "fat": 22.5,
+    "carbs": 52.4,
+    "jans": [
+      "4901990385107"
+    ]
+  },
+  {
     "id": "211402",
     "name": "昔ながらの中華そば",
     "category": "instant-noodles",

@@ -165,50 +165,6 @@
     "carbs": 38.4
   },
   {
-    "id": "1500",
-    "name": "ザクザクジューシーももチキン",
-    "category": "side",
-    "price": 270,
-    "url": "https://www.mcdonalds.co.jp/products/1500/",
-    "calories": 239,
-    "protein": 12.3,
-    "fat": 13.4,
-    "carbs": 17.2
-  },
-  {
-    "id": "1510",
-    "name": "てりやきチキンジューシーマック",
-    "category": "burger",
-    "price": 470,
-    "url": "https://www.mcdonalds.co.jp/products/1510/",
-    "calories": 488,
-    "protein": 17.7,
-    "fat": 23.1,
-    "carbs": 53.2
-  },
-  {
-    "id": "1520",
-    "name": "スパイシーザクザクジューシーマック",
-    "category": "burger",
-    "price": 470,
-    "url": "https://www.mcdonalds.co.jp/products/1520/",
-    "calories": 473,
-    "protein": 17.5,
-    "fat": 24.7,
-    "carbs": 45.8
-  },
-  {
-    "id": "1530",
-    "name": "ザクザクジューシーマック",
-    "category": "burger",
-    "price": 460,
-    "url": "https://www.mcdonalds.co.jp/products/1530/",
-    "calories": 452,
-    "protein": 17.5,
-    "fat": 22.1,
-    "carbs": 46.4
-  },
-  {
     "id": "1610",
     "name": "チキンマックナゲット® 5ピース",
     "category": "side",
@@ -240,17 +196,6 @@
     "protein": 20.1,
     "fat": 39.3,
     "carbs": 38.7
-  },
-  {
-    "id": "1920",
-    "name": "チーズチーズてりやきチキンジューシーマック",
-    "category": "burger",
-    "price": 540,
-    "url": "https://www.mcdonalds.co.jp/products/1920/",
-    "calories": 590,
-    "protein": 23.5,
-    "fat": 31.2,
-    "carbs": 54.5
   },
   {
     "id": "1930",
@@ -438,39 +383,6 @@
     "protein": 23.7,
     "fat": 45.3,
     "carbs": 35.6
-  },
-  {
-    "id": "4810",
-    "name": "倍てりやきチキンジューシーマック",
-    "category": "burger",
-    "price": 610,
-    "url": "https://www.mcdonalds.co.jp/products/4810/",
-    "calories": 754,
-    "protein": 30.2,
-    "fat": 36.6,
-    "carbs": 77
-  },
-  {
-    "id": "4820",
-    "name": "倍スパイシーザクザクジューシーマック",
-    "category": "burger",
-    "price": 610,
-    "url": "https://www.mcdonalds.co.jp/products/4820/",
-    "calories": 712,
-    "protein": 29.8,
-    "fat": 38.2,
-    "carbs": 63
-  },
-  {
-    "id": "4830",
-    "name": "倍ザクザクジューシーマック",
-    "category": "burger",
-    "price": 600,
-    "url": "https://www.mcdonalds.co.jp/products/4830/",
-    "calories": 691,
-    "protein": 29.8,
-    "fat": 35.5,
-    "carbs": 63.6
   },
   {
     "id": "5010",
