@@ -16,12 +16,19 @@ export function getBarcodeMapping(
   return redis.get<BarcodeFood>(mappingKey(barcode));
 }
 
-export async function saveBarcodeMapping(
-  barcode: string,
-  food: BarcodeFood,
+export async function saveBarcodeMappings(
+  mappings: BarcodeMappingRow[],
 ): Promise<void> {
-  await redis.set(mappingKey(barcode), food);
-  await redis.sadd(INDEX_KEY, barcode);
+  const [first, ...rest] = mappings;
+  if (!first) return;
+  const values = Object.fromEntries(
+    mappings.map(({ barcode, food }) => [mappingKey(barcode), food]),
+  );
+  await redis
+    .multi()
+    .mset(values)
+    .sadd(INDEX_KEY, first.barcode, ...rest.map(({ barcode }) => barcode))
+    .exec();
 }
 
 export async function listBarcodeMappings(): Promise<BarcodeMappingRow[]> {

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { PoolClient } from 'pg';
 import { buildLogItem } from '@/lib/pfc';
 import { deleteUserRow, getPool } from '@/lib/server/db';
 import {
@@ -68,6 +69,45 @@ export async function createLogItem(
   const row = result.rows[0];
   if (!row) throw new Error('ログの登録に失敗しました');
   return toLogItem(row);
+}
+
+export async function findLogItemsByIds(
+  userId: string,
+  ids: string[],
+  db: Pick<PoolClient, 'query'>,
+): Promise<LogItem[]> {
+  const { rows } = await db.query<LogRow>(
+    `SELECT ${RETURNING} FROM pfc_log_items WHERE user_id = $1 AND id = ANY($2::uuid[])`,
+    [userId, ids],
+  );
+  return rows.map(toLogItem);
+}
+
+/** スキャンの下書き ID で登録し、同じリクエストの再送による二重記録を防ぐ。 */
+export async function createLogItemsBulk(
+  userId: string,
+  entries: { id: string; input: LogItemInput }[],
+  db: Pick<PoolClient, 'query'>,
+): Promise<LogItem[]> {
+  if (entries.length === 0) return [];
+  const values: unknown[] = [userId];
+  const tuples = entries.map(({ id, input }) => {
+    const args = [
+      id,
+      formatDate(input.timestamp),
+      ...foodValues(input),
+      input.quantity,
+    ];
+    const placeholders = args.map((value) => `$${values.push(value)}`);
+    return `($1, ${placeholders.join(', ')})`;
+  });
+  const { rows } = await db.query<LogRow>(
+    `INSERT INTO pfc_log_items (user_id, id, date, ${FOOD_COLUMNS}, quantity)
+     VALUES ${tuples.join(', ')}
+     ON CONFLICT (id) DO NOTHING RETURNING ${RETURNING}`,
+    values,
+  );
+  return rows.map(toLogItem);
 }
 
 export async function updateLogItem(

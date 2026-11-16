@@ -1,4 +1,5 @@
 import { dayLogList, expect, test } from './fixtures';
+import type { SavedScanEntry } from '@/lib/scan-batch';
 
 test('JSONカタログの商品を共通フォームで開き、食品リストと食事記録に保存できる', async ({
   page,
@@ -62,4 +63,47 @@ test('食品管理からも日時と数量を指定して記録でき、食品�
   await expect(
     dayLogList(page).getByRole('button', { name: /数量指定のチキン/ }),
   ).toContainText('555');
+});
+
+test('一括保存は再送しても記録を重複させず、同じ食品を辞書に1件だけ保存する', async ({
+  page,
+}) => {
+  const timestamp = Date.now();
+  const input = {
+    name: '一括登録のチキン',
+    protein: 25,
+    fat: 5,
+    carbs: 10,
+    calories: 185,
+    timestamp,
+  };
+  const entries = [1, 3].map((quantity) => ({
+    id: crypto.randomUUID(),
+    input: { ...input, quantity },
+    barcodes: [],
+  }));
+  const invalid = { ...entries[0], input: { ...input, quantity: 0 } };
+  const responses = await Promise.all(
+    [0, 1].map(() =>
+      page.request.post('/api/log-items/batch', {
+        data: [invalid, ...entries],
+      }),
+    ),
+  );
+  for (const response of responses) {
+    expect(response.ok()).toBe(true);
+    const saved = (await response.json()) as SavedScanEntry[];
+    expect(saved.map(({ item }) => item.id)).toEqual(
+      entries.map(({ id }) => id),
+    );
+  }
+
+  await page.goto('/');
+  const logs = dayLogList(page).getByRole('button', {
+    name: /一括登録のチキン/,
+  });
+  await expect(logs).toHaveCount(2);
+  await expect(logs.filter({ hasText: '555' })).toHaveCount(1);
+  await page.goto('/foods');
+  await expect(page.getByText(input.name, { exact: true })).toHaveCount(1);
 });

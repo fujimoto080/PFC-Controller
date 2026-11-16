@@ -5,7 +5,10 @@ import { barcodeFoodSchema } from '@/lib/api/schemas';
 import { normalizeBarcodes, toBarcodeFood } from '@/lib/barcode';
 import { findCatalogItemByJan } from '@/lib/catalog/stores';
 import { foodCandidateKey } from '@/lib/food-suggestions';
-import { getBarcodeMapping, saveBarcodeMapping } from '@/lib/server/barcode-kv';
+import {
+  getBarcodeMapping,
+  saveBarcodeMappings,
+} from '@/lib/server/barcode-kv';
 import { findFoodByAlias } from '@/lib/server/foods';
 import { findOpenFoodFactsByBarcode } from '@/lib/server/open-food-facts';
 
@@ -45,8 +48,8 @@ export const POST = defineRoute(
     if (barcodes.length === 0)
       throw new ApiError('バーコードを1件以上指定してください', 400);
 
-    await Promise.all(
-      barcodes.map((code) => saveBarcodeMapping(code, body.food)),
+    await saveBarcodeMappings(
+      barcodes.map((barcode) => ({ barcode, food: body.food })),
     );
     return noContent();
   },

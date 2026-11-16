@@ -63,3 +63,8 @@ export function buildFoodMatchKey(food: BarcodeFood): string {
     food.calories,
   ].join('|');
 }
+
+/** 食品辞書では同じ栄養値でも、店舗・店内グループが異なる食品は別に扱う。 */
+export function foodDictionaryKey(food: BarcodeFood & { storeGroup?: string }) {
+  return JSON.stringify([buildFoodMatchKey(food), food.store, food.storeGroup]);
+}

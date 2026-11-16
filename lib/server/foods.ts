@@ -24,8 +24,11 @@ const UPSERT_SET = `
   store_group = EXCLUDED.store_group,
   image = EXCLUDED.image`;
 
-export async function listFoods(userId: string): Promise<FoodItem[]> {
-  const result = await getPool().query<FoodRow>(
+export async function listFoods(
+  userId: string,
+  db: Pick<PoolClient, 'query'> = getPool(),
+): Promise<FoodItem[]> {
+  const result = await db.query<FoodRow>(
     `SELECT ${COLUMNS} FROM pfc_foods WHERE user_id = $1 ORDER BY position ASC`,
     [userId],
   );
@@ -166,8 +169,9 @@ export async function upsertFood(
 export async function upsertFoodsBulk(
   userId: string,
   items: FoodItem[],
+  db: Pick<PoolClient, 'query'> = getPool(),
 ): Promise<number> {
-  const result = await getPool().query(
+  const result = await db.query(
     `WITH base AS (
        SELECT COALESCE(MAX(position) + 1, 0) AS start FROM pfc_foods WHERE user_id = $1
      ),

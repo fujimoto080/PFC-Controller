@@ -1,6 +1,6 @@
 import type { FoodTemplate } from './food-form';
 import { scalePFC, sumPFC } from './pfc';
-import type { PFC } from './types';
+import type { FoodItem, LogItem, LogItemInput, PFC } from './types';
 
 // バーコードの連続読み取りで溜めて、まとめて記録・登録する商品の一覧。
 
@@ -25,6 +25,17 @@ export interface BatchItem {
 }
 
 export const QUANTITY_STEP = 0.5;
+
+export interface ScanSaveEntry {
+  id: string;
+  input: LogItemInput;
+  barcodes: string[];
+}
+
+export interface SavedScanEntry {
+  item: LogItem;
+  food?: FoodItem;
+}
 
 /** 読み取ったバーコードを一覧に加える。同じバーコードが既にあれば数量を 1 増やす。 */
 export function addBarcodeItem(

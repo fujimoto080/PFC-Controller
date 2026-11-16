@@ -1,16 +1,19 @@
 import { act, renderHook } from '@testing-library/react';
 import { useScanBatch } from '@/hooks/use-scan-batch';
-import { saveFoodRegistration } from '@/lib/client/food-registration';
+import { api } from '@/lib/client/api';
+import { buildLogItem } from '@/lib/pfc';
+import type { SavedScanEntry, ScanSaveEntry } from '@/lib/scan-batch';
 
-jest.mock('@/lib/client/food-registration', () => ({
-  saveFoodRegistration: jest.fn(),
+jest.mock('@/lib/client/actions', () => ({
+  applySavedScanEntries: jest.fn(),
 }));
 jest.mock('@/lib/client/api', () => ({
+  api: { post: jest.fn() },
   fetchBarcodeFood: jest.fn(),
   estimateNutritionFromImages: jest.fn(),
 }));
 jest.mock('@/lib/toast', () => ({
-  toast: { success: jest.fn(), fromError: jest.fn() },
+  toast: { success: jest.fn(), error: jest.fn(), fromError: jest.fn() },
 }));
 
 const food = {
@@ -21,12 +24,16 @@ const food = {
   carbs: 10,
   calories: 185,
 };
-const save = jest.mocked(saveFoodRegistration);
+const save = jest.mocked(api.post<SavedScanEntry[]>);
+const savedEntries = (entries: ScanSaveEntry[]) =>
+  entries.map(({ id, input }) => ({ item: buildLogItem(id, input) }));
 
 beforeEach(() => {
   localStorage.clear();
   save.mockReset();
-  save.mockResolvedValue(true);
+  save.mockImplementation((_url, entries) =>
+    Promise.resolve(savedEntries(entries as ScanSaveEntry[])),
+  );
 });
 
 it('共通フォームで指定した数量・日時・グループ・複数バーコードを一括保存に渡す', async () => {
@@ -44,10 +51,17 @@ it('共通フォームで指定した数量・日時・グループ・複数バ�
     if (!item) throw new Error('商品がありません');
     result.current.setRegistration(item.id, entry);
   });
+  const id = result.current.items[0]?.id;
   await act(async () => {
     expect(await result.current.commit(999999)).toBe(true);
   });
-  expect(save).toHaveBeenCalledWith(entry);
+  expect(save).toHaveBeenCalledWith('/api/log-items/batch', [
+    {
+      id,
+      input: { ...entry.food, quantity: entry.quantity },
+      barcodes: entry.barcodes,
+    },
+  ]);
   expect(result.current.items).toEqual([]);
 });
 
@@ -56,7 +70,9 @@ it('保存できた商品だけ一覧から外し、失敗した商品を再試�
   act(() => {
     result.current.addFoods([food, { ...food, name: 'サラダ' }]);
   });
-  save.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+  save.mockImplementationOnce((_url, entries) =>
+    Promise.resolve(savedEntries((entries as ScanSaveEntry[]).slice(0, 1))),
+  );
   await act(async () => {
     expect(await result.current.commit(123456)).toBe(false);
   });
@@ -66,7 +82,10 @@ it('保存できた商品だけ一覧から外し、失敗した商品を再試�
   await act(async () => {
     expect(await result.current.commit(123456)).toBe(true);
   });
-  expect(save).toHaveBeenCalledTimes(3);
+  expect(save).toHaveBeenCalledTimes(2);
+  const retry = save.mock.lastCall?.[1] as ScanSaveEntry[];
+  expect(retry).toHaveLength(1);
+  expect(retry[0]?.input.name).toBe('サラダ');
   expect(result.current.items).toEqual([]);
 });
 
@@ -93,11 +112,13 @@ it('一括指定した日時を編集済みの商品にも反映する', () => {
 });
 
 it('保存中に連打しても同じ商品を二重に保存しない', async () => {
-  let finish!: (saved: boolean) => void;
+  let finish!: () => void;
   save.mockImplementationOnce(
-    () =>
+    (_url, entries) =>
       new Promise((resolve) => {
-        finish = resolve;
+        finish = () => {
+          resolve(savedEntries(entries as ScanSaveEntry[]));
+        };
       }),
   );
   const { result } = renderHook(() => useScanBatch());
@@ -113,7 +134,7 @@ it('保存中に連打しても同じ商品を二重に保存しない', async (
   });
   expect(save).toHaveBeenCalledTimes(1);
   await act(async () => {
-    finish(true);
+    finish();
     await pending;
   });
 });

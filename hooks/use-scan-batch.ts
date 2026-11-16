@@ -3,11 +3,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFormDraft } from '@/hooks/use-form-draft';
 import type { FoodTemplate } from '@/lib/food-form';
+import { applySavedScanEntries } from '@/lib/client/actions';
+import type { FoodRegistration } from '@/lib/client/food-registration';
 import {
-  saveFoodRegistration,
-  type FoodRegistration,
-} from '@/lib/client/food-registration';
-import {
+  api,
   estimateNutritionFromImages,
   fetchBarcodeFood,
 } from '@/lib/client/api';
@@ -18,6 +17,8 @@ import {
   restoreItems,
   updateItem,
   type BatchItem,
+  type SavedScanEntry,
+  type ScanSaveEntry,
 } from '@/lib/scan-batch';
 import { toast } from '@/lib/toast';
 
@@ -150,25 +151,40 @@ export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
   /** 保存できた商品だけ一覧から外し、失敗した商品は再試行できるよう残す。 */
   const commit = async (timestamp: number): Promise<boolean> => {
     if (savingRef.current) return false;
+    const entries = readyFoods(itemsRef.current).map(
+      ({ item, food }): ScanSaveEntry => ({
+        id: item.id,
+        input: {
+          ...food,
+          timestamp: item.timestamp ?? timestamp,
+          quantity: item.quantity,
+        },
+        barcodes: item.barcodes ?? (item.linkBarcode ? [item.barcode] : []),
+      }),
+    );
+    if (entries.length === 0) return itemsRef.current.length === 0;
     savingRef.current = true;
     setSaving(true);
-    const entries = readyFoods(itemsRef.current);
-    let savedCount = 0;
-    for (const { item, food } of entries) {
-      const saved = await saveFoodRegistration({
-        food: { ...food, timestamp: item.timestamp ?? timestamp },
-        quantity: item.quantity,
-        barcodes: item.barcodes ?? (item.linkBarcode ? [item.barcode] : []),
-      });
-      if (saved) {
-        remove(item.id);
-        savedCount++;
-      }
+    try {
+      const saved = await api.post<SavedScanEntry[]>(
+        '/api/log-items/batch',
+        entries,
+      );
+      applySavedScanEntries(saved);
+      const savedIds = new Set(saved.map(({ item }) => item.id));
+      update((current) => current.filter(({ id }) => !savedIds.has(id)));
+      if (saved.length > 0) toast.success(`${saved.length}品を保存しました`);
+      const failedCount = entries.length - saved.length;
+      if (failedCount > 0)
+        toast.error(`${failedCount}品を保存できませんでした`);
+      return itemsRef.current.length === 0;
+    } catch (error) {
+      toast.fromError('食品の一括保存に失敗しました', error);
+      return false;
+    } finally {
+      setSaving(false);
+      savingRef.current = false;
     }
-    setSaving(false);
-    savingRef.current = false;
-    if (savedCount > 0) toast.success(`${savedCount}品を保存しました`);
-    return itemsRef.current.length === 0;
   };
 
   return {

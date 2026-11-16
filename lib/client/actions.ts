@@ -1,6 +1,7 @@
 'use client';
 
-import { buildFoodMatchKey } from '@/lib/barcode';
+import { foodDictionaryKey } from '@/lib/barcode';
+import type { SavedScanEntry } from '@/lib/scan-batch';
 import { api } from '@/lib/client/api';
 import {
   getState,
@@ -135,16 +136,31 @@ function addFood(item: FoodItem): Promise<boolean> {
  * 同じ店舗・グループ・栄養値の食品がリストに無ければ追加する。
  */
 export function rememberFood(food: FoodItemInput): Promise<boolean> {
-  const matchKey = buildFoodMatchKey(food);
+  const matchKey = foodDictionaryKey(food);
   const exists = getState().foods.some(
-    (saved) =>
-      buildFoodMatchKey(saved) === matchKey &&
-      saved.store === food.store &&
-      saved.storeGroup === food.storeGroup,
+    (saved) => foodDictionaryKey(saved) === matchKey,
   );
   return exists
     ? Promise.resolve(true)
     : addFood({ ...food, id: crypto.randomUUID() });
+}
+
+/** 一括保存済みの記録・食品をストアに反映する。再送時は同じ ID の項目を追加しない。 */
+export function applySavedScanEntries(entries: SavedScanEntry[]) {
+  if (entries.length === 0) return;
+  setState((current) => {
+    let logs = current.logs;
+    const foods = new Map(current.foods.map((food) => [food.id, food]));
+    for (const { item, food } of entries) {
+      logs = updateDay(
+        removeLogItem(logs, item.id),
+        formatDate(item.timestamp),
+        (log) => ({ items: [...log.items, item] }),
+      );
+      if (food) foods.set(food.id, food);
+    }
+    return { ...current, logs, foods: [...foods.values()] };
+  });
 }
 
 export function updateFood(item: FoodItem): Promise<boolean> {
