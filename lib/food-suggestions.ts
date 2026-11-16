@@ -1,4 +1,5 @@
 import { buildFoodMatchKey, type BarcodeFood } from '@/lib/barcode';
+import { MACROS } from '@/lib/macros';
 import type { FoodAlias, FoodItem, Logs, PFC } from '@/lib/types';
 
 const normalizeCandidateLabel = (value: string): string =>
@@ -8,6 +9,25 @@ const normalizeFoodName = (value: string): string =>
   normalizeCandidateLabel(value).replace(/ー/g, '');
 
 const MAX_CANDIDATES = 30;
+
+interface FoodMergeCandidate {
+  key: string;
+  foods: [FoodItem, ...FoodItem[]];
+}
+
+/** P・F・C がすべて同じ食品が2件以上ある組を返す。 */
+export function findFoodMergeCandidates(
+  foods: readonly FoodItem[],
+): FoodMergeCandidate[] {
+  const groups = new Map<string, FoodMergeCandidate>();
+  for (const food of foods) {
+    const key = MACROS.map(({ key }) => food[key]).join('|');
+    const group = groups.get(key);
+    if (group) group.foods.push(food);
+    else groups.set(key, { key, foods: [food] });
+  }
+  return [...groups.values()].filter((group) => group.foods.length >= 2);
+}
 
 export function foodCandidateKey(food: BarcodeFood): string {
   return JSON.stringify([

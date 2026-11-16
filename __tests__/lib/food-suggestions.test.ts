@@ -1,4 +1,5 @@
 import {
+  findFoodMergeCandidates,
   foodCandidateKey,
   rankFrequentFoods,
   searchFoodCandidates,
@@ -35,6 +36,28 @@ const foods: FoodItem[] = [
     timestamp: 1,
   },
 ];
+
+describe('findFoodMergeCandidates', () => {
+  it('カロリーや名前が異なってもP・F・Cがすべて一致する食品をまとめる', () => {
+    const original = foods[0]!;
+    const duplicate = {
+      ...original,
+      id: 'duplicate',
+      name: '蒸し鶏',
+      calories: 125,
+    };
+    const other = {
+      ...original,
+      id: 'other',
+      carbs: original.carbs + 0.01,
+    };
+    expect(
+      findFoodMergeCandidates([...foods, duplicate, other]).map(
+        (group) => group.foods,
+      ),
+    ).toEqual([[original, duplicate]]);
+  });
+});
 
 describe('searchFoodCandidates', () => {
   const eaten = (id: string, timestamp: number, food: FoodItem) =>

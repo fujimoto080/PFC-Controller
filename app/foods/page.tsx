@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { BulkStoreEditor } from '@/components/foods/BulkStoreEditor';
 import { CollapsibleSection } from '@/components/foods/CollapsibleSection';
 import { FoodEditor } from '@/components/foods/FoodEditor';
+import { FoodMergeCandidates } from '@/components/foods/FoodMergeCandidates';
 import { FoodMergeDrawer } from '@/components/foods/FoodMergeDrawer';
 import { FoodRow } from '@/components/foods/FoodRow';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import {
   updateFood,
 } from '@/lib/client/actions';
 import { useAppState } from '@/lib/client/store';
+import { findFoodMergeCandidates } from '@/lib/food-suggestions';
 import {
   buildStoreSections,
   collectStoreGroups,
@@ -49,6 +51,11 @@ export default function FoodsPage() {
   const selectedFoods = selection
     ? foods.filter((food) => selection.ids.includes(food.id))
     : [];
+  const isMerging = selection?.mode === 'merge';
+  const mergeCandidates = useMemo(
+    () => (isMerging ? findFoodMergeCandidates(foods) : []),
+    [foods, isMerging],
+  );
 
   const storeOptions = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const groupOptions = useMemo(() => collectStoreGroups(foods), [foods]);
@@ -143,7 +150,7 @@ export default function FoodsPage() {
               </Button>
             </div>
           )}
-          {selection?.mode === 'merge' && (
+          {isMerging && (
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm">{selectedFoods.length}件を選択中</p>
               <div className="flex gap-2">
@@ -169,6 +176,15 @@ export default function FoodsPage() {
             </div>
           )}
         </div>
+
+        {isMerging && (
+          <FoodMergeCandidates
+            candidates={mergeCandidates}
+            onSelect={(ids) => {
+              setSelection({ mode: 'merge', ids });
+            }}
+          />
+        )}
 
         {sections.length === 0 ? (
           <StatusMessage>食品が見つかりません</StatusMessage>
