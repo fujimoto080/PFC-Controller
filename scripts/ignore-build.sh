@@ -16,5 +16,7 @@ exec git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . \
   ':(exclude).oxlintrc.json' \
   ':(exclude).oxfmtrc.json' \
   ':(exclude)renovate.json' \
+  ':(exclude)scripts/e2e-session-cookie.ts' \
+  ':(exclude)scripts/lighthouse.mjs' \
   ':(exclude)scripts/seed-sukiya-foods.mjs' \
   ':(exclude)scripts/scrape-catalog.ts'
