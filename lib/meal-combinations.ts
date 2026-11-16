@@ -3,6 +3,7 @@ import type { PFC } from '@/lib/types';
 
 /** 目標カロリーをこの割合まで超える組み合わせは候補にする。 */
 const CALORIE_TOLERANCE = 1.05;
+const PACK_BLOCK_SIZE = 32;
 
 export interface MealCombination<T extends PFC> {
   items: T[];
@@ -26,6 +27,50 @@ interface SidePack<T extends PFC> {
   c: number;
   weight: number;
   calories: number;
+}
+
+interface PackBounds {
+  minCalories: number;
+  minP: number;
+  maxP: number;
+  minF: number;
+  maxF: number;
+  minC: number;
+  maxC: number;
+}
+
+/** weight 順の並びを粗く区切り、副菜の組をまとめて除外するための上下限を取る。 */
+function packBounds<T extends PFC>(packs: SidePack<T>[]): PackBounds[] {
+  const blocks: PackBounds[] = [];
+  for (let i = 0; i < packs.length; i += PACK_BLOCK_SIZE) {
+    const block = {
+      minCalories: Infinity,
+      minP: Infinity,
+      maxP: -Infinity,
+      minF: Infinity,
+      maxF: -Infinity,
+      minC: Infinity,
+      maxC: -Infinity,
+    };
+    for (const { calories, p, f, c } of packs.slice(i, i + PACK_BLOCK_SIZE)) {
+      block.minCalories = Math.min(block.minCalories, calories);
+      block.minP = Math.min(block.minP, p);
+      block.maxP = Math.max(block.maxP, p);
+      block.minF = Math.min(block.minF, f);
+      block.maxF = Math.max(block.maxF, f);
+      block.minC = Math.min(block.minC, c);
+      block.maxC = Math.max(block.maxC, c);
+    }
+    blocks.push(block);
+  }
+  return blocks;
+}
+
+function blockScore(block: PackBounds, p: number, f: number, c: number) {
+  const dp = Math.max(block.minP - p, p - block.maxP, 0);
+  const df = Math.max(block.minF - f, f - block.maxF, 0);
+  const dc = Math.max(block.minC - c, c - block.maxC, 0);
+  return 2 * dp * dp + df * df + dc * dc;
 }
 
 function toPack<T extends PFC>(items: T[]): SidePack<T> {
@@ -73,10 +118,12 @@ function lowerBound<T extends PFC>(packs: SidePack<T>[], value: number) {
  * たんぱく質の差を2倍の重みで優先し、カロリーへの影響で比べる。
  * 3 つの差の和を s とするとずれは s²/3 以上なので、主食ごとに副菜の組を「目標の残りとの weight の差」が
  * 小さい順に調べ、その下限がそれまでの最良を超えたら打ち切る。used の商品は使わない。
+ * 各ブロックに入るとき、最小カロリーと P/F/C の範囲から、ブロック全体を除外できるか確認する。
  */
 function findBest<T extends PFC>(
   mains: readonly T[],
   packs: SidePack<T>[],
+  bounds: PackBounds[],
   used: Set<T>,
   target: PFC,
   calorieCap: number,
@@ -91,6 +138,8 @@ function findBest<T extends PFC>(
     const rest = p + f + c;
     let lo = lowerBound(packs, rest) - 1;
     let hi = lo + 1;
+    let checkedBelow = -1;
+    let checkedAbove = -1;
     for (;;) {
       const below = packs[lo];
       const above = packs[hi];
@@ -101,19 +150,29 @@ function findBest<T extends PFC>(
       if (!pack) break;
       const gap = pack.weight - rest;
       if ((gap * gap) / 3 >= bestScore) break;
+      const index = Math.floor((takeBelow ? lo : hi) / PACK_BLOCK_SIZE);
+      if (index !== (takeBelow ? checkedBelow : checkedAbove)) {
+        const block = bounds[index];
+        if (
+          block &&
+          (main.calories + block.minCalories > calorieCap ||
+            blockScore(block, p, f, c) >= bestScore)
+        ) {
+          if (takeBelow) lo = index * PACK_BLOCK_SIZE - 1;
+          else hi = (index + 1) * PACK_BLOCK_SIZE;
+          continue;
+        }
+        if (takeBelow) checkedBelow = index;
+        else checkedAbove = index;
+      }
       if (takeBelow) lo -= 1;
       else hi += 1;
-      if (
-        main.calories + pack.calories > calorieCap ||
-        pack.items.some((item) => used.has(item))
-      ) {
-        continue;
-      }
+      if (main.calories + pack.calories > calorieCap) continue;
       const dp = pack.p - p;
       const df = pack.f - f;
       const dc = pack.c - c;
       const score = 2 * dp * dp + df * df + dc * dc;
-      if (score < bestScore) {
+      if (score < bestScore && !pack.items.some((item) => used.has(item))) {
         bestScore = score;
         best = [main, ...pack.items];
       }
@@ -132,13 +191,14 @@ export function mealCombinationFinder<T extends PFC>({
   sides,
 }: MealCandidates<T>) {
   const packs = sidePacks(sides);
+  const bounds = packBounds(packs);
   return (target: PFC, count: number): MealCombination<T>[] => {
     if (target.calories <= 0) return [];
     const calorieCap = target.calories * CALORIE_TOLERANCE;
     const used = new Set<T>();
     const combinations: MealCombination<T>[] = [];
     while (combinations.length < count) {
-      const best = findBest(mains, packs, used, target, calorieCap);
+      const best = findBest(mains, packs, bounds, used, target, calorieCap);
       if (!best) break;
       combinations.push({ items: best, total: sumPFC(best) });
       for (const item of best) used.add(item);

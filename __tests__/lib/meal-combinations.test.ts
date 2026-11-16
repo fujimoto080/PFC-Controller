@@ -62,4 +62,21 @@ describe('mealCombinationFinder', () => {
       ),
     ).toEqual([]);
   });
+
+  it('上限を超える副菜の組を飛ばし、同点の候補は探索順に選ぶ', () => {
+    const main = food('主食', 10, 2, 20);
+    const tooHeavy = Array.from({ length: 70 }, (_, i) => ({
+      ...food(`上限を超える副菜 ${i}`, 20, 0, 0),
+      calories: 300,
+    }));
+    const sides = [
+      ...tooHeavy,
+      food('目標より少ない副菜', 19, 0, 0),
+      food('目標より多い副菜', 21, 0, 0),
+    ];
+    const find = mealCombinationFinder({ mains: [main], sides });
+    expect(find(food('目標', 30, 2, 20), 1).map(names)).toEqual([
+      ['主食', '目標より少ない副菜'],
+    ]);
+  });
 });
