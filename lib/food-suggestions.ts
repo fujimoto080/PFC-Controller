@@ -3,7 +3,10 @@ import { MACROS } from '@/lib/macros';
 import type { FoodAlias, FoodItem, Logs, PFC } from '@/lib/types';
 
 const normalizeCandidateLabel = (value: string): string =>
-  value.normalize('NFKC').toLowerCase().replace(/[\s_・-]+/g, '');
+  value
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\s_・-]+/g, '');
 
 const normalizeFoodName = (value: string): string =>
   normalizeCandidateLabel(value).replace(/ー/g, '');

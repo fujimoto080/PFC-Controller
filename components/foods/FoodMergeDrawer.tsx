@@ -32,7 +32,9 @@ export function FoodMergeDrawer({
     if (!target || foods.length < 2 || savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
-    const sourceIds = foods.map(({ id }) => id).filter((id) => id !== target.id);
+    const sourceIds = foods
+      .map(({ id }) => id)
+      .filter((id) => id !== target.id);
     const saved = await mergeFoods(target.id, sourceIds);
     savingRef.current = false;
     setSaving(false);
@@ -70,7 +72,7 @@ export function FoodMergeDrawer({
                 </label>
                 <PfcMacroLine food={food} />
                 <span className="text-muted-foreground block text-xs">
-                  {food.store || '店舗未設定'}
+                  {food.store?.length ? food.store : '店舗未設定'}
                   {food.storeGroup && ` / ${food.storeGroup}`}
                 </span>
               </div>

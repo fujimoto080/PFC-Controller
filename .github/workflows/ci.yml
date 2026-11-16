@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: ['main']
     paths-ignore:
@@ -105,7 +106,8 @@ jobs:
 
   e2e:
     needs: build
-    runs-on: ubuntu-latest
+    # プリインストール済みの Chrome を使い、ブラウザと OS 依存のインストールを省く。
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -116,8 +118,8 @@ jobs:
         ports:
           - 54329:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
+          --health-cmd "pg_isready -h 127.0.0.1"
+          --health-interval 1s
           --health-timeout 5s
           --health-retries 10
 
@@ -136,22 +138,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      # ブラウザ本体は Playwright のバージョンごとにキャッシュし、OS 依存ライブラリだけ毎回入れる
-      - name: Cache Playwright browser
-        id: playwright-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install Playwright browser
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps --only-shell chromium
-
-      - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium-headless-shell
-
       - name: Download build
         uses: actions/download-artifact@v8
         with:
@@ -165,6 +151,7 @@ jobs:
         run: pnpm test:e2e
         env:
           E2E_PREBUILT: '1'
+          E2E_BROWSER_CHANNEL: chrome
 
       - name: Upload Playwright traces
         if: failure()
@@ -176,7 +163,19 @@ jobs:
   # 本番ビルドを起動してログイン済みの主要画面を Lighthouse で計測し、Performance スコアの下限を割ったら失敗させる
   lighthouse:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - page: today
+            path: /
+          - page: foods
+            path: /foods
+          - page: suggest
+            path: /suggest
+          - page: settings
+            path: /settings
 
     services:
       postgres:
@@ -187,8 +186,8 @@ jobs:
         ports:
           - 54329:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
+          --health-cmd "pg_isready -h 127.0.0.1"
+          --health-interval 1s
           --health-timeout 5s
           --health-retries 10
 
@@ -242,14 +241,15 @@ jobs:
         env:
           LIGHTHOUSE_BASE_URL: http://localhost:3210
           LIGHTHOUSE_MIN_SCORE: '0.4'
+          LIGHTHOUSE_PATH: ${{ matrix.path }}
         run: |
           export LIGHTHOUSE_COOKIE="$(node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/e2e-session-cookie.ts)"
-          pnpm lighthouse
+          pnpm lighthouse "$LIGHTHOUSE_PATH"
 
       - name: Upload Lighthouse reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: lighthouse-reports
+          name: lighthouse-reports-${{ matrix.page }}
           path: .lighthouse
           include-hidden-files: true

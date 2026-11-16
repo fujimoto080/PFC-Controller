@@ -7,7 +7,7 @@ import {
 import { buildLogItem } from '@/lib/pfc';
 import { createEmptyDailyLog, type FoodItem, type Logs } from '@/lib/types';
 
-const foods: FoodItem[] = [
+const foods: [FoodItem, ...FoodItem[]] = [
   {
     id: '1',
     name: 'サラダチキン',
@@ -39,7 +39,7 @@ const foods: FoodItem[] = [
 
 describe('findFoodMergeCandidates', () => {
   it('カロリーや名前が異なってもP・F・Cがすべて一致する食品をまとめる', () => {
-    const original = foods[0]!;
+    const original = foods[0];
     const duplicate = {
       ...original,
       id: 'duplicate',
@@ -82,7 +82,9 @@ describe('searchFoodCandidates', () => {
 
   it('区切り文字を無視して食品名に検索語を含むものに絞る', () => {
     expect(
-      searchFoodCandidates(foods, logs, 'チキン バジル', {}).map((food) => food.id),
+      searchFoodCandidates(foods, logs, 'チキン バジル', {}).map(
+        (food) => food.id,
+      ),
     ).toEqual([basil.id]);
   });
 
@@ -127,7 +129,9 @@ describe('searchFoodCandidates', () => {
       searchFoodCandidates(stored, {}, 'セブン', {}).map((food) => food.id),
     ).toEqual(['s1', 's2']);
     expect(
-      searchFoodCandidates(stored, {}, 'セブン チキン', {}).map((food) => food.id),
+      searchFoodCandidates(stored, {}, 'セブン チキン', {}).map(
+        (food) => food.id,
+      ),
     ).toEqual(['s1']);
   });
 
@@ -141,9 +145,9 @@ describe('searchFoodCandidates', () => {
     const aliases = {
       [foodCandidateKey(old)]: { foodId: chicken.id, name: old.name },
     };
-    expect(searchFoodCandidates([chicken], history, '蒸し鶏', aliases)).toEqual([
-      chicken,
-    ]);
+    expect(searchFoodCandidates([chicken], history, '蒸し鶏', aliases)).toEqual(
+      [chicken],
+    );
     expect(searchFoodCandidates([chicken], {}, '蒸し鶏', aliases)).toEqual([
       chicken,
     ]);

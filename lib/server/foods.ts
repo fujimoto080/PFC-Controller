@@ -107,7 +107,9 @@ export async function mergeFoods(
         [...aliases.values()].map((row) => row.store),
       ],
     );
-    const settings = await db.query<{ favorite_food_ids_json: string[] | null }>(
+    const settings = await db.query<{
+      favorite_food_ids_json: string[] | null;
+    }>(
       `SELECT favorite_food_ids_json FROM pfc_user_settings
        WHERE user_id = $1 FOR UPDATE`,
       [userId],

@@ -32,7 +32,10 @@ import { StatusMessage } from '@/components/ui/status-message';
 
 /** 編集フォームの状態。null は一覧表示、food: null は新規追加。 */
 type EditorState = { food: FoodItem | null } | null;
-type Selection = { mode: 'store' | 'merge'; ids: string[] };
+interface Selection {
+  mode: 'store' | 'merge';
+  ids: string[];
+}
 
 // 折りたたみ中の店舗・グループのキー一覧を保存する
 const COLLAPSED_STORAGE_KEY = 'pfc_manage_foods_collapsed';
@@ -91,7 +94,9 @@ export default function FoodsPage() {
           <FoodEditor
             key={editor.food?.id ?? 'new'}
             food={editor.food}
-            initialBarcodes={editor.food ? registeredBarcodesOf(editor.food) : []}
+            initialBarcodes={
+              editor.food ? registeredBarcodesOf(editor.food) : []
+            }
             onBarcodesSaved={addBarcodes}
             onClose={() => {
               setEditor(null);

@@ -14,6 +14,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: E2E_BASE_URL,
+    channel: process.env.E2E_BROWSER_CHANNEL,
     locale: 'ja-JP',
     timezoneId: 'Asia/Tokyo',
     trace: 'retain-on-failure',

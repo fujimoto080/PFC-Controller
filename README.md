@@ -48,7 +48,7 @@ AUTH_TRUST_HOST=true                     # Vercel 以外にデプロイする場
 スキーマは `scripts/migrate.mjs` で管理します。内容は冪等 (`CREATE TABLE IF NOT EXISTS` + `CREATE EXTENSION IF NOT EXISTS pgcrypto`)。
 
 - **ローカル**: `pnpm migrate`
-- **Vercel**: デプロイ毎に `pnpm vercel-build` が走る（Vercel は `scripts.vercel-build` を自動検出）。マイグレーションと Next.js ビルドを並列実行し、両方の成功を待ちます。Vercel のビルド環境から `DATABASE_URL` にネットワーク到達できる必要があります。依存関係はキャッシュを優先してインストールし、`.vercelignore` でテストや Android 用ファイルなどのアップロードを省きます。
+- **Vercel**: デプロイ時は `vercel.json` の `node --run vercel-build` を実行します。マイグレーションと Next.js ビルドを並列実行し、両方の成功を待ちます。Vercel のビルド環境から `DATABASE_URL` にネットワーク到達できる必要があります。依存関係はキャッシュを優先してインストールし、`.vercelignore` でテストや Android 用ファイルなどのアップロードを省きます。
 
 生成されるテーブル:
 
@@ -164,7 +164,7 @@ CI では `build` ジョブが本番ビルドを一度だけ作り、E2E と Lig
 - **実ユーザー**: 本番で Vercel Speed Insights（`@vercel/speed-insights`）が Web Vitals を送ります。Vercel ダッシュボードの Speed Insights で見ます。
 - **API・DB の処理時間**: `defineRoute` を使う API は `Server-Timing` ヘッダに、全体（`total`）・DB 合計（`db`）・遅い順のクエリごとの所要時間（`q1`…、SQL の先頭 40 文字つき）を載せます。DevTools の Network → Timing で確認できます。クエリ単位の計測は `getPool().query` と `transaction` を通るクエリが対象です。
 - **バンドルサイズ**: `pnpm analyze` で `.next/diagnostics/analyze` にバンドル分析を出力します（対話的に見るなら `pnpm exec next experimental-analyze`）。
-- **Lighthouse**: `pnpm build && pnpm start` で本番ビルドを起動し、ログイン済みセッション Cookie を渡して計測します。結果は `.lighthouse/` に出力されます。`LIGHTHOUSE_MIN_SCORE`（0〜1）を渡すと、Performance がそれを下回る URL があれば異常終了します。CI の `lighthouse` ジョブが同じ手順で E2E 用 DB・ユーザーに対して計測し、下限 0.4 を割ると失敗します（現状は 54〜76 点で、CPU スロットリングによる TBT が主因です）。レポートは Artifact `lighthouse-reports` から取得できます。
+- **Lighthouse**: `pnpm build && pnpm start` で本番ビルドを起動し、ログイン済みセッション Cookie を渡して計測します。結果は `.lighthouse/` に出力されます。`LIGHTHOUSE_MIN_SCORE`（0〜1）を渡すと、Performance がそれを下回る URL があれば異常終了します。CI の `lighthouse` ジョブが同じ手順で E2E 用 DB・ユーザーに対して計測し、下限 0.4 を割ると失敗します（現状は 54〜76 点で、CPU スロットリングによる TBT が主因です）。4画面を個別のランナーで並列計測し、レポートは画面ごとの `lighthouse-reports-*` から取得できます。
 
 ```bash
 LIGHTHOUSE_COOKIE='authjs.session-token=<ブラウザの Cookie 値>' pnpm lighthouse [URL...]

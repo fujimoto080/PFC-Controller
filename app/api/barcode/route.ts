@@ -26,7 +26,9 @@ export const GET = defineRoute(
     if (!food) throw new ApiError('該当する商品が見つかりません', 404);
     const target = await findFoodByAlias(userId, foodCandidateKey(food));
     return NextResponse.json(
-      target ? { ...toBarcodeFood(target), storeGroup: target.storeGroup } : food,
+      target
+        ? { ...toBarcodeFood(target), storeGroup: target.storeGroup }
+        : food,
     );
   },
 );
