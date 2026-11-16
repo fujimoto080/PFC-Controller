@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { FoodForm } from '@/components/input/FoodForm';
 import { EditLogItemDrawer } from '@/components/today/EditLogItemDrawer';
@@ -139,20 +145,24 @@ it('同名の候補のうち選んだ食品を保存欄に表示し、保存欄�
     source: 'catalog',
     foods: [initial, other],
   });
-  render(<FoodForm initialTimestamp={Date.now()} onDone={jest.fn()} />);
-  const name = screen.getByLabelText('食品名');
-  fireEvent.change(name, { target: { value: initial.name } });
-  const candidate = await screen.findByRole('button', { name: /ローソン/ });
-  const scrollIntoView = jest.fn();
-  const submitSection = screen
-    .getByRole('button', { name: '保存' })
-    .closest('.scroll-mb-4');
-  Object.defineProperty(submitSection, 'scrollIntoView', {
-    value: scrollIntoView,
-  });
   const originalMatchMedia = window.matchMedia;
   window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+  jest.useFakeTimers();
   try {
+    render(<FoodForm initialTimestamp={Date.now()} onDone={jest.fn()} />);
+    const name = screen.getByLabelText('食品名');
+    fireEvent.change(name, { target: { value: initial.name } });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(400);
+    });
+    const candidate = screen.getByRole('button', { name: /ローソン/ });
+    const scrollIntoView = jest.fn();
+    const submitSection = screen
+      .getByRole('button', { name: '保存' })
+      .closest('.scroll-mb-4');
+    Object.defineProperty(submitSection, 'scrollIntoView', {
+      value: scrollIntoView,
+    });
     fireEvent.click(candidate);
     expect(candidate).toHaveAttribute('aria-pressed', 'true');
     expect(
@@ -160,16 +170,18 @@ it('同名の候補のうち選んだ食品を保存欄に表示し、保存欄�
     ).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('status')).toHaveTextContent('ローソン');
     expect(screen.getByLabelText('カロリー')).toHaveValue(185);
-    await waitFor(() => {
-      expect(scrollIntoView).toHaveBeenCalledWith({
-        block: 'end',
-        behavior: 'smooth',
-      });
+    act(() => {
+      jest.advanceTimersToNextFrame();
+    });
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      block: 'end',
+      behavior: 'smooth',
     });
     expect(addFoodItem).not.toHaveBeenCalled();
     fireEvent.change(name, { target: { value: '別の食品' } });
     expect(screen.queryByText('選択した食品')).not.toBeInTheDocument();
   } finally {
+    jest.useRealTimers();
     window.matchMedia = originalMatchMedia;
   }
 });

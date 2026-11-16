@@ -157,7 +157,7 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-CI では `build` ジョブが本番ビルドを一度だけ作り、E2E と Lighthouse が同じ成果物を使って並列に検証します。`E2E_PREBUILT=1 pnpm test:e2e` はビルド済みの `.next` を使います（ソース変更後は先にビルドし直してください）。ドキュメント・Android 用ファイルだけの変更では CI を省略します。単体テストの並列数はローカルで4、CIで2に制限しています。
+CI では E2E と Lighthouse がそれぞれのランナーで Next.js のキャッシュを使ってビルドし、並列に検証します。`E2E_PREBUILT=1 pnpm test:e2e` はビルド済みの `.next` を使います（ソース変更後は先にビルドし直してください）。ドキュメント・Android 用ファイルだけの変更では CI を省略します。単体テストの並列数はローカルで4、CIで2に制限しています。
 
 ## パフォーマンス計測
 

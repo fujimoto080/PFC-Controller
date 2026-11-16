@@ -40,141 +40,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Format
-        run: pnpm format:check
+      - name: Run static checks and unit tests in parallel
+        run: pnpm run '/^(format:check|lint|typecheck|knip|test)$/'
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm exec tsc --noEmit
-
-      - name: Knip
-        run: pnpm knip
-
-      - name: Run tests
-        run: pnpm test
-
-  # 実行用ファイルだけを共有し、キャッシュや開発サーバーの成果物は転送しない。
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Use Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24.x'
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Cache Next.js build
-        uses: actions/cache@v6
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
-
-      - name: Build
-        run: pnpm build
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:54329/pfc_e2e
-          AUTH_SECRET: e2e-auth-secret-not-for-production
-          AUTH_URL: http://localhost:3210
-          AUTH_TRUST_HOST: 'true'
-          AUTH_GOOGLE_ID: e2e
-          AUTH_GOOGLE_SECRET: e2e
-
-      - name: Pack build
-        run: tar --exclude=.next/cache --exclude=.next/dev -cf /tmp/next-build.tar .next
-
-      - name: Upload build
-        uses: actions/upload-artifact@v7
-        with:
-          name: next-build
-          path: /tmp/next-build.tar
-          retention-days: 1
-          compression-level: 1
-          if-no-files-found: error
-
-  e2e:
-    needs: build
-    # プリインストール済みの Chrome を使い、ブラウザと OS 依存のインストールを省く。
-    runs-on: ubuntu-24.04
-
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: pfc_e2e
-        ports:
-          - 54329:5432
-        options: >-
-          --health-cmd "pg_isready -h 127.0.0.1"
-          --health-interval 1s
-          --health-timeout 5s
-          --health-retries 10
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Use Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24.x'
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Download build
-        uses: actions/download-artifact@v8
-        with:
-          name: next-build
-          path: /tmp
-
-      - name: Extract build
-        run: tar -xf /tmp/next-build.tar
-
-      - name: E2E
-        run: pnpm test:e2e
-        env:
-          E2E_PREBUILT: '1'
-          E2E_BROWSER_CHANNEL: chrome
-
-      - name: Upload Playwright traces
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-test-results
-          path: test-results
-
-  # 本番ビルドを起動してログイン済みの主要画面を Lighthouse で計測し、Performance スコアの下限を割ったら失敗させる
-  lighthouse:
-    needs: build
+  # 各ブラウザ検証を同時に開始し、ビルド成果物の受け渡しを省く。
+  browser:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         include:
-          - page: today
+          - name: e2e
+            page: ''
+          - name: lighthouse (today)
+            page: today
             path: /
-          - page: foods
+          - name: lighthouse (foods)
+            page: foods
             path: /foods
-          - page: suggest
+          - name: lighthouse (suggest)
+            page: suggest
             path: /suggest
-          - page: settings
+          - name: lighthouse (settings)
+            page: settings
             path: /settings
 
     services:
@@ -215,39 +104,66 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Download build
-        uses: actions/download-artifact@v8
+      - name: Restore Next.js build cache
+        id: next-cache
+        uses: actions/cache/restore@v6
         with:
-          name: next-build
-          path: /tmp
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
 
-      - name: Extract build
-        run: tar -xf /tmp/next-build.tar
+      - name: Build
+        run: node --run build
+
+      - name: E2E
+        if: matrix.name == 'e2e'
+        run: node --run test:e2e
+        env:
+          E2E_PREBUILT: '1'
+          E2E_BROWSER_CHANNEL: chrome
+
+      - name: Save Next.js build cache
+        if: matrix.name == 'e2e' && steps.next-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: .next/cache
+          key: ${{ steps.next-cache.outputs.cache-primary-key }}
+
+      - name: Upload Playwright traces
+        if: failure() && matrix.name == 'e2e'
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-test-results
+          path: test-results
 
       - name: Migrate
-        run: pnpm migrate
+        if: matrix.page != ''
+        run: node --run migrate
 
       - name: Start app
+        if: matrix.page != ''
         run: |
-          pnpm start --port 3210 &
-          for _ in $(seq 60); do
+          node --run start -- --port 3210 &
+          for _ in $(seq 240); do
             curl -sf -o /dev/null http://localhost:3210/login && exit 0
-            sleep 1
+            sleep 0.25
           done
           echo 'アプリが起動しませんでした' >&2
           exit 1
 
       - name: Lighthouse
+        if: matrix.page != ''
         env:
           LIGHTHOUSE_BASE_URL: http://localhost:3210
           LIGHTHOUSE_MIN_SCORE: '0.4'
           LIGHTHOUSE_PATH: ${{ matrix.path }}
         run: |
           export LIGHTHOUSE_COOKIE="$(node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/e2e-session-cookie.ts)"
-          pnpm lighthouse "$LIGHTHOUSE_PATH"
+          node --run lighthouse -- "$LIGHTHOUSE_PATH"
 
       - name: Upload Lighthouse reports
-        if: always()
+        if: always() && matrix.page != ''
         uses: actions/upload-artifact@v7
         with:
           name: lighthouse-reports-${{ matrix.page }}

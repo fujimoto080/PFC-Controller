@@ -11,7 +11,7 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: {
     baseURL: E2E_BASE_URL,
     channel: process.env.E2E_BROWSER_CHANNEL,
@@ -26,8 +26,8 @@ export default defineConfig({
     // 本番と同じ挙動で確かめるため、開発サーバーではなくビルド成果物で動かす
     command:
       process.env.E2E_PREBUILT === '1'
-        ? `pnpm start --port ${E2E_PORT}`
-        : `pnpm build && pnpm start --port ${E2E_PORT}`,
+        ? `node --run start -- --port ${E2E_PORT}`
+        : `node --run build && node --run start -- --port ${E2E_PORT}`,
     url: E2E_BASE_URL,
     timeout: 300_000,
     // .env.local より優先されるよう、E2E 用の DB と認証設定をプロセス環境変数で渡す

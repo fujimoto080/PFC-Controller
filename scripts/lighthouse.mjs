@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 // 使い方: LIGHTHOUSE_COOKIE='authjs.session-token=...' pnpm lighthouse [URL...]
 // 本番ビルド（pnpm build && pnpm start）に対して計測する。結果は .lighthouse/ に出力する。
@@ -9,6 +10,9 @@ const BASE_URL = process.env.LIGHTHOUSE_BASE_URL ?? 'http://localhost:3000';
 const PATHS = ['/', '/foods', '/suggest', '/settings'];
 const OUTPUT_DIR = '.lighthouse';
 const MIN_SCORE = Number(process.env.LIGHTHOUSE_MIN_SCORE ?? 0);
+const LIGHTHOUSE_CLI = fileURLToPath(
+  import.meta.resolve('lighthouse/cli/index.js'),
+);
 
 const cookie = process.env.LIGHTHOUSE_COOKIE;
 if (!cookie) throw new Error('LIGHTHOUSE_COOKIE が未設定です');
@@ -21,10 +25,9 @@ for (const path of urls) {
   const url = new URL(path, BASE_URL).href;
   const name = new URL(url).pathname.replaceAll('/', '_') || '_';
   execFileSync(
-    'pnpm',
+    process.execPath,
     [
-      'exec',
-      'lighthouse',
+      LIGHTHOUSE_CLI,
       url,
       '--only-categories=performance',
       '--extra-headers',
