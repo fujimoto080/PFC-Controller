@@ -4,19 +4,28 @@ import {
 } from '@/lib/client/food-registration';
 import {
   addFoodItem,
+  applySavedScanEntries,
+  hasRememberedFood,
   rememberFood,
   updateFood,
   updateLogItem,
 } from '@/lib/client/actions';
-import { saveBarcodeMapping } from '@/lib/client/api';
+import { api, saveBarcodeMapping } from '@/lib/client/api';
+import { buildLogItem } from '@/lib/pfc';
+import type { SavedScanEntry } from '@/lib/scan-batch';
 
 jest.mock('@/lib/client/actions', () => ({
   addFoodItem: jest.fn(),
+  applySavedScanEntries: jest.fn(),
+  hasRememberedFood: jest.fn(),
   rememberFood: jest.fn(),
   updateFood: jest.fn(),
   updateLogItem: jest.fn(),
 }));
-jest.mock('@/lib/client/api', () => ({ saveBarcodeMapping: jest.fn() }));
+jest.mock('@/lib/client/api', () => ({
+  api: { post: jest.fn() },
+  saveBarcodeMapping: jest.fn(),
+}));
 jest.mock('@/lib/toast', () => ({ toast: { fromError: jest.fn() } }));
 
 const entry: FoodRegistration = {
@@ -34,8 +43,14 @@ const entry: FoodRegistration = {
   barcodes: ['4901', '4902'],
 };
 
+const target = { id: 'registration-1' };
+const input = { ...entry.food, quantity: entry.quantity };
+const saved = [{ item: buildLogItem(target.id, input) }];
+const post = jest.mocked(api.post<SavedScanEntry[]>);
+
 beforeEach(() => {
   jest.resetAllMocks();
+  post.mockResolvedValue(saved);
   jest.mocked(saveBarcodeMapping).mockResolvedValue();
   jest.mocked(rememberFood).mockResolvedValue(true);
   jest.mocked(addFoodItem).mockResolvedValue(true);
@@ -43,8 +58,51 @@ beforeEach(() => {
   jest.mocked(updateLogItem).mockResolvedValue(true);
 });
 
-it('全入口で食品・バーコードは1個分、食事記録は数量込みで保存する', async () => {
-  expect(await saveFoodRegistration(entry)).toBe(true);
+it('新規食品の1個分の栄養値と食事の数量・バーコードを一括保存する', async () => {
+  expect(await saveFoodRegistration(entry, target)).toBe(true);
+  expect(post).toHaveBeenCalledWith('/api/log-items/batch', [
+    { id: target.id, input, barcodes: entry.barcodes },
+  ]);
+  expect(applySavedScanEntries).toHaveBeenCalledWith(saved);
+  expect(saveBarcodeMapping).not.toHaveBeenCalled();
+  expect(rememberFood).not.toHaveBeenCalled();
+  expect(addFoodItem).not.toHaveBeenCalled();
+});
+
+it('一括保存で記録が保存されなければ失敗を返し、同じIDで再送する', async () => {
+  post.mockResolvedValueOnce([]);
+  expect(await saveFoodRegistration(entry, target)).toBe(false);
+  expect(await saveFoodRegistration(entry, target)).toBe(true);
+  expect(post).toHaveBeenCalledTimes(2);
+  expect(post.mock.calls[0]).toEqual(post.mock.calls[1]);
+  expect(addFoodItem).not.toHaveBeenCalled();
+});
+
+it('既存食品でバーコードの変更がなければ食事記録だけを追加する', async () => {
+  jest.mocked(hasRememberedFood).mockReturnValueOnce(true);
+  expect(
+    await saveFoodRegistration({ ...entry, barcodes: [] }, target),
+  ).toBe(true);
+  expect(addFoodItem).toHaveBeenCalledWith(input);
+  expect(post).not.toHaveBeenCalled();
+});
+
+it('編集する食品の保存に失敗したら食事の更新まで進まない', async () => {
+  jest.mocked(rememberFood).mockResolvedValueOnce(false);
+  expect(
+    await saveFoodRegistration(entry, { ...target, logId: 'log-1' }),
+  ).toBe(false);
+  expect(updateLogItem).not.toHaveBeenCalled();
+});
+
+it('編集対象のIDを更新に使い、新規追加しない', async () => {
+  expect(
+    await saveFoodRegistration(entry, {
+      ...target,
+      foodId: 'food-1',
+      logId: 'log-1',
+    }),
+  ).toBe(true);
   expect(saveBarcodeMapping).toHaveBeenCalledWith(['4901', '4902'], {
     name: 'チキン',
     store: 'ローソン',
@@ -53,38 +111,8 @@ it('全入口で食品・バーコードは1個分、食事記録は数量込み
     carbs: 10,
     calories: 185,
   });
-  expect(rememberFood).toHaveBeenCalledWith(entry.food);
-  expect(addFoodItem).toHaveBeenCalledWith({
-    ...entry.food,
-    quantity: 3,
-  });
-});
-
-it('バーコード保存に失敗したら食事の追加まで進まず、再試行で重複しない', async () => {
-  jest.mocked(saveBarcodeMapping).mockRejectedValueOnce(new Error('offline'));
-  expect(await saveFoodRegistration(entry)).toBe(false);
-  expect(rememberFood).not.toHaveBeenCalled();
-  expect(addFoodItem).not.toHaveBeenCalled();
-  expect(await saveFoodRegistration(entry)).toBe(true);
-  expect(addFoodItem).toHaveBeenCalledTimes(1);
-});
-
-it('食品の保存に失敗したら食事の追加まで進まない', async () => {
-  jest.mocked(rememberFood).mockResolvedValueOnce(false);
-  expect(await saveFoodRegistration(entry)).toBe(false);
-  expect(addFoodItem).not.toHaveBeenCalled();
-});
-
-it('編集対象のIDを更新に使い、新規追加しない', async () => {
-  expect(
-    await saveFoodRegistration(entry, { foodId: 'food-1', logId: 'log-1' }),
-  ).toBe(true);
   expect(updateFood).toHaveBeenCalledWith({ ...entry.food, id: 'food-1' });
-  expect(updateLogItem).toHaveBeenCalledWith({
-    ...entry.food,
-    id: 'log-1',
-    quantity: 3,
-  });
+  expect(updateLogItem).toHaveBeenCalledWith({ ...input, id: 'log-1' });
   expect(addFoodItem).not.toHaveBeenCalled();
   expect(rememberFood).not.toHaveBeenCalled();
 });
