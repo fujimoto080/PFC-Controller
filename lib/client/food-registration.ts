@@ -8,11 +8,10 @@ import {
   updateLogItem,
 } from '@/lib/client/actions';
 import { saveBarcodeMapping } from '@/lib/client/api';
-import { scalePFC } from '@/lib/pfc';
 import { toast } from '@/lib/toast';
 import type { FoodItemInput } from '@/lib/types';
 
-/** 食品の栄養値は 1 個分で保存し、食事記録だけ数量を掛ける。 */
+/** 食品の栄養値は1個分で保存し、食事記録には数量も渡す。 */
 export interface FoodRegistration {
   food: FoodItemInput;
   quantity: number;
@@ -33,7 +32,7 @@ export async function saveFoodRegistration(
       ? await updateFood({ ...entry.food, id: target.foodId })
       : await rememberFood(entry.food);
     if (!foodSaved) return false;
-    const food = scalePFC(entry.food, entry.quantity);
+    const food = { ...entry.food, quantity: entry.quantity };
     const saved = target.logId
       ? await updateLogItem({ ...food, id: target.logId })
       : await addFoodItem(food);

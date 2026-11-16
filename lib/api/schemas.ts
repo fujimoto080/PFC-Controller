@@ -3,6 +3,7 @@ import type {
   FoodItem,
   FoodItemInput,
   GeoPoint,
+  LogItemInput,
   MealPreferences,
   MealSchedule,
   MealSlot,
@@ -37,6 +38,10 @@ export const foodInputSchema = pfcSchema.extend({
   storeGroup: z.string().optional(),
   image: z.string().optional(),
 }) satisfies z.ZodType<FoodItemInput>;
+
+export const logItemInputSchema = foodInputSchema.extend({
+  quantity: z.number().positive(),
+}) satisfies z.ZodType<LogItemInput>;
 
 // 食品辞書の id はクライアント採番（seed データは sukiya_NNN 形式）なので uuid に限定しない。
 const foodIdSchema = z.string().trim().min(1);

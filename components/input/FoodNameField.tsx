@@ -5,6 +5,7 @@ import { LabeledInput } from '@/components/input/FormFields';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { useFoodSearch } from '@/hooks/use-food-search';
 import type { FoodTemplate, PfcFormValues } from '@/lib/food-form';
+import { foodCandidateKey } from '@/lib/food-suggestions';
 
 interface FoodNameFieldProps {
   register: UseFormRegister<PfcFormValues>;
@@ -40,7 +41,7 @@ export function FoodNameField({
           <p className="text-muted-foreground text-xs">食品候補</p>
           {suggestions.map((food) => (
             <button
-              key={`${food.store ?? ''}|${food.name}|${food.calories}|${food.protein}|${food.fat}|${food.carbs}`}
+              key={foodCandidateKey(food)}
               type="button"
               data-track="食品名の候補を選択"
               className="hover:bg-muted/80 w-full rounded-md border p-2 text-left transition-colors"

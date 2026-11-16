@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useFoodSearch } from '@/hooks/use-food-search';
+import { foodCandidateKey } from '@/lib/food-suggestions';
 import type { BarcodeFood } from '@/lib/barcode';
 import type { FoodItem } from '@/lib/types';
 import { defaultTimestampFor } from '@/lib/utils';
@@ -173,7 +174,7 @@ function FoodList({
   return (
     <ul className="divide-y rounded-lg border">
       {foods.map((food) => (
-        <li key={`${food.store ?? ''}|${food.name}|${food.calories}`}>
+        <li key={foodCandidateKey(food)}>
           <button
             type="button"
             data-track="検索結果の食品を選択"

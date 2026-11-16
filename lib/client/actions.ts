@@ -10,13 +10,16 @@ import {
 } from '@/lib/client/store';
 import { DEFAULT_MEAL_SPLIT } from '@/lib/meal-split';
 import { DEFAULT_PROFILE } from '@/lib/nutrition-goals';
-import { sumPFC } from '@/lib/pfc';
+import { buildLogItem, sumPFC } from '@/lib/pfc';
 import { buildSportActivity, type SportIntensity } from '@/lib/sports';
 import {
   createEmptyDailyLog,
   type DailyLog,
+  type FoodAlias,
   type FoodItem,
   type FoodItemInput,
+  type LogItem,
+  type LogItemInput,
   type Logs,
   type MealNote,
   type MealSplit,
@@ -64,30 +67,34 @@ function removeLogItem(logs: Logs, id: string): Logs {
   }));
 }
 
-function replaceLogItem(logs: Logs, id: string, item: FoodItem): Logs {
+function replaceLogItem(logs: Logs, id: string, item: LogItem): Logs {
   return updateDay(logs, formatDate(item.timestamp), (log) => ({
     items: log.items.map((it) => (it.id === id ? item : it)),
   }));
 }
 
-export function addFoodItem(input: FoodItemInput): Promise<boolean> {
+export function addFoodItem(input: LogItemInput): Promise<boolean> {
   const id = tempId();
-  const date = formatDate(input.timestamp);
+  const item = buildLogItem(id, input);
+  const date = formatDate(item.timestamp);
   return optimistic({
     apply: withLogs((logs) =>
       updateDay(logs, date, (log) => ({
-        items: [...log.items, { ...input, id }],
+        items: [...log.items, item],
       })),
     ),
-    request: () => api.post<FoodItem>('/api/log-items', input),
+    request: () => api.post<LogItem>('/api/log-items', input),
     errorMessage: '食事記録の追加に失敗しました',
     onSuccess: (current, saved) =>
       withLogs((logs) => replaceLogItem(logs, id, saved))(current),
   });
 }
 
-export function updateLogItem(item: FoodItem): Promise<boolean> {
-  const { id, ...input } = item;
+export function updateLogItem({
+  id,
+  ...input
+}: LogItemInput & { id: string }): Promise<boolean> {
+  const item = buildLogItem(id, input);
   return optimistic({
     apply: withLogs((logs) => {
       const removed = removeLogItem(logs, id);
@@ -156,6 +163,29 @@ export function deleteFood(id: string): Promise<boolean> {
     request: () => api.delete(`/api/foods/${encodeURIComponent(id)}`),
     errorMessage: '食品の削除に失敗しました',
   });
+}
+
+export async function mergeFoods(
+  targetId: string,
+  sourceIds: string[],
+): Promise<boolean> {
+  try {
+    const { foodAliases, favoriteFoodIds } = await api.post<{
+      foodAliases: Record<string, FoodAlias>;
+      favoriteFoodIds: string[];
+    }>('/api/foods/merge', { targetId, sourceIds });
+    const sources = new Set(sourceIds);
+    setState((current) => ({
+      ...current,
+      foodAliases,
+      foods: current.foods.filter(({ id }) => !sources.has(id)),
+      settings: { ...current.settings, favoriteFoodIds },
+    }));
+    return true;
+  } catch (error) {
+    toast.fromError('食品の名寄せに失敗しました', error);
+    return false;
+  }
 }
 
 /** 保存時点の最新の設定に patch を重ねて保存する。別の画面・パネルの変更を上書きしない。 */

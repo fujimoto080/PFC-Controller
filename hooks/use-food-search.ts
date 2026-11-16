@@ -7,10 +7,10 @@ import { searchFoodCandidates } from '@/lib/food-suggestions';
 
 /** 過去の記録・食品リスト → JSON カタログ → Kalori の順に食品を探す。 */
 export function useFoodSearch(query: string) {
-  const { foods, logs } = useAppState();
+  const { foods, logs, foodAliases } = useAppState();
   const candidates = useMemo(
-    () => searchFoodCandidates(foods, logs, query),
-    [foods, logs, query],
+    () => searchFoodCandidates(foods, logs, query, foodAliases),
+    [foods, logs, query, foodAliases],
   );
   const catalog = useCatalogSearch(query, candidates.length === 0);
 

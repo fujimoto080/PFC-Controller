@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { useFoodSearch } from '@/hooks/use-food-search';
 import { searchCatalogFoods } from '@/lib/client/api';
 import { useAppState } from '@/lib/client/store';
+import { buildLogItem } from '@/lib/pfc';
 import { createEmptyDailyLog } from '@/lib/types';
 
 jest.mock('@/lib/client/api', () => ({ searchCatalogFoods: jest.fn() }));
@@ -23,9 +24,11 @@ const appState = jest.mocked(useAppState);
 beforeEach(() => {
   jest.useFakeTimers();
   searchCatalog.mockReset();
-  appState.mockReturnValue({ foods: [], logs: {} } as unknown as ReturnType<
-    typeof useAppState
-  >);
+  appState.mockReturnValue({
+    foods: [],
+    logs: {},
+    foodAliases: {},
+  } as unknown as ReturnType<typeof useAppState>);
 });
 
 afterEach(() => {
@@ -37,12 +40,13 @@ it.each(['foods', 'logs'] as const)(
   async (source) => {
     appState.mockReturnValue({
       foods: source === 'foods' ? [food] : [],
+      foodAliases: {},
       logs:
         source === 'logs'
           ? {
               '2026-10-07': {
                 ...createEmptyDailyLog('2026-10-07'),
-                items: [food],
+                items: [buildLogItem(food.id, { ...food, quantity: 4 })],
               },
             }
           : {},

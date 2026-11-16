@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { BulkStoreEditor } from '@/components/foods/BulkStoreEditor';
 import { CollapsibleSection } from '@/components/foods/CollapsibleSection';
 import { FoodEditor } from '@/components/foods/FoodEditor';
+import { FoodMergeDrawer } from '@/components/foods/FoodMergeDrawer';
 import { FoodRow } from '@/components/foods/FoodRow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import { StatusMessage } from '@/components/ui/status-message';
 
 /** 編集フォームの状態。null は一覧表示、food: null は新規追加。 */
 type EditorState = { food: FoodItem | null } | null;
+type Selection = { mode: 'store' | 'merge'; ids: string[] };
 
 // 折りたたみ中の店舗・グループのキー一覧を保存する
 const COLLAPSED_STORAGE_KEY = 'pfc_manage_foods_collapsed';
@@ -40,9 +42,13 @@ export default function FoodsPage() {
   const { foods, logs, settings } = useAppState();
   const [searchQuery, setSearchQuery] = useState('');
   const [editor, setEditor] = useState<EditorState>(null);
-  const [selectedFoodIds, setSelectedFoodIds] = useState<string[] | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const [reviewMerge, setReviewMerge] = useState(false);
   const collapsed = useCollapsedKeys(COLLAPSED_STORAGE_KEY);
-  const { barcodesOf, addBarcodes } = useBarcodesByFood();
+  const { barcodesOf, registeredBarcodesOf, addBarcodes } = useBarcodesByFood();
+  const selectedFoods = selection
+    ? foods.filter((food) => selection.ids.includes(food.id))
+    : [];
 
   const storeOptions = useMemo(() => collectStores(foods, logs), [foods, logs]);
   const groupOptions = useMemo(() => collectStoreGroups(foods), [foods]);
@@ -63,14 +69,11 @@ export default function FoodsPage() {
     store: string | undefined,
     storeGroup: string | undefined,
   ) => {
-    const selected = new Set(selectedFoodIds);
-    for (const food of foods) {
-      if (selected.has(food.id)) {
-        void updateFood({ ...food, store, storeGroup, timestamp: Date.now() });
-      }
+    for (const food of selectedFoods) {
+      void updateFood({ ...food, store, storeGroup, timestamp: Date.now() });
     }
     toast.success('選択した食品の店舗とグループを更新しました');
-    setSelectedFoodIds(null);
+    setSelection(null);
   };
 
   if (editor) {
@@ -81,7 +84,7 @@ export default function FoodsPage() {
           <FoodEditor
             key={editor.food?.id ?? 'new'}
             food={editor.food}
-            initialBarcodes={editor.food ? barcodesOf(editor.food) : []}
+            initialBarcodes={editor.food ? registeredBarcodesOf(editor.food) : []}
             onBarcodesSaved={addBarcodes}
             onClose={() => {
               setEditor(null);
@@ -107,6 +110,7 @@ export default function FoodsPage() {
               }}
             />
             <Button
+              disabled={selection !== null}
               onClick={() => {
                 setEditor({ food: null });
               }}
@@ -114,17 +118,55 @@ export default function FoodsPage() {
               <Plus /> 新規
             </Button>
           </div>
-          {selectedFoodIds === null && (
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto px-0"
-              onClick={() => {
-                setSelectedFoodIds([]);
-              }}
-            >
-              店舗・グループをまとめて変更
-            </Button>
+          {selection === null && (
+            <div className="flex flex-wrap gap-x-4">
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto px-0"
+                onClick={() => {
+                  setSelection({ mode: 'store', ids: [] });
+                }}
+              >
+                店舗・グループをまとめて変更
+              </Button>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto px-0"
+                disabled={foods.length < 2}
+                onClick={() => {
+                  setSelection({ mode: 'merge', ids: [] });
+                }}
+              >
+                食品を名寄せ
+              </Button>
+            </div>
+          )}
+          {selection?.mode === 'merge' && (
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm">{selectedFoods.length}件を選択中</p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSelection(null);
+                  }}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={selectedFoods.length < 2}
+                  onClick={() => {
+                    setReviewMerge(true);
+                  }}
+                >
+                  残す食品を選ぶ
+                </Button>
+              </div>
+            </div>
           )}
         </div>
 
@@ -162,10 +204,14 @@ export default function FoodsPage() {
                           isFavorite={settings.favoriteFoodIds.includes(
                             food.id,
                           )}
-                          selected={selectedFoodIds?.includes(food.id) ?? null}
+                          selected={selection?.ids.includes(food.id) ?? null}
                           onToggleSelect={() => {
-                            setSelectedFoodIds(
-                              (prev) => prev && toggleItem(prev, food.id),
+                            setSelection(
+                              (prev) =>
+                                prev && {
+                                  ...prev,
+                                  ids: toggleItem(prev.ids, food.id),
+                                },
                             );
                           }}
                           onToggleFavorite={() => {
@@ -188,14 +234,26 @@ export default function FoodsPage() {
         )}
       </div>
 
-      {selectedFoodIds && (
+      {selection?.mode === 'store' && (
         <BulkStoreEditor
-          selectedCount={selectedFoodIds.length}
+          selectedCount={selectedFoods.length}
           storeOptions={storeOptions}
           groupOptions={groupOptions}
           onApply={applyBulkUpdate}
           onCancel={() => {
-            setSelectedFoodIds(null);
+            setSelection(null);
+          }}
+        />
+      )}
+      {reviewMerge && (
+        <FoodMergeDrawer
+          foods={selectedFoods}
+          onClose={() => {
+            setReviewMerge(false);
+          }}
+          onDone={() => {
+            setReviewMerge(false);
+            setSelection(null);
           }}
         />
       )}

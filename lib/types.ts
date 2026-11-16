@@ -16,6 +16,12 @@ export interface FoodItem extends PFC {
 
 export type FoodItemInput = Omit<FoodItem, 'id'>;
 
+/** 食事記録の入力は1個分の栄養値と数量。 */
+export type LogItemInput = FoodItemInput & { quantity: number };
+
+/** 食事記録の栄養値は合計。編集には1個分の栄養値と数量を使う。 */
+export type LogItem = FoodItem & { quantity: number; unitPfc: PFC };
+
 /** 登録済みのスポーツ（消費の単位 METs。強度と時間は記録のたびに指定する）。 */
 export interface SportDefinition {
   id: string;
@@ -35,7 +41,7 @@ export type SportActivityInput = Omit<SportActivityLog, 'id'>;
 
 export interface DailyLog {
   date: string; // YYYY-MM-DD
-  items: FoodItem[];
+  items: LogItem[];
   total: PFC;
   activities: SportActivityLog[];
 }
@@ -139,10 +145,17 @@ export interface MealSuggestion {
 }
 
 /** ログインユーザーの全データ。未保存の設定はサーバー側で既定値が補われる。 */
+export interface FoodAlias {
+  foodId: string;
+  name: string;
+  store?: string;
+}
+
 export interface UserData {
   logs: Logs;
   settings: UserSettings;
   foods: FoodItem[];
+  foodAliases: Record<string, FoodAlias>;
   sports: SportDefinition[];
 }
 

@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { BarcodeFood } from '@/lib/barcode';
 import { CATALOG_STORES } from '@/lib/catalog/stores';
-import { matchesFoodQuery } from '@/lib/food-suggestions';
+import { matchesFoodQuery, uniqueFoodCandidates } from '@/lib/food-suggestions';
 import { searchKaloriFoods } from '@/lib/server/kalori';
 
 const MAX_RESULTS = 20;
@@ -21,22 +21,23 @@ export async function searchCatalogFoods(
   userId: string,
   query: string,
 ): Promise<CatalogSearchResult> {
-  const foods = CATALOG_STORES.flatMap((store) =>
-    store.items
-      .map((item) => ({
+  const foods = uniqueFoodCandidates(
+    CATALOG_STORES.flatMap((store) =>
+      store.items.map((item) => ({
         name: item.name,
         store: store.name,
         calories: item.calories,
         protein: item.protein,
         fat: item.fat,
         carbs: item.carbs,
-      }))
-      .filter((food) => matchesFoodQuery(food, query)),
-  ).slice(0, MAX_RESULTS);
+      })),
+    ),
+    { limit: MAX_RESULTS, filter: (food) => matchesFoodQuery(food, query) },
+  );
   if (foods.length > 0) return { source: 'catalog', foods };
 
   return {
     source: 'kalori',
-    foods: (await searchKaloriFoods(userId, query)) ?? [],
+    foods: uniqueFoodCandidates((await searchKaloriFoods(userId, query)) ?? []),
   };
 }

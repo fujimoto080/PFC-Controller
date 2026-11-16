@@ -73,6 +73,18 @@ const APP_SCHEMA_SQL = `
   );
 
 
+  CREATE TABLE IF NOT EXISTS pfc_food_aliases (
+    user_id UUID NOT NULL,
+    food_key TEXT NOT NULL,
+    food_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    store TEXT,
+    PRIMARY KEY (user_id, food_key),
+    FOREIGN KEY (user_id, food_id) REFERENCES pfc_foods (user_id, food_id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_pfc_food_aliases_food
+    ON pfc_food_aliases (user_id, food_id);
+
   CREATE TABLE IF NOT EXISTS pfc_log_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -87,6 +99,9 @@ const APP_SCHEMA_SQL = `
     store_group TEXT,
     image TEXT
   );
+  ALTER TABLE pfc_log_items
+    ADD COLUMN IF NOT EXISTS quantity DOUBLE PRECISION NOT NULL DEFAULT 1
+      CHECK (quantity > 0 AND quantity < 'Infinity'::DOUBLE PRECISION);
   CREATE INDEX IF NOT EXISTS idx_pfc_log_items_user_date
     ON pfc_log_items (user_id, date);
   CREATE INDEX IF NOT EXISTS idx_pfc_log_items_user_timestamp

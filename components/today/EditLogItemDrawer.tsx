@@ -6,10 +6,10 @@ import { RecordDrawer } from '@/components/record/RecordDrawer';
 import { Button } from '@/components/ui/button';
 import { deleteLogItem } from '@/lib/client/actions';
 import { toast } from '@/lib/toast';
-import type { FoodItem } from '@/lib/types';
+import type { LogItem } from '@/lib/types';
 
 interface EditLogItemDrawerProps {
-  item: FoodItem | null;
+  item: LogItem | null;
   onClose: () => void;
 }
 
@@ -26,7 +26,9 @@ export function EditLogItemDrawer({ item, onClose }: EditLogItemDrawerProps) {
       {item && (
         <FoodForm
           key={item.id}
-          initial={item}
+          initial={{ ...item, ...item.unitPfc }}
+          initialQuantity={item.quantity}
+          draftKey={`log-quantity:${item.id}`}
           logId={item.id}
           initialTimestamp={item.timestamp}
           onDone={onClose}

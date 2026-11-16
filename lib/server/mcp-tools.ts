@@ -128,6 +128,7 @@ async function logMeal(userId: string, input: z.infer<typeof logMealSchema>) {
   const { date, time, ...food } = input;
   const item = await createLogItem(userId, {
     ...food,
+    quantity: 1,
     timestamp: timestampOf(date, time),
   });
   return {

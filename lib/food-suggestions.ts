@@ -1,13 +1,20 @@
-import { buildFoodMatchKey } from '@/lib/barcode';
-import type { FoodItem, Logs, PFC } from '@/lib/types';
+import { buildFoodMatchKey, type BarcodeFood } from '@/lib/barcode';
+import type { FoodAlias, FoodItem, Logs, PFC } from '@/lib/types';
+
+const normalizeCandidateLabel = (value: string): string =>
+  value.normalize('NFKC').toLowerCase().replace(/[\s_・-]+/g, '');
 
 const normalizeFoodName = (value: string): string =>
-  value
-    .toLowerCase()
-    .normalize('NFKC')
-    .replace(/[\s　\-_ー・]+/g, '');
+  normalizeCandidateLabel(value).replace(/ー/g, '');
 
 const MAX_CANDIDATES = 30;
+
+export function foodCandidateKey(food: BarcodeFood): string {
+  return JSON.stringify([
+    normalizeCandidateLabel(food.store ?? ''),
+    buildFoodMatchKey({ ...food, name: normalizeCandidateLabel(food.name) }),
+  ]);
+}
 
 /**
  * 食品名か店名が検索語に当てはまるか。
@@ -27,6 +34,24 @@ export const matchesFoodQuery = (
     .every(matches);
 };
 
+/** 食品名・店舗・栄養値が一致する候補は、先に出たものを残す。 */
+export function uniqueFoodCandidates<T extends BarcodeFood>(
+  foods: readonly T[],
+  {
+    limit = Infinity,
+    filter,
+  }: { limit?: number; filter?: (food: T) => boolean } = {},
+): T[] {
+  const candidates = new Map<string, T>();
+  for (const food of foods) {
+    if (candidates.size >= limit) break;
+    if (filter && !filter(food)) continue;
+    const key = foodCandidateKey(food);
+    if (!candidates.has(key)) candidates.set(key, food);
+  }
+  return [...candidates.values()];
+}
+
 /**
  * 記録追加で選べる食品候補。過去の記録（新しい順）→ 食品リストの順に並べ、同じ内容のものは 1 件にまとめる。
  * query が空なら全件、そうでなければ食品名か店名が query に当てはまるものに絞る。
@@ -35,20 +60,29 @@ export function searchFoodCandidates(
   foods: FoodItem[],
   logs: Logs,
   query: string,
+  aliases: Record<string, FoodAlias>,
 ): FoodItem[] {
   const trimmedQuery = query.trim();
+  const foodsById = new Map(foods.map((food) => [food.id, food]));
+  const matchingAliases = new Set(
+    Object.values(aliases)
+      .filter((alias) => matchesFoodQuery(alias, trimmedQuery))
+      .map((alias) => alias.foodId),
+  );
   const history = Object.values(logs)
     .flatMap((log) => log.items)
-    .sort((a, b) => b.timestamp - a.timestamp);
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .map(({ unitPfc, quantity: _, ...food }) => {
+      const candidate = { ...food, ...unitPfc };
+      const alias = aliases[foodCandidateKey(candidate)];
+      return (alias && foodsById.get(alias.foodId)) ?? candidate;
+    });
 
-  const candidates = new Map<string, FoodItem>();
-  for (const food of [...history, ...foods]) {
-    if (!matchesFoodQuery(food, trimmedQuery)) continue;
-    const key = buildFoodMatchKey(food);
-    if (!candidates.has(key)) candidates.set(key, food);
-    if (candidates.size >= MAX_CANDIDATES) break;
-  }
-  return [...candidates.values()];
+  return uniqueFoodCandidates([...history, ...foods], {
+    limit: MAX_CANDIDATES,
+    filter: (food) =>
+      matchingAliases.has(food.id) || matchesFoodQuery(food, trimmedQuery),
+  });
 }
 
 export interface FrequentFood extends PFC {

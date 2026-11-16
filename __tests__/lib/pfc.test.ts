@@ -1,4 +1,5 @@
 import {
+  buildLogItem,
   burnedCalories,
   computeDailyLimit,
   hasNutrition,
@@ -24,7 +25,12 @@ const settings = { profile: DEFAULT_PROFILE };
 
 /** 摂取合計が total の食事を1件記録したその日のログ。 */
 function recordedLog(date: string, total: PFC): DailyLog {
-  const item = { id: date, name: '食事', timestamp: 0, ...total };
+  const item = buildLogItem(date, {
+    name: '食事',
+    timestamp: 0,
+    quantity: 1,
+    ...total,
+  });
   return { ...createEmptyDailyLog(date), items: [item], total };
 }
 

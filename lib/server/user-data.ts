@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { listFoods } from '@/lib/server/foods';
+import { listFoodAliases, listFoods } from '@/lib/server/foods';
 import {
   listLogActivities,
   listLogActivitiesBetween,
@@ -11,7 +11,7 @@ import { listSports } from '@/lib/server/sports';
 import { sumPFC } from '@/lib/pfc';
 import {
   createEmptyDailyLog,
-  type FoodItem,
+  type LogItem,
   type Logs,
   type SportActivityLog,
   type UserData,
@@ -20,7 +20,7 @@ import {
 type Dated<T> = T & { date: string };
 
 function groupLogs(
-  items: Dated<FoodItem>[],
+  items: Dated<LogItem>[],
   activities: Dated<SportActivityLog>[],
 ): Logs {
   const logs: Logs = {};
@@ -37,17 +37,20 @@ function groupLogs(
 }
 
 export async function getUserData(userId: string): Promise<UserData> {
-  const [settings, items, activities, foods, sports] = await Promise.all([
-    getSettings(userId),
-    listLogItems(userId),
-    listLogActivities(userId),
-    listFoods(userId),
-    listSports(userId),
-  ]);
+  const [settings, items, activities, foods, sports, foodAliases] =
+    await Promise.all([
+      getSettings(userId),
+      listLogItems(userId),
+      listLogActivities(userId),
+      listFoods(userId),
+      listSports(userId),
+      listFoodAliases(userId),
+    ]);
   return {
     logs: groupLogs(items, activities),
     settings,
     foods,
+    foodAliases,
     sports,
   };
 }

@@ -6,7 +6,7 @@ import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { useAppState } from '@/lib/client/store';
 import { assignMealSlots, mealSlotLabel } from '@/lib/meal-schedule';
 import { sumPFC } from '@/lib/pfc';
-import type { FoodItem } from '@/lib/types';
+import type { LogItem } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { useEverOpen } from '@/hooks/use-ever-open';
 
@@ -23,7 +23,7 @@ interface DayLogListProps {
 /** 選択日に食べたものを朝・昼・夜に分けて時刻順に並べる。タップで編集・削除できる。 */
 export function DayLogList({ date, onAdd }: DayLogListProps) {
   const { logs } = useAppState();
-  const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
+  const [editingItem, setEditingItem] = useState<LogItem | null>(null);
   const editMounted = useEverOpen(editingItem !== null);
   const items = logs[date]?.items ?? [];
 

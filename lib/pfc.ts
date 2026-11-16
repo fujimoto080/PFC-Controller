@@ -1,5 +1,12 @@
 import { PFC_KEYS, type PfcKey } from './macros';
-import type { DailyLog, Logs, PFC, UserSettings } from './types';
+import type {
+  DailyLog,
+  LogItem,
+  LogItemInput,
+  Logs,
+  PFC,
+  UserSettings,
+} from './types';
 import { roundPFC, shiftDate } from './utils';
 import {
   calculateGoals,
@@ -31,6 +38,13 @@ export function subtractPFC(a: PFC, b: PFC): PFC {
 /** 栄養値を factor 倍する（数量 ×0.5 / ×2 などの記録用）。 */
 export function scalePFC<T extends PFC>(food: T, factor: number): T {
   return { ...food, ...mapPFC((key) => roundPFC(food[key] * factor)) };
+}
+
+export function buildLogItem(id: string, input: LogItemInput): LogItem {
+  const unitPfc = mapPFC((key) => input[key]);
+  const total =
+    input.quantity === 1 ? unitPfc : scalePFC(unitPfc, input.quantity);
+  return { ...input, ...total, id, unitPfc };
 }
 
 /** P/F/C/カロリーのどれかが 0 より大きい（全部 0 の読み取り結果は栄養値として意味がない）。 */

@@ -1,13 +1,15 @@
 import 'server-only';
 
-import { deleteUserRow, getPool } from '@/lib/server/db';
+import type { PoolClient } from 'pg';
+import { foodCandidateKey } from '@/lib/food-suggestions';
+import { deleteUserRow, getPool, transaction } from '@/lib/server/db';
 import {
   FOOD_COLUMNS,
   foodValues,
   toFoodItem,
   type FoodRow,
 } from '@/lib/server/food-row';
-import type { FoodItem, FoodItemInput } from '@/lib/types';
+import type { FoodAlias, FoodItem, FoodItemInput } from '@/lib/types';
 
 const COLUMNS = `food_id AS id, ${FOOD_COLUMNS}`;
 
@@ -28,6 +30,104 @@ export async function listFoods(userId: string): Promise<FoodItem[]> {
     [userId],
   );
   return result.rows.map(toFoodItem);
+}
+
+export async function listFoodAliases(
+  userId: string,
+  db: Pick<PoolClient, 'query'> = getPool(),
+): Promise<Record<string, FoodAlias>> {
+  const { rows } = await db.query<{
+    food_key: string;
+    food_id: string;
+    name: string;
+    store: string | null;
+  }>(
+    'SELECT food_key, food_id, name, store FROM pfc_food_aliases WHERE user_id = $1',
+    [userId],
+  );
+  return Object.fromEntries(
+    rows.map(({ food_key, food_id, name, store }) => [
+      food_key,
+      { foodId: food_id, name, store: store ?? undefined },
+    ]),
+  );
+}
+
+export async function findFoodByAlias(
+  userId: string,
+  foodKey: string,
+): Promise<FoodItem | undefined> {
+  const { rows } = await getPool().query<FoodRow>(
+    `SELECT ${COLUMNS}
+     FROM pfc_foods
+     WHERE user_id = $1 AND food_id = (
+       SELECT food_id FROM pfc_food_aliases WHERE user_id = $1 AND food_key = $2
+     )`,
+    [userId, foodKey],
+  );
+  return rows[0] && toFoodItem(rows[0]);
+}
+
+export async function mergeFoods(
+  userId: string,
+  targetId: string,
+  sourceIds: string[],
+) {
+  return transaction(async (db) => {
+    const ids = [targetId, ...sourceIds];
+    const { rows } = await db.query<FoodRow>(
+      `SELECT ${COLUMNS}
+       FROM pfc_foods WHERE user_id = $1 AND food_id = ANY($2::text[])
+       ORDER BY food_id FOR UPDATE`,
+      [userId, ids],
+    );
+    if (rows.length !== ids.length) return null;
+
+    // すでに統合されている旧名も、今回残す食品へ付け替える。
+    await db.query(
+      `UPDATE pfc_food_aliases SET food_id = $2
+       WHERE user_id = $1 AND food_id = ANY($3::text[])`,
+      [userId, targetId, sourceIds],
+    );
+    const aliases = new Map(
+      rows.map((row) => [foodCandidateKey(toFoodItem(row)), row]),
+    );
+    await db.query(
+      `INSERT INTO pfc_food_aliases (user_id, food_key, food_id, name, store)
+       SELECT $1::uuid, food_key, $2::text, name, store
+       FROM unnest($3::text[], $4::text[], $5::text[]) AS entries(food_key, name, store)
+       ORDER BY food_key
+       ON CONFLICT (user_id, food_key)
+       DO UPDATE SET food_id = EXCLUDED.food_id, name = EXCLUDED.name, store = EXCLUDED.store`,
+      [
+        userId,
+        targetId,
+        [...aliases.keys()],
+        [...aliases.values()].map((row) => row.name),
+        [...aliases.values()].map((row) => row.store),
+      ],
+    );
+    const settings = await db.query<{ favorite_food_ids_json: string[] | null }>(
+      `SELECT favorite_food_ids_json FROM pfc_user_settings
+       WHERE user_id = $1 FOR UPDATE`,
+      [userId],
+    );
+    const favoriteIds = settings.rows[0]?.favorite_food_ids_json ?? [];
+    const sources = new Set(sourceIds);
+    const favoriteFoodIds = [
+      ...new Set(favoriteIds.map((id) => (sources.has(id) ? targetId : id))),
+    ];
+    await db.query(
+      `UPDATE pfc_user_settings SET favorite_food_ids_json = $2::jsonb
+       WHERE user_id = $1`,
+      [userId, JSON.stringify(favoriteFoodIds)],
+    );
+    await db.query(
+      'DELETE FROM pfc_foods WHERE user_id = $1 AND food_id = ANY($2::text[])',
+      [userId, sourceIds],
+    );
+    return { foodAliases: await listFoodAliases(userId, db), favoriteFoodIds };
+  });
 }
 
 /**

@@ -1,7 +1,9 @@
 import {
+  foodCandidateKey,
   rankFrequentFoods,
   searchFoodCandidates,
 } from '@/lib/food-suggestions';
+import { buildLogItem } from '@/lib/pfc';
 import { createEmptyDailyLog, type FoodItem, type Logs } from '@/lib/types';
 
 const foods: FoodItem[] = [
@@ -35,11 +37,8 @@ const foods: FoodItem[] = [
 ];
 
 describe('searchFoodCandidates', () => {
-  const eaten = (id: string, timestamp: number, food: FoodItem): FoodItem => ({
-    ...food,
-    id,
-    timestamp,
-  });
+  const eaten = (id: string, timestamp: number, food: FoodItem) =>
+    buildLogItem(id, { ...food, timestamp, quantity: 1 });
   const [chicken, basil, onigiri] = foods as [FoodItem, FoodItem, FoodItem];
   const logs: Logs = {
     '2026-09-24': {
@@ -54,14 +53,45 @@ describe('searchFoodCandidates', () => {
 
   it('過去の記録を新しい順に並べ、同じ内容は 1 件にまとめて食品リストを続ける', () => {
     expect(
-      searchFoodCandidates(foods, logs, '').map((food) => food.id),
+      searchFoodCandidates(foods, logs, '', {}).map((food) => food.id),
     ).toEqual(['log-2', 'log-3', '2']);
   });
 
   it('区切り文字を無視して食品名に検索語を含むものに絞る', () => {
     expect(
-      searchFoodCandidates(foods, logs, 'チキン バジル').map((food) => food.id),
+      searchFoodCandidates(foods, logs, 'チキン バジル', {}).map((food) => food.id),
     ).toEqual([basil.id]);
+  });
+
+  it('名称の表記ゆれと記録の数量を吸収し、店舗や栄養値が異なる候補を残す', () => {
+    const stored = { ...chicken, store: 'セブンイレブン' };
+    const date = '2026-09-24';
+    const recent = buildLogItem('recent', {
+      ...stored,
+      name: 'ｻﾗﾀﾞ　ﾁｷﾝ',
+      store: 'セブン・イレブン',
+      timestamp: 300,
+      quantity: 4,
+    });
+    const history = {
+      [date]: { ...createEmptyDailyLog(date), items: [recent] },
+    };
+    const candidates = searchFoodCandidates(
+      [
+        stored,
+        { ...stored, id: 'other-store', store: 'ローソン' },
+        { ...stored, id: 'other-nutrition', protein: 25 },
+      ],
+      history,
+      'サラダチキン',
+      {},
+    );
+    expect(candidates.map((food) => food.id)).toEqual([
+      'recent',
+      'other-store',
+      'other-nutrition',
+    ]);
+    expect(candidates[0]).toMatchObject({ protein: 23, calories: 120 });
   });
 
   it('店名でも検索でき、店名と食品名を組み合わせて絞り込める', () => {
@@ -71,11 +101,30 @@ describe('searchFoodCandidates', () => {
       { ...chicken, id: 's3', protein: 25, store: 'ローソン' },
     ];
     expect(
-      searchFoodCandidates(stored, {}, 'セブン').map((food) => food.id),
+      searchFoodCandidates(stored, {}, 'セブン', {}).map((food) => food.id),
     ).toEqual(['s1', 's2']);
     expect(
-      searchFoodCandidates(stored, {}, 'セブン チキン').map((food) => food.id),
+      searchFoodCandidates(stored, {}, 'セブン チキン', {}).map((food) => food.id),
     ).toEqual(['s1']);
+  });
+
+  it('名寄せ後は旧名のみで検索しても、残した食品にまとまる', () => {
+    const old = { ...chicken, name: '蒸し鶏', protein: 25 };
+    const record = buildLogItem('old-log', { ...old, quantity: 4 });
+    const date = '2026-09-24';
+    const history = {
+      [date]: { ...createEmptyDailyLog(date), items: [record] },
+    };
+    const aliases = {
+      [foodCandidateKey(old)]: { foodId: chicken.id, name: old.name },
+    };
+    expect(searchFoodCandidates([chicken], history, '蒸し鶏', aliases)).toEqual([
+      chicken,
+    ]);
+    expect(searchFoodCandidates([chicken], {}, '蒸し鶏', aliases)).toEqual([
+      chicken,
+    ]);
+    expect(record.protein).toBe(100);
   });
 });
 

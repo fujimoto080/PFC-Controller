@@ -26,9 +26,9 @@ export function getPool(): Pool {
   return pool;
 }
 
-export async function transaction(
-  fn: (client: PoolClient) => Promise<void>,
-): Promise<void> {
+export async function transaction<T>(
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<T> {
   const client = await getPool().connect();
   // プールで共有されるクライアントは書き換えず、query だけ差し替えた派生オブジェクトを渡す
   const timed = Object.assign(Object.create(client) as PoolClient, {
@@ -36,8 +36,9 @@ export async function transaction(
   });
   try {
     await timed.query('BEGIN');
-    await fn(timed);
+    const result = await fn(timed);
     await timed.query('COMMIT');
+    return result;
   } catch (error) {
     await timed.query('ROLLBACK');
     throw error;

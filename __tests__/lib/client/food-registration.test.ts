@@ -56,10 +56,7 @@ it('全入口で食品・バーコードは1個分、食事記録は数量込み
   expect(rememberFood).toHaveBeenCalledWith(entry.food);
   expect(addFoodItem).toHaveBeenCalledWith({
     ...entry.food,
-    protein: 75,
-    fat: 15,
-    carbs: 30,
-    calories: 555,
+    quantity: 3,
   });
 });
 
@@ -83,9 +80,11 @@ it('編集対象のIDを更新に使い、新規追加しない', async () => {
     await saveFoodRegistration(entry, { foodId: 'food-1', logId: 'log-1' }),
   ).toBe(true);
   expect(updateFood).toHaveBeenCalledWith({ ...entry.food, id: 'food-1' });
-  expect(updateLogItem).toHaveBeenCalledWith(
-    expect.objectContaining({ id: 'log-1', protein: 75 }),
-  );
+  expect(updateLogItem).toHaveBeenCalledWith({
+    ...entry.food,
+    id: 'log-1',
+    quantity: 3,
+  });
   expect(addFoodItem).not.toHaveBeenCalled();
   expect(rememberFood).not.toHaveBeenCalled();
 });

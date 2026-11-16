@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { FoodForm } from '@/components/input/FoodForm';
+import { EditLogItemDrawer } from '@/components/today/EditLogItemDrawer';
 import {
   addFoodItem,
   rememberFood,
@@ -7,6 +9,7 @@ import {
   updateLogItem,
 } from '@/lib/client/actions';
 import { fetchBarcodeFood, saveBarcodeMapping } from '@/lib/client/api';
+import { buildLogItem } from '@/lib/pfc';
 
 jest.mock('@/lib/client/actions', () => ({
   addFoodItem: jest.fn(() => Promise.resolve(true)),
@@ -22,7 +25,7 @@ jest.mock('@/lib/client/api', () => ({
   ),
 }));
 jest.mock('@/lib/client/store', () => ({
-  useAppState: () => ({ foods: [], logs: {} }),
+  useAppState: () => ({ foods: [], logs: {}, foodAliases: {} }),
 }));
 jest.mock('@/lib/toast', () => ({
   toast: { success: jest.fn(), fromError: jest.fn(), info: jest.fn() },
@@ -39,6 +42,9 @@ jest.mock('@/hooks/use-ai-nutrition', () => ({
 jest.mock('@/components/input/NutritionPhotoButton', () => ({
   NutritionPhotoButton: () => null,
 }));
+jest.mock('@/components/record/RecordDrawer', () => ({
+  RecordDrawer: ({ children }: { children: ReactNode }) => children,
+}));
 
 beforeEach(() => {
   global.ResizeObserver = class {
@@ -51,7 +57,7 @@ beforeEach(() => {
 });
 
 it.each([0.5, 1, 1.5, 2])(
-  '手入力した栄養値を %s 倍で記録し、食品には元の値を保存する',
+  '食事記録に数量 %s と1個分の栄養値を渡す',
   async (factor) => {
     const onDone = jest.fn();
     render(
@@ -82,10 +88,11 @@ it.each([0.5, 1, 1.5, 2])(
       expect(addFoodItem).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'サラダ',
-          protein: 25 * factor,
-          fat: 5 * factor,
-          carbs: 10 * factor,
-          calories: 185 * factor,
+          protein: 25,
+          fat: 5,
+          carbs: 10,
+          calories: 185,
+          quantity: factor,
         }),
       );
     });
@@ -149,11 +156,11 @@ it('食品リストと食事記録に登録し、店舗・グループ・複数�
     expect.objectContaining({ ...initial, storeGroup: 'おかず' }),
   );
   expect(addFoodItem).toHaveBeenCalledWith(
-    expect.objectContaining({ protein: 75 }),
+    expect.objectContaining({ protein: 25, quantity: 3 }),
   );
 });
 
-it('既存食品を更新し、数量を掛けて食事にも記録する', async () => {
+it('既存食品を更新し、数量を指定して食事にも記録する', async () => {
   const onDone = jest.fn();
   render(
     <FoodForm
@@ -172,21 +179,23 @@ it('既存食品を更新し、数量を掛けて食事にも記録する', asyn
     expect.objectContaining({ id: 'food-1', protein: 25 }),
   );
   expect(addFoodItem).toHaveBeenCalledWith(
-    expect.objectContaining({ protein: 50 }),
+    expect.objectContaining({ protein: 25, quantity: 2 }),
   );
   expect(rememberFood).not.toHaveBeenCalled();
 });
 
-it('既存記録を更新し、新しい食事記録を重複追加しない', async () => {
-  const onDone = jest.fn();
-  render(
-    <FoodForm
-      initial={initial}
-      logId="log-1"
-      initialTimestamp={Date.now()}
-      onDone={onDone}
-    />,
-  );
+it('記録を開くと元の数量と1個分の栄養値が表示され、4個から2個に変更できる', async () => {
+  const onClose = jest.fn();
+  const item = buildLogItem('log-1', {
+    ...initial,
+    timestamp: Date.now(),
+    quantity: 4,
+  });
+  expect(item.calories).toBe(740);
+  render(<EditLogItemDrawer item={item} onClose={onClose} />);
+  expect(screen.getByLabelText('数量を指定')).toHaveValue(4);
+  expect(screen.getByLabelText('カロリー')).toHaveValue(185);
+  fireEvent.click(screen.getByRole('button', { name: '×2' }));
   fireEvent.change(screen.getByLabelText('食べた日付'), {
     target: { value: '2026-10-08' },
   });
@@ -195,12 +204,14 @@ it('既存記録を更新し、新しい食事記録を重複追加しない', a
   });
   fireEvent.click(screen.getByRole('button', { name: '保存' }));
   await waitFor(() => {
-    expect(onDone).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
   });
   expect(updateLogItem).toHaveBeenCalledWith(
     expect.objectContaining({
       id: 'log-1',
       timestamp: new Date('2026-10-08T12:30:00+09:00').getTime(),
+      quantity: 2,
+      calories: 185,
     }),
   );
   expect(addFoodItem).not.toHaveBeenCalled();

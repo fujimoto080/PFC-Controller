@@ -20,20 +20,21 @@ describe('searchCatalogFoods', () => {
     expect(searchKalori).not.toHaveBeenCalled();
   });
 
-  it('カタログに無ければ Kalori の結果を返す', async () => {
-    const foods = [
-      {
-        name: 'ニューデイズの商品',
-        calories: 100,
-        protein: 1,
-        fat: 2,
-        carbs: 3,
-      },
-    ];
-    searchKalori.mockResolvedValueOnce(foods);
+  it('カタログに無ければ、表記ゆれをまとめた Kalori の結果を返す', async () => {
+    const food = {
+      name: 'ニューデイズの商品',
+      calories: 100,
+      protein: 1,
+      fat: 2,
+      carbs: 3,
+    };
+    searchKalori.mockResolvedValueOnce([
+      food,
+      { ...food, name: 'ニューデイズの　商品' },
+    ]);
     await expect(
       searchCatalogFoods('user-1', 'zzz存在しない商品名zzz'),
-    ).resolves.toEqual({ source: 'kalori', foods });
+    ).resolves.toEqual({ source: 'kalori', foods: [food] });
     expect(searchKalori).toHaveBeenCalledWith(
       'user-1',
       'zzz存在しない商品名zzz',
