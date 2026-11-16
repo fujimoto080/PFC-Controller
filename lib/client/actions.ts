@@ -12,6 +12,7 @@ import { DEFAULT_MEAL_SPLIT } from '@/lib/meal-split';
 import { DEFAULT_PROFILE } from '@/lib/nutrition-goals';
 import { buildLogItem, sumPFC } from '@/lib/pfc';
 import { buildSportActivity, type SportIntensity } from '@/lib/sports';
+import { toast } from '@/lib/toast';
 import {
   createEmptyDailyLog,
   type DailyLog,
