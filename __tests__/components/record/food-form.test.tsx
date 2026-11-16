@@ -8,7 +8,11 @@ import {
   updateFood,
   updateLogItem,
 } from '@/lib/client/actions';
-import { fetchBarcodeFood, saveBarcodeMapping } from '@/lib/client/api';
+import {
+  fetchBarcodeFood,
+  saveBarcodeMapping,
+  searchCatalogFoods,
+} from '@/lib/client/api';
 import { buildLogItem } from '@/lib/pfc';
 
 jest.mock('@/lib/client/actions', () => ({
@@ -128,6 +132,47 @@ const initial = {
   calories: 185,
   store: 'ローソン',
 };
+
+it('同名の候補のうち選んだ食品を保存欄に表示し、保存欄までスクロールする', async () => {
+  const other = { ...initial, store: 'セブンイレブン', calories: 200 };
+  jest.mocked(searchCatalogFoods).mockResolvedValueOnce({
+    source: 'catalog',
+    foods: [initial, other],
+  });
+  render(<FoodForm initialTimestamp={Date.now()} onDone={jest.fn()} />);
+  const name = screen.getByLabelText('食品名');
+  fireEvent.change(name, { target: { value: initial.name } });
+  const candidate = await screen.findByRole('button', { name: /ローソン/ });
+  const scrollIntoView = jest.fn();
+  const submitSection = screen
+    .getByRole('button', { name: '保存' })
+    .closest('.scroll-mb-4');
+  Object.defineProperty(submitSection, 'scrollIntoView', {
+    value: scrollIntoView,
+  });
+  const originalMatchMedia = window.matchMedia;
+  window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+  try {
+    fireEvent.click(candidate);
+    expect(candidate).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: /セブンイレブン/ }),
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('status')).toHaveTextContent('ローソン');
+    expect(screen.getByLabelText('カロリー')).toHaveValue(185);
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        block: 'end',
+        behavior: 'smooth',
+      });
+    });
+    expect(addFoodItem).not.toHaveBeenCalled();
+    fireEvent.change(name, { target: { value: '別の食品' } });
+    expect(screen.queryByText('選択した食品')).not.toBeInTheDocument();
+  } finally {
+    window.matchMedia = originalMatchMedia;
+  }
+});
 
 it('食品リストと食事記録に登録し、店舗・グループ・複数バーコードを保存する', async () => {
   const onDone = jest.fn();

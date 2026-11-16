@@ -11,6 +11,7 @@ import { FoodNameField } from '@/components/input/FoodNameField';
 import { LabeledInput, PfcMacroInputs } from '@/components/input/FormFields';
 import { NutritionPhotoButton } from '@/components/input/NutritionPhotoButton';
 import { StoreField } from '@/components/input/StoreField';
+import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { useAiNutrition } from '@/hooks/use-ai-nutrition';
 import { useEatDateTime } from '@/hooks/use-eat-datetime';
 import { useFormDraft } from '@/hooks/use-form-draft';
@@ -87,6 +88,7 @@ export function FoodForm({
   const [scannerOpen, setScannerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const submitSectionRef = useRef<HTMLDivElement>(null);
   const [lookingUp, setLookingUp] = useState(false);
   const [photoVersion, setPhotoVersion] = useState(0);
   const eatAt = useEatDateTime(initialTimestamp);
@@ -100,8 +102,10 @@ export function FoodForm({
 
   const [photos, setPhotos] = useState(initialPhotos);
   const [factor, setFactor] = useState(initialQuantity);
+  const [selectedFood, setSelectedFood] = useState<FoodTemplate | null>(null);
 
   const applyFood = (food: FoodTemplate, estimatedPhotos?: string[]) => {
+    setSelectedFood(null);
     const current = getValues();
     reset({
       ...toFormValues(food),
@@ -109,6 +113,18 @@ export function FoodForm({
       storeGroup: food.storeGroup ?? current.storeGroup,
     });
     if (estimatedPhotos) setPhotos(estimatedPhotos);
+  };
+  const selectFood = (food: FoodTemplate) => {
+    applyFood(food);
+    setSelectedFood(food);
+    requestAnimationFrame(() => {
+      submitSectionRef.current?.scrollIntoView({
+        block: 'end',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'instant'
+          : 'smooth',
+      });
+    });
   };
   const ai = useAiNutrition(applyFood);
   const { setText: setAiText } = ai;
@@ -141,6 +157,7 @@ export function FoodForm({
   );
 
   const handleClear = () => {
+    setSelectedFood(null);
     reset(EMPTY_FORM_VALUES);
     setFactor(1);
     setAiText('');
@@ -212,7 +229,11 @@ export function FoodForm({
         <FoodNameField
           register={register}
           control={control}
-          onSelect={applyFood}
+          selectedFood={selectedFood}
+          onNameChange={() => {
+            setSelectedFood(null);
+          }}
+          onSelect={selectFood}
         />
         <PfcMacroInputs register={register} />
         <QuantitySelector value={factor} onChange={setFactor} />
@@ -266,29 +287,49 @@ export function FoodForm({
           </Button>
         </div>
         <EatDateTimeFields value={eatAt.value} onChange={eatAt.onChange} />
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            onClick={handleClear}
-            aria-label="入力をクリア"
-          >
-            <Eraser />
-          </Button>
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              キャンセル
-            </Button>
+        <div ref={submitSectionRef} className="scroll-mb-4 space-y-2">
+          {selectedFood && (
+            <div className="border-primary bg-primary/5 rounded-md border p-2">
+              <output className="block">
+                <span className="text-primary block text-xs font-medium">
+                  選択した食品
+                </span>
+                <span className="block text-sm font-medium break-words">
+                  {selectedFood.name}
+                </span>
+                {selectedFood.store && (
+                  <span className="text-muted-foreground block text-xs">
+                    {selectedFood.store}
+                  </span>
+                )}
+              </output>
+              <PfcMacroLine food={selectedFood} />
+            </div>
           )}
-          <Button
-            type="submit"
-            size="lg"
-            className="flex-1"
-            disabled={saving || lookingUp || ai.pending !== null}
-          >
-            <Save /> {saving ? '保存中…' : onSave ? '決定' : '保存'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={handleClear}
+              aria-label="入力をクリア"
+            >
+              <Eraser />
+            </Button>
+            {onCancel && (
+              <Button type="button" variant="outline" onClick={onCancel}>
+                キャンセル
+              </Button>
+            )}
+            <Button
+              type="submit"
+              size="lg"
+              className="flex-1"
+              disabled={saving || lookingUp || ai.pending !== null}
+            >
+              <Save /> {saving ? '保存中…' : onSave ? '決定' : '保存'}
+            </Button>
+          </div>
         </div>
       </fieldset>
       {scannerOpen && (
