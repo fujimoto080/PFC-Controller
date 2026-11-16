@@ -3,39 +3,50 @@ import { dayLogList, expect, test } from './fixtures';
 test('食品リストに登録したお気に入りを共通フォームで確認して記録できる', async ({
   page,
 }) => {
-  await page.goto('/foods');
-  await page.getByRole('button', { name: '新規' }).click();
-  await page.getByLabel('食品名', { exact: true }).fill('プロテインバー');
-  await page.getByLabel('タンパク質').fill('15');
-  await page.getByLabel('脂質').fill('7');
-  await page.getByLabel('炭水化物').fill('12');
-  await page.getByLabel('カロリー').fill('180');
-  await page.getByLabel('店名 / ブランド (任意)').fill('コンビニ');
-  const foodSaved = page.waitForResponse(
-    (res) => res.url().includes('/api/foods') && res.ok(),
-  );
-  await page.getByRole('button', { name: '保存', exact: true }).click();
-  await foodSaved;
+  await test.step('食品を新規保存', async () => {
+    await page.goto('/foods');
+    await page.getByRole('button', { name: '新規' }).click();
+    await page.getByLabel('食品名', { exact: true }).fill('プロテインバー');
+    await page.getByLabel('タンパク質').fill('15');
+    await page.getByLabel('脂質').fill('7');
+    await page.getByLabel('炭水化物').fill('12');
+    await page.getByLabel('カロリー').fill('180');
+    await page.getByLabel('店名 / ブランド (任意)').fill('コンビニ');
+    const foodSaved = page.waitForResponse(
+      (res) => res.url().includes('/api/foods') && res.ok(),
+    );
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+    await foodSaved;
+  });
 
-  const favoriteSaved = page.waitForResponse(
-    (res) => res.url().includes('/api/settings') && res.ok(),
-  );
-  await page.getByRole('button', { name: 'お気に入り' }).click();
-  await favoriteSaved;
+  await test.step('お気に入りを保存', async () => {
+    const favoriteSaved = page.waitForResponse(
+      (res) => res.url().includes('/api/settings') && res.ok(),
+    );
+    await page.getByRole('button', { name: 'お気に入り' }).click();
+    await favoriteSaved;
+  });
 
-  await page.getByRole('link', { name: '今日' }).click();
-  await page.getByRole('button', { name: /プロテインバー\s*180kcal/ }).click();
-  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await test.step('お気に入りから食事を記録', async () => {
+    await page.getByRole('link', { name: '今日' }).click();
+    await page
+      .getByRole('button', { name: /プロテインバー\s*180kcal/ })
+      .click();
+    await page.getByRole('button', { name: '保存', exact: true }).click();
+  });
+
   // 食品の新規保存時と、お気に入りからの追加時の2件が記録される。
   const records = dayLogList(page).getByRole('button', {
     name: /プロテインバー/,
   });
   await expect(records).toHaveText([/180/, /180/]);
 
-  // お気に入りと記録がサーバーに保存されていることをリロード後の表示で確かめる
-  await page.reload();
-  await expect(
-    page.getByRole('button', { name: /プロテインバー\s*180kcal/ }),
-  ).toBeVisible();
-  await expect(records).toHaveText([/180/, /180/]);
+  await test.step('再読み込みして保存を確認', async () => {
+    // お気に入りと記録がサーバーに保存されていることをリロード後の表示で確かめる
+    await page.reload();
+    await expect(
+      page.getByRole('button', { name: /プロテインバー\s*180kcal/ }),
+    ).toBeVisible();
+    await expect(records).toHaveText([/180/, /180/]);
+  });
 });

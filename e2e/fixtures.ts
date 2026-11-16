@@ -2,22 +2,30 @@ import { test as base, type Page } from '@playwright/test';
 import { E2E_BASE_URL } from './env';
 import { createSession, SESSION_COOKIE } from './session';
 
-/** テストごとに新しいユーザーを作り、そのユーザーでログイン済みのセッション Cookie を付ける。 */
-export const test = base.extend<{ userId: string }>({
-  userId: [
-    async ({ context }, provide) => {
-      const session = await createSession();
-      try {
-        await context.addCookies([
-          { name: SESSION_COOKIE, value: session.token, url: E2E_BASE_URL },
-        ]);
-        await provide(session.userId);
-      } finally {
-        await session.cleanup();
-      }
-    },
-    { auto: true },
-  ],
+/** テストごとに独立したログイン状態を作り、ブラウザと HTTP クライアントで使えるようにする。 */
+export const test = base.extend({
+  storageState: async ({ baseURL }, provide) => {
+    const session = await createSession();
+    try {
+      await provide({
+        cookies: [
+          {
+            name: SESSION_COOKIE,
+            value: session.token,
+            domain: new URL(baseURL ?? E2E_BASE_URL).hostname,
+            path: '/',
+            expires: -1,
+            httpOnly: true,
+            secure: false,
+            sameSite: 'Lax',
+          },
+        ],
+        origins: [],
+      });
+    } finally {
+      await session.cleanup();
+    }
+  },
 });
 
 export { expect } from '@playwright/test';

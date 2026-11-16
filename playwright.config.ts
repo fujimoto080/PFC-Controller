@@ -10,8 +10,12 @@ export default defineConfig({
   testDir: './e2e',
   globalSetup: './e2e/global-setup.ts',
   forbidOnly: !!process.env.CI,
+  fullyParallel: !!process.env.CI,
+  workers: process.env.CI ? 3 : undefined,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['github'], ['list']] : 'list',
+  reporter: process.env.CI
+    ? [['github'], ['list', { printSteps: true }]]
+    : 'list',
   use: {
     baseURL: E2E_BASE_URL,
     channel: process.env.E2E_BROWSER_CHANNEL,
