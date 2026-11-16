@@ -80,29 +80,24 @@ it('一括保存で記録が保存されなければ失敗を返し、同じID�
 
 it('既存食品でバーコードの変更がなければ食事記録だけを追加する', async () => {
   jest.mocked(hasRememberedFood).mockReturnValueOnce(true);
-  expect(
-    await saveFoodRegistration({ ...entry, barcodes: [] }, target),
-  ).toBe(true);
+  const result = await saveFoodRegistration({ ...entry, barcodes: [] }, target);
+  expect(result).toBe(true);
   expect(addFoodItem).toHaveBeenCalledWith(input);
   expect(post).not.toHaveBeenCalled();
 });
 
 it('編集する食品の保存に失敗したら食事の更新まで進まない', async () => {
   jest.mocked(rememberFood).mockResolvedValueOnce(false);
-  expect(
-    await saveFoodRegistration(entry, { ...target, logId: 'log-1' }),
-  ).toBe(false);
+  const editTarget = { ...target, logId: 'log-1' };
+  const result = await saveFoodRegistration(entry, editTarget);
+  expect(result).toBe(false);
   expect(updateLogItem).not.toHaveBeenCalled();
 });
 
 it('編集対象のIDを更新に使い、新規追加しない', async () => {
-  expect(
-    await saveFoodRegistration(entry, {
-      ...target,
-      foodId: 'food-1',
-      logId: 'log-1',
-    }),
-  ).toBe(true);
+  const editTarget = { ...target, foodId: 'food-1', logId: 'log-1' };
+  const result = await saveFoodRegistration(entry, editTarget);
+  expect(result).toBe(true);
   expect(saveBarcodeMapping).toHaveBeenCalledWith(['4901', '4902'], {
     name: 'チキン',
     store: 'ローソン',
