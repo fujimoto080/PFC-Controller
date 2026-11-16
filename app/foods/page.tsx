@@ -182,6 +182,7 @@ export default function FoodsPage() {
             candidates={mergeCandidates}
             onSelect={(ids) => {
               setSelection({ mode: 'merge', ids });
+              setReviewMerge(true);
             }}
           />
         )}
