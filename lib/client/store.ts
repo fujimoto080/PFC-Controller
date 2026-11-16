@@ -39,9 +39,9 @@ function writeCache() {
   }
 }
 
-function replaceState(next: AppState) {
+function replaceState(next: AppState, persist = true) {
   state = next;
-  writeCache();
+  if (persist) writeCache();
   for (const listener of listeners) listener();
 }
 
@@ -76,7 +76,7 @@ export function hydrateFromCache() {
     const raw = userId && localStorage.getItem(CACHE_KEY_PREFIX + userId);
     if (!raw) return;
     currentUserId = userId;
-    replaceState(JSON.parse(raw) as AppState);
+    replaceState(JSON.parse(raw) as AppState, false);
   } catch {
     // 壊れたキャッシュは無視してサーバー取得を待つ
   }

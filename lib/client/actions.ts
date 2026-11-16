@@ -135,12 +135,15 @@ function addFood(item: FoodItem): Promise<boolean> {
 /**
  * 同じ店舗・グループ・栄養値の食品がリストに無ければ追加する。
  */
-export function rememberFood(food: FoodItemInput): Promise<boolean> {
+export function hasRememberedFood(food: FoodItemInput): boolean {
   const matchKey = foodDictionaryKey(food);
-  const exists = getState().foods.some(
+  return getState().foods.some(
     (saved) => foodDictionaryKey(saved) === matchKey,
   );
-  return exists
+}
+
+export function rememberFood(food: FoodItemInput): Promise<boolean> {
+  return hasRememberedFood(food)
     ? Promise.resolve(true)
     : addFood({ ...food, id: crypto.randomUUID() });
 }

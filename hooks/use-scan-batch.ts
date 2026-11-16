@@ -3,10 +3,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFormDraft } from '@/hooks/use-form-draft';
 import type { FoodTemplate } from '@/lib/food-form';
-import { applySavedScanEntries } from '@/lib/client/actions';
-import type { FoodRegistration } from '@/lib/client/food-registration';
 import {
-  api,
+  saveFoodEntries,
+  type FoodRegistration,
+} from '@/lib/client/food-registration';
+import {
   estimateNutritionFromImages,
   fetchBarcodeFood,
 } from '@/lib/client/api';
@@ -17,7 +18,6 @@ import {
   restoreItems,
   updateItem,
   type BatchItem,
-  type SavedScanEntry,
   type ScanSaveEntry,
 } from '@/lib/scan-batch';
 import { toast } from '@/lib/toast';
@@ -166,11 +166,7 @@ export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
     savingRef.current = true;
     setSaving(true);
     try {
-      const saved = await api.post<SavedScanEntry[]>(
-        '/api/log-items/batch',
-        entries,
-      );
-      applySavedScanEntries(saved);
+      const saved = await saveFoodEntries(entries);
       const savedIds = new Set(saved.map(({ item }) => item.id));
       update((current) => current.filter(({ id }) => !savedIds.has(id)));
       if (saved.length > 0) toast.success(`${saved.length}品を保存しました`);

@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { BarcodeFood } from '@/lib/barcode';
 import { CATALOG_STORES } from '@/lib/catalog/stores';
-import { matchesFoodQuery, uniqueFoodCandidates } from '@/lib/food-suggestions';
+import { foodQueryMatcher, uniqueFoodCandidates } from '@/lib/food-suggestions';
 import { searchKaloriFoods } from '@/lib/server/kalori';
 
 const MAX_RESULTS = 20;
@@ -32,7 +32,7 @@ export async function searchCatalogFoods(
         carbs: item.carbs,
       })),
     ),
-    { limit: MAX_RESULTS, filter: (food) => matchesFoodQuery(food, query) },
+    { limit: MAX_RESULTS, filter: foodQueryMatcher(query) },
   );
   if (foods.length > 0) return { source: 'catalog', foods };
 

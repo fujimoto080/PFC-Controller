@@ -88,6 +88,7 @@ export function FoodForm({
   const [scannerOpen, setScannerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const registrationId = useRef<string | undefined>(undefined);
   const submitSectionRef = useRef<HTMLDivElement>(null);
   const [lookingUp, setLookingUp] = useState(false);
   const [photoVersion, setPhotoVersion] = useState(0);
@@ -157,6 +158,7 @@ export function FoodForm({
   );
 
   const handleClear = () => {
+    registrationId.current = undefined;
     setSelectedFood(null);
     reset(EMPTY_FORM_VALUES);
     setFactor(1);
@@ -184,10 +186,12 @@ export function FoodForm({
     } else {
       savingRef.current = true;
       setSaving(true);
-      const saved = await saveFoodRegistration(entry, { foodId, logId });
+      const id = (registrationId.current ??= crypto.randomUUID());
+      const saved = await saveFoodRegistration(entry, { id, foodId, logId });
       setSaving(false);
       savingRef.current = false;
       if (!saved) return;
+      registrationId.current = undefined;
       if (entry.barcodes.length > 0)
         onBarcodesSaved?.(entry.food, entry.barcodes);
       toast.success('保存しました');

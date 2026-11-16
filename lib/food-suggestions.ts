@@ -39,23 +39,35 @@ export function foodCandidateKey(food: BarcodeFood): string {
   ]);
 }
 
-/**
- * 食品名か店名が検索語に当てはまるか。
- * 区切り文字を無視して食品名・店名のどちらかに含まれるか、空白区切りの各語が食品名・店名のいずれかに含まれれば当てはまる。
- */
-export const matchesFoodQuery = (
-  food: Pick<FoodItem, 'name' | 'store'>,
-  query: string,
-): boolean => {
-  const name = normalizeFoodName(food.name);
-  const store = normalizeFoodName(food.store ?? '');
-  const matches = (term: string) => name.includes(term) || store.includes(term);
-  if (matches(normalizeFoodName(query))) return true;
-  return query
-    .split(/[\s　]+/)
-    .map(normalizeFoodName)
-    .every(matches);
-};
+type FoodLabel = Pick<FoodItem, 'name' | 'store'>;
+
+interface SearchCandidate {
+  food: FoodItem;
+  key?: string;
+  label?: ReturnType<typeof normalizeFoodLabel>;
+}
+
+function normalizeFoodLabel(food: FoodLabel) {
+  return {
+    name: normalizeFoodName(food.name),
+    store: normalizeFoodName(food.store ?? ''),
+  };
+}
+
+/** 全体の語句が含まれるか、空白区切りの各語が食品名・店名に含まれれば一致する。 */
+function matchNormalizedFoodQuery(query: string) {
+  const whole = normalizeFoodName(query);
+  const terms = query.split(/[\s　]+/).map(normalizeFoodName);
+  return ({ name, store }: ReturnType<typeof normalizeFoodLabel>): boolean =>
+    name.includes(whole) ||
+    store.includes(whole) ||
+    terms.every((term) => name.includes(term) || store.includes(term));
+}
+
+export function foodQueryMatcher(query: string) {
+  const matches = matchNormalizedFoodQuery(query);
+  return (food: FoodLabel): boolean => matches(normalizeFoodLabel(food));
+}
 
 /** 食品名・店舗・栄養値が一致する候補は、先に出たものを残す。 */
 export function uniqueFoodCandidates<T extends BarcodeFood>(
@@ -77,35 +89,60 @@ export function uniqueFoodCandidates<T extends BarcodeFood>(
 
 /**
  * 記録追加で選べる食品候補。過去の記録（新しい順）→ 食品リストの順に並べ、同じ内容のものは 1 件にまとめる。
- * query が空なら全件、そうでなければ食品名か店名が query に当てはまるものに絞る。
+ * 履歴の並べ替えは一度だけ行い、検索で必要になった食品名の正規化結果を使い回す。
  */
-export function searchFoodCandidates(
+export function createFoodCandidateSearch(
   foods: FoodItem[],
   logs: Logs,
-  query: string,
   aliases: Record<string, FoodAlias>,
-): FoodItem[] {
-  const trimmedQuery = query.trim();
+) {
   const foodsById = new Map(foods.map((food) => [food.id, food]));
-  const matchingAliases = new Set(
-    Object.values(aliases)
-      .filter((alias) => matchesFoodQuery(alias, trimmedQuery))
-      .map((alias) => alias.foodId),
-  );
+  const aliasLabels = Object.values(aliases).map((alias) => ({
+    foodId: alias.foodId,
+    label: normalizeFoodLabel(alias),
+  }));
   const history = Object.values(logs)
     .flatMap((log) => log.items)
     .sort((a, b) => b.timestamp - a.timestamp)
     .map(({ unitPfc, quantity: _, ...food }) => {
       const candidate = { ...food, ...unitPfc };
-      const alias = aliases[foodCandidateKey(candidate)];
+      const alias =
+        aliasLabels.length > 0
+          ? aliases[foodCandidateKey(candidate)]
+          : undefined;
       return (alias && foodsById.get(alias.foodId)) ?? candidate;
     });
 
-  return uniqueFoodCandidates([...history, ...foods], {
-    limit: MAX_CANDIDATES,
-    filter: (food) =>
-      matchingAliases.has(food.id) || matchesFoodQuery(food, trimmedQuery),
-  });
+  const candidates: SearchCandidate[] = [...history, ...foods].map((food) => ({
+    food,
+  }));
+
+  return (query: string): FoodItem[] => {
+    const trimmed = query.trim();
+    const matches = trimmed ? matchNormalizedFoodQuery(trimmed) : undefined;
+    const matchingAliases = matches
+      ? new Set(
+          aliasLabels
+            .filter(({ label }) => matches(label))
+            .map(({ foodId }) => foodId),
+        )
+      : undefined;
+    const results = new Map<string, FoodItem>();
+    for (const candidate of candidates) {
+      const { food } = candidate;
+      if (
+        matches &&
+        !matchingAliases?.has(food.id) &&
+        !matches((candidate.label ??= normalizeFoodLabel(food)))
+      ) {
+        continue;
+      }
+      const key = (candidate.key ??= foodCandidateKey(food));
+      if (!results.has(key)) results.set(key, food);
+      if (results.size === MAX_CANDIDATES) break;
+    }
+    return [...results.values()];
+  };
 }
 
 export interface FrequentFood extends PFC {

@@ -2,10 +2,15 @@ import {
   findFoodMergeCandidates,
   foodCandidateKey,
   rankFrequentFoods,
-  searchFoodCandidates,
+  createFoodCandidateSearch,
 } from '@/lib/food-suggestions';
 import { buildLogItem } from '@/lib/pfc';
-import { createEmptyDailyLog, type FoodItem, type Logs } from '@/lib/types';
+import {
+  createEmptyDailyLog,
+  type FoodAlias,
+  type FoodItem,
+  type Logs,
+} from '@/lib/types';
 
 const foods: [FoodItem, ...FoodItem[]] = [
   {
@@ -59,7 +64,13 @@ describe('findFoodMergeCandidates', () => {
   });
 });
 
-describe('searchFoodCandidates', () => {
+describe('createFoodCandidateSearch', () => {
+  const searchFoodCandidates = (
+    items: FoodItem[],
+    logs: Logs,
+    query: string,
+    aliases: Record<string, FoodAlias>,
+  ) => createFoodCandidateSearch(items, logs, aliases)(query);
   const eaten = (id: string, timestamp: number, food: FoodItem) =>
     buildLogItem(id, { ...food, timestamp, quantity: 1 });
   const [chicken, basil, onigiri] = foods as [FoodItem, FoodItem, FoodItem];

@@ -13,7 +13,7 @@ test('食品リストに登録したお気に入りを共通フォームで確�
     await page.getByLabel('カロリー').fill('180');
     await page.getByLabel('店名 / ブランド (任意)').fill('コンビニ');
     const foodSaved = page.waitForResponse(
-      (res) => res.url().includes('/api/foods') && res.ok(),
+      (res) => res.url().endsWith('/api/log-items/batch') && res.ok(),
     );
     await page.getByRole('button', { name: '保存', exact: true }).click();
     await foodSaved;

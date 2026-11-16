@@ -10,24 +10,30 @@ import { FoodForm } from '@/components/input/FoodForm';
 import { EditLogItemDrawer } from '@/components/today/EditLogItemDrawer';
 import {
   addFoodItem,
+  hasRememberedFood,
   rememberFood,
   updateFood,
   updateLogItem,
 } from '@/lib/client/actions';
 import {
+  api,
   fetchBarcodeFood,
   saveBarcodeMapping,
   searchCatalogFoods,
 } from '@/lib/client/api';
 import { buildLogItem } from '@/lib/pfc';
+import type { SavedScanEntry, ScanSaveEntry } from '@/lib/scan-batch';
 
 jest.mock('@/lib/client/actions', () => ({
   addFoodItem: jest.fn(() => Promise.resolve(true)),
+  applySavedScanEntries: jest.fn(),
+  hasRememberedFood: jest.fn(() => false),
   updateFood: jest.fn(() => Promise.resolve(true)),
   updateLogItem: jest.fn(() => Promise.resolve(true)),
   rememberFood: jest.fn(() => Promise.resolve(true)),
 }));
 jest.mock('@/lib/client/api', () => ({
+  api: { post: jest.fn() },
   saveBarcodeMapping: jest.fn(() => Promise.resolve()),
   fetchBarcodeFood: jest.fn(),
   searchCatalogFoods: jest.fn(() =>
@@ -56,6 +62,8 @@ jest.mock('@/components/record/RecordDrawer', () => ({
   RecordDrawer: ({ children }: { children: ReactNode }) => children,
 }));
 
+const postFoodEntries = jest.mocked(api.post<SavedScanEntry[]>);
+
 beforeEach(() => {
   global.ResizeObserver = class {
     observe = jest.fn();
@@ -63,12 +71,21 @@ beforeEach(() => {
     disconnect = jest.fn();
   };
   jest.clearAllMocks();
+  postFoodEntries.mockReset();
+  postFoodEntries.mockImplementation((_url, entries) =>
+    Promise.resolve(
+      (entries as ScanSaveEntry[]).map(({ id, input }) => ({
+        item: buildLogItem(id, input),
+      })),
+    ),
+  );
   localStorage.clear();
 });
 
 it.each([0.5, 1, 1.5, 2])(
   '食事記録に数量 %s と1個分の栄養値を渡す',
   async (factor) => {
+    jest.mocked(hasRememberedFood).mockReturnValueOnce(true);
     const onDone = jest.fn();
     render(
       <FoodForm
@@ -106,14 +123,7 @@ it.each([0.5, 1, 1.5, 2])(
         }),
       );
     });
-    expect(rememberFood).toHaveBeenCalledWith(
-      expect.objectContaining({
-        protein: 25,
-        fat: 5,
-        carbs: 10,
-        calories: 185,
-      }),
-    );
+    expect(postFoodEntries).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(onDone).toHaveBeenCalledTimes(1);
     });
@@ -208,13 +218,18 @@ it('食品リストと食事記録に登録し、店舗・グループ・複数�
   await waitFor(() => {
     expect(onDone).toHaveBeenCalled();
   });
-  expect(saveBarcodeMapping).toHaveBeenCalledWith(['4901', '4902'], initial);
-  expect(rememberFood).toHaveBeenCalledWith(
-    expect.objectContaining({ ...initial, storeGroup: 'おかず' }),
-  );
-  expect(addFoodItem).toHaveBeenCalledWith(
-    expect.objectContaining({ protein: 25, quantity: 3 }),
-  );
+  expect(postFoodEntries).toHaveBeenCalledTimes(1);
+  expect(postFoodEntries.mock.lastCall?.[0]).toBe('/api/log-items/batch');
+  const entries = postFoodEntries.mock.lastCall?.[1] as ScanSaveEntry[];
+  expect(entries).toHaveLength(1);
+  expect(entries[0]?.input).toMatchObject({
+    ...initial,
+    storeGroup: 'おかず',
+    quantity: 3,
+  });
+  expect(entries[0]?.barcodes).toEqual(['4901', '4902']);
+  expect(saveBarcodeMapping).not.toHaveBeenCalled();
+  expect(addFoodItem).not.toHaveBeenCalled();
 });
 
 it('既存食品を更新し、数量を指定して食事にも記録する', async () => {
@@ -289,8 +304,7 @@ it('保存先のチェック項目を表示せず両方に保存する', async (
   await waitFor(() => {
     expect(onDone).toHaveBeenCalled();
   });
-  expect(addFoodItem).toHaveBeenCalled();
-  expect(rememberFood).toHaveBeenCalled();
+  expect(postFoodEntries).toHaveBeenCalledTimes(1);
 });
 
 it('スキャン一覧への反映では、数量・日時を保持してまだ保存しない', async () => {
@@ -314,12 +328,13 @@ it('スキャン一覧への反映では、数量・日時を保持してまだ�
       }),
     );
   });
+  expect(postFoodEntries).not.toHaveBeenCalled();
   expect(addFoodItem).not.toHaveBeenCalled();
   expect(saveBarcodeMapping).not.toHaveBeenCalled();
 });
 
-it('保存に失敗したらフォームを閉じず、入力内容を残す', async () => {
-  jest.mocked(addFoodItem).mockResolvedValueOnce(false);
+it('保存に失敗しても入力を残し、同じIDで再試行する', async () => {
+  postFoodEntries.mockRejectedValueOnce(new Error('通信に失敗しました'));
   const onDone = jest.fn();
   render(
     <FoodForm
@@ -330,10 +345,18 @@ it('保存に失敗したらフォームを閉じず、入力内容を残す', a
   );
   fireEvent.click(screen.getByRole('button', { name: '保存' }));
   await waitFor(() => {
-    expect(addFoodItem).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: '保存' })).toBeEnabled();
   });
   expect(onDone).not.toHaveBeenCalled();
   expect(screen.getByLabelText('食品名')).toHaveValue(initial.name);
+  fireEvent.click(screen.getByRole('button', { name: '保存' }));
+  await waitFor(() => {
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+  expect(postFoodEntries).toHaveBeenCalledTimes(2);
+  const first = postFoodEntries.mock.calls[0]?.[1] as ScanSaveEntry[];
+  const retry = postFoodEntries.mock.calls[1]?.[1] as ScanSaveEntry[];
+  expect(retry[0]?.id).toBe(first[0]?.id);
 });
 
 it('バーコードを照会し、登録済みの商品をフォームに入れる', async () => {
