@@ -346,9 +346,7 @@ it('保存に失敗しても入力を残し、同じIDで再試行する', async
   fireEvent.click(screen.getByRole('button', { name: '保存' }));
   await waitFor(() => {
     expect(postFoodEntries).toHaveBeenCalledTimes(1);
-    expect(
-      screen.getByRole('button', { name: '保存', exact: true }),
-    ).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^保存$/ })).toBeEnabled();
   });
   expect(onDone).not.toHaveBeenCalled();
   expect(screen.getByLabelText('食品名')).toHaveValue(initial.name);
