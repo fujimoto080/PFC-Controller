@@ -1,7 +1,9 @@
 #!/bin/sh
 # Vercel の Ignored Build Step。前回デプロイからアプリに影響するファイルが変わっていなければビルドを省く。
-# 終了コード 0 でスキップ、それ以外（差分あり・前回 SHA が取れない等）ではビルドする。
-exec git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . \
+# 終了コード 0 でスキップ。差分がある場合や比較できない場合は 1 を返してビルドする。
+[ -n "${VERCEL_GIT_PREVIOUS_SHA:-}" ] || exit 1
+
+git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . \
   ':(exclude).claude' \
   ':(exclude).github' \
   ':(exclude)__tests__' \
@@ -19,4 +21,4 @@ exec git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . \
   ':(exclude)scripts/e2e-session-cookie.ts' \
   ':(exclude)scripts/lighthouse.mjs' \
   ':(exclude)scripts/seed-sukiya-foods.mjs' \
-  ':(exclude)scripts/scrape-catalog.ts'
+  ':(exclude)scripts/scrape-catalog.ts' || exit 1
