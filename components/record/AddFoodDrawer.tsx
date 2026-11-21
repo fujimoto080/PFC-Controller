@@ -96,7 +96,9 @@ function FoodSearch({
   onSelect: (step: RecordStep) => void;
 }) {
   const [storeQuery, setStoreQuery] = useState('');
-  const search = useFoodSearch([storeQuery.trim(), query.trim()].filter(Boolean).join(' '));
+  const search = useFoodSearch(
+    [storeQuery.trim(), query.trim()].filter(Boolean).join(' '),
+  );
   const ai = useAiNutrition((food) => {
     onSelect({ food });
   });
