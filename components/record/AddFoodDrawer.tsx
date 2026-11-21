@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Loader2, PenLine, Search, Sparkles } from 'lucide-react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,14 @@ export function AddFoodDrawer({
       : null,
   );
   const [query, setQuery] = useState('');
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const searchScrollTop = useRef(0);
+  useLayoutEffect(() => {
+    if (!selection && scrollRef.current) {
+      scrollRef.current.scrollTop = searchScrollTop.current;
+    }
+  }, [selection]);
   const [wasOpen, setWasOpen] = useState(open);
   // 開いた瞬間に、指定された画面から始める
   if (open !== wasOpen) {
@@ -57,8 +65,11 @@ export function AddFoodDrawer({
       onClosed={() => {
         setSelection(null);
         setQuery('');
+        setSelectedKey(null);
+        searchScrollTop.current = 0;
       }}
       title={selection ? '食品を登録・記録' : '食品を検索'}
+      scrollRef={scrollRef}
       onBack={
         selection
           ? () => {
@@ -67,20 +78,29 @@ export function AddFoodDrawer({
           : undefined
       }
     >
-      {selection ? (
-        <RecordStepView
-          step={selection.step}
-          timestamp={selection.timestamp}
-          onDone={onClose}
-        />
-      ) : (
+      <div hidden={selection !== null}>
         <FoodSearch
           query={query}
+          selectedKey={selectedKey}
           onQueryChange={setQuery}
           onSelect={(step) => {
+            searchScrollTop.current = scrollRef.current?.scrollTop ?? 0;
+            setSelectedKey(step.food ? foodCandidateKey(step.food) : null);
             setSelection({ step, timestamp: defaultTimestampFor(date) });
           }}
         />
+      </div>
+      {selection && (
+        <div className="space-y-3">
+          <Button variant="outline" className="w-full" onClick={() => setSelection(null)}>
+            別の食品を選ぶ
+          </Button>
+          <RecordStepView
+            step={selection.step}
+            timestamp={selection.timestamp}
+            onDone={onClose}
+          />
+        </div>
       )}
     </RecordDrawer>
   );
@@ -88,10 +108,12 @@ export function AddFoodDrawer({
 
 function FoodSearch({
   query,
+  selectedKey,
   onQueryChange,
   onSelect,
 }: {
   query: string;
+  selectedKey: string | null;
   onQueryChange: (query: string) => void;
   onSelect: (step: RecordStep) => void;
 }) {
@@ -164,7 +186,7 @@ function FoodSearch({
                 : '店舗・メーカーのカタログ'}
             </p>
           )}
-          <FoodList foods={search.foods} onSelect={onSelect} />
+          <FoodList foods={search.foods} selectedKey={selectedKey} onSelect={onSelect} />
         </>
       ) : (
         <StatusMessage>見つかりませんでした</StatusMessage>
@@ -175,9 +197,11 @@ function FoodSearch({
 
 function FoodList({
   foods,
+  selectedKey,
   onSelect,
 }: {
   foods: readonly (BarcodeFood & Pick<FoodItem, 'storeGroup'>)[];
+  selectedKey: string | null;
   onSelect: (step: RecordStep) => void;
 }) {
   return (
@@ -187,7 +211,8 @@ function FoodList({
           <button
             type="button"
             data-track="検索結果の食品を選択"
-            className="hover:bg-muted/60 w-full px-3 py-2.5 text-left"
+            aria-pressed={foodCandidateKey(food) === selectedKey}
+            className="hover:bg-muted/60 aria-pressed:bg-primary/10 aria-pressed:ring-primary w-full px-3 py-2.5 text-left aria-pressed:ring-2"
             onClick={() => {
               onSelect({ food });
             }}
