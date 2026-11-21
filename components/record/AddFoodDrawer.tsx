@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Keyboard, Loader2, PenLine, Search, Sparkles } from 'lucide-react';
+import { Loader2, PenLine, Search, Sparkles } from 'lucide-react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -161,9 +161,6 @@ export function FoodSearch({
         placeholder="店名で絞り込み（例: セブン）"
         aria-label="店名で絞り込み"
       />
-      <Button variant="outline" className="w-full" onClick={dismissKeyboard}>
-        <Keyboard /> キーボードを閉じる
-      </Button>
       <Button
         variant="outline"
         className="w-full"
