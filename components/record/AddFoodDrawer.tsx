@@ -95,7 +95,8 @@ function FoodSearch({
   onQueryChange: (query: string) => void;
   onSelect: (step: RecordStep) => void;
 }) {
-  const search = useFoodSearch(query);
+  const [storeQuery, setStoreQuery] = useState('');
+  const search = useFoodSearch([storeQuery.trim(), query.trim()].filter(Boolean).join(' '));
   const ai = useAiNutrition((food) => {
     onSelect({ food });
   });
@@ -114,6 +115,12 @@ function FoodSearch({
           aria-label="食品を検索"
         />
       </div>
+      <Input
+        value={storeQuery}
+        onChange={(e) => setStoreQuery(e.target.value)}
+        placeholder="店名で絞り込み（例: セブン）"
+        aria-label="店名で絞り込み"
+      />
       <Button
         variant="outline"
         className="w-full"
@@ -142,7 +149,7 @@ function FoodSearch({
       )}
 
       <p className="text-muted-foreground pt-1 text-xs">
-        {query ? '検索結果' : '最近食べたもの'}
+        {query || storeQuery ? `検索結果（${search.foods.length}件）` : '最近食べたもの'}
       </p>
       {search.loading ? (
         <StatusMessage>商品を探しています…</StatusMessage>
