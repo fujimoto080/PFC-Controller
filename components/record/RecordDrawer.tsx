@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode, Ref } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -43,6 +43,7 @@ export function RecordDrawer({
   return (
     <Drawer
       open={open}
+      dismissible={false}
       onOpenChange={(next) => {
         if (!next) onClose();
       }}
@@ -50,8 +51,8 @@ export function RecordDrawer({
         if (!isOpen) onClosed?.();
       }}
     >
-      <DrawerContent className="data-[vaul-drawer-direction=bottom]:max-h-[92dvh]">
-        <DrawerHeader className="relative">
+      <DrawerContent className="data-[vaul-drawer-direction=bottom]:h-[100dvh] data-[vaul-drawer-direction=bottom]:max-h-[100dvh] data-[vaul-drawer-direction=bottom]:rounded-none">
+        <DrawerHeader className="relative shrink-0 border-b">
           {onBack && (
             <IconButton
               className="absolute top-2 left-2"
@@ -62,8 +63,15 @@ export function RecordDrawer({
             </IconButton>
           )}
           <DrawerTitle>{title}</DrawerTitle>
+          <IconButton
+            className="absolute top-2 right-2"
+            onClick={onClose}
+            aria-label="閉じる"
+          >
+            <X />
+          </IconButton>
         </DrawerHeader>
-        <div ref={scrollRef} className="overflow-y-auto px-4 pb-8">{children}</div>
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-8">{children}</div>
       </DrawerContent>
     </Drawer>
   );
