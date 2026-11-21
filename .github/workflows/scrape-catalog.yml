@@ -8,6 +8,11 @@ on:
     # 毎週月曜 4:00 JST
     - cron: '0 19 * * 0'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/catalog/yoshinoya.ts'
+      - '.github/workflows/scrape-catalog.yml'
 
 permissions:
   contents: write
