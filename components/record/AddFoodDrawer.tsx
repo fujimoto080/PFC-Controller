@@ -106,7 +106,7 @@ export function AddFoodDrawer({
   );
 }
 
-function FoodSearch({
+export function FoodSearch({
   query,
   selectedKey,
   onQueryChange,
@@ -120,7 +120,6 @@ function FoodSearch({
   const [storeQuery, setStoreQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const storeInputRef = useRef<HTMLInputElement>(null);
-  const suppressSelectionRef = useRef(false);
   const dismissKeyboard = () => {
     searchInputRef.current?.blur();
     storeInputRef.current?.blur();
@@ -210,17 +209,7 @@ function FoodSearch({
           <FoodList
             foods={search.foods}
             selectedKey={selectedKey}
-            onPointerDown={() => {
-              suppressSelectionRef.current =
-                document.activeElement === searchInputRef.current ||
-                document.activeElement === storeInputRef.current;
-              if (suppressSelectionRef.current) dismissKeyboard();
-            }}
             onSelect={(step) => {
-              if (suppressSelectionRef.current) {
-                suppressSelectionRef.current = false;
-                return;
-              }
               dismissKeyboard();
               onSelect(step);
             }}
@@ -236,16 +225,14 @@ function FoodSearch({
 function FoodList({
   foods,
   selectedKey,
-  onPointerDown,
   onSelect,
 }: {
   foods: readonly (BarcodeFood & Pick<FoodItem, 'storeGroup'>)[];
   selectedKey: string | null;
-  onPointerDown: () => void;
   onSelect: (step: RecordStep) => void;
 }) {
   return (
-    <ul onPointerDownCapture={onPointerDown} className="divide-y rounded-lg border">
+    <ul className="divide-y rounded-lg border">
       {foods.map((food) => (
         <li key={foodCandidateKey(food)}>
           <button
