@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import type { RecordStep } from '@/components/record/RecordDrawer';
 import { DayActivityList } from '@/components/today/DayActivityList';
 import { DateHeader } from '@/components/today/DateHeader';
@@ -19,6 +20,7 @@ const AddFoodDrawer = dynamic(() =>
 );
 
 export default function TodayPage() {
+  const router = useRouter();
   const [date, setDate] = useState(() => formatDate(Date.now()));
   // 追加シートを開いているときは、最初に出す画面（未指定なら検索）を持つ
   const [adding, setAdding] = useState<{ step?: RecordStep } | null>(null);
@@ -30,7 +32,7 @@ export default function TodayPage() {
   const addMounted = useEverOpen(adding !== null);
 
   const openAdd = () => {
-    setAdding({});
+    router.push('/add-food?date=' + encodeURIComponent(date));
   };
 
   return (
