@@ -1,22 +1,20 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import type { ImageReadingFood } from '@/lib/barcode';
+import type { ImageReading } from '@/lib/barcode';
 
 // 写真の AI 読み取りがうまくいかないとき、送った画像と AI の応答を見て原因を確かめられるよう直近の分を残す。
 // 画像が大きいため保存はせずメモリにだけ持つ。
 
 const LIMIT = 10;
 
-export interface AiReading {
+export interface AiReading extends Pick<ImageReading, 'foods' | 'timings'> {
   id: string;
   at: number;
   /** 送った画像（dataURL） */
   images: string[];
   /** AI の応答テキスト。通信・AI の呼び出しに失敗した場合は無い */
   response?: string;
-  /** 応答から読み取れた食品と確かさ */
-  foods: ImageReadingFood[];
   /** 失敗したときのメッセージ */
   error?: string;
 }

@@ -77,7 +77,7 @@ function SentImage({ image, kilobytes }: { image: string; kilobytes: number }) {
 }
 
 function ReadingEntry({ reading }: { reading: AiReading }) {
-  const { response } = reading;
+  const { response, timings } = reading;
 
   return (
     <li className="space-y-2 p-3">
@@ -85,6 +85,12 @@ function ReadingEntry({ reading }: { reading: AiReading }) {
         <span>{format(reading.at, 'HH:mm:ss')}</span>
         <span>{reading.images.length}枚</span>
       </p>
+      {timings && (
+        <p className="text-muted-foreground text-xs tabular-nums">
+          GPT-6 {timings.gpt6Ms} ms · Drex{' '}
+          {timings.drexMs === null ? '計測なし' : `${timings.drexMs} ms`}
+        </p>
+      )}
       {reading.images.map((image, index) => (
         <SentImage
           key={index}

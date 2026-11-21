@@ -123,8 +123,8 @@ export async function estimateNutritionFromImages(
     });
     throw error;
   }
-  const { foods, response } = reading;
-  recordAiReading({ images: imageDataUrls, response, foods });
+  recordAiReading({ images: imageDataUrls, ...reading });
+  const { foods } = reading;
   const [first] = foods;
   if (!first) throw new Error('栄養値を読み取れませんでした');
   if (first.confidence !== 'high') {

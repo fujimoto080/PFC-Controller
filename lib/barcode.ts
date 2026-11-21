@@ -21,6 +21,7 @@ export interface ImageReadingFood {
 export interface ImageReading {
   foods: ImageReadingFood[];
   response: string;
+  timings?: { gpt6Ms: number; drexMs: number | null };
 }
 
 export interface BarcodeMappingRow {
