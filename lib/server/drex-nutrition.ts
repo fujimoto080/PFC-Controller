@@ -101,6 +101,7 @@ export async function readDrexLabel(
     return responseSchema.safeParse(await response.json()).data;
   } catch {
     console.warn('Drex API から応答を取得できませんでした');
+    return undefined;
   }
 }
 
