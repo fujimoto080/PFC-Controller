@@ -3,27 +3,38 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Copy } from 'lucide-react';
+import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
 import type { ReadingConfidence } from '@/lib/barcode';
 import { useAiReadings, type AiReading } from '@/lib/client/ai-readings';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
 
-/** 直近の写真の AI 読み取りについて、送った画像と AI の応答をそのまま見せる。読み取りが無ければ何も出さない。 */
+/** 最新の読み取り結果を表示し、過去の結果と診断情報は折りたたむ。 */
 export function AiReadingLog({ className }: { className?: string }) {
-  const readings = useAiReadings();
-  if (readings.length === 0) return null;
+  const [latest, ...previous] = useAiReadings();
+  if (!latest) return null;
   return (
-    <details className={cn('rounded-lg border', className)}>
-      <summary className="text-muted-foreground cursor-pointer px-3 py-2 text-xs">
-        写真の読み取り結果を確認（直近{readings.length}件）
-      </summary>
-      <ul className="divide-y border-t">
-        {readings.map((reading) => (
-          <ReadingEntry key={reading.id} reading={reading} />
-        ))}
+    <section
+      className={cn('rounded-lg border', className)}
+      aria-label="直近の写真読み取り"
+    >
+      <ul>
+        <ReadingEntry key={latest.id} reading={latest} />
       </ul>
-    </details>
+      {previous.length > 0 && (
+        <details className="border-t">
+          <summary className="text-muted-foreground cursor-pointer px-3 py-2 text-xs">
+            以前の読み取り（{previous.length}件）
+          </summary>
+          <ul className="divide-y border-t">
+            {previous.map((reading) => (
+              <ReadingEntry key={reading.id} reading={reading} />
+            ))}
+          </ul>
+        </details>
+      )}
+    </section>
   );
 }
 
@@ -82,61 +93,101 @@ function ReadingEntry({ reading }: { reading: AiReading }) {
   return (
     <li className="space-y-2 p-3">
       <p className="text-muted-foreground flex justify-between text-xs tabular-nums">
-        <span>{format(reading.at, 'HH:mm:ss')}</span>
-        <span>{reading.images.length}枚</span>
+        <span>写真の読み取り結果</span>
+        <time dateTime={new Date(reading.at).toISOString()}>
+          {format(reading.at, 'HH:mm:ss')}
+        </time>
       </p>
-      {timings && (
-        <p className="text-muted-foreground text-xs tabular-nums">
-          GPT-6 {timings.gpt6Ms} ms · Drex{' '}
-          {timings.drexMs === null ? '計測なし' : `${timings.drexMs} ms`}
-        </p>
-      )}
-      {reading.images.map((image, index) => (
-        <SentImage
-          key={index}
-          image={image}
-          kilobytes={dataUrlKilobytes(image)}
-        />
-      ))}
       {reading.error ? (
         <p className="text-destructive text-xs">{reading.error}</p>
-      ) : (
-        <p className="text-xs">
-          読み取れた食品: {reading.foods.length}件
-          {reading.foods.length > 0 &&
-            `（${reading.foods
-              .map(
-                ({ food, confidence }) =>
-                  `${food.name}: ${CONFIDENCE_LABELS[confidence]}`,
-              )
-              .join('、')}）`}
+      ) : reading.foods.length === 0 ? (
+        <p className="text-muted-foreground text-xs">
+          食品を読み取れませんでした
         </p>
-      )}
-      {response !== undefined && (
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-xs">AI の応答</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => {
-                navigator.clipboard.writeText(response).then(
-                  () => toast.success('応答をコピーしました'),
-                  (error: unknown) =>
-                    toast.fromError('コピーに失敗しました', error),
-                );
-              }}
-            >
-              <Copy /> コピー
-            </Button>
+      ) : (
+        reading.foods.map(({ food, confidence }, index) => (
+          <div key={index} className="space-y-0.5">
+            <p className="text-sm font-medium">{food.name}</p>
+            <PfcMacroLine food={food} className="tabular-nums" />
+            {confidence !== 'high' && (
+              <p className="text-muted-foreground text-xs">
+                読み取り精度は{CONFIDENCE_LABELS[confidence]}
+              </p>
+            )}
           </div>
-          <pre className="bg-muted max-h-60 overflow-auto rounded p-2 text-[11px] break-all whitespace-pre-wrap">
-            {response}
-          </pre>
-        </div>
+        ))
       )}
+      {timings && <ReadingTimings {...timings} />}
+      <details className="border-t pt-2">
+        <summary className="text-muted-foreground cursor-pointer text-xs">
+          送信した写真とAIの応答
+        </summary>
+        <div className="mt-2 space-y-2">
+          {reading.images.map((image, index) => (
+            <SentImage
+              key={index}
+              image={image}
+              kilobytes={dataUrlKilobytes(image)}
+            />
+          ))}
+          {response !== undefined && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-xs">AI の応答</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    navigator.clipboard.writeText(response).then(
+                      () => toast.success('応答をコピーしました'),
+                      (error: unknown) =>
+                        toast.fromError('コピーに失敗しました', error),
+                    );
+                  }}
+                >
+                  <Copy /> コピー
+                </Button>
+              </div>
+              <pre className="bg-muted max-h-60 overflow-auto rounded p-2 text-[11px] break-all whitespace-pre-wrap">
+                {response}
+              </pre>
+            </div>
+          )}
+        </div>
+      </details>
     </li>
+  );
+}
+
+function formatDuration(ms: number) {
+  return ms < 10 ? `${ms}ミリ秒` : `${(ms / 1000).toFixed(2)}秒`;
+}
+
+function ReadingTimings(timings: NonNullable<AiReading['timings']>) {
+  const { gpt6Ms, drexMs } = timings;
+  const difference = drexMs === null ? null : gpt6Ms - drexMs;
+  const comparison =
+    difference === null
+      ? 'Drexの計測なし'
+      : difference === 0
+        ? '同じ応答時間'
+        : `${difference > 0 ? 'Drex' : 'GPT-6'}が${formatDuration(Math.abs(difference))}早く応答`;
+
+  return (
+    <div className="bg-muted space-y-1 rounded-md px-2.5 py-2 text-xs tabular-nums">
+      <p className="font-medium">{comparison}</p>
+      <dl className="text-muted-foreground grid grid-cols-2 gap-x-2">
+        <div className="flex flex-wrap gap-x-1.5">
+          <dt>GPT-6</dt>
+          <dd>{formatDuration(gpt6Ms)}</dd>
+        </div>
+        <div className="flex flex-wrap gap-x-1.5">
+          <dt>Drex</dt>
+          <dd>{drexMs === null ? '—' : formatDuration(drexMs)}</dd>
+        </div>
+      </dl>
+    </div>
   );
 }
