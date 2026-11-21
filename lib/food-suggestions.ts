@@ -11,8 +11,6 @@ const normalizeCandidateLabel = (value: string): string =>
 const normalizeFoodName = (value: string): string =>
   normalizeCandidateLabel(value).replace(/ー/g, '');
 
-const MAX_CANDIDATES = 30;
-
 interface FoodMergeCandidate {
   key: string;
   foods: [FoodItem, ...FoodItem[]];
@@ -139,7 +137,6 @@ export function createFoodCandidateSearch(
       }
       const key = (candidate.key ??= foodCandidateKey(food));
       if (!results.has(key)) results.set(key, food);
-      if (results.size === MAX_CANDIDATES) break;
     }
     return [...results.values()];
   };
