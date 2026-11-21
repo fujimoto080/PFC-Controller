@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Loader2, PenLine, Search, Sparkles } from 'lucide-react';
+import { Keyboard, Loader2, PenLine, Search, Sparkles } from 'lucide-react';
 import { PfcMacroLine } from '@/components/pfc/PfcMacroLine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -118,6 +118,13 @@ function FoodSearch({
   onSelect: (step: RecordStep) => void;
 }) {
   const [storeQuery, setStoreQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const storeInputRef = useRef<HTMLInputElement>(null);
+  const suppressSelectionRef = useRef(false);
+  const dismissKeyboard = () => {
+    searchInputRef.current?.blur();
+    storeInputRef.current?.blur();
+  };
   const search = useFoodSearch(
     [storeQuery.trim(), query.trim()].filter(Boolean).join(' '),
   );
@@ -130,6 +137,11 @@ function FoodSearch({
       <div className="relative">
         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
+          ref={searchInputRef}
+          enterKeyHint="done"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') dismissKeyboard();
+          }}
           value={query}
           onChange={(e) => {
             onQueryChange(e.target.value);
@@ -140,15 +152,24 @@ function FoodSearch({
         />
       </div>
       <Input
+        ref={storeInputRef}
+        enterKeyHint="done"
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') dismissKeyboard();
+        }}
         value={storeQuery}
         onChange={(e) => setStoreQuery(e.target.value)}
         placeholder="店名で絞り込み（例: セブン）"
         aria-label="店名で絞り込み"
       />
+      <Button variant="outline" className="w-full" onClick={dismissKeyboard}>
+        <Keyboard /> キーボードを閉じる
+      </Button>
       <Button
         variant="outline"
         className="w-full"
         onClick={() => {
+          dismissKeyboard();
           onSelect({});
         }}
       >
@@ -186,7 +207,24 @@ function FoodSearch({
                 : '店舗・メーカーのカタログ'}
             </p>
           )}
-          <FoodList foods={search.foods} selectedKey={selectedKey} onSelect={onSelect} />
+          <FoodList
+            foods={search.foods}
+            selectedKey={selectedKey}
+            onPointerDown={() => {
+              suppressSelectionRef.current =
+                document.activeElement === searchInputRef.current ||
+                document.activeElement === storeInputRef.current;
+              if (suppressSelectionRef.current) dismissKeyboard();
+            }}
+            onSelect={(step) => {
+              if (suppressSelectionRef.current) {
+                suppressSelectionRef.current = false;
+                return;
+              }
+              dismissKeyboard();
+              onSelect(step);
+            }}
+          />
         </>
       ) : (
         <StatusMessage>見つかりませんでした</StatusMessage>
@@ -198,14 +236,16 @@ function FoodSearch({
 function FoodList({
   foods,
   selectedKey,
+  onPointerDown,
   onSelect,
 }: {
   foods: readonly (BarcodeFood & Pick<FoodItem, 'storeGroup'>)[];
   selectedKey: string | null;
+  onPointerDown: () => void;
   onSelect: (step: RecordStep) => void;
 }) {
   return (
-    <ul className="divide-y rounded-lg border">
+    <ul onPointerDownCapture={onPointerDown} className="divide-y rounded-lg border">
       {foods.map((food) => (
         <li key={foodCandidateKey(food)}>
           <button
