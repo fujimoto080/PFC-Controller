@@ -39,4 +39,5 @@
     }]
     
   </string>  
+  <string name="syncLabel">PFC 同期設定</string>
 </resources>
