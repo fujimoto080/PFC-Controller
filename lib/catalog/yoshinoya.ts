@@ -27,11 +27,15 @@ const NUTRITION_PDF_URL = `${BASE_URL}/pdf/allergy/`;
 /**
  * 集める商品カテゴリ。slug は公式サイトのメニューページ（/menu/<slug>）で、配列の順に商品を割り当てる。
  * 複数のカテゴリのメニューページに載る商品（鰻皿は「おかず」と「鰻重」など）は最初のカテゴリに入れる。
- * 「から揚げ」のメニューページは丼・定食・カレーと重なるので持たない。
- * お子様メニュー（kids）・牛丼・麺セット（menset）・期間限定（gentei。他のメニューページと重複）は集めない。
+ * 「から揚げ」のメニューページは丼・定食・カレーと重なるが、重複は商品 URL で除去する。
+ * お子様メニュー・麺セット・期間限定・から揚げも対象にする。重複は商品 URL で除去する。
  */
 export const YOSHINOYA_CATEGORIES = [
   { slug: 'gyudon', label: '牛丼', role: 'main' },
+  { slug: 'menset', label: '牛丼・麺セット', role: 'main' },
+  { slug: 'karaage', label: 'から揚げ', role: 'main' },
+  { slug: 'gentei', label: '期間限定', role: 'main' },
+  { slug: 'kids', label: 'お子様セット', role: 'main' },
   { slug: 'yoshinoyanodon', label: '丼', role: 'main' },
   { slug: 'set', label: '定食', role: 'main' },
   { slug: 'curry', label: 'カレー', role: 'main' },
@@ -42,12 +46,12 @@ export const YOSHINOYA_CATEGORIES = [
 ] as const satisfies readonly CatalogCategory[];
 
 /**
- * 集めない商品名。組み合わせ提案が主食と副菜を組むので、単品を組み合わせたセット（お新香セット・牛丼・汁なし坦々セットなど）は除く。
+ * 集めない商品名。単品を組み合わせたサイドセットは除くが、食事として完結するセットは残す。
  * ファミリーパックは複数人前なので除く。
  * PDF にあっても公式サイトの集めるメニューページに無い物（ドリンク・調味料・お子様セット・地域限定メニュー・
  * 牛丼のトッピング違い）は、商品名が合わないので集まらない。店内価格の無い持ち帰り専用の商品も集めない。
  */
-const EXCLUDED_NAME_PATTERN = /セット|ファミリーパック/;
+const EXCLUDED_NAME_PATTERN = /ファミリーパック|^(?:お新香|キムチ|サラダ|ポテトサラダ|から揚げ)セット/;
 
 /** 栄養成分一覧の 1 行。size は表のサイズ欄（無い商品もある）。 */
 export interface NutritionRow {
