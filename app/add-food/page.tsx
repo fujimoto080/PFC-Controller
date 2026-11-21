@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { Suspense, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { defaultTimestampFor, formatDate } from '@/lib/utils';
  * Keep the search subtree mounted while editing so its filters and scroll
  * position survive going back without synthetic keyboard/touch heuristics.
  */
-export default function AddFoodPage() {
+function AddFoodFlow() {
   const router = useRouter();
   const params = useSearchParams();
   const date = params.get('date') || formatDate(Date.now());
@@ -83,5 +83,13 @@ export default function AddFoodPage() {
         </div>
       )}
     </section>
+  );
+}
+
+export default function AddFoodPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddFoodFlow />
+    </Suspense>
   );
 }
