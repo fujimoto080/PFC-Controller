@@ -5,8 +5,6 @@ import { CATALOG_STORES } from '@/lib/catalog/stores';
 import { foodQueryMatcher, uniqueFoodCandidates } from '@/lib/food-suggestions';
 import { searchKaloriFoods } from '@/lib/server/kalori';
 
-const MAX_RESULTS = 20;
-
 export interface CatalogSearchResult {
   /** 結果の出どころ。公式サイトから集めたカタログ、または Kalori */
   source: 'catalog' | 'kalori';
@@ -32,7 +30,7 @@ export async function searchCatalogFoods(
         carbs: item.carbs,
       })),
     ),
-    { limit: MAX_RESULTS, filter: foodQueryMatcher(query) },
+    { filter: foodQueryMatcher(query) },
   );
   if (foods.length > 0) return { source: 'catalog', foods };
 
