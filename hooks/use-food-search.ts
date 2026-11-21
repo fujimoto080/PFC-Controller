@@ -19,12 +19,15 @@ export function useFoodSearch(query: string) {
   const catalog = useCatalogSearch(query, true);
   const combined = useMemo(() => {
     const seen = new Set(candidates.map(foodCandidateKey));
-    return [...candidates, ...catalog.foods.filter((food) => {
-      const key = foodCandidateKey(food);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })];
+    return [
+      ...candidates,
+      ...catalog.foods.filter((food) => {
+        const key = foodCandidateKey(food);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }),
+    ];
   }, [candidates, catalog.foods]);
 
   return {
