@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import {
   Drawer,
@@ -27,6 +27,7 @@ interface RecordDrawerProps {
   /** 指定するとヘッダーに戻るボタンを出す。 */
   onBack?: () => void;
   children: ReactNode;
+  scrollRef?: Ref<HTMLDivElement>;
 }
 
 /** 記録用のボトムシート。中身はスクロールできる。 */
@@ -37,6 +38,7 @@ export function RecordDrawer({
   title,
   onBack,
   children,
+  scrollRef,
 }: RecordDrawerProps) {
   return (
     <Drawer
@@ -61,7 +63,7 @@ export function RecordDrawer({
           )}
           <DrawerTitle>{title}</DrawerTitle>
         </DrawerHeader>
-        <div className="overflow-y-auto px-4 pb-8">{children}</div>
+        <div ref={scrollRef} className="overflow-y-auto px-4 pb-8">{children}</div>
       </DrawerContent>
     </Drawer>
   );
