@@ -28,11 +28,10 @@ const NUTRITION_PDF_URL = `${BASE_URL}/pdf/allergy/`;
  * 集める商品カテゴリ。slug は公式サイトのメニューページ（/menu/<slug>）で、配列の順に商品を割り当てる。
  * 複数のカテゴリのメニューページに載る商品（鰻皿は「おかず」と「鰻重」など）は最初のカテゴリに入れる。
  * 「から揚げ」のメニューページは丼・定食・カレーと重なるが、重複は商品 URL で除去する。
- * お子様メニュー・麺セット・期間限定・から揚げも対象にする。重複は商品 URL で除去する。
+ * お子様メニュー・期間限定・から揚げも対象にする。麺セットは牛丼カテゴリから取得する。
  */
 export const YOSHINOYA_CATEGORIES = [
   { slug: 'gyudon', label: '牛丼', role: 'main' },
-  { slug: 'menset', label: '牛丼・麺セット', role: 'main' },
   { slug: 'karaage', label: 'から揚げ', role: 'main' },
   { slug: 'gentei', label: '期間限定', role: 'main' },
   { slug: 'kids', label: 'お子様セット', role: 'main' },
