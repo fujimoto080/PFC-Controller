@@ -2424,6 +2424,48 @@
     ]
   },
   {
+    "id": "13996",
+    "name": "カップヌードル 冬の濃厚ミルクシーフードヌードル",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/13996/",
+    "calories": 393,
+    "protein": 8,
+    "fat": 19.8,
+    "carbs": 45.6,
+    "price": 268,
+    "jans": [
+      "4902105296585"
+    ]
+  },
+  {
+    "id": "13997",
+    "name": "日清のどん兵衛 きつねそば",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/13997/",
+    "calories": 367,
+    "protein": 9.6,
+    "fat": 16.1,
+    "carbs": 45.8,
+    "price": 268,
+    "jans": [
+      "4902105296783"
+    ]
+  },
+  {
+    "id": "13998",
+    "name": "日清マ王 大魔王味噌",
+    "category": "即席麺",
+    "url": "https://www.nissin.com/jp/product/items/13998/",
+    "calories": 426,
+    "protein": 11.6,
+    "fat": 10.9,
+    "carbs": 70.4,
+    "price": 397,
+    "jans": [
+      "4902105299234"
+    ]
+  },
+  {
     "id": "13999",
     "name": "日清BLACKカレーメシ 濃厚チーズ",
     "category": "カップライス",

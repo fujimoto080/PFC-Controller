@@ -180,18 +180,6 @@
     "carbs": 105
   },
   {
-    "id": "040949",
-    "category": "bento",
-    "url": "https://www.sej.co.jp/products/a/item/040949/kanto/",
-    "name": "ハンバーグ&唐揚げ弁当",
-    "price": 754,
-    "area": "埼玉県、千葉県、東京都、神奈川県、新潟県、北陸",
-    "calories": 698,
-    "protein": 29.2,
-    "fat": 19.2,
-    "carbs": 104.5
-  },
-  {
     "id": "040957",
     "category": "bento",
     "url": "https://www.sej.co.jp/products/a/item/040957/kanto/",
@@ -384,6 +372,18 @@
     "carbs": 29.1
   },
   {
+    "id": "041739",
+    "category": "sushi",
+    "url": "https://www.sej.co.jp/products/a/item/041739/kanto/",
+    "name": "サラダ巻4巻",
+    "price": 430,
+    "area": "茨城県、栃木県、群馬県、埼玉県",
+    "calories": 338,
+    "protein": 7.7,
+    "fat": 8.2,
+    "carbs": 59.7
+  },
+  {
     "id": "041814",
     "category": "bento",
     "url": "https://www.sej.co.jp/products/a/item/041814/kanto/",
@@ -406,6 +406,18 @@
     "protein": 5.6,
     "fat": 1.6,
     "carbs": 76.4
+  },
+  {
+    "id": "041873",
+    "category": "sushi",
+    "url": "https://www.sej.co.jp/products/a/item/041873/kanto/",
+    "name": "寿司おむすび梅しそたくあん",
+    "price": 192,
+    "area": "茨城県、栃木県、群馬県、埼玉県",
+    "calories": 187,
+    "protein": 2.8,
+    "fat": 1,
+    "carbs": 42.7
   },
   {
     "id": "041907",
@@ -478,6 +490,30 @@
     "protein": 10.3,
     "fat": 20.5,
     "carbs": 69.8
+  },
+  {
+    "id": "042092",
+    "category": "bento",
+    "url": "https://www.sej.co.jp/products/a/item/042092/kanto/",
+    "name": "ガラスープの旨み 肉あんかけチャーハン",
+    "price": 594,
+    "area": "関東、山梨県、長野県、近畿、九州",
+    "calories": 733,
+    "protein": 31.8,
+    "fat": 28.1,
+    "carbs": 90
+  },
+  {
+    "id": "042138",
+    "category": "bento",
+    "url": "https://www.sej.co.jp/products/a/item/042138/kanto/",
+    "name": "チキン南蛮&スタミナ豚焼肉弁当",
+    "price": 754,
+    "area": "北海道、東北、関東、山梨県、長野県、東海、近畿、九州",
+    "calories": 848,
+    "protein": 34.2,
+    "fat": 24.3,
+    "carbs": 126.1
   },
   {
     "id": "042484",
@@ -641,23 +677,11 @@
     "url": "https://www.sej.co.jp/products/a/item/043605/kanto/",
     "name": "ぷちもち食感!もち麦おむすび 塩こんぶ枝豆",
     "price": 149,
-    "area": "関東、山梨県、長野県、岐阜県、愛知県、三重県、近畿、九州",
+    "area": "栃木県、群馬県、埼玉県、千葉県、東京都、神奈川県、山梨県、長野県、岐阜県、愛知県、三重県、近畿、九州",
     "calories": 165,
     "protein": 4.7,
     "fat": 1.6,
     "carbs": 34.4
-  },
-  {
-    "id": "043608",
-    "category": "sushi",
-    "url": "https://www.sej.co.jp/products/a/item/043608/kanto/",
-    "name": "細巻寿司 旨味タレのひきわり納豆巻",
-    "price": 238,
-    "area": "東北、関東",
-    "calories": 182,
-    "protein": 5.1,
-    "fat": 1.8,
-    "carbs": 37.6
   },
   {
     "id": "043747",
@@ -1373,7 +1397,7 @@
     "url": "https://www.sej.co.jp/products/a/item/045034/kanto/",
     "name": "弁当おむすび かつ丼",
     "price": 268,
-    "area": "関東、甲信越、北陸、東海、近畿、鳥取県、島根県、岡山県、広島県、四国、九州",
+    "area": "関東、甲信越、北陸、東海、近畿、中国、四国、九州",
     "calories": 315,
     "protein": 8.6,
     "fat": 9.8,
@@ -1402,6 +1426,30 @@
     "protein": 6.4,
     "fat": 7.9,
     "carbs": 37.3
+  },
+  {
+    "id": "045053",
+    "category": "onigiri",
+    "url": "https://www.sej.co.jp/products/a/item/045053/kanto/",
+    "name": "おおきなおむすび 枝豆としゃけ",
+    "price": 238,
+    "area": "埼玉県、千葉県、東京都、神奈川県、山梨県、長野県、北陸、近畿、九州",
+    "calories": 253,
+    "protein": 6,
+    "fat": 2.6,
+    "carbs": 52.8
+  },
+  {
+    "id": "045061",
+    "category": "onigiri",
+    "url": "https://www.sej.co.jp/products/a/item/045061/kanto/",
+    "name": "天タレまぶしおむすび",
+    "price": 160,
+    "area": "東北、埼玉県、千葉県、東京都、神奈川県、山梨県、長野県、九州",
+    "calories": 304,
+    "protein": 4.3,
+    "fat": 8.3,
+    "carbs": 54.9
   },
   {
     "id": "051760",
@@ -1450,6 +1498,18 @@
     "protein": 11.4,
     "fat": 16.4,
     "carbs": 33.9
+  },
+  {
+    "id": "053904",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/053904/kanto/",
+    "name": "ブリトーバターチキンカレー",
+    "price": 311,
+    "area": "東北、茨城県、栃木県、群馬県、埼玉県、沖縄",
+    "calories": 289,
+    "protein": 13.5,
+    "fat": 11.8,
+    "carbs": 32.9
   },
   {
     "id": "053999",
@@ -1589,7 +1649,7 @@
     "url": "https://www.sej.co.jp/products/a/item/054034/kanto/",
     "name": "タルタル海老カツサンド",
     "price": 482,
-    "area": "東北、埼玉県、千葉県、東京都、神奈川県、甲信越、北陸、東海、近畿、中国、四国、九州、沖縄",
+    "area": "東北、埼玉県、千葉県、東京都、神奈川県、甲信越、北陸、東海、近畿、中国、四国、九州",
     "calories": 451,
     "protein": 13,
     "fat": 24.4,
@@ -1822,6 +1882,102 @@
     "protein": 9.4,
     "fat": 12.8,
     "carbs": 32.6
+  },
+  {
+    "id": "054143",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/054143/kanto/",
+    "name": "メンチカツサンド",
+    "price": 367,
+    "area": "茨城県、栃木県、群馬県、埼玉県、東京都",
+    "calories": 513,
+    "protein": 13.2,
+    "fat": 29.7,
+    "carbs": 49.9
+  },
+  {
+    "id": "054144",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/054144/kanto/",
+    "name": "北海道産きたあかり使用ハムポテトロール",
+    "price": 160,
+    "area": "東北、埼玉県、千葉県、東京都、神奈川県、甲信越、北陸、東海、近畿、中国、四国、九州",
+    "calories": 213,
+    "protein": 6,
+    "fat": 8.8,
+    "carbs": 28.3
+  },
+  {
+    "id": "054145",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/054145/kanto/",
+    "name": "バゲット 燻製モッツアレラ&ベーコン",
+    "price": 432,
+    "area": "東京都",
+    "calories": 380,
+    "protein": 13.8,
+    "fat": 24,
+    "carbs": 27.9
+  },
+  {
+    "id": "054146",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/054146/kanto/",
+    "name": "やみつき旨辛チキンロール",
+    "price": 378,
+    "area": "東北、関東、甲信越、静岡県、近畿、中国、四国、九州",
+    "calories": 436,
+    "protein": 16,
+    "fat": 20.3,
+    "carbs": 48.1
+  },
+  {
+    "id": "054147",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/054147/kanto/",
+    "name": "バゲット パストラミ&カマンベール",
+    "price": 430,
+    "area": "栃木県、群馬県、埼玉県、千葉県、東京都、神奈川県、東海、中国、四国",
+    "calories": 311,
+    "protein": 13.6,
+    "fat": 16.1,
+    "carbs": 28.7
+  },
+  {
+    "id": "054148",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/054148/kanto/",
+    "name": "バゲット パストラミ&カマンベール",
+    "price": 430,
+    "area": "北海道、茨城県、甲信越、北陸",
+    "calories": 311,
+    "protein": 13.6,
+    "fat": 16.1,
+    "carbs": 28.7
+  },
+  {
+    "id": "054149",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/054149/kanto/",
+    "name": "スモークサーモン&クリームチーズサンド",
+    "price": 497,
+    "area": "青森県、岩手県、宮城県、秋田県、山形県、関東、甲信越、北陸、東海、近畿、中国、四国、九州、沖縄",
+    "calories": 272,
+    "protein": 11.9,
+    "fat": 14.8,
+    "carbs": 23.5
+  },
+  {
+    "id": "054160",
+    "category": "sandwich",
+    "url": "https://www.sej.co.jp/products/a/item/054160/kanto/",
+    "name": "チーズドッグ",
+    "price": 292,
+    "area": "埼玉県、千葉県、東京都、神奈川県",
+    "calories": 290,
+    "protein": 10.9,
+    "fat": 17.6,
+    "carbs": 22.7
   },
   {
     "id": "090416",
@@ -2532,18 +2688,6 @@
     "carbs": 43.9
   },
   {
-    "id": "091991",
-    "category": "gratin",
-    "url": "https://www.sej.co.jp/products/a/item/091991/kanto/",
-    "name": "海老と蟹のトマトクリームドリア",
-    "price": 646,
-    "area": "北海道、東北、関東、甲信越、北陸、東海、近畿、中国、四国、沖縄",
-    "calories": 411,
-    "protein": 14,
-    "fat": 10.4,
-    "carbs": 66.9
-  },
-  {
     "id": "091992",
     "category": "pasta",
     "url": "https://www.sej.co.jp/products/a/item/091992/kanto/",
@@ -2554,6 +2698,162 @@
     "protein": 20.2,
     "fat": 13.7,
     "carbs": 52.7
+  },
+  {
+    "id": "091994",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/091994/kanto/",
+    "name": "茨城名物 たっぷり野菜のけんちんそば",
+    "price": 594,
+    "area": "茨城県、栃木県、群馬県、埼玉県",
+    "calories": 417,
+    "protein": 21.4,
+    "fat": 10.1,
+    "carbs": 63.6
+  },
+  {
+    "id": "091995",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/091995/kanto/",
+    "name": "たぬきうどん 上州地粉使用麺",
+    "price": 421,
+    "area": "茨城県、栃木県、群馬県、埼玉県",
+    "calories": 500,
+    "protein": 14.2,
+    "fat": 14.2,
+    "carbs": 80.5
+  },
+  {
+    "id": "092013",
+    "category": "pasta",
+    "url": "https://www.sej.co.jp/products/a/item/092013/kanto/",
+    "name": "コクと旨味が広がる ボンゴレスープパスタ",
+    "price": 529,
+    "area": "茨城県、栃木県、群馬県、埼玉県",
+    "calories": 428,
+    "protein": 22.4,
+    "fat": 8.3,
+    "carbs": 68.3
+  },
+  {
+    "id": "092014",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/092014/kanto/",
+    "name": "だしの旨みと醤油香る 焼うどん",
+    "price": 518,
+    "area": "茨城県、栃木県、群馬県、埼玉県、山梨県、長野県",
+    "calories": 634,
+    "protein": 18.4,
+    "fat": 20,
+    "carbs": 97.6
+  },
+  {
+    "id": "092019",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/092019/kanto/",
+    "name": "鶏塩そうめん",
+    "price": 354,
+    "area": "茨城県、栃木県、群馬県、埼玉県",
+    "calories": 204,
+    "protein": 12.3,
+    "fat": 3.3,
+    "carbs": 32.1
+  },
+  {
+    "id": "092031",
+    "category": "gratin",
+    "url": "https://www.sej.co.jp/products/a/item/092031/kanto/",
+    "name": "魚介の旨み広がるシーフードグラタン",
+    "price": 646,
+    "area": "北海道、東北、関東、甲信越、北陸、東海、近畿、中国、四国、九州",
+    "calories": 355,
+    "protein": 18.3,
+    "fat": 14.2,
+    "carbs": 39.8
+  },
+  {
+    "id": "092033",
+    "category": "pasta",
+    "url": "https://www.sej.co.jp/products/a/item/092033/kanto/",
+    "name": "蟹の旨み広がるトマトクリームパスタ",
+    "price": 646,
+    "area": "東北、関東、山梨県、長野県、鳥取県、島根県、岡山県、広島県、四国、九州",
+    "calories": 496,
+    "protein": 24.4,
+    "fat": 13.4,
+    "carbs": 73.5
+  },
+  {
+    "id": "092046",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/092046/kanto/",
+    "name": "北海道産玄蕎麦使用濃厚だし割りとろろ新そば",
+    "price": 605,
+    "area": "東北、関東、新潟県、北陸、岐阜県、愛知県、三重県、近畿、鳥取県、島根県、岡山県、広島県、四国、沖縄",
+    "calories": 334,
+    "protein": 13.9,
+    "fat": 3,
+    "carbs": 65.5
+  },
+  {
+    "id": "092047",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/092047/kanto/",
+    "name": "北海道産玄蕎麦使用石臼挽きそば粉の新そば",
+    "price": 497,
+    "area": "東北、埼玉県、東京都、新潟県、北陸、岐阜県、愛知県、三重県",
+    "calories": 327,
+    "protein": 15.3,
+    "fat": 2,
+    "carbs": 64.3
+  },
+  {
+    "id": "092048",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/092048/kanto/",
+    "name": "北海道産玄蕎麦使用石臼挽きそば粉の新そば",
+    "price": 497,
+    "area": "関東",
+    "calories": 327,
+    "protein": 15.3,
+    "fat": 2,
+    "carbs": 64.3
+  },
+  {
+    "id": "092049",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/092049/kanto/",
+    "name": "お好み焼き&焼そば",
+    "price": 594,
+    "area": "東北、埼玉県、千葉県、東京都、神奈川県、新潟県、山梨県、静岡県",
+    "calories": 590,
+    "protein": 19.9,
+    "fat": 24.2,
+    "carbs": 76.3
+  },
+  {
+    "id": "092050",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/092050/kanto/",
+    "name": "鶏塩そうめん",
+    "price": 354,
+    "area": "埼玉県、千葉県、東京都、神奈川県",
+    "calories": 190,
+    "protein": 12.3,
+    "fat": 5.4,
+    "carbs": 24.3
+  },
+  {
+    "id": "092054",
+    "category": "men",
+    "url": "https://www.sej.co.jp/products/a/item/092054/kanto/",
+    "name": "鰹香る旨みつゆ きつねそば",
+    "price": 518,
+    "area": "埼玉県、千葉県、東京都、神奈川県、岐阜県、愛知県、三重県",
+    "calories": 356,
+    "protein": 21.3,
+    "fat": 6.4,
+    "carbs": 56.2
   },
   {
     "id": "100062",
@@ -4781,7 +5081,7 @@
     "url": "https://www.sej.co.jp/products/a/item/105890/kanto/",
     "name": "柚子とおだしでたべる野菜豚しゃぶ鍋",
     "price": 559,
-    "area": "東北、関東、甲信越、北陸、東海、鳥取県、島根県、岡山県、広島県、四国、九州",
+    "area": "東北、関東、甲信越、北陸、東海、四国、九州",
     "calories": 177,
     "protein": 16.8,
     "fat": 9.2,
@@ -4884,28 +5184,16 @@
     "carbs": 7.8
   },
   {
-    "id": "105998",
-    "category": "salad",
-    "url": "https://www.sej.co.jp/products/a/item/105998/kanto/",
-    "name": "色どりサラダ 三浦市産大根使用",
-    "price": 257,
-    "area": "神奈川県",
-    "calories": 106,
-    "protein": 2.8,
-    "fat": 7.8,
-    "carbs": 7.2
-  },
-  {
-    "id": "106007",
-    "category": "salad",
-    "url": "https://www.sej.co.jp/products/a/item/106007/kanto/",
-    "name": "やみつき白菜 栃木県産ニラ使用",
-    "price": 225,
-    "area": "茨城県",
-    "calories": 43,
-    "protein": 2.1,
-    "fat": 0.9,
-    "carbs": 7.9
+    "id": "106010",
+    "category": "dailydish",
+    "url": "https://www.sej.co.jp/products/a/item/106010/kanto/",
+    "name": "あおさ豆腐",
+    "price": 268,
+    "area": "東北、関東、新潟県、山梨県、北陸、東海",
+    "calories": 159,
+    "protein": 15.1,
+    "fat": 7.1,
+    "carbs": 10.3
   },
   {
     "id": "106014",
@@ -4978,6 +5266,42 @@
     "protein": 2.1,
     "fat": 19.3,
     "carbs": 21.4
+  },
+  {
+    "id": "106086",
+    "category": "salad",
+    "url": "https://www.sej.co.jp/products/a/item/106086/kanto/",
+    "name": "合鴨と彩り野菜のサラダ",
+    "price": 646,
+    "area": "東北、関東、甲信越、北陸、東海、近畿、中国、四国、九州、沖縄",
+    "calories": 299,
+    "protein": 18.3,
+    "fat": 19,
+    "carbs": 15.6
+  },
+  {
+    "id": "106090",
+    "category": "salad",
+    "url": "https://www.sej.co.jp/products/a/item/106090/kanto/",
+    "name": "かぶとサーモンのフレンチサラダ",
+    "price": 322,
+    "area": "東北、関東、甲信越、北陸、東海、近畿、中国、四国、九州",
+    "calories": 103,
+    "protein": 6.3,
+    "fat": 6.6,
+    "carbs": 5.5
+  },
+  {
+    "id": "106098",
+    "category": "dailydish",
+    "url": "https://www.sej.co.jp/products/a/item/106098/kanto/",
+    "name": "手包みロールキャベツ入りポトフ",
+    "price": 495,
+    "area": "北海道、東北、関東、新潟県、北陸、東海、近畿、中国、九州、沖縄",
+    "calories": 152,
+    "protein": 11.2,
+    "fat": 6.3,
+    "carbs": 14.4
   },
   {
     "id": "106611",
@@ -5280,18 +5604,6 @@
     "carbs": 34.3
   },
   {
-    "id": "150134",
-    "category": "hotsnack",
-    "url": "https://www.sej.co.jp/products/a/item/150134/kanto/",
-    "name": "お店で揚げたソーセージドーナツ",
-    "price": 161,
-    "area": "東京都",
-    "calories": 222,
-    "protein": 5.3,
-    "fat": 13,
-    "carbs": 21.2
-  },
-  {
     "id": "150176",
     "category": "hotsnack",
     "url": "https://www.sej.co.jp/products/a/item/150176/kanto/",
@@ -5362,18 +5674,6 @@
     "protein": 6.2,
     "fat": 10.3,
     "carbs": 44.8
-  },
-  {
-    "id": "150304",
-    "category": "hotsnack",
-    "url": "https://www.sej.co.jp/products/a/item/150304/kanto/",
-    "name": "群馬県産豚肉使用 黒いカレーパン",
-    "price": 220,
-    "area": "茨城県",
-    "calories": 374,
-    "protein": 6.8,
-    "fat": 24.6,
-    "carbs": 32.6
   },
   {
     "id": "150349",
@@ -5628,6 +5928,18 @@
     "carbs": 19.1
   },
   {
+    "id": "150760",
+    "category": "hotsnack",
+    "url": "https://www.sej.co.jp/products/a/item/150760/kanto/",
+    "name": "だし薫る和風チキン(国産鶏肉使用)",
+    "price": 180,
+    "area": "北海道、東北、関東、甲信越、北陸",
+    "calories": 160,
+    "protein": 7.8,
+    "fat": 9.6,
+    "carbs": 11.2
+  },
+  {
     "id": "150761",
     "category": "hotsnack",
     "url": "https://www.sej.co.jp/products/a/item/150761/kanto/",
@@ -5693,7 +6005,7 @@
     "url": "https://www.sej.co.jp/products/a/item/150832/kanto/",
     "name": "お店で揚げた北海道産小豆使用あんドーナツ",
     "price": 171,
-    "area": "東京都、神奈川県",
+    "area": "神奈川県",
     "calories": 339,
     "protein": 7.1,
     "fat": 12,
@@ -5712,24 +6024,12 @@
     "carbs": 17.7
   },
   {
-    "id": "150848",
-    "category": "hotsnack",
-    "url": "https://www.sej.co.jp/products/a/item/150848/kanto/",
-    "name": "おかしなチキンとんがりコーン焼とうもろこし風",
-    "price": 199,
-    "area": "北海道、東北、関東、甲信越、北陸、東海、近畿、中国、四国、福岡県、佐賀県、長崎県、大分県、宮崎県、鹿児島県、沖縄",
-    "calories": 172,
-    "protein": 9.4,
-    "fat": 8.9,
-    "carbs": 13.8
-  },
-  {
     "id": "150849",
     "category": "hotsnack",
     "url": "https://www.sej.co.jp/products/a/item/150849/kanto/",
     "name": "ポークハムカツ",
     "price": 189,
-    "area": "全国",
+    "area": "北海道、東北、茨城県、東京都、神奈川県、山梨県、長野県、東海、沖縄",
     "calories": 257,
     "protein": 8.7,
     "fat": 16.3,

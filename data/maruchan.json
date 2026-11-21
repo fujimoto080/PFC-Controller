@@ -1244,6 +1244,48 @@
     ]
   },
   {
+    "id": "206951",
+    "name": "麺づくり 五香粉香る甘醤油",
+    "category": "instant-cupnoodles",
+    "price": 268,
+    "url": "https://www.maruchan.co.jp/products/search/206951.html",
+    "calories": 337,
+    "protein": 9.7,
+    "fat": 8.6,
+    "carbs": 55.2,
+    "jans": [
+      "4901990385145"
+    ]
+  },
+  {
+    "id": "206952",
+    "name": "麺づくり ピリ辛豆乳",
+    "category": "instant-cupnoodles",
+    "price": 268,
+    "url": "https://www.maruchan.co.jp/products/search/206952.html",
+    "calories": 333,
+    "protein": 8.3,
+    "fat": 8,
+    "carbs": 56.9,
+    "jans": [
+      "4901990385169"
+    ]
+  },
+  {
+    "id": "206953",
+    "name": "やみつき屋 背脂マニア スタミナ醤油ラーメン",
+    "category": "instant-cupnoodles",
+    "price": 322,
+    "url": "https://www.maruchan.co.jp/products/search/206953.html",
+    "calories": 443,
+    "protein": 9.8,
+    "fat": 21.1,
+    "carbs": 53.5,
+    "jans": [
+      "4901990385183"
+    ]
+  },
+  {
     "id": "211402",
     "name": "昔ながらの中華そば",
     "category": "instant-noodles",

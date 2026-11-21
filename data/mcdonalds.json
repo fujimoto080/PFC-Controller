@@ -209,6 +209,39 @@
     "carbs": 32.7
   },
   {
+    "id": "2010",
+    "name": "マックフライポテト®(S)",
+    "category": "side",
+    "price": 220,
+    "url": "https://www.mcdonalds.co.jp/products/2010/",
+    "calories": 225,
+    "protein": 3,
+    "fat": 11,
+    "carbs": 28.7
+  },
+  {
+    "id": "2020",
+    "name": "マックフライポテト®(M)",
+    "category": "side",
+    "price": 350,
+    "url": "https://www.mcdonalds.co.jp/products/2020/",
+    "calories": 410,
+    "protein": 5.5,
+    "fat": 20,
+    "carbs": 52.4
+  },
+  {
+    "id": "2050",
+    "name": "マックフライポテト®(L)",
+    "category": "side",
+    "price": 400,
+    "url": "https://www.mcdonalds.co.jp/products/2050/",
+    "calories": 517,
+    "protein": 7,
+    "fat": 25.2,
+    "carbs": 66
+  },
+  {
     "id": "2200",
     "name": "サイドサラダ",
     "category": "side",
@@ -465,7 +498,7 @@
     "id": "9030",
     "name": "チキンマックナゲット® 15ピース",
     "category": "side",
-    "price": 740,
+    "price": 490,
     "url": "https://www.mcdonalds.co.jp/products/9030/",
     "calories": 786,
     "protein": 46,
