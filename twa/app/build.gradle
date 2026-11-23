@@ -18,6 +18,7 @@ import groovy.xml.MarkupBuilder
 
 plugins {
     id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
 }
 
 def twaManifest = [
@@ -55,7 +56,7 @@ android {
     namespace "app.vercel.pfc_controller.twa"
     defaultConfig {
         applicationId "app.vercel.pfc_controller.twa"
-        minSdkVersion 21
+        minSdkVersion 26
         targetSdkVersion 35
         versionCode 1
         versionName "1"
@@ -156,8 +157,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
     }
     lintOptions {
         checkReleaseBuilds false
@@ -209,5 +213,11 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     
         implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+    
+    // ヘルスコネクトの読み取りと、定期同期
+    implementation 'androidx.health.connect:connect-client:1.1.0'
+    implementation 'androidx.work:work-runtime-ktx:2.10.0'
+    implementation 'androidx.activity:activity-ktx:1.9.3'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.7'
     
 }
