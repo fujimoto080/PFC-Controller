@@ -105,7 +105,7 @@ export function restoreItems(items: BatchItem[]): BatchItem[] {
 /** 栄養値のそろった商品を数量込みで返す。 */
 export function readyFoods(items: BatchItem[]) {
   return items.flatMap((item) =>
-    item.status === 'ready' && item.food?.name.trim()
+    item.status === 'ready' && item.food
       ? [{ item, food: item.food, scaled: scalePFC(item.food, item.quantity) }]
       : [],
   );

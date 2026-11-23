@@ -110,7 +110,6 @@ export function FoodForm({
     const current = getValues();
     reset({
       ...toFormValues(food),
-      name: food.name || current.name,
       store: food.store ?? current.store,
       storeGroup: food.storeGroup ?? current.storeGroup,
     });
@@ -128,11 +127,7 @@ export function FoodForm({
       });
     });
   };
-  const ai = useAiNutrition(applyFood, (name) => {
-    if (!getValues('name').trim()) {
-      setValue('name', name, { shouldDirty: true, shouldValidate: true });
-    }
-  });
+  const ai = useAiNutrition(applyFood);
   const { setText: setAiText } = ai;
 
   const draft = useMemo<FoodFormDraft>(
@@ -321,7 +316,6 @@ export function FoodForm({
               variant="outline"
               size="lg"
               onClick={handleClear}
-              disabled={ai.pending !== null}
               aria-label="入力をクリア"
             >
               <Eraser />
@@ -359,7 +353,7 @@ export function FoodForm({
   );
 }
 
-/** 栄養成分表示の写真、または文章から AI で栄養値を入力する。 */
+/** 栄養成分表示や料理の写真、または文章から AI で栄養値を入力する。 */
 function AiAssist({
   ai,
   initialPhotos,
@@ -375,9 +369,7 @@ function AiAssist({
         initialPhotos={initialPhotos}
         onRead={ai.estimateFromImages}
         disabled={busy}
-        reading={
-          ai.pending === 'image' || ai.pending === 'title' ? ai.pending : null
-        }
+        reading={ai.pending === 'image'}
       />
       <div className="flex gap-2">
         <Input

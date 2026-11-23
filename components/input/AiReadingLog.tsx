@@ -88,7 +88,7 @@ function SentImage({ image, kilobytes }: { image: string; kilobytes: number }) {
 }
 
 function ReadingEntry({ reading }: { reading: AiReading }) {
-  const { response, drexMs, gpt6Ms, titleProbability, title } = reading;
+  const { response, timings } = reading;
 
   return (
     <li className="space-y-2 p-3">
@@ -98,16 +98,16 @@ function ReadingEntry({ reading }: { reading: AiReading }) {
           {format(reading.at, 'HH:mm:ss')}
         </time>
       </p>
-      {title && <p className="text-sm font-medium">{title}</p>}
       {reading.error ? (
         <p className="text-destructive text-xs">{reading.error}</p>
       ) : reading.foods.length === 0 ? (
         <p className="text-muted-foreground text-xs">
-          栄養表示を読み取れませんでした
+          食品を読み取れませんでした
         </p>
       ) : (
         reading.foods.map(({ food, confidence }, index) => (
           <div key={index} className="space-y-0.5">
+            <p className="text-sm font-medium">{food.name}</p>
             <PfcMacroLine food={food} className="tabular-nums" />
             {confidence !== 'high' && (
               <p className="text-muted-foreground text-xs">
@@ -117,22 +117,12 @@ function ReadingEntry({ reading }: { reading: AiReading }) {
           </div>
         ))
       )}
-      {drexMs !== undefined && (
-        <p className="text-muted-foreground text-xs tabular-nums">
-          成分表示（Drex）{formatDuration(drexMs)}
-          {gpt6Ms !== undefined && ` · 商品名（GPT）${formatDuration(gpt6Ms)}`}
-        </p>
-      )}
+      {timings && <ReadingTimings {...timings} />}
       <details className="border-t pt-2">
         <summary className="text-muted-foreground cursor-pointer text-xs">
           送信した写真とAIの応答
         </summary>
         <div className="mt-2 space-y-2">
-          {titleProbability !== undefined && (
-            <p className="text-muted-foreground text-xs">
-              商品名が写っている確率 {Math.round(titleProbability * 100)}%
-            </p>
-          )}
           {reading.images.map((image, index) => (
             <SentImage
               key={index}
@@ -175,3 +165,29 @@ function formatDuration(ms: number) {
   return ms < 10 ? `${ms}ミリ秒` : `${(ms / 1000).toFixed(2)}秒`;
 }
 
+function ReadingTimings(timings: NonNullable<AiReading['timings']>) {
+  const { gpt6Ms, drexMs } = timings;
+  const difference = drexMs === null ? null : gpt6Ms - drexMs;
+  const comparison =
+    difference === null
+      ? 'Drexの計測なし'
+      : difference === 0
+        ? '同じ応答時間'
+        : `${difference > 0 ? 'Drex' : 'GPT-6'}が${formatDuration(Math.abs(difference))}早く応答`;
+
+  return (
+    <div className="bg-muted space-y-1 rounded-md px-2.5 py-2 text-xs tabular-nums">
+      <p className="font-medium">{comparison}</p>
+      <dl className="text-muted-foreground grid grid-cols-2 gap-x-2">
+        <div className="flex flex-wrap gap-x-1.5">
+          <dt>GPT-6</dt>
+          <dd>{formatDuration(gpt6Ms)}</dd>
+        </div>
+        <div className="flex flex-wrap gap-x-1.5">
+          <dt>Drex</dt>
+          <dd>{drexMs === null ? '—' : formatDuration(drexMs)}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}

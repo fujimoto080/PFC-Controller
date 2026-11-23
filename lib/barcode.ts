@@ -21,12 +21,8 @@ export interface ImageReadingFood {
 export interface ImageReading {
   foods: ImageReadingFood[];
   response: string;
-  titleProbability: number;
-  drexMs: number;
+  timings?: { gpt6Ms: number; drexMs: number | null };
 }
-
-/** GPT に商品名の転記を依頼する最低確率。 */
-export const IMAGE_TITLE_THRESHOLD = 0.65;
 
 export interface BarcodeMappingRow {
   barcode: string;

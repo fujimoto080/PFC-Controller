@@ -230,9 +230,6 @@ function ItemCard({
         <Loader2 className="text-muted-foreground size-5 animate-spin" />
         <div className="min-w-0 flex-1">
           <p className="text-sm">{item.loadingLabel}...</p>
-          {item.loadingLabel === '商品名を読み取り中' && item.food && (
-            <PfcMacroLine food={scalePFC(item.food, item.quantity)} />
-          )}
           <BarcodeLabel barcode={item.barcode} />
         </div>
       </li>
@@ -264,14 +261,13 @@ function ItemCard({
 
   const food = item.food;
   if (!food) return null;
-  const name = food.name || '商品名を入力';
   return (
     <li className="flex items-center gap-1 rounded-lg border py-2 pl-3">
       <button
         type="button"
         className="min-w-0 flex-1 text-left"
         onClick={onEdit}
-        aria-label={food.name ? `${food.name}を修正` : name}
+        aria-label={`${food.name}を修正`}
         data-track="スキャンした商品を修正"
       >
         {food.store && (
@@ -280,7 +276,7 @@ function ItemCard({
           </p>
         )}
         <p className="flex items-center gap-1 text-sm leading-snug font-medium">
-          <span className="line-clamp-2">{name}</span>
+          <span className="line-clamp-2">{food.name}</span>
           <PenLine className="text-muted-foreground size-3 shrink-0" />
         </p>
         <PfcMacroLine food={scalePFC(food, item.quantity)} className="mt-0.5" />
