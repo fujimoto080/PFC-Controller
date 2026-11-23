@@ -108,14 +108,32 @@ export function useScanBatch(storageKey = DRAFT_STORAGE_KEY) {
     imageDataUrl: string,
     append: boolean,
   ) => {
-    const previous = append
-      ? (itemsRef.current.find((item) => item.id === id)?.photos ?? [])
-      : [];
+    const item = itemsRef.current.find((row) => row.id === id);
+    if (!item || item.status === 'loading') return;
+    const previous = append ? (item.photos ?? []) : [];
     const photos = [...previous, imageDataUrl];
     patch(id, { status: 'loading', loadingLabel: '成分表示を読み取り中' });
     try {
-      const food = await estimateNutritionFromImages(photos);
-      finish(id, { food, photos, linkBarcode: true });
+      let name = item.food?.name ?? '';
+      const food = await estimateNutritionFromImages(photos, {
+        onNutrition: (values) => {
+          patch(id, { food: { ...item.food, ...values, name }, photos });
+        },
+        onTitlePending: () => {
+          patch(id, { loadingLabel: '商品名を読み取り中' });
+        },
+        onTitle: (title) => {
+          if (!name) name = title;
+        },
+      });
+      const values = food ?? item.food;
+      finish(
+        id,
+        values
+          ? { food: { ...item.food, ...values, name }, photos, linkBarcode: true }
+          : { photos },
+      );
+      if (!food) toast.info('栄養表示を読み取れませんでした');
     } catch (error) {
       // 失敗したら元の内容に戻す
       finish(id);

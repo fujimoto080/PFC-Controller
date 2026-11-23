@@ -13,12 +13,12 @@ interface NutritionPhotoButtonProps {
   onRead: (files: File[], previousPhotos?: string[]) => Promise<boolean>;
   initialPhotos?: string[];
   disabled: boolean;
-  /** 写真を読み取り中か。 */
-  reading: boolean;
+  /** 写真のどの情報を読み取り中か。 */
+  reading: 'image' | 'title' | null;
 }
 
 /**
- * 栄養成分表示や料理を撮影する（または保存済みの画像を選ぶ）ボタン。
+ * 栄養成分表示や商品名を撮影する（または保存済みの画像を選ぶ）ボタン。
  * 成分表示と商品名が別の面にある場合のため、写真を複数枚溜めてからまとめて読み取らせる。
  * 読み取った後も写真は残し、写真を足すと前の写真と合わせて読み取り直す（後から撮った面だけで値を上書きしない）。
  * 直近の読み取り結果も確認できる。
@@ -72,7 +72,7 @@ export function NutritionPhotoButton({
           onClick={() => cameraRef.current?.click()}
           disabled={disabled || full}
         >
-          <Camera /> 成分表示・商品名・料理を撮影
+          <Camera /> 成分表示・商品名を撮影
         </Button>
         <Button
           type="button"
@@ -99,6 +99,7 @@ export function NutritionPhotoButton({
                   type="button"
                   className="bg-background absolute -top-2 -right-2 size-6 rounded-full border"
                   aria-label={`以前の写真 ${index + 1} を外す`}
+                  disabled={disabled}
                   onClick={() => {
                     setPreviousPhotos((current) =>
                       current.filter((_, i) => i !== index),
@@ -122,6 +123,7 @@ export function NutritionPhotoButton({
                   type="button"
                   className="bg-background absolute -top-2 -right-2 size-6 rounded-full border"
                   aria-label={`写真 ${index + 1} を外す`}
+                  disabled={disabled}
                   onClick={() => {
                     setFiles((current) =>
                       current.filter((_, i) => i !== index),
@@ -143,7 +145,12 @@ export function NutritionPhotoButton({
           >
             {reading ? (
               <>
-                <Loader2Icon className="animate-spin" /> 写真から読み取り中...
+                <Loader2Icon className="animate-spin" />
+                <span role="status">
+                  {reading === 'title'
+                    ? '商品名を読み取り中…'
+                    : '成分表示を読み取り中…'}
+                </span>
               </>
             ) : alreadyRead ? (
               '読み取り済み'

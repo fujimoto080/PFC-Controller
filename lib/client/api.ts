@@ -1,7 +1,8 @@
-import type {
-  BarcodeFood,
-  BarcodeMappingRow,
-  ImageReading,
+import {
+  IMAGE_TITLE_THRESHOLD,
+  type BarcodeFood,
+  type BarcodeMappingRow,
+  type ImageReading,
 } from '@/lib/barcode';
 import { recordAiReading } from '@/lib/client/ai-readings';
 import { toast } from '@/lib/toast';
@@ -104,12 +105,16 @@ export function estimateNutrition(text: string): Promise<BarcodeFood> {
 }
 
 /**
- * 同じ商品を撮った画像(dataURL)の栄養成分表示・商品名を AI で読み取る。
- * 表示が無ければ写っている料理から推定する。送った画像と応答は確認用に残す。
+ * Drex の成分表示を先に通知し、商品名が写っていれば GPT で転記する。
  */
 export async function estimateNutritionFromImages(
   imageDataUrls: string[],
-): Promise<BarcodeFood> {
+  options: {
+    onNutrition?: (food: BarcodeFood) => void;
+    onTitlePending?: () => void;
+    onTitle?: (name: string) => void;
+  } = {},
+): Promise<BarcodeFood | undefined> {
   let reading: ImageReading;
   try {
     reading = await api.post<ImageReading>('/api/ai-nutrition/image', {
@@ -123,14 +128,26 @@ export async function estimateNutritionFromImages(
     });
     throw error;
   }
-  recordAiReading({ images: imageDataUrls, ...reading });
-  const { foods } = reading;
-  const [first] = foods;
-  if (!first) throw new Error('栄養値を読み取れませんでした');
-  if (first.confidence !== 'high') {
+  const updateLog = recordAiReading({ images: imageDataUrls, ...reading });
+  const [first] = reading.foods;
+  const food = first?.food;
+  if (food) options.onNutrition?.(food);
+  if (first && first.confidence !== 'high') {
     toast.info('読み取りに自信のない値があります。数値を確認してください');
   }
-  return first.food;
+  if (reading.titleProbability < IMAGE_TITLE_THRESHOLD) return food;
+
+  options.onTitlePending?.();
+  let title: { name: string; gpt6Ms: number };
+  try {
+    title = await api.post('/api/ai-nutrition/image/title', { imageDataUrls });
+  } catch (error) {
+    toast.fromError('商品名を読み取れませんでした', error);
+    return food;
+  }
+  updateLog({ title: title.name, gpt6Ms: title.gpt6Ms });
+  if (title.name) options.onTitle?.(title.name);
+  return food && { ...food, name: title.name };
 }
 
 /** 要望・不具合を GitHub Issue として起票する。 */

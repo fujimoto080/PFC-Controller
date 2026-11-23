@@ -8,13 +8,14 @@ import type { ImageReading } from '@/lib/barcode';
 
 const LIMIT = 10;
 
-export interface AiReading extends Pick<ImageReading, 'foods' | 'timings'> {
+export interface AiReading extends Partial<ImageReading> {
   id: string;
   at: number;
   /** 送った画像（dataURL） */
   images: string[];
-  /** AI の応答テキスト。通信・AI の呼び出しに失敗した場合は無い */
-  response?: string;
+  foods: ImageReading['foods'];
+  title?: string;
+  gpt6Ms?: number;
   /** 失敗したときのメッセージ */
   error?: string;
 }
@@ -24,13 +25,22 @@ const listeners = new Set<() => void>();
 const EMPTY: AiReading[] = [];
 
 export function recordAiReading(reading: Omit<AiReading, 'id' | 'at'>) {
+  const id = crypto.randomUUID();
   readings = [
-    { ...reading, id: crypto.randomUUID(), at: Date.now() },
+    { ...reading, id, at: Date.now() },
     ...readings,
   ].slice(0, LIMIT);
   listeners.forEach((listener) => {
     listener();
   });
+  return (update: Pick<AiReading, 'title' | 'gpt6Ms'>) => {
+    readings = readings.map((entry) =>
+      entry.id === id ? { ...entry, ...update } : entry,
+    );
+    listeners.forEach((listener) => {
+      listener();
+    });
+  };
 }
 
 function subscribe(listener: () => void) {
