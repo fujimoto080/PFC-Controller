@@ -2018,20 +2018,6 @@
     ]
   },
   {
-    "id": "13830",
-    "name": "完全メシ ガパオ風ライス",
-    "category": "カップライス",
-    "url": "https://www.nissin.com/jp/product/items/13830/",
-    "calories": 453,
-    "protein": 18.3,
-    "fat": 13.7,
-    "carbs": 66.6,
-    "price": 430,
-    "jans": [
-      "4902105801642"
-    ]
-  },
-  {
     "id": "13831",
     "name": "日清のどん兵衛 特盛和スパイスカレーきつねうどん",
     "category": "即席麺",
@@ -2057,62 +2043,6 @@
     "price": 322,
     "jans": [
       "4902105296509"
-    ]
-  },
-  {
-    "id": "13833",
-    "name": "チキンラーメン汁なしどんぶり 台湾まぜそば味",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13833/",
-    "calories": 427,
-    "protein": 10.1,
-    "fat": 19.2,
-    "carbs": 53.5,
-    "price": 268,
-    "jans": [
-      "4902105297049"
-    ]
-  },
-  {
-    "id": "13834",
-    "name": "チキンラーメンどんぶり 旨辛チゲ味",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13834/",
-    "calories": 415,
-    "protein": 9.7,
-    "fat": 17.7,
-    "carbs": 54.3,
-    "price": 268,
-    "jans": [
-      "4902105297032"
-    ]
-  },
-  {
-    "id": "13835",
-    "name": "チキンラーメンビッグカップ すきやき味",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13835/",
-    "calories": 452,
-    "protein": 10.3,
-    "fat": 19.9,
-    "carbs": 57.8,
-    "price": 322,
-    "jans": [
-      "4902105297056"
-    ]
-  },
-  {
-    "id": "13836",
-    "name": "カップヌードル レモンシーフードヌードル",
-    "category": "即席麺",
-    "url": "https://www.nissin.com/jp/product/items/13836/",
-    "calories": 322,
-    "protein": 8.5,
-    "fat": 11.7,
-    "carbs": 45.7,
-    "price": 268,
-    "jans": [
-      "4902105298169"
     ]
   },
   {
